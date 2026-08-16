@@ -24,6 +24,8 @@ All byte positions below are zero-based and unused bytes are `00`.
 | Device information | `01 02` | type/subtype, board ID, firmware at bytes 8–11, serial at bytes 17–28 |
 | Device feature bitmap | `01 03` | magnetic/connection/RGB feature bits |
 | RT precision | `02 0C 00` | byte 3, in micrometres (`/1000` for mm) |
+| Commit performance to flash | `02 02 02` | saves active performance parameters to non-volatile memory |
+| Commit layout/keymap to flash | `02 02 04` | saves active key layout parameters to non-volatile memory |
 | Read performance | `04 01 row col` | performance structure below |
 | Write performance | `04 02 row col …` | acknowledgement reply |
 | Read key code | `03 03 layer row col` | 16-bit HID keycode at bytes 5–6 |
@@ -45,10 +47,10 @@ For `04 02`, bytes after `row col` are:
 | axis range max | 23–24 | `uint16 LE` |
 | axis coefficient | 25–26 | `uint16 LE` |
 
-The driver reads each key's performance record before writing. This ensures that axis, calibration, and other firmware-specific values are not overwritten by the UI.
+The driver reads each key's performance record before writing. This ensures that axis, calibration, and other firmware-specific values are not overwritten by the UI. After every successful save, it sends the matching `SaveParam` command to commit the change to the keyboard's non-volatile memory; browser storage is retained only as a recovery backup.
 
 ## Layout coordinates
 
-The current UI maps its five displayed keyboard rows and their key order to `row` and `col`. The manufacturer protocol also exposes layout-discovery requests (`03 05 row`) for devices whose physical matrix differs. Run a USB capture while applying a change in the manufacturer UI before relying on a custom physical layout or firmware variant.
+AE64's five firmware keymap rows are **1–5**, while the browser UI rows are 0–4. The driver therefore uses `protocolRow = visibleRow + 1`; columns are zero-based within the displayed row. This distinction is essential: sending the visual row index made a `Q` write target the number row instead. The manufacturer protocol also exposes layout-discovery requests (`03 05 row`) for devices whose physical matrix differs.
 
 No firmware-update or bootloader command is included.

@@ -108,6 +108,13 @@
       return data[3] / 1000;
     }
 
+    // Global / SaveParam. The firmware keeps edits in its active parameter bank
+    // until this command commits the specified group to non-volatile memory.
+    async saveParameters(group) {
+      if (!Number.isInteger(group) || group < 0 || group > 0xff) throw new RangeError("Invalid parameter group.");
+      await this.transact([GLOBAL, 2, group]);
+    }
+
     async getPerformance(position) {
       const data = await this.transact([PERFORMANCE, 1, position.row, position.col]);
       return {
