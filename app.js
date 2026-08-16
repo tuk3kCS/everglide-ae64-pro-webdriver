@@ -4,7 +4,7 @@ const layout = [
   [{n:"Esc"},{n:"1"},{n:"2"},{n:"3"},{n:"4"},{n:"5"},{n:"6"},{n:"7"},{n:"8"},{n:"9"},{n:"0"},{n:"-"},{n:"="},{n:"Backspace",u:2}],
   [{n:"Tab",u:1.5},{n:"Q"},{n:"W"},{n:"E"},{n:"R"},{n:"T"},{n:"Y"},{n:"U"},{n:"I"},{n:"O"},{n:"P"},{n:"["},{n:"]"},{n:"\\",u:1.5}],
   [{n:"Caps Lock",u:1.75},{n:"A"},{n:"S"},{n:"D"},{n:"F"},{n:"G"},{n:"H"},{n:"J"},{n:"K"},{n:"L"},{n:";"},{n:"'"},{n:"Enter",u:2.25}],
-  [{n:"Shift",u:2},{n:"Z"},{n:"X"},{n:"C"},{n:"V"},{n:"B"},{n:"N"},{n:"M"},{n:","},{n:"."},{n:"/"},{n:"Shift R"},{n:"↑"},{n:"Del"}],
+  [{n:"Shift",u:2},{n:"Z"},{n:"X"},{n:"C"},{n:"V"},{n:"B"},{n:"N"},{n:"M"},{n:","},{n:"."},{n:"/"},{n:"Shift"},{n:"↑"},{n:"Del"}],
   [{n:"Ctrl",u:1.25},{n:"Win",u:1.25},{n:"Alt",u:1.25},{n:"Space",u:6.25},{n:"Alt"},{n:"Fn"},{n:"←"},{n:"↓"},{n:"→"}]
 ];
 const keys = layout.flatMap((row, rowIndex) => row.map((key, colIndex) => ({...key, u:key.u || 1, id:0, row:rowIndex, col:colIndex}))).map((key, index) => ({...key, id:index}));
