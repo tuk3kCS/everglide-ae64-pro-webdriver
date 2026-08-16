@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071119">
+  <meta name="description" content="Bảng điều khiển web không chính thức cho Everglide AE64 Pro.">
+  <title>AE64 Pro Control</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="AE64 Pro Control home"><span class="brand-mark">A</span><span><strong>AE64 PRO</strong><small>Hall Effect Control</small></span></a>
+    <nav class="topnav" aria-label="Điều hướng chính"><a href="#features">Tính năng</a><a href="#device">Thiết bị</a><button class="button ghost" id="demoButton" type="button">Mở bản demo</button><button class="button primary" id="connectButton" type="button">Kết nối bàn phím</button></nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">UNOFFICIAL WEB DRIVER · AE64 PRO</p>
+        <h1>Điều khiển từng<br><span>phím bấm.</span></h1>
+        <p class="lead">Tinh chỉnh điểm nhận phím, Rapid Trigger và keybind của Everglide AE64 Pro ngay trên trình duyệt. Không cần cài đặt phần mềm.</p>
+        <div class="hero-actions"><button class="button primary big" id="heroStart" type="button">Bắt đầu cấu hình <span>→</span></button><button class="text-button" id="heroDemo" type="button">Khám phá bản demo</button></div>
+        <p class="compatibility"><i></i> Chrome hoặc Edge trên máy tính · WebHID hỗ trợ kết nối trực tiếp</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orb"></div>
+        <div class="keyboard-card hero-keyboard" id="heroKeyboard"></div>
+        <div class="float-card float-travel"><b>↕</b><span><strong>Travel distance</strong><small>0.10 – 4.00 mm</small></span></div>
+        <div class="float-card float-rapid"><b>ϟ</b><span><strong>Rapid Trigger</strong><small>Per-key precision</small></span></div>
+      </div>
+    </section>
+
+    <section class="feature-strip" id="features">
+      <article><span>01</span><h2>Travel distance</h2><p>Chọn điểm kích hoạt riêng cho từng phím hoặc cả cụm phím.</p></article>
+      <article><span>02</span><h2>Rapid Trigger</h2><p>Thiết lập ngưỡng nhấn và nhả cho phản hồi tức thì.</p></article>
+      <article><span>03</span><h2>Key mapping</h2><p>Gán lại phím cơ bản, media key và thao tác chuột.</p></article>
+    </section>
+
+    <section class="device-section" id="device">
+      <p class="eyebrow">SINGLE-BOARD KEYBOARD CONTROL</p>
+      <h2>Thiết kế cho <span>AE64 Pro.</span></h2>
+      <p>Nhận diện thiết bị qua USB HID với Vendor ID <code>1CA6</code> và Product ID <code>300A</code>. Bố cục compact ANSI được dựng đúng tỷ lệ keycap để bạn chọn và cấu hình trực quan.</p>
+    </section>
+  </main>
+
+  <section class="workspace hidden" id="workspace" aria-label="AE64 Pro workspace">
+    <aside class="sidebar">
+      <div class="device-title"><span class="device-icon">⌨</span><div><strong>AE64 Pro</strong><small id="connectionLabel">Bản cấu hình cục bộ</small></div></div>
+      <nav id="sideNav" aria-label="Các trang cấu hình">
+        <button class="active" data-page="overview" type="button"><span>⌂</span>Tổng quan</button>
+        <button data-page="travel" type="button"><span>↕</span>Travel distance</button>
+        <button data-page="rapid" type="button"><span>ϟ</span>Rapid Trigger</button>
+        <button data-page="mapping" type="button"><span>⌨</span>Key mapping</button>
+      </nav>
+      <div class="sidebar-note"><i></i><p><strong>Lưu an toàn</strong><br>Thay đổi đang được lưu trong trình duyệt.</p></div>
+    </aside>
+    <div class="work-area">
+      <header class="work-header"><div><p class="eyebrow" id="pageKicker">AE64 PRO WORKSPACE</p><h1 id="pageTitle">Tổng quan</h1><p id="pageDescription">Chọn một phím trên bàn phím để bắt đầu.</p></div><div class="work-actions"><button class="button primary" id="backHomeButton" type="button">← Trang chủ</button><button class="button ghost" id="workspaceConnectButton" type="button">Kết nối</button><button class="button ghost" id="exportButton" type="button">Xuất cấu hình</button><button class="button primary" id="saveButton" type="button">Lưu thay đổi</button></div></header>
+      <div class="save-notice hidden" id="saveNotice">Đã lưu cấu hình vào trình duyệt.</div>
+      <div class="page" id="pageContent"></div>
+    </div>
+  </section>
+
+  <template id="keyboardTemplate"></template>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="protocol.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

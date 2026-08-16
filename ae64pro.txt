@@ -1,0 +1,558 @@
+
+    =========================== USB Port6 ===========================
+
+Connection Status        : 0x01 (Device is connected)
+Port Chain               : 1-6
+Properties               : 0x01
+ IsUserConnectable       : yes
+ PortIsDebugCapable      : no
+ PortHasMultiCompanions  : no
+ PortConnectorIsTypeC    : no
+ConnectionIndex          : 0x06 (Port 6)
+CompanionIndex           : 0
+ CompanionHubSymLnk      : USB#ROOT_HUB30#4&280e3a9a&0&0#{f18a0e88-c30c-11d0-8815-00a0c906bed8}
+ CompanionPortNumber     : 0x1A (Port 26)
+ -> CompanionPortChain   : 1-26
+
+      ========================== Summary =========================
+Vendor ID                : 0x1CA6 (TECHNO-AP Limited Company)
+Product ID               : 0x300A
+Manufacturer String      : "AE64 Pro"
+Product String           : "AE64 Pro"
+Serial                   : "20250613"
+USB Version              : 2.0 (480 Mbit/s)
+Port maximum Speed       : High-Speed (Companion Port 1-26 is doing the SuperSpeed)
+Device maximum Speed     : High-Speed
+Device Connection Speed  : High-Speed
+Self powered             : no
+Demanded Current         : 200 mA
+Used Endpoints           : 5
+
+      ======================== USB Device ========================
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : USB Composite Device
+BusReported Device Desc  : AE64 Pro
+Device Path              : \\?\USB#VID_1CA6&PID_300A#20250613#{a5dcbf10-6530-11d2-901f-00c04fb951ed} (GUID_DEVINTERFACE_USB_DEVICE)
+Kernel Name              : \Device\USBPDO-4
+Device ID                : USB\VID_1CA6&PID_300A\20250613
+Hardware IDs             : USB\VID_1CA6&PID_300A&REV_0002 USB\VID_1CA6&PID_300A
+Driver KeyName           : {36fc9e60-c465-11cf-8056-444553540000}\0041 (GUID_DEVCLASS_USB)
+Driver                   : \SystemRoot\System32\drivers\usbccgp.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\usb.inf
+Legacy BusType           : PNPBus
+Class                    : USB
+Class GUID               : {36fc9e60-c465-11cf-8056-444553540000} (GUID_DEVCLASS_USB)
+Service                  : usbccgp
+Enumerator               : USB
+Location Info            : Port_#0006.Hub_#0001
+Address                  : 6
+Location IDs             : PCIROOT(0)#PCI(1400)#USBROOT(0)#USB(6), ACPI(_SB_)#ACPI(PC00)#ACPI(XHCI)#ACPI(RHUB)#ACPI(HS06)
+Container ID             : {4245c528-d0c9-5193-9565-790f95815ece}
+Manufacturer Info        : (Standard USB Host Controller)
+Capabilities             : 0x94 (Removable, UniqueID, SurpriseRemovalOK)
+Status                   : 0x0180400A (DN_DRIVER_LOADED, DN_STARTED, DN_REMOVABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:50
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+        +++++++++++++++++ Registry USB Flags +++++++++++++++++
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\usbflags\1CA6300A0002
+ osvc                    : REG_BINARY 00 00
+
+        ---------------- Connection Information ---------------
+Connection Index         : 0x06 (Port 6)
+Connection Status        : 0x01 (DeviceConnected)
+Current Config Value     : 0x01 (Configuration 1)
+Device Address           : 0x04 (4)
+Is Hub                   : 0x00 (no)
+Device Bus Speed         : 0x02 (High-Speed)
+Number of open Pipes     : 0x04 (4 pipes to data endpoints)
+Pipe[0]                  : EndpointID=1  Direction=IN   ScheduleOffset=0  Type=Interrupt  wMaxPacketSize=0x8     bInterval=1   -> 1568 Bits/ms = 196000 Bytes/s
+Pipe[1]                  : EndpointID=2  Direction=IN   ScheduleOffset=0  Type=Interrupt  wMaxPacketSize=0x40    bInterval=1   -> 5744 Bits/ms = 718000 Bytes/s
+Pipe[2]                  : EndpointID=3  Direction=IN   ScheduleOffset=0  Type=Interrupt  wMaxPacketSize=0x40    bInterval=1   -> 5744 Bits/ms = 718000 Bytes/s
+Pipe[3]                  : EndpointID=4  Direction=OUT  ScheduleOffset=0  Type=Interrupt  wMaxPacketSize=0x40    bInterval=1   -> 5744 Bits/ms = 718000 Bytes/s
+
+        --------------- Connection Information V2 -------------
+Connection Index         : 0x06 (6)
+Length                   : 0x10 (16 bytes)
+SupportedUsbProtocols    : 0x03
+ Usb110                  : 1 (yes, port supports USB 1.1)
+ Usb200                  : 1 (yes, port supports USB 2.0)
+ Usb300                  : 0 (no, port not supports USB 3.0) -> but Companion Port 1-26 does
+ ReservedMBZ             : 0x00
+Flags                    : 0x00
+ DevIsOpAtSsOrHigher     : 0 (Device is not operating at SuperSpeed or higher)
+ DevIsSsCapOrHigher      : 0 (Device is not SuperSpeed capable or higher)
+ DevIsOpAtSsPlusOrHigher : 0 (Device is not operating at SuperSpeedPlus or higher)
+ DevIsSsPlusCapOrHigher  : 0 (Device is not SuperSpeedPlus capable or higher)
+ ReservedMBZ             : 0x00
+
+    ---------------------- Device Descriptor ----------------------
+bLength                  : 0x12 (18 bytes)
+bDescriptorType          : 0x01 (Device Descriptor)
+bcdUSB                   : 0x200 (USB Version 2.0)
+bDeviceClass             : 0x00 (defined by the interface descriptors)
+bDeviceSubClass          : 0x00
+bDeviceProtocol          : 0x00
+bMaxPacketSize0          : 0x40 (64 bytes)
+idVendor                 : 0x1CA6 (TECHNO-AP Limited Company)
+idProduct                : 0x300A
+bcdDevice                : 0x0002
+iManufacturer            : 0x01 (String Descriptor 1)
+ Language 0x0409         : "AE64 Pro"
+iProduct                 : 0x02 (String Descriptor 2)
+ Language 0x0409         : "AE64 Pro"
+iSerialNumber            : 0x03 (String Descriptor 3)
+ Language 0x0409         : "20250613"
+bNumConfigurations       : 0x01 (1 Configuration)
+
+    ------------------ Configuration Descriptor -------------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x02 (Configuration Descriptor)
+wTotalLength             : 0x005B (91 bytes)
+bNumInterfaces           : 0x03 (3 Interfaces)
+bConfigurationValue      : 0x01 (Configuration 1)
+iConfiguration           : 0x00 (No String Descriptor)
+bmAttributes             : 0xA0
+ D7: Reserved, set 1     : 0x01
+ D6: Self Powered        : 0x00 (no)
+ D5: Remote Wakeup       : 0x01 (yes)
+ D4..0: Reserved, set 0  : 0x00
+MaxPower                 : 0x64 (200 mA)
+
+        ---------------- Interface Descriptor -----------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x04 (Interface Descriptor)
+bInterfaceNumber         : 0x00 (Interface 0)
+bAlternateSetting        : 0x00
+bNumEndpoints            : 0x01 (1 Endpoint)
+bInterfaceClass          : 0x03 (HID - Human Interface Device)
+bInterfaceSubClass       : 0x01 (Boot Interface)
+bInterfaceProtocol       : 0x01 (Keyboard)
+iInterface               : 0x00 (No String Descriptor)
+
+        ------------------- HID Descriptor --------------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x21 (HID Descriptor)
+bcdHID                   : 0x0110 (HID Version 1.10)
+bCountryCode             : 0x00 (00 = not localized)
+bNumDescriptors          : 0x01
+Descriptor 1:
+bDescriptorType          : 0x22 (Class=Report)
+wDescriptorLength        : 0x003E (62 bytes)
+Error reading descriptor : ERROR_GEN_FAILURE (due to a obscure limitation of the Win32 USB API, see F1 Help)
+
+        ----------------- Endpoint Descriptor -----------------
+bLength                  : 0x07 (7 bytes)
+bDescriptorType          : 0x05 (Endpoint Descriptor)
+bEndpointAddress         : 0x81 (Direction=IN EndpointID=1)
+bmAttributes             : 0x03 (TransferType=Interrupt)
+wMaxPacketSize           : 0x0008
+ Bits 15..13             : 0x00 (reserved, must be zero)
+ Bits 12..11             : 0x00 (0 additional transactions per microframe -> allows 1..1024 bytes per packet)
+ Bits 10..0              : 0x08 (8 bytes per packet)
+bInterval                : 0x01 (1 microframe -> 0.125 ms)
+
+        ---------------- Interface Descriptor -----------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x04 (Interface Descriptor)
+bInterfaceNumber         : 0x01 (Interface 1)
+bAlternateSetting        : 0x00
+bNumEndpoints            : 0x01 (1 Endpoint)
+bInterfaceClass          : 0x03 (HID - Human Interface Device)
+bInterfaceSubClass       : 0x00 (None)
+bInterfaceProtocol       : 0x00 (None)
+iInterface               : 0x00 (No String Descriptor)
+
+        ------------------- HID Descriptor --------------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x21 (HID Descriptor)
+bcdHID                   : 0x0110 (HID Version 1.10)
+bCountryCode             : 0x00 (00 = not localized)
+bNumDescriptors          : 0x01
+Descriptor 1:
+bDescriptorType          : 0x22 (Class=Report)
+wDescriptorLength        : 0x007D (125 bytes)
+Error reading descriptor : ERROR_GEN_FAILURE (due to a obscure limitation of the Win32 USB API, see F1 Help)
+
+        ----------------- Endpoint Descriptor -----------------
+bLength                  : 0x07 (7 bytes)
+bDescriptorType          : 0x05 (Endpoint Descriptor)
+bEndpointAddress         : 0x82 (Direction=IN EndpointID=2)
+bmAttributes             : 0x03 (TransferType=Interrupt)
+wMaxPacketSize           : 0x0040
+ Bits 15..13             : 0x00 (reserved, must be zero)
+ Bits 12..11             : 0x00 (0 additional transactions per microframe -> allows 1..1024 bytes per packet)
+ Bits 10..0              : 0x40 (64 bytes per packet)
+bInterval                : 0x01 (1 microframe -> 0.125 ms)
+
+        ---------------- Interface Descriptor -----------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x04 (Interface Descriptor)
+bInterfaceNumber         : 0x02 (Interface 2)
+bAlternateSetting        : 0x00
+bNumEndpoints            : 0x02 (2 Endpoints)
+bInterfaceClass          : 0x03 (HID - Human Interface Device)
+bInterfaceSubClass       : 0x00 (None)
+bInterfaceProtocol       : 0x00 (None)
+iInterface               : 0x00 (No String Descriptor)
+
+        ------------------- HID Descriptor --------------------
+bLength                  : 0x09 (9 bytes)
+bDescriptorType          : 0x21 (HID Descriptor)
+bcdHID                   : 0x0110 (HID Version 1.10)
+bCountryCode             : 0x00 (00 = not localized)
+bNumDescriptors          : 0x01
+Descriptor 1:
+bDescriptorType          : 0x22 (Class=Report)
+wDescriptorLength        : 0x0022 (34 bytes)
+Error reading descriptor : ERROR_GEN_FAILURE (due to a obscure limitation of the Win32 USB API, see F1 Help)
+
+        ----------------- Endpoint Descriptor -----------------
+bLength                  : 0x07 (7 bytes)
+bDescriptorType          : 0x05 (Endpoint Descriptor)
+bEndpointAddress         : 0x83 (Direction=IN EndpointID=3)
+bmAttributes             : 0x03 (TransferType=Interrupt)
+wMaxPacketSize           : 0x0040
+ Bits 15..13             : 0x00 (reserved, must be zero)
+ Bits 12..11             : 0x00 (0 additional transactions per microframe -> allows 1..1024 bytes per packet)
+ Bits 10..0              : 0x40 (64 bytes per packet)
+bInterval                : 0x01 (1 microframe -> 0.125 ms)
+
+        ----------------- Endpoint Descriptor -----------------
+bLength                  : 0x07 (7 bytes)
+bDescriptorType          : 0x05 (Endpoint Descriptor)
+bEndpointAddress         : 0x04 (Direction=OUT EndpointID=4)
+bmAttributes             : 0x03 (TransferType=Interrupt)
+wMaxPacketSize           : 0x0040
+ Bits 15..13             : 0x00 (reserved, must be zero)
+ Bits 12..11             : 0x00 (0 additional transactions per microframe -> allows 1..1024 bytes per packet)
+ Bits 10..0              : 0x40 (64 bytes per packet)
+bInterval                : 0x01 (1 microframe -> 0.125 ms)
+
+    ----------------- Device Qualifier Descriptor -----------------
+Error                    : ERROR_GEN_FAILURE  (*!*ERROR   USB 2.0 HighSpeed devices must provide a Device Qualifier Descriptor)
+
+      -------------------- String Descriptors -------------------
+             ------ String Descriptor 0 ------
+bLength                  : 0x04 (4 bytes)
+bDescriptorType          : 0x03 (String Descriptor)
+Language ID[0]           : 0x0409 (English - United States)
+             ------ String Descriptor 1 ------
+bLength                  : 0x12 (18 bytes)
+bDescriptorType          : 0x03 (String Descriptor)
+Language 0x0409          : "AE64 Pro"
+             ------ String Descriptor 2 ------
+bLength                  : 0x12 (18 bytes)
+bDescriptorType          : 0x03 (String Descriptor)
+Language 0x0409          : "AE64 Pro"
+             ------ String Descriptor 3 ------
+bLength                  : 0x12 (18 bytes)
+bDescriptorType          : 0x03 (String Descriptor)
+Language 0x0409          : "20250613"
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : USB Input Device
+BusReported Device Desc  : AE64 Pro
+Kernel Name (PDO)        : \Device\0000006a
+Device ID                : USB\VID_1CA6&PID_300A&MI_00\6&1A7C856C&0&0000
+Hardware IDs             : USB\VID_1CA6&PID_300A&REV_0002&MI_00 USB\VID_1CA6&PID_300A&MI_00
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0135 (GUID_DEVCLASS_HIDCLASS)
+Driver                   : \SystemRoot\System32\drivers\hidusb.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\input.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : HidUsb
+Enumerator               : USB
+Location Info            : 0000.0014.0000.006.000.000.000.000.000
+Address                  : 6
+Manufacturer Info        : (Standard system devices)
+Capabilities             : 0x80 (SurpriseRemovalOK)
+Status                   : 0x0180000A (DN_DRIVER_LOADED, DN_STARTED, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+SelectiveSuspendEnabled  : 0
+EnhancedPowerMgmtEnabled : 1
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID Keyboard Device
+Device Path 1            : \\?\HID#VID_1CA6&PID_300A&MI_00#7&254f392&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd} (GUID_DEVINTERFACE_KEYBOARD)
+Device Path 2            : \\?\HID#VID_1CA6&PID_300A&MI_00#7&254f392&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\kbd (GUID_DEVINTERFACE_HID)
+Kernel Name              : \Device\0000006f
+Device ID                : HID\VID_1CA6&PID_300A&MI_00\7&254F392&0&0000
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_00 HID\VID_1CA6&PID_300A&MI_00 HID\VID_1CA6&UP:0001_U:0006 HID_DEVICE_SYSTEM_KEYBOARD HID_DEVICE_UP:0001_U:0006 HID_DEVICE
+Driver KeyName           : {4d36e96b-e325-11ce-bfc1-08002be10318}\0024 (GUID_DEVCLASS_KEYBOARD)
+Driver                   : \SystemRoot\System32\drivers\kbdhid.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\keyboard.inf
+Legacy BusType           : PNPBus
+Class                    : Keyboard
+Class GUID               : {4d36e96b-e325-11ce-bfc1-08002be10318} (GUID_DEVCLASS_KEYBOARD)
+Service                  : kbdhid
+Enumerator               : HID
+Location Info            : -
+Address                  : 1
+Manufacturer Info        : (Standard keyboards)
+Capabilities             : 0xA0 (SilentInstall, SurpriseRemovalOK)
+Status                   : 0x0180000A (DN_DRIVER_LOADED, DN_STARTED, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             ++++++++++++ Keyboad Information +++++++++++++
+Keyboard ID.Type         : 0x51 (HID)
+Keyboard ID.Subtype      : 0
+Keyboard Mode            : 1
+Number of Function Keys  : 12
+Number of Indicators     : 3
+Number of Keys Total     : 154
+Input Data Queue Length  : 1
+Key Repeat Minimum.UnitId: 1
+Key Repeat Minimum.Rate  : 2 per second
+Key Repeat Minimum.Delay : 250 ms
+Key Repeat Maximum.UnitId: 1
+Key Repeat Maximum.Rate  : 30 per second
+Key Repeat Maximum.Delay : 1000 ms
+Key Repeat UnitId        : 0
+Key Repeat Rate          : 30 per second
+Key Repeat Delay         : 500 ms
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0x01 (Generic Desktop Controls)
+Usage                    : 0x06 (Keyboard)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : USB Input Device
+BusReported Device Desc  : AE64 Pro
+Kernel Name (PDO)        : \Device\0000006b
+Device ID                : USB\VID_1CA6&PID_300A&MI_01\6&1A7C856C&0&0001
+Hardware IDs             : USB\VID_1CA6&PID_300A&REV_0002&MI_01 USB\VID_1CA6&PID_300A&MI_01
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0136 (GUID_DEVCLASS_HIDCLASS)
+Driver                   : \SystemRoot\System32\drivers\hidusb.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\input.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : HidUsb
+Enumerator               : USB
+Location Info            : 0000.0014.0000.006.000.000.000.000.000
+Address                  : 7
+Manufacturer Info        : (Standard system devices)
+Capabilities             : 0x80 (SurpriseRemovalOK)
+Status                   : 0x0180000A (DN_DRIVER_LOADED, DN_STARTED, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+SelectiveSuspendEnabled  : 0
+EnhancedPowerMgmtEnabled : 1
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID Keyboard Device
+Device Path 1            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col01#7&262c3154&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\kbd (GUID_DEVINTERFACE_HID)
+Device Path 2            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col01#7&262c3154&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd} (GUID_DEVINTERFACE_KEYBOARD)
+Kernel Name              : \Device\00000070
+Device ID                : HID\VID_1CA6&PID_300A&MI_01&COL01\7&262C3154&0&0000
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_01&Col01 HID\VID_1CA6&PID_300A&MI_01&Col01 HID\VID_1CA6&UP:0001_U:0006 HID_DEVICE_SYSTEM_KEYBOARD HID_DEVICE_UP:0001_U:0006 HID_DEVICE
+Driver KeyName           : {4d36e96b-e325-11ce-bfc1-08002be10318}\0025 (GUID_DEVCLASS_KEYBOARD)
+Driver                   : \SystemRoot\System32\drivers\kbdhid.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\keyboard.inf
+Legacy BusType           : PNPBus
+Class                    : Keyboard
+Class GUID               : {4d36e96b-e325-11ce-bfc1-08002be10318} (GUID_DEVCLASS_KEYBOARD)
+Service                  : kbdhid
+Enumerator               : HID
+Location Info            : -
+Address                  : 1
+Manufacturer Info        : (Standard keyboards)
+Capabilities             : 0xA0 (SilentInstall, SurpriseRemovalOK)
+Status                   : 0x0180000A (DN_DRIVER_LOADED, DN_STARTED, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             ++++++++++++ Keyboad Information +++++++++++++
+Keyboard ID.Type         : 0x51 (HID)
+Keyboard ID.Subtype      : 0
+Keyboard Mode            : 1
+Number of Function Keys  : 12
+Number of Indicators     : 3
+Number of Keys Total     : 109
+Input Data Queue Length  : 1
+Key Repeat Minimum.UnitId: 2
+Key Repeat Minimum.Rate  : 2 per second
+Key Repeat Minimum.Delay : 250 ms
+Key Repeat Maximum.UnitId: 2
+Key Repeat Maximum.Rate  : 30 per second
+Key Repeat Maximum.Delay : 1000 ms
+Key Repeat UnitId        : 0
+Key Repeat Rate          : 30 per second
+Key Repeat Delay         : 500 ms
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0x01 (Generic Desktop Controls)
+Usage                    : 0x06 (Keyboard)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID-compliant consumer control device
+Device Path              : \\?\HID#VID_1CA6&PID_300A&MI_01&Col02#7&262c3154&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030} (GUID_DEVINTERFACE_HID)
+Kernel Name              : \Device\00000071
+Device ID                : HID\VID_1CA6&PID_300A&MI_01&COL02\7&262C3154&0&0001
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_01&Col02 HID\VID_1CA6&PID_300A&MI_01&Col02 HID\VID_1CA6&UP:000C_U:0001 HID_DEVICE_SYSTEM_CONSUMER HID_DEVICE_UP:000C_U:0001 HID_DEVICE
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0138 (GUID_DEVCLASS_HIDCLASS)
+Driver Inf               : C:\WINDOWS\inf\hidserv.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : -
+Enumerator               : HID
+Location Info            : -
+Address                  : 2
+Manufacturer Info        : Microsoft
+Capabilities             : 0xE0 (SilentInstall, RawDeviceOK, SurpriseRemovalOK)
+Status                   : 0x0180200A (DN_DRIVER_LOADED, DN_STARTED, DN_DISABLEABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0x0C (Consumer)
+Usage                    : 0x01 (Consumer Control)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID-compliant system controller
+Device Path 1            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col03#7&262c3154&0&0002#{4afa3d53-74a7-11d0-be5e-00a0c9062857} (GUID_DEVICE_SYS_BUTTON)
+Device Path 2            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col03#7&262c3154&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030} (GUID_DEVINTERFACE_HID)
+Kernel Name              : \Device\00000072
+Device ID                : HID\VID_1CA6&PID_300A&MI_01&COL03\7&262C3154&0&0002
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_01&Col03 HID\VID_1CA6&PID_300A&MI_01&Col03 HID\VID_1CA6&UP:0001_U:0080 HID_DEVICE_SYSTEM_CONTROL HID_DEVICE_UP:0001_U:0080 HID_DEVICE
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0139 (GUID_DEVCLASS_HIDCLASS)
+Driver Inf               : C:\WINDOWS\inf\input.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : -
+Enumerator               : HID
+Location Info            : -
+Address                  : 3
+Manufacturer Info        : (Standard system devices)
+Capabilities             : 0xE0 (SilentInstall, RawDeviceOK, SurpriseRemovalOK)
+Status                   : 0x0180200A (DN_DRIVER_LOADED, DN_STARTED, DN_DISABLEABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0x01 (Generic Desktop Controls)
+Usage                    : 0x80 (System Control)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID-compliant mouse
+Device Path 1            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col04#7&262c3154&0&0003#{378de44c-56ef-11d1-bc8c-00a0c91405dd} (GUID_DEVINTERFACE_MOUSE)
+Device Path 2            : \\?\HID#VID_1CA6&PID_300A&MI_01&Col04#7&262c3154&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030} (GUID_DEVINTERFACE_HID)
+Kernel Name              : \Device\00000073
+Device ID                : HID\VID_1CA6&PID_300A&MI_01&COL04\7&262C3154&0&0003
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_01&Col04 HID\VID_1CA6&PID_300A&MI_01&Col04 HID\VID_1CA6&UP:0001_U:0002 HID_DEVICE_SYSTEM_MOUSE HID_DEVICE_UP:0001_U:0002 HID_DEVICE
+Driver KeyName           : {4d36e96f-e325-11ce-bfc1-08002be10318}\0016 (GUID_DEVCLASS_MOUSE)
+Driver                   : \SystemRoot\System32\drivers\mouhid.sys (Version: 10.0.26100.1150  Date: 2025-12-07  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\msmouse.inf
+Legacy BusType           : PNPBus
+Class                    : Mouse
+Class GUID               : {4d36e96f-e325-11ce-bfc1-08002be10318} (GUID_DEVCLASS_MOUSE)
+Service                  : mouhid
+Enumerator               : HID
+Location Info            : -
+Address                  : 4
+Manufacturer Info        : Microsoft
+Capabilities             : 0xA0 (SilentInstall, SurpriseRemovalOK)
+Status                   : 0x0180200A (DN_DRIVER_LOADED, DN_STARTED, DN_DISABLEABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             +++++++++++++ Mouse Information ++++++++++++++
+Input Data Queue Length  : 2
+Mouse Identifier         : 256
+Number of Buttons        : 8
+Sample Rate              : 0
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0x01 (Generic Desktop Controls)
+Usage                    : 0x02 (Mouse)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : USB Input Device
+BusReported Device Desc  : AE64 Pro
+Kernel Name (PDO)        : \Device\0000006c
+Device ID                : USB\VID_1CA6&PID_300A&MI_02\6&1A7C856C&0&0002
+Hardware IDs             : USB\VID_1CA6&PID_300A&REV_0002&MI_02 USB\VID_1CA6&PID_300A&MI_02
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0137 (GUID_DEVCLASS_HIDCLASS)
+Driver                   : \SystemRoot\System32\drivers\hidusb.sys (Version: 10.0.26100.8972  Date: 2026-08-12  Company: Microsoft Corporation)
+Driver Inf               : C:\WINDOWS\inf\input.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : HidUsb
+Enumerator               : USB
+Location Info            : 0000.0014.0000.006.000.000.000.000.000
+Address                  : 8
+Manufacturer Info        : (Standard system devices)
+Capabilities             : 0x80 (SurpriseRemovalOK)
+Status                   : 0x0180200A (DN_DRIVER_LOADED, DN_STARTED, DN_DISABLEABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+SelectiveSuspendEnabled  : 0
+EnhancedPowerMgmtEnabled : 1
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+        +++++++++++++++++ Device Information ++++++++++++++++++
+Device Description       : HID-compliant vendor-defined device
+Device Path              : \\?\HID#VID_1CA6&PID_300A&MI_02#7&e68a50f&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030} (GUID_DEVINTERFACE_HID)
+Kernel Name              : \Device\00000074
+Device ID                : HID\VID_1CA6&PID_300A&MI_02\7&E68A50F&0&0000
+Hardware IDs             : HID\VID_1CA6&PID_300A&REV_0002&MI_02 HID\VID_1CA6&PID_300A&MI_02 HID\VID_1CA6&UP:FFB0_U:0001 HID_DEVICE_UP:FFB0_U:0001 HID_DEVICE_UPR:FF00-FFFF HID_DEVICE
+Driver KeyName           : {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0140 (GUID_DEVCLASS_HIDCLASS)
+Driver Inf               : C:\WINDOWS\inf\input.inf
+Legacy BusType           : PNPBus
+Class                    : HIDClass
+Class GUID               : {745a17a0-74d3-11d0-b6fe-00a0c90f57da} (GUID_DEVCLASS_HIDCLASS)
+Service                  : -
+Enumerator               : HID
+Location Info            : -
+Address                  : 1
+Manufacturer Info        : (Standard system devices)
+Capabilities             : 0xE0 (SilentInstall, RawDeviceOK, SurpriseRemovalOK)
+Status                   : 0x0180200A (DN_DRIVER_LOADED, DN_STARTED, DN_DISABLEABLE, DN_NT_ENUMERATOR, DN_NT_DRIVER)
+First Install Date       : 2026-08-05 23:22:54
+Last Arrival Date        : 2026-08-16 08:21:51
+EnhancedPowerMgmtEnabled : 0
+Power State              : D0 (supported: D0, D1, D2, D3, wake from D0, wake from D1, wake from D2)
+
+             ++++++++++++++ HID Information +++++++++++++++
+Manufacturer             : AE64 Pro
+Product                  : AE64 Pro
+Serial Number            : 20250613
+UsagePage                : 0xFFB0 (Vendor Defined)
+Usage                    : 0x01 (unknown)
