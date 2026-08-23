@@ -4,6 +4,14 @@ An unofficial, local-first WebHID driver for the Everglide AE64 Pro magnetic key
 
 The protocol implementation was reconstructed from the two captured manufacturer HAR files in `xsyd.top HAR files/`. The HE30 alternative driver was used as a safety and interaction reference only—the AE64 packet protocol is different.
 
+## Deploy on GitHub Pages
+
+The repository includes an automated GitHub Pages workflow. Before its first run, open **Settings → Pages** in the GitHub repository and set **Source** to **GitHub Actions**. Pushes to `main` then test and deploy the driver automatically at:
+
+[Open the GitHub Pages driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/)
+
+You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only `index.html`, `styles.css`, `protocol.js`, `app.js`, and `languages.xml`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
+
 ## Run locally
 
 WebHID needs a secure context. Desktop Chrome or Edge accepts `localhost`:

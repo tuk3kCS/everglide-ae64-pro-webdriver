@@ -1,8 +1,16 @@
 danh sách cần làm:
 
 /tung - làm UI cho phần keymap chỉnh
+- deploy len github cho toi test, contributor khong deploy duoc. Toi can test thu live page
+To publish:
+1. Commit and push these changes to main.
+2. Open repository Settings → Pages.
+3. Set Source to GitHub Actions, as required for a custom Pages workflow in the GitHub documentation.
+The driver should then appear at:
+https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/
+
 - khi user chọn phím để chỉnh hall effect, thêm chức năng kéo thả để chọn nhiều phím,
-giữ ctrl xong bấm chuột vào nhiều phím để chọn nhiều phím
+giữ ctrl xong bấm chuột vào nhiều phím để chọn nhiều phím, 
 - check thủ công các phần UI được gắn cứng giá trị pixel, chuyển sang relative tương đối
     + thanh navbar bên trên (không phải là thanh sidebar đang chiếm nhiều diện tích, thu hẹp cho tôi)
 - đcm chỉnh lại text trang landing huhu

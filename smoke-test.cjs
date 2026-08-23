@@ -51,6 +51,16 @@ async function main() {
   const html = read("index.html");
   const app = read("app.js");
   const xml = read("languages.xml");
+  const pagesWorkflow = read(path.join(".github", "workflows", "pages.yml"));
+
+  for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
+    if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml"])
+    if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("path: _site"))
+    throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
+  for (const privatePath of ["xsyd.top HAR files", "tasks.txt", "ae64pro.txt", ".openai"])
+    if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
@@ -126,7 +136,7 @@ async function main() {
   await transport.setCustomLightingPacket(2, [{ r: 0x11, g: 0x22, b: 0x33, custom: true }]);
   equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 0, 2, 0x33, 0x22, 0x11, 0xff], "Custom-light packet changed.");
 
-  console.log("Smoke test passed: WebHID packets, codecs, language XML, feature visibility, and firmware-update exclusion verified.");
+  console.log("Smoke test passed: WebHID packets, codecs, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
 }
 
 main().catch((error) => { console.error(error.stack || error); process.exitCode = 1; });
