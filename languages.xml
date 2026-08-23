@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Add another <language> block to localize the driver. String keys fall back to
+  English when a translation is omitted. The browser reads this file locally;
+  it is never uploaded.
+-->
+<translations version="1">
+  <language code="en" name="English">
+    <string key="brandTagline">Independent WebHID driver</string>
+    <string key="navFeatures">Features</string>
+    <string key="navProtocol">Protocol</string>
+    <string key="language">Language</string>
+    <string key="openDemo">Open demo</string>
+    <string key="connectKeyboard">Connect keyboard</string>
+    <string key="heroEyebrow">LOCAL-FIRST · NO CHINA ROUND TRIP</string>
+    <string key="heroLine1">Your AE64.</string>
+    <string key="heroLine2">Fully visible.</string>
+    <string key="heroLead">Configure actuation, Rapid Trigger, remaps, RGB, profiles and the keyboard's hidden diagnostic controls directly through WebHID.</string>
+    <string key="exploreOffline">Explore offline</string>
+    <string key="compatibility">Desktop Chrome or Edge · HTTPS or localhost · no account required</string>
+    <string key="ready">READY</string>
+    <string key="deviceId">Device ID</string>
+    <string key="reportSize">Report size</string>
+    <string key="collection">Collection</string>
+    <string key="featurePerformanceTitle">Hall performance</string>
+    <string key="featurePerformanceBody">Per-key actuation, RT, independent press/release values and both dead zones.</string>
+    <string key="featureKeymapTitle">Four key layers</string>
+    <string key="featureKeymapBody">Keyboard, media, mouse, lighting and internal firmware functions.</string>
+    <string key="featureHiddenTitle">Feature Lab</string>
+    <string key="featureHiddenBody">Calibration, raw travel, magnetic-axis metadata and advanced-key inspection stay visible.</string>
+    <string key="protocolEyebrow">CAPTURE-DERIVED, DEVICE-LOCAL</string>
+    <string key="protocolTitle">The keyboard is the source of truth.</string>
+    <string key="protocolBody">The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is intentionally excluded.</string>
+    <string key="offlineWorkspace">Offline workspace</string>
+    <string key="overview">Overview</string>
+    <string key="performance">Performance</string>
+    <string key="keymap">Key mapping</string>
+    <string key="lighting">Lighting</string>
+    <string key="settings">Device settings</string>
+    <string key="featureLab">Feature Lab</string>
+    <string key="diagnostics">Diagnostics</string>
+    <string key="stagedEdits">Staged edits</string>
+    <string key="stagedEditsBody">Nothing reaches the keyboard until Apply.</string>
+    <string key="profile">Profile</string>
+    <string key="layer">Layer</string>
+    <string key="home">Home</string>
+    <string key="connect">Connect</string>
+    <string key="revert">Revert</string>
+    <string key="applyChanges">Apply changes</string>
+    <string key="offline">Offline</string>
+    <string key="noPendingChanges">No pending changes</string>
+  </language>
+  <language code="vi" name="Tiếng Việt">
+    <string key="brandTagline">Trình điều khiển WebHID độc lập</string>
+    <string key="navFeatures">Tính năng</string>
+    <string key="navProtocol">Giao thức</string>
+    <string key="language">Ngôn ngữ</string>
+    <string key="openDemo">Mở bản thử</string>
+    <string key="connectKeyboard">Kết nối bàn phím</string>
+    <string key="heroEyebrow">CỤC BỘ TRƯỚC · KHÔNG CHỜ MÁY CHỦ TRUNG QUỐC</string>
+    <string key="heroLine1">AE64 của bạn.</string>
+    <string key="heroLine2">Hiển thị đầy đủ.</string>
+    <string key="heroLead">Thiết lập hành trình, Rapid Trigger, ánh xạ phím, RGB, hồ sơ và các điều khiển chẩn đoán ẩn qua WebHID.</string>
+    <string key="exploreOffline">Khám phá ngoại tuyến</string>
+    <string key="compatibility">Chrome hoặc Edge máy tính · HTTPS hoặc localhost · không cần tài khoản</string>
+    <string key="ready">SẴN SÀNG</string>
+    <string key="deviceId">Mã thiết bị</string>
+    <string key="reportSize">Kích thước báo cáo</string>
+    <string key="collection">Collection</string>
+    <string key="featurePerformanceTitle">Hiệu năng Hall</string>
+    <string key="featurePerformanceBody">Điểm nhận phím, RT, nhấn/nhả và vùng chết riêng cho từng phím.</string>
+    <string key="featureKeymapTitle">Bốn lớp phím</string>
+    <string key="featureKeymapBody">Bàn phím, media, chuột, đèn và chức năng firmware nội bộ.</string>
+    <string key="featureHiddenTitle">Phòng thí nghiệm</string>
+    <string key="featureHiddenBody">Luôn hiển thị cân chỉnh, hành trình thô, dữ liệu trục từ và chế độ phím nâng cao.</string>
+    <string key="protocolEyebrow">TỪ BẢN GHI GÓI TIN · CHẠY CỤC BỘ</string>
+    <string key="protocolTitle">Bàn phím là nguồn dữ liệu chuẩn.</string>
+    <string key="protocolBody">Trình điều khiển đọc dữ liệu hiện tại trước khi sửa, giữ nguyên trường do firmware quản lý, chỉ ghi thay đổi đã xếp hàng, lưu đúng nhóm tham số và đọc lại giá trị quan trọng. Cập nhật firmware bị loại trừ có chủ ý.</string>
+    <string key="offlineWorkspace">Không gian ngoại tuyến</string>
+    <string key="overview">Tổng quan</string>
+    <string key="performance">Hiệu năng</string>
+    <string key="keymap">Ánh xạ phím</string>
+    <string key="lighting">Ánh sáng</string>
+    <string key="settings">Cài đặt thiết bị</string>
+    <string key="featureLab">Phòng thí nghiệm</string>
+    <string key="diagnostics">Chẩn đoán</string>
+    <string key="stagedEdits">Thay đổi tạm</string>
+    <string key="stagedEditsBody">Không có gì được ghi cho đến khi nhấn Áp dụng.</string>
+    <string key="profile">Hồ sơ</string>
+    <string key="layer">Lớp</string>
+    <string key="home">Trang đầu</string>
+    <string key="connect">Kết nối</string>
+    <string key="revert">Hoàn tác</string>
+    <string key="applyChanges">Áp dụng</string>
+    <string key="offline">Ngoại tuyến</string>
+    <string key="noPendingChanges">Không có thay đổi chờ</string>
+  </language>
+</translations>

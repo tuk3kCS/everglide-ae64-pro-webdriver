@@ -1,56 +1,108 @@
 # AE64 Pro vendor-HID report protocol
 
-Derived from the manufacturer WebHID bundle referenced in `webhid.har`, and checked against the AE64 Pro USB descriptor in `ae64pro.txt`.
+This map was derived from the manufacturer JavaScript bundles captured in the two HAR files under `xsyd.top HAR files/`, then checked against `ae64pro.txt`. It describes the AE64 family; the HE30 uses a different protocol.
 
-## Transport
+## Transport and identity
 
 | Property | Value |
 | --- | --- |
-| WebHID filter | `VID 1CA6`, `PID 300A`, usage page `FFB0`, usage `0001` |
+| WebHID filter | VID `1CA6`, PID `300A`, usage page `FFB0`, usage `0001` |
+| Captured board ID | `0030000A` |
+| Captured firmware | `0.0.7.0` |
 | USB interface | `MI_02` |
-| Interrupt endpoints | OUT `0x04`, IN `0x83` |
+| Endpoints | OUT `0x04`, IN `0x83` |
 | WebHID report ID | `0` |
 | Report payload | 64 bytes, zero-padded |
-| Integer encoding | unsigned little-endian |
+| Multi-byte integers | unsigned little-endian unless noted |
 
-Requests and replies are processed serially. The first bytes of a reply echo the command family and operation.
+The driver serializes requests: only one request awaits a reply at a time. Normal replies echo the command family and operation in bytes 0–1. Configuration writes are accepted only after device info reports board ID `0030000A`.
 
-## Packet families
+## Command families
 
-All byte positions below are zero-based and unused bytes are `00`.
+| ID | Family | Used by this release |
+| ---: | --- | --- |
+| `01` | Device | protocol version, identity, feature bitmap |
+| `02` | Global | commits, profiles, system settings, rate, calibration, axis, lighting areas, precision, sleep, macro capacity, shake |
+| `03` | Layout and key | four layers, per-key mapping, layout metadata, defaults |
+| `04` | Performance | per-key Hall settings and raw axis data |
+| `05` | Lighting | base effect, palette, custom matrix |
+| `06` | Higher key | advanced-key reads; writes deferred |
+| `07` | Macro | mode/data reads; writes deferred |
+| `08` | Firmware upgrade | **excluded** |
+| `0A` | Custom command | manufacturer web-driver handshake |
+| `0C`–`11` | Display/three-mode/voice/touch/gamepad/3D | generic manufacturer surfaces, exposed through feature diagnostics when reported |
 
-| Function | Request bytes | Reply data |
+## Device and global commands
+
+| Function | Request bytes | Reply |
 | --- | --- | --- |
-| Device information | `01 02` | type/subtype, board ID, firmware at bytes 8–11, serial at bytes 17–28 |
-| Device feature bitmap | `01 03` | magnetic/connection/RGB feature bits |
-| RT precision | `02 0C 00` | byte 3, in micrometres (`/1000` for mm) |
-| Commit performance to flash | `02 02 02` | saves active performance parameters to non-volatile memory |
-| Commit layout/keymap to flash | `02 02 04` | saves active key layout parameters to non-volatile memory |
-| Read performance | `04 01 row col` | performance structure below |
-| Write performance | `04 02 row col …` | acknowledgement reply |
-| Read key code | `03 03 layer row col` | 16-bit HID keycode at bytes 5–6 |
-| Write key code | `03 04 layer row col codeLo codeHi` | acknowledgement reply |
+| Protocol version | `01 01` | main/sub/hardware/software at bytes 2–5 |
+| Device information | `01 02` | type/subtype, big-endian board ID at 4–7, firmware at 8–11, serial at 17–28 |
+| Device feature bitmap | `01 03` | axis/connection/basic/extended bitmaps at 2–5 |
+| Commit parameters | `02 02 group` | matching acknowledgement |
+| List profiles | `02 03 00` | count at byte 3 |
+| Active profile | `02 03 01` | index at byte 3 |
+| Switch profile | `02 03 02 index` | active index at byte 3 |
+| Read/write profile name | `02 03 03/04 index …` | UTF-8, at most 32 bytes |
+| System mode list/read/write | `02 04 00/01/02 …` | enumerated byte values |
+| Report-rate list/read/write | `02 05 00/01/02 …` | enumerated byte values |
+| Calibration start/stop | `02 06 00/01` | acknowledgement |
+| Axis library | `02 07 00` | count plus 16-bit IDs |
+| Lighting areas | `02 08 00` | area records |
+| Default axis | `02 09 01` / `02 09 00 id` | selected ID |
+| Double/special lighting | `02 0A 00`, `02 0B 00` | feature values |
+| RT precision | `02 0C 00` | byte 3, divided by 1000 for millimetres |
+| RGB sleep read/write | `02 0D 01` / `02 0D 00 lo hi` | minutes |
+| Macro capacity | `02 0E 00` | count and 16-bit capacity |
+| Shake optimization | `02 10 01` / `02 10 00 enabled` | boolean |
 
-## Performance payload
+Commit groups are `0` all, `1` calibration, `2` performance, `3` lighting, `4` layout, `5` higher/advanced key, `6` macro, and `7` axis.
 
-For `04 02`, bytes after `row col` are:
+## Layout and key mapping
 
-| Field | Bytes | Unit |
+| Function | Request |
+| --- | --- |
+| Read/write complete row | `03 01/02 layer row …` |
+| Read key | `03 03 layer row col` |
+| Write key | `03 04 layer row col codeLo codeHi` |
+| Layout style/geometry | `03 05 row` |
+| Default layout row | `03 06 packedSystemLayer row` |
+
+The visible UI has rows 0–4, but AE64 firmware addresses physical rows **1–5**. Columns are zero-based within each displayed row. Keycodes are 16-bit values; this is wider than the standard one-byte keyboard usage space and permits media, mouse, lighting, and firmware-internal functions.
+
+## Performance
+
+Read with `04 01 row col`; write with `04 02 row col …`.
+
+| Field | Packet bytes | Unit |
 | --- | --- | --- |
-| mode | 4 | `0` normal, `1` Rapid Trigger |
-| normal press / release | 5–8 | mm × 1000, `uint16 LE` |
-| RT first touch | 9–10 | mm × 1000, `uint16 LE` |
-| RT press / release | 11–14 | mm × 1000, `uint16 LE` |
-| press / release dead stroke | 15–18 | mm × 1000, `uint16 LE` |
-| axis / calibration | 19–20 | byte |
-| axis v2 ID | 21–22 | `uint16 LE` |
-| axis range max | 23–24 | `uint16 LE` |
-| axis coefficient | 25–26 | `uint16 LE` |
+| Mode | 4 | `0` normal, `1` Rapid Trigger |
+| Normal press/release | 5–8 | millimetres × 1000, uint16 LE |
+| RT first touch | 9–10 | millimetres × 1000 |
+| RT press/release | 11–14 | millimetres × 1000 |
+| Top/bottom dead stroke | 15–18 | millimetres × 1000 |
+| Axis/calibration | 19–20 | byte each |
+| Axis v2 ID | 21–22 | uint16 LE |
+| Axis range maximum | 23–24 | uint16 LE |
+| Axis coefficient | 25–26 | uint16 LE |
 
-The driver reads each key's performance record before writing. This ensures that axis, calibration, and other firmware-specific values are not overwritten by the UI. After every successful save, it sends the matching `SaveParam` command to commit the change to the keyboard's non-volatile memory; browser storage is retained only as a recovery backup.
+Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. The basic UI edits only the decoded performance fields and preserves axis/calibration metadata from a fresh hardware read.
 
-## Layout coordinates
+## Lighting
 
-AE64's five firmware keymap rows are **1–5**, while the browser UI rows are 0–4. The driver therefore uses `protocolRow = visibleRow + 1`; columns are zero-based within the displayed row. This distinction is essential: sending the visual row index made a `Q` write target the number row instead. The manufacturer protocol also exposes layout-discovery requests (`03 05 row`) for devices whose physical matrix differs.
+Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. Palette configuration uses subtype `01` with eight `B,G,R,hue` records.
 
-No firmware-update or bootloader command is included.
+The custom matrix is read as `05 03 area packet` and written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. AE64 uses the generic `6 × 21` matrix address space; visible keys occupy firmware rows 1–5 and unused cells are preserved.
+
+## Advanced keys and macros
+
+`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. The manufacturer write family is known, but editors/writers are deferred until captured examples can be verified on physical hardware.
+
+Macro metadata/data is read with family `07` operations `01` and `03`. Macro mode/data writers (`02` and `04`) are likewise deferred.
+
+## Safety boundary
+
+- Firmware family `08`, bootloader actions, and update-file handling do not exist in this implementation.
+- Destructive factory reset remains disabled until device testing.
+- Basic writable records are read before modification, committed with their matching save group, and important fields are read back for verification.
+- Commands inferred only from generic manufacturer capabilities are displayed diagnostically, not sent to an AE64 unless its feature bitmap and packet shape are verified.
