@@ -90,6 +90,17 @@ async function main() {
   vm.runInContext(app, browser, { filename: "app.js" });
   const renderedKeys = (elements.get("#heroKeyboard").innerHTML.match(/class="key /g) || []).length;
   if (renderedKeys !== 64) throw new Error(`Browser bootstrap rendered ${renderedKeys} keys instead of 64.`);
+  const settingsEnums = vm.runInContext(`({
+    systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
+    polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
+    rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
+  })`, browser);
+  equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
+  equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
+  equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
+  const settingsMarkup = vm.runInContext("settingsPage()", browser);
+  for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
+  if (!read("styles.css").includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
   equal(API.le16(0x1234), [0x34, 0x12], "Little-endian codec failed.");

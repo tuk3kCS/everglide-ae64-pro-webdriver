@@ -45,7 +45,7 @@ The driver serializes requests: only one request awaits a reply at a time. Norma
 | Switch profile | `02 03 02 index` | active index at byte 3 |
 | Read/write profile name | `02 03 03/04 index …` | UTF-8, at most 32 bytes |
 | System mode list/read/write | `02 04 00/01/02 …` | enumerated byte values |
-| Report-rate list/read/write | `02 05 00/01/02 …` | enumerated byte values |
+| Polling-rate list/read/write | `02 05 00/01/02 …` | enumerated byte values |
 | Calibration start/stop | `02 06 00/01` | acknowledgement |
 | Axis library | `02 07 00` | count plus 16-bit IDs |
 | Lighting areas | `02 08 00` | area records |
@@ -57,6 +57,8 @@ The driver serializes requests: only one request awaits a reply at a time. Norma
 | Shake optimization | `02 10 01` / `02 10 00 enabled` | boolean |
 
 Commit groups are `0` all, `1` calibration, `2` performance, `3` lighting, `4` layout, `5` higher/advanced key, `6` macro, and `7` axis.
+
+System mode is `0 = Windows`, `1 = macOS`. AE64 polling-rate values are reverse ordered: `5 = 250 Hz`, `4 = 500 Hz`, `3 = 1,000 Hz`, `2 = 2,000 Hz`, `1 = 4,000 Hz`, and `0 = 8,000 Hz`. The generic manufacturer enum also defines `6 = 125 Hz`, but that option is not exposed for AE64.
 
 ## Layout and key mapping
 

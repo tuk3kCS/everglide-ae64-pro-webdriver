@@ -31,7 +31,7 @@ Implemented now:
 - Per-key top and bottom dead zones; switch-axis metadata is preserved during writes
 - Hall calibration and live raw-travel test
 - Base RGB effect settings, eight-color palette, and complete `6 × 21` custom-light matrix handling
-- System mode, report rate, RGB sleep timer, and shake optimization
+- Windows/macOS system mode, 250–8,000 Hz polling rate, RGB sleep timer, and shake optimization
 - Local profiles plus JSON import/export
 - XML-driven English/Vietnamese language selection through `languages.xml`
 - Visible/read-only inspection for DKS, MPT, MT, TGL, END, SOCD, RS, and macro capacity
