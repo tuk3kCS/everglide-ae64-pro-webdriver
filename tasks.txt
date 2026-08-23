@@ -1,0 +1,24 @@
+danh sách cần làm:
+
+- khi user chọn phím để chỉnh hall effect, thêm chức năng kéo thả để chọn nhiều phím,
+giữ ctrl xong bấm chuột vào nhiều phím để chọn nhiều phím
+- hiệu ứng LED thời gian thực
+
+- thêm các mục dưới đây vào tab advanced, mỗi cái là 1 task vì cần UI cho từng cái một
++ socd
++ dks
++ mpt
++ mpt
++ tgl
++ end
++ rs
++ tổ hợp keycombination - cái này ban đầu trong phần mềm gốc ở mục bind phím nhưng không hợp
+
+
+tính sau:
+- chỉnh lại UI
+- kiểm tra các phần nào chỉ có 1 ngôn ngữ -> thêm vào file xml
+
+đã xong:
+- chữa thọt UI
+- chữa thọt phím
