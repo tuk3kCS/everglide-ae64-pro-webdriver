@@ -9,6 +9,7 @@ const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
   "js/app/foundation.js",
+  "js/app/mapping.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -178,6 +179,11 @@ async function main() {
       gamepadCount: KEYCODE_GROUPS.gamepad.length,
       gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
     },
+    combination: {
+      encoded: combinationKeycode(new Set([0x01, 0x02]), 4),
+      label: keycodeLabel(0x0304),
+      triggerCount: COMBINATION_TRIGGER_KEYS.length,
+    },
     vendorCatalog: Object.fromEntries(
       ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
         group,
@@ -232,6 +238,11 @@ async function main() {
     gamepadCount: 58,
     gamepadDpadRight: "Gamepad D-pad Right",
   }, "The complete original-driver mapping catalog must remain selectable.");
+  equal(settingsEnums.combination, {
+    encoded: 0x0304,
+    label: "Ctrl + Shift + A",
+    triggerCount: 119,
+  }, "Combination mappings must encode HID modifiers and the trigger key in one 16-bit keycode.");
   equal(settingsEnums.vendorCatalog, {
     system: [0x1152, 0x1329, 0x1807, 0x1808, 0x1815],
     media: [0x206f, 0x2070, 0x20b5, 0x20b6, 0x20b7, 0x20cd, 0x20e2, 0x20e9, 0x20ea, 0x2183, 0x218a, 0x2192, 0x2194, 0x2223],
@@ -246,6 +257,9 @@ async function main() {
     { row: 4, col: 9 },
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
+  const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
+  for (const required of ["Associated keys", "Trigger key", "Apply combination"])
+    if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
   for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])

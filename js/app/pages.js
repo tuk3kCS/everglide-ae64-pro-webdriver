@@ -29,9 +29,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               (candidate) => candidate.uiRow === uiRow && candidate.col === col,
             );
             const code = displayedKeycode(key, layer);
-            const mapped =
-              KEYCODE_LABELS.get(code) ||
-              `0x${Number(code).toString(16).padStart(4, "0")}`;
+            const mapped = keycodeLabel(code);
             const custom = Boolean(light.customEnabled?.[key.id]),
               liveColor = live
                 ? state.hardware.liveMatrix[key.row * MATRIX_COLS + key.col]
@@ -72,7 +70,7 @@ function selectedCard() {
     performance = state.profile.performance[key.id],
     code = displayedKeycode(key),
     address = position(key);
-  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(KEYCODE_LABELS.get(code) || `Keycode 0x${Number(code).toString(16)}`)} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
+  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(keycodeLabel(code))} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
 }
 function pageCopy() {
   return {
@@ -136,21 +134,26 @@ function performancePage() {
   ];
   return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""}">${label}</button>`).join("")}</div>${performanceControls()}</section></div>`;
 }
+function combinationEditor() {
+  const combination = state.mappingCombination,
+    modifiers = combination.modifiers,
+    trigger = combination.trigger,
+    preview = modifiers.size
+      ? keycodeLabel(combinationKeycode(modifiers, trigger))
+      : "Choose modifier keys and a trigger key";
+  return `<section class="combination-editor" aria-label="Key combination editor"><div class="combination-heading"><div><span>Associated keys</span><strong>${esc(preview)}</strong></div><small>Uses the keyboard's standard modifier-bitmask mapping.</small></div><div class="combination-modifiers">${COMBINATION_MODIFIERS.map(({ label, value }) => `<button type="button" data-combo-modifier="${value}" aria-pressed="${modifiers.has(value)}" class="${modifiers.has(value) ? "active" : ""}">${label}</button>`).join("")}</div><div class="combination-trigger"><div><span>Trigger key</span><small>Select the key pressed with the associated modifiers.</small></div><div class="combination-key-grid">${COMBINATION_TRIGGER_KEYS.map(({ label, code }) => `<button type="button" data-combo-trigger="${code}" aria-pressed="${trigger === code}" class="${trigger === code ? "active" : ""}">${esc(label)}</button>`).join("")}</div></div><div class="apply-row"><button class="button primary" id="applyCombination" type="button" ${modifiers.size ? "" : "disabled"}>Apply combination</button></div></section>`;
+}
 function keymapPage() {
   const active = displayedKeycode(selectedKey()),
-    entries = KEYCODE_GROUPS[state.mappingGroup].filter((entry) =>
+    groups = [...Object.keys(KEYCODE_GROUPS), "combination"],
+    entries = (KEYCODE_GROUPS[state.mappingGroup] || []).filter((entry) =>
       entry.label.toLowerCase().includes(state.mappingSearch.toLowerCase()),
-    );
-  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${esc(selectedKey().n)}</h2><p>Writes a 16-bit keycode on layer ${Number(state.profile.layer) + 1}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-groups">${Object.keys(
-    KEYCODE_GROUPS,
-  )
-    .map(
-      (group) =>
-        `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group}</button>`,
-    )
-    .join(
-      "",
-    )}</div><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div></div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for this key</button></div></section></div>`;
+    ),
+    editor =
+      state.mappingGroup === "combination"
+        ? combinationEditor()
+        : `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
+  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${esc(selectedKey().n)}</h2><p>Writes a 16-bit keycode on layer ${Number(state.profile.layer) + 1}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for this key</button></div></section></div>`;
 }
 
 function lightingArea(index) {
