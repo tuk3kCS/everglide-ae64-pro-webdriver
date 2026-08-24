@@ -21,7 +21,7 @@ These are classic scripts that intentionally share top-level declarations. Do no
 
 ## Data and write flow
 
-Page controls update the staged `state.profile` and mark the relevant dirty group. Confirming the Apply dialog calls the writer for each dirty group. Writers read firmware-owned fields where needed, write the staged values, read them back, and commit only the matching flash group. Live readers and polling never commit data.
+Page controls update the staged `state.profile` and mark the relevant dirty group. Confirming the Apply dialog calls the writer for each dirty group. Experimental auto apply calls the same verified writer after a short debounce; it does not use a separate protocol path. Writers read firmware-owned fields where needed, write the staged values, read them back, and commit only the matching flash group. Live readers and polling never commit data.
 
 `protocol.js` is the only layer that should construct raw 64-byte HID reports. Application modules call its named transport methods and work with decoded objects.
 

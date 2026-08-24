@@ -65,25 +65,6 @@ function refreshLightingSelection() {
     summary.innerHTML = `Selected: <b>${count} ${label}</b>`;
   }
 }
-function applyLightingSelection(kind, index, mode) {
-  const selection =
-    kind === "key" ? state.lightingSelectedKeys : state.stripSelection;
-  if (mode === "remove") selection.delete(index);
-  else selection.add(index);
-  if (kind === "key") {
-    if (mode !== "remove") {
-      state.profile.selected = index;
-      state.selectedKeys = new Set([index]);
-    }
-    else if (Number(state.profile.selected) === index && selection.size)
-      state.profile.selected = [...selection].at(-1);
-  } else {
-    if (mode !== "remove") state.stripSelected = index;
-    else if (Number(state.stripSelected) === index && selection.size)
-      state.stripSelected = [...selection].at(-1);
-  }
-  refreshLightingSelection();
-}
 function refreshKeySelection() {
   document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
     const selected = state.selectedKeys.has(Number(node.dataset.key));
@@ -183,59 +164,124 @@ function bindKeySelection() {
     .querySelectorAll(".layout-board")
     .forEach((node) => node.addEventListener("pointerdown", beginKeySelection));
 }
+function marqueeSelection(initial, inside, ctrl) {
+  if (!ctrl) return new Set(inside);
+  const selection = new Set(initial);
+  inside.forEach((index) => {
+    if (selection.has(index)) selection.delete(index);
+    else selection.add(index);
+  });
+  return selection;
+}
+function commitLightingSelection(kind, selection, primary) {
+  if (kind === "key") {
+    state.lightingSelectedKeys = selection;
+    if (selection.size) {
+      state.profile.selected = selection.has(primary)
+        ? primary
+        : [...selection].at(-1);
+      state.selectedKeys = new Set([state.profile.selected]);
+    }
+  } else {
+    state.stripSelection = selection;
+    if (selection.size)
+      state.stripSelected = selection.has(primary)
+        ? primary
+        : [...selection].at(-1);
+  }
+  refreshLightingSelection();
+}
+function updateLightingMarquee(event) {
+  const drag = state.selectionDrag;
+  if (!drag) return;
+  const left = Math.min(drag.startX, event.clientX),
+    top = Math.min(drag.startY, event.clientY),
+    width = Math.abs(event.clientX - drag.startX),
+    height = Math.abs(event.clientY - drag.startY),
+    bounds = drag.surface.getBoundingClientRect();
+  if (width < 4 && height < 4) return;
+  drag.moved = true;
+  Object.assign(drag.marquee.style, {
+    left: `${left - bounds.left + drag.surface.scrollLeft}px`,
+    top: `${top - bounds.top + drag.surface.scrollTop}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+  });
+  drag.marquee.classList.add("active");
+  const inside = [...drag.surface.querySelectorAll(drag.selector)]
+    .filter((node) => {
+      const rect = node.getBoundingClientRect(),
+        centerX = rect.left + rect.width / 2,
+        centerY = rect.top + rect.height / 2;
+      return (
+        centerX >= left &&
+        centerX <= left + width &&
+        centerY >= top &&
+        centerY <= top + height
+      );
+    })
+    .map((node) =>
+      Number(drag.kind === "key" ? node.dataset.key : node.dataset.stripLed),
+    );
+  commitLightingSelection(
+    drag.kind,
+    marqueeSelection(drag.initial, inside, drag.ctrl),
+    drag.startIndex,
+  );
+}
 function stopLightingSelection() {
-  if (!state.selectionDrag) return;
-  document.removeEventListener("pointermove", moveLightingSelection);
+  const drag = state.selectionDrag;
+  if (!drag) return;
+  document.removeEventListener("pointermove", updateLightingMarquee);
   document.removeEventListener("pointerup", stopLightingSelection);
   document.removeEventListener("pointercancel", stopLightingSelection);
   state.selectionDrag = null;
+  drag.marquee.classList.remove("active");
+  if (!drag.moved) {
+    const inside = Number.isInteger(drag.startIndex) ? [drag.startIndex] : [];
+    commitLightingSelection(
+      drag.kind,
+      marqueeSelection(drag.initial, inside, drag.ctrl),
+      drag.startIndex,
+    );
+  }
   render();
 }
-function moveLightingSelection(event) {
-  const drag = state.selectionDrag;
-  if (!drag) return;
-  const selector = drag.kind === "key" ? "[data-key]" : "[data-strip-led]",
-    node = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest(selector);
-  if (!node || !node.closest(".unified-lighting-preview")) return;
-  const index = Number(
-    drag.kind === "key" ? node.dataset.key : node.dataset.stripLed,
-  );
-  if (drag.visited.has(index)) return;
-  drag.visited.add(index);
-  applyLightingSelection(drag.kind, index, drag.mode);
-}
-function beginLightingSelection(kind, index, event) {
-  if (event.button !== 0) return;
+function beginLightingSelection(event) {
+  if (event.button !== 0 || !["perKey", "strip"].includes(state.lightingTab))
+    return;
   event.preventDefault();
-  const selection =
+  const surface = event.currentTarget,
+    kind = state.lightingTab === "perKey" ? "key" : "strip",
+    selector = kind === "key" ? "[data-key]" : "[data-strip-led]",
+    startNode = event.target.closest(selector),
+    startIndex = startNode
+      ? Number(kind === "key" ? startNode.dataset.key : startNode.dataset.stripLed)
+      : null,
+    initial = new Set(
       kind === "key" ? state.lightingSelectedKeys : state.stripSelection,
-    mode = event.ctrlKey ? (selection.has(index) ? "remove" : "add") : "add";
-  if (!event.ctrlKey) selection.clear();
-  state.selectionDrag = { kind, mode, visited: new Set([index]) };
-  applyLightingSelection(kind, index, mode);
-  document.addEventListener("pointermove", moveLightingSelection);
+    );
+  state.selectionDrag = {
+    surface,
+    marquee: surface.querySelector(".lighting-selection-marquee"),
+    kind,
+    selector,
+    startX: event.clientX,
+    startY: event.clientY,
+    startIndex: Number.isInteger(startIndex) ? startIndex : null,
+    initial,
+    ctrl: event.ctrlKey,
+    moved: false,
+  };
+  document.addEventListener("pointermove", updateLightingMarquee);
   document.addEventListener("pointerup", stopLightingSelection);
   document.addEventListener("pointercancel", stopLightingSelection);
 }
 function bindLightingSelection() {
-  if (state.lightingTab === "perKey")
-    document
-      .querySelectorAll(".unified-lighting-preview [data-key]")
-      .forEach((node) =>
-        node.addEventListener("pointerdown", (event) =>
-          beginLightingSelection("key", Number(node.dataset.key), event),
-        ),
-      );
-  if (state.lightingTab === "strip")
-    document
-      .querySelectorAll(".unified-lighting-preview [data-strip-led]")
-      .forEach((node) =>
-        node.addEventListener("pointerdown", (event) =>
-          beginLightingSelection("strip", Number(node.dataset.stripLed), event),
-        ),
-      );
+  if (!["perKey", "strip"].includes(state.lightingTab)) return;
+  document
+    .querySelector(".unified-preview-scroll")
+    ?.addEventListener("pointerdown", beginLightingSelection);
 }
 
 function bindPage() {

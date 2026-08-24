@@ -26,6 +26,9 @@ document
 document
   .querySelector("#revertButton")
   .addEventListener("click", revertChanges);
+document
+  .querySelector("#autoApplyToggle")
+  .addEventListener("change", (event) => setAutoApply(event.target.checked));
 document.querySelector("#sideNav").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-page]");
   if (button) {

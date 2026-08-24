@@ -110,13 +110,16 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
-  for (const sidebarControl of ['id="backHomeButton"', 'id="layerSelect"', 'class="sidebar-controls"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  for (const sidebarControl of ['id="backHomeButton"', 'id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  if (html.indexOf('class="sidebar-profile"') > html.indexOf('id="sideNav"')) throw new Error("Quick profiles must appear above Overview in the sidebar.");
+  if (html.indexOf('sidebar-language-control') < html.indexOf('class="sidebar-note"')) throw new Error("Language selection must remain at the bottom of the sidebar.");
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
+  for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
 
@@ -152,6 +155,10 @@ async function main() {
   vm.runInContext(app, browser, { filename: "app.js" });
   const renderedKeys = (elements.get("#heroKeyboard").innerHTML.match(/class="key /g) || []).length;
   if (renderedKeys !== 64) throw new Error(`Browser bootstrap rendered ${renderedKeys} keys instead of 64.`);
+  const autoToggleState = vm.runInContext(`(state.dirty.lightingBase = true, setAutoApply(true), [state.autoApply, document.querySelector("#autoApplyToggle").checked, document.querySelector("#applyButton").disabled])`, browser);
+  equal(autoToggleState, [true, true, true], "Enabling experimental auto apply must update its state and disable manual Apply.");
+  vm.runInContext("clearDirty(); setAutoApply(false)", browser);
+  if (!app.includes('["keymap", "advanced"].includes(state.page)')) throw new Error("Layer selection must be limited to Key Mapping and Advanced.");
   const settingsEnums = vm.runInContext(`({
     systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
@@ -280,28 +287,35 @@ async function main() {
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
   for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
-  if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("Drag across keyboard keys")) throw new Error("Per-key must reuse the unified preview and explain drag selection.");
+  if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("rectangular marquee") || !perKeyMarkup.includes('class="lighting-selection-marquee"')) throw new Error("Per-key must reuse the unified preview and explain rectangular marquee selection.");
   const perKeyMultiMarkup = vm.runInContext(`(state.lightingSelectedKeys = new Set([0, 1, 2]), lightingPage())`, browser);
   if (!perKeyMultiMarkup.includes("3 keys") || !perKeyMultiMarkup.includes("3 SELECTED")) throw new Error("Per-key multi-selection is not reflected in its editor.");
   const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
   for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
   if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
-  if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("Drag only across the four light-strip sides")) throw new Error("Light strip must reuse the unified preview and scope selection to its four sides.");
+  if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("rectangular marquee over any of the four sides")) throw new Error("Light strip must reuse the unified preview and scope marquee selection to its four sides.");
   for (const side of ["top", "right", "bottom", "left"]) if (!stripMarkup.includes(`data-strip-side="${side}"`)) throw new Error(`Decorative1 omitted its ${side} physical side.`);
   if ((stripMarkup.match(/class="key /g) || []).length !== 64) throw new Error("Decorative1 perimeter must surround the live 64-key preview.");
   const stripMultiMarkup = vm.runInContext(`(state.stripSelection = new Set([2, 3, 4, 5]), lightingPage())`, browser);
   if (!stripMultiMarkup.includes("4 light strip LEDs selected") || !stripMultiMarkup.includes("4 SELECTED")) throw new Error("Light-strip multi-selection is not reflected in its editor.");
-  for (const selectionFeature of ["beginLightingSelection", "moveLightingSelection", "event.ctrlKey", "bindLightingSelection"])
+  for (const selectionFeature of ["beginLightingSelection", "updateLightingMarquee", "marqueeSelection", "event.ctrlKey", "bindLightingSelection"])
     if (!app.includes(selectionFeature)) throw new Error(`Lighting selection omitted ${selectionFeature}.`);
+  const marqueeSets = vm.runInContext(`([
+    [...marqueeSelection(new Set([1, 2]), [2, 3], true)].sort((a, b) => a - b),
+    [...marqueeSelection(new Set([1, 2]), [4, 5], false)].sort((a, b) => a - b),
+  ])`, browser);
+  equal(marqueeSets, [[1, 3], [4, 5]], "Lighting marquee must replace normally and toggle with Ctrl.");
   const changeSummary = vm.runInContext(`(state.dirty.lightingBase = true, state.profile.lighting.base.mode = 20, summarizeChanges())`, browser);
   if (!changeSummary.some((entry) => entry.includes("L21") && entry.includes("experimental"))) throw new Error("Apply review must identify experimental lighting changes.");
   vm.runInContext("clearDirty()", browser);
   if (app.includes("Workspace saved in this browser. Connect to write it to the keyboard.")) throw new Error("Disconnected Apply must not masquerade as an onboard save.");
   if (!app.includes("requestApplyChanges") || !app.includes("summarizeChanges")) throw new Error("Apply review-confirm-write workflow is missing.");
+  for (const autoApplyFeature of ["scheduleAutoApply", "flushAutoApply", "setAutoApply", "automatic = false"])
+    if (!app.includes(autoApplyFeature)) throw new Error(`Experimental auto apply omitted ${autoApplyFeature}.`);
   const css = read("styles.css");
   if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
-  for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]"])
+  for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]", ".lighting-selection-marquee"])
     if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
@@ -317,6 +331,9 @@ async function main() {
   const info = await transport.getDeviceInfo();
   if (info.boardIdHex !== "0030000a" || info.firmware !== "0.0.7.0") throw new Error("Device information decoder failed.");
   browser.injectedTransport = transport;
+  vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
+  const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
+  equal(autoApplied, [true, 0, true, 12], "Experimental auto apply must write, verify, and clear a completed edit.");
   vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
   const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);

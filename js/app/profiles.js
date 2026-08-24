@@ -8,6 +8,53 @@
  * Reviews staged changes, performs verified writes, switches profiles, and imports or exports JSON.
  */
 
+const AUTO_APPLY_KEY = "ae64-control-auto-apply-v1";
+Object.assign(state, {
+  autoApply: localStorage.getItem(AUTO_APPLY_KEY) === "true",
+  writeInFlight: false,
+});
+state.timers.autoApply = null;
+
+function scheduleAutoApply() {
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
+  if (
+    !state.autoApply ||
+    state.writeInFlight ||
+    !connected() ||
+    !dirtyCount()
+  )
+    return;
+  state.timers.autoApply = setTimeout(flushAutoApply, 350);
+}
+async function flushAutoApply() {
+  state.timers.autoApply = null;
+  if (
+    !state.autoApply ||
+    state.writeInFlight ||
+    !connected() ||
+    !dirtyCount()
+  )
+    return false;
+  return applyChanges({ automatic: true });
+}
+function setAutoApply(enabled) {
+  state.autoApply = Boolean(enabled);
+  localStorage.setItem(AUTO_APPLY_KEY, String(state.autoApply));
+  if (!state.autoApply) {
+    clearTimeout(state.timers.autoApply);
+    state.timers.autoApply = null;
+  }
+  renderStatus();
+  showToast(
+    state.autoApply
+      ? connected()
+        ? "Experimental auto apply enabled. Completed edits will write automatically."
+        : "Experimental auto apply enabled. Connect the keyboard before editing."
+      : "Auto apply disabled. Changes will remain staged until Apply.",
+  );
+}
+
 function summarizeChanges() {
   const changes = [],
     names = (ids) => {
@@ -94,16 +141,20 @@ function requestApplyChanges() {
   openDialog(dialog);
 }
 
-async function applyChanges() {
-  if (!dirtyCount()) return;
-  if (!connected())
-    return showToast(
+async function applyChanges({ automatic = false } = {}) {
+  if (!dirtyCount()) return false;
+  if (!connected()) {
+    showToast(
       "The keyboard disconnected before writing. Staged changes are still available.",
       true,
     );
+    return false;
+  }
+  state.writeInFlight = true;
+  renderStatus();
   stopPolling();
   showProgress(
-    "Applying staged changes",
+    automatic ? "Auto applying changes" : "Applying staged changes",
     "Reading existing records and preserving firmware-owned fields.",
   );
   try {
@@ -292,23 +343,39 @@ async function applyChanges() {
       );
       log("Polling rate changed; reconnect required");
       await reconnectAfterPollingRateChange();
-      return;
+      return true;
     }
     log("Staged changes applied and verified");
     render();
-    showToast("Changes written, committed, and verified on the AE64 Pro.");
+    showToast(
+      automatic
+        ? "Auto apply wrote and verified the completed edit."
+        : "Changes written, committed, and verified on the AE64 Pro.",
+    );
+    return true;
   } catch (error) {
     log("Apply failed", error.message);
-    renderStatus();
-    showToast(`Apply stopped: ${error.message}`, true);
+    if (automatic) {
+      state.autoApply = false;
+      localStorage.setItem(AUTO_APPLY_KEY, "false");
+    }
+    showToast(
+      `${automatic ? "Auto apply was disabled" : "Apply stopped"}: ${error.message}`,
+      true,
+    );
+    return false;
   } finally {
+    state.writeInFlight = false;
     hideProgress();
+    renderStatus();
     if (state.page === "lighting" && state.liveLighting && connected())
       startLightingLive();
   }
 }
 
 function revertChanges() {
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
   state.profile = clone(state.original);
   clearDirty();
   render();
@@ -484,7 +551,11 @@ async function importProfile(file) {
     state.dirty.decorativeBase = true;
     state.dirty.decorativePalette = true;
     render();
-    showToast("Profile imported and staged. Review before applying.");
+    showToast(
+      state.autoApply
+        ? "Profile imported. Experimental auto apply will write it now."
+        : "Profile imported and staged. Review before applying.",
+    );
   } catch (error) {
     showToast(`Import failed: ${error.message}`, true);
   }

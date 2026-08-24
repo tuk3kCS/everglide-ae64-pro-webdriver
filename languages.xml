@@ -85,6 +85,10 @@
     <string key="connect">Connect</string>
     <string key="revert">Revert</string>
     <string key="applyChanges">Apply changes</string>
+    <string key="autoApply">Auto apply</string>
+    <string key="experimental">EXPERIMENTAL</string>
+    <string key="autoApplyHint">Writes each completed edit to the keyboard automatically.</string>
+    <string key="autoApplyActive">Auto apply on · keyboard synchronized</string>
     <string key="offline">Offline</string>
     <string key="noPendingChanges">No pending changes</string>
   </language>
@@ -168,6 +172,10 @@
     <string key="connect">Kết nối</string>
     <string key="revert">Hoàn tác</string>
     <string key="applyChanges">Áp dụng</string>
+    <string key="autoApply">Tự động áp dụng</string>
+    <string key="experimental">THỬ NGHIỆM</string>
+    <string key="autoApplyHint">Tự động ghi từng chỉnh sửa hoàn tất vào bàn phím.</string>
+    <string key="autoApplyActive">Tự động áp dụng đang bật · bàn phím đã đồng bộ</string>
     <string key="offline">Ngoại tuyến</string>
     <string key="noPendingChanges">Không có thay đổi chờ</string>
   </language>
