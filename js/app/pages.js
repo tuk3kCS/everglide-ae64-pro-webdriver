@@ -57,7 +57,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)}" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}><b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)}" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
