@@ -13,6 +13,12 @@ const COMBINATION_TRIGGER_KEYS = Object.freeze(
   KEYCODE_GROUPS.keyboard.filter(({ code }) => code >= 4 && code < 224),
 );
 state.mappingCombination = { modifiers: new Set([0x01]), trigger: 4 };
+state.selectedKeys = new Set([Number(state.profile.selected)]);
+state.keySelectionDrag = null;
+const selectedKeyIds = () => {
+  const ids = [...state.selectedKeys].filter((id) => keys[id]);
+  return ids.sort((a, b) => a - b);
+};
 function decodeCombinationKeycode(keycode) {
   const value = Number(keycode), modifiers = (value >>> 8) & 0xff, trigger = value & 0xff;
   if (!Number.isInteger(value) || value <= 0xff || !modifiers || modifiers & ~0x0f || !COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === trigger)) return null;

@@ -261,6 +261,14 @@ async function main() {
   const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const required of ["Associated keys", "Trigger key", "Apply combination"])
     if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
+  const multipleSelection = vm.runInContext(`(() => {
+    state.selectedKeys = new Set([1, 2]);
+    stagePerformance("normalPress", 1.25);
+    const result = [keymapPage().includes("Assign 2 keys"), state.profile.performance[1].normalPress, state.profile.performance[2].normalPress];
+    clearDirty();
+    return result;
+  })()`, browser);
+  equal(multipleSelection, [true, 1.25, 1.25], "Multiple selected keys must share staged configuration edits.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
   for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])

@@ -77,18 +77,20 @@
     </aside>
 
     <div class="work-area">
-      <header class="work-header">
-        <div class="work-heading">
-          <h1 id="pageTitle">Overview</h1>
+      <div class="work-chrome">
+        <header class="work-header">
+          <div class="work-heading">
+            <h1 id="pageTitle">Overview</h1>
+          </div>
+          <div class="work-actions">
+            <button class="button ghost" id="revertButton" type="button" data-i18n="revert">Revert</button>
+            <button class="button primary" id="applyButton" type="button" data-i18n="applyChanges">Apply changes</button>
+          </div>
+        </header>
+        <div class="status-strip" id="statusStrip">
+          <span><i id="connectionDot"></i><b id="connectionStatus" data-i18n="offline">Offline</b></span>
+          <span id="dirtyStatus" data-i18n="noPendingChanges">No pending changes</span>
         </div>
-        <div class="work-actions">
-          <button class="button ghost" id="revertButton" type="button" data-i18n="revert">Revert</button>
-          <button class="button primary" id="applyButton" type="button" data-i18n="applyChanges">Apply changes</button>
-        </div>
-      </header>
-      <div class="status-strip" id="statusStrip">
-        <span><i id="connectionDot"></i><b id="connectionStatus" data-i18n="offline">Offline</b></span>
-        <span id="dirtyStatus" data-i18n="noPendingChanges">No pending changes</span>
       </div>
       <div class="page" id="pageContent"></div>
     </div>

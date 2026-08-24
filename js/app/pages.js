@@ -46,24 +46,33 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 state.page === "lighting" &&
                 state.lightingTab === "perKey" &&
                 state.lightingSelectedKeys.has(key.id),
+              keySelected =
+                !lighting && !hero && state.selectedKeys.has(key.id),
               selected =
                 !hero &&
-                (lighting ? lightingSelected : key.id === selectedKey().id);
+                (lighting ? lightingSelected : keySelected);
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)}" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lightingSelected}"`}><b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)}" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}><b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
     .join("")}</div>`;
 }
 function boardPanel(options = {}) {
-  const address = position(selectedKey());
-  return `<section class="panel layout-board ${options.full ? "full-span" : ""}"><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Select a key to inspect or stage a change."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectedKey().n)}</b> · row ${address.row}, col ${address.col}</span></div></section>`;
+  const address = position(selectedKey()),
+    selected = selectedKeyIds(),
+    selectionLabel =
+      selected.length === 0
+        ? "No keys selected"
+        : selected.length === 1
+        ? `${selectedKey().n} · row ${address.row}, col ${address.col}`
+        : `${selected.length} keys selected · primary: ${selectedKey().n}`;
+  return `<section class="panel layout-board ${options.full ? "full-span" : ""}"><i class="key-selection-marquee" aria-hidden="true"></i><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Drag anywhere in this card to draw a selection box. Hold Ctrl and click to add or remove keys."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectionLabel)}</b></span></div></section>`;
 }
 function selectedCard() {
   const key = selectedKey(),
@@ -145,6 +154,7 @@ function combinationEditor() {
 }
 function keymapPage() {
   const active = displayedKeycode(selectedKey()),
+    selected = selectedKeyIds(),
     groups = [...Object.keys(KEYCODE_GROUPS), "combination"],
     entries = (KEYCODE_GROUPS[state.mappingGroup] || []).filter((entry) =>
       entry.label.toLowerCase().includes(state.mappingSearch.toLowerCase()),
@@ -153,7 +163,7 @@ function keymapPage() {
       state.mappingGroup === "combination"
         ? combinationEditor()
         : `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
-  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${esc(selectedKey().n)}</h2><p>Writes a 16-bit keycode on layer ${Number(state.profile.layer) + 1}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for this key</button></div></section></div>`;
+  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on layer ${Number(state.profile.layer) + 1}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
 }
 
 function lightingArea(index) {
