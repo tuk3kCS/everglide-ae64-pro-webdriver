@@ -38,8 +38,9 @@ Implemented now:
 - Per-key normal press/release, Rapid Trigger, RT first touch, and independent RT press/release distances
 - Per-key top and bottom dead zones; switch-axis metadata is preserved during writes
 - Hall calibration and live raw-travel test
-- Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, approximately 10 Hz live framebuffer display, and separate Decorative1 controls for five effects and 38 addressable perimeter LEDs
+- Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one approximately 10 Hz live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling
+- Drag selection plus Ctrl-click add/remove editing for keyboard keys and light-strip LEDs, with each mode restricted to its own physical region
 - Windows/macOS system mode, 250–8,000 Hz polling rate, RGB sleep timer, and shake optimization
 - Local profiles plus JSON import/export
 - XML-driven English/Vietnamese language selection through `languages.xml`

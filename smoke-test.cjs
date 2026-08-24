@@ -140,26 +140,38 @@ async function main() {
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
+  if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
   if (!lightingMarkup.includes("UNADVERTISED") || !lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised effects must be clearly labeled as experimental.");
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
   for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
+  if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("Drag across keyboard keys")) throw new Error("Per-key must reuse the unified preview and explain drag selection.");
+  const perKeyMultiMarkup = vm.runInContext(`(state.lightingSelectedKeys = new Set([0, 1, 2]), lightingPage())`, browser);
+  if (!perKeyMultiMarkup.includes("3 keys") || !perKeyMultiMarkup.includes("3 SELECTED")) throw new Error("Per-key multi-selection is not reflected in its editor.");
   const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
   for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
   if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
+  if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("Drag only across the four light-strip sides")) throw new Error("Light strip must reuse the unified preview and scope selection to its four sides.");
   for (const side of ["top", "right", "bottom", "left"]) if (!stripMarkup.includes(`data-strip-side="${side}"`)) throw new Error(`Decorative1 omitted its ${side} physical side.`);
   if ((stripMarkup.match(/class="key /g) || []).length !== 64) throw new Error("Decorative1 perimeter must surround the live 64-key preview.");
+  const stripMultiMarkup = vm.runInContext(`(state.stripSelection = new Set([2, 3, 4, 5]), lightingPage())`, browser);
+  if (!stripMultiMarkup.includes("4 light strip LEDs selected") || !stripMultiMarkup.includes("4 SELECTED")) throw new Error("Light-strip multi-selection is not reflected in its editor.");
+  for (const selectionFeature of ["beginLightingSelection", "moveLightingSelection", "event.ctrlKey", "bindLightingSelection"])
+    if (!app.includes(selectionFeature)) throw new Error(`Lighting selection omitted ${selectionFeature}.`);
   const changeSummary = vm.runInContext(`(state.dirty.lightingBase = true, state.profile.lighting.base.mode = 20, summarizeChanges())`, browser);
   if (!changeSummary.some((entry) => entry.includes("L21") && entry.includes("experimental"))) throw new Error("Apply review must identify experimental lighting changes.");
   vm.runInContext("clearDirty()", browser);
   if (app.includes("Workspace saved in this browser. Connect to write it to the keyboard.")) throw new Error("Disconnected Apply must not masquerade as an onboard save.");
   if (!app.includes("requestApplyChanges") || !app.includes("summarizeChanges")) throw new Error("Apply review-confirm-write workflow is missing.");
-  if (!read("styles.css").includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
+  const css = read("styles.css");
+  if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
+  for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]"])
+    if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
   equal(API.LIGHTING_OPEN_MODE, { OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 }, "Upper/lower lighting bit mapping changed.");
