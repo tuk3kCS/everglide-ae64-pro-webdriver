@@ -146,6 +146,18 @@ async function main() {
     decorativeDefaults: defaultProfile().lighting.decorative.customEnabled,
     decorativeLayout: Object.fromEntries(Object.entries(DECORATIVE_LAYOUT).map(([side, indexes]) => [side, Array.from(indexes)])),
     rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
+    shiftedRowPositions: (() => {
+      const style = layout.map((row) => row.map(() => ({ ratio: 4 })));
+      style[3] = [{ ratio: 0 }, ...layout[3].map(() => ({ ratio: 4 }))];
+      style[4] = [{ ratio: 0 }, ...layout[4].map(() => ({ ratio: 4 }))];
+      const positions = firmwareKeyPositions(style);
+      return [
+        positions.get(keys.find((key) => key.uiRow === 3 && key.col === 0).id),
+        positions.get(keys.find((key) => key.uiRow === 3 && key.col === 13).id),
+        positions.get(keys.find((key) => key.uiRow === 4 && key.col === 0).id),
+        positions.get(keys.find((key) => key.uiRow === 4 && key.col === 8).id),
+      ];
+    })(),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
   equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
@@ -161,6 +173,12 @@ async function main() {
   const perimeterIndexes = Object.values(settingsEnums.decorativeLayout).flat().sort((a, b) => a - b);
   equal(perimeterIndexes, Array.from({ length: 38 }, (_, index) => index), "Decorative1 perimeter must contain every protocol index exactly once.");
   equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
+  equal(settingsEnums.shiftedRowPositions, [
+    { row: 4, col: 1 },
+    { row: 4, col: 14 },
+    { row: 5, col: 1 },
+    { row: 5, col: 9 },
+  ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);

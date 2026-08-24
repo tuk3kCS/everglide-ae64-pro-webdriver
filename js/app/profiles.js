@@ -432,7 +432,7 @@ async function importProfile(file) {
     state.profile = {
       ...base,
       ...imported,
-      schema: 4,
+      schema: base.schema,
       performance: { ...base.performance, ...imported.performance },
       keycodes: Object.fromEntries(
         Array.from({ length: 4 }, (_, i) => [

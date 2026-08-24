@@ -565,8 +565,32 @@ function selectedKey() {
     keys.find((key) => key.id === Number(state.profile.selected)) || keys[0]
   );
 }
+function firmwareKeyPositions(layoutStyle) {
+  const positions = new Map();
+  if (!Array.isArray(layoutStyle)) return positions;
+  layoutStyle.forEach((styleRow, uiRow) => {
+    const row = layout[uiRow];
+    const firmwareSlots = (styleRow || [])
+      .map((style, col) => ({ style, col }))
+      .filter(({ style }) => Number(style?.ratio) > 0);
+    if (firmwareSlots.length !== row?.length) return;
+    firmwareSlots.forEach(({ col }, visualCol) => {
+      const key = keys.find(
+        (candidate) =>
+          candidate.uiRow === uiRow && candidate.col === visualCol,
+      );
+      if (key) positions.set(key.id, { row: uiRow + 1, col });
+    });
+  });
+  return positions;
+}
 function position(key = selectedKey()) {
-  return { row: key.row, col: key.col };
+  return (
+    state.hardware.keyPositions.get(key.id) || {
+      row: key.row,
+      col: key.col,
+    }
+  );
 }
 function mergeDecorative(base, saved = {}) {
   return {
@@ -660,6 +684,7 @@ const state = {
     advanced: null,
     macroSpace: null,
     layoutStyle: null,
+    keyPositions: new Map(),
     travelValue: 0,
     performance: new Map(),
     keycodes: new Map(),

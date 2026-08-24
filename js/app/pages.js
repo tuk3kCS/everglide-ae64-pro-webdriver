@@ -64,13 +64,15 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
     .join("")}</div>`;
 }
 function boardPanel(options = {}) {
-  return `<section class="panel ${options.full ? "full-span" : ""}"><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Select a key to inspect or stage a change."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectedKey().n)}</b> · row ${selectedKey().row}, col ${selectedKey().col}</span></div></section>`;
+  const address = position(selectedKey());
+  return `<section class="panel ${options.full ? "full-span" : ""}"><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Select a key to inspect or stage a change."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectedKey().n)}</b> · row ${address.row}, col ${address.col}</span></div></section>`;
 }
 function selectedCard() {
   const key = selectedKey(),
     performance = state.profile.performance[key.id],
-    code = state.profile.keycodes[state.profile.layer][key.id];
-  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${key.row}:${key.col}</span><strong>${esc(KEYCODE_LABELS.get(code) || `Keycode 0x${Number(code).toString(16)}`)} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
+    code = state.profile.keycodes[state.profile.layer][key.id],
+    address = position(key);
+  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(KEYCODE_LABELS.get(code) || `Keycode 0x${Number(code).toString(16)}`)} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
 }
 function pageCopy() {
   return {

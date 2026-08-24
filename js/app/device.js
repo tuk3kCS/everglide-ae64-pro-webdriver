@@ -152,6 +152,11 @@ async function connectKeyboard(device = null) {
       throw new Error(
         `Unexpected board ID ${info.boardIdHex}; writes refused.`,
       );
+    const layoutStyle = await optional("key layout style", () =>
+      Promise.all(
+        [1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
+      ),
+    );
     state.knownDevice = state.transport.device;
     Object.assign(state.hardware, {
       protocol,
@@ -168,6 +173,8 @@ async function connectKeyboard(device = null) {
       decorativeMatrix: null,
       liveMatrix: null,
       liveStrip: null,
+      layoutStyle,
+      keyPositions: firmwareKeyPositions(layoutStyle),
     });
     state.profile.profileIndex = currentConfig;
     state.profile.settings = { systemMode, reportRate, sleepTime, shake };
@@ -202,6 +209,7 @@ async function connectKeyboard(device = null) {
       lightingAreas,
       doubleLighting: Boolean(doubleLighting),
       automatic: Boolean(targetDevice),
+      remappedPositions: state.hardware.keyPositions.size,
     });
     openWorkspace();
     showToast(`AE64 Pro connected · firmware ${info.firmware}`);
