@@ -200,7 +200,9 @@ function bindPage() {
       ?.addEventListener("input", (event) => {
         state.mappingSearch = event.target.value;
         render();
-        document.querySelector("#mappingSearch")?.focus();
+        const search = document.querySelector("#mappingSearch");
+        search?.focus();
+        search?.setSelectionRange(search.value.length, search.value.length);
       });
     document.querySelectorAll("[data-mapping-group]").forEach((button) =>
       button.addEventListener("click", () => {
