@@ -9,8 +9,10 @@
  */
 
 function stagePerformance(field, value) {
-  state.profile.performance[selectedKey().id][field] = value;
-  state.dirty.performance.add(selectedKey().id);
+  selectedKeyIds().forEach((id) => {
+    state.profile.performance[id][field] = value;
+    state.dirty.performance.add(id);
+  });
   renderStatus();
 }
 function stageSetting(field, value) {
@@ -69,7 +71,10 @@ function applyLightingSelection(kind, index, mode) {
   if (mode === "remove") selection.delete(index);
   else selection.add(index);
   if (kind === "key") {
-    if (mode !== "remove") state.profile.selected = index;
+    if (mode !== "remove") {
+      state.profile.selected = index;
+      state.selectedKeys = new Set([index]);
+    }
     else if (Number(state.profile.selected) === index && selection.size)
       state.profile.selected = [...selection].at(-1);
   } else {
@@ -78,6 +83,105 @@ function applyLightingSelection(kind, index, mode) {
       state.stripSelected = [...selection].at(-1);
   }
   refreshLightingSelection();
+}
+function refreshKeySelection() {
+  document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
+    const selected = state.selectedKeys.has(Number(node.dataset.key));
+    node.classList.toggle("selected", selected);
+    node.setAttribute("aria-pressed", String(selected));
+  });
+}
+function commitKeySelection(selection, primary) {
+  if (!selection.size && Number.isInteger(primary)) selection.add(primary);
+  state.selectedKeys = selection;
+  if (selection.size)
+    state.profile.selected = selection.has(primary)
+      ? primary
+      : [...selection].at(-1);
+  refreshKeySelection();
+}
+function updateKeyMarquee(event) {
+  const drag = state.keySelectionDrag;
+  if (!drag) return;
+  const left = Math.min(drag.startX, event.clientX),
+    top = Math.min(drag.startY, event.clientY),
+    width = Math.abs(event.clientX - drag.startX),
+    height = Math.abs(event.clientY - drag.startY),
+    bounds = drag.surface.getBoundingClientRect();
+  if (width < 4 && height < 4) return;
+  drag.moved = true;
+  Object.assign(drag.marquee.style, {
+    left: `${left - bounds.left}px`,
+    top: `${top - bounds.top}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+  });
+  drag.marquee.classList.add("active");
+  const inside = [...document.querySelectorAll(".layout-board [data-key]")]
+    .filter((node) => {
+      const rect = node.getBoundingClientRect(),
+        centerX = rect.left + rect.width / 2,
+        centerY = rect.top + rect.height / 2;
+      return centerX >= left && centerX <= left + width && centerY >= top && centerY <= top + height;
+    })
+    .map((node) => Number(node.dataset.key));
+  commitKeySelection(
+    new Set(drag.ctrl ? [...drag.initial, ...inside] : inside),
+    drag.startKey,
+  );
+}
+function stopKeySelection() {
+  const drag = state.keySelectionDrag;
+  if (!drag) return;
+  document.removeEventListener("pointermove", updateKeyMarquee);
+  document.removeEventListener("pointerup", stopKeySelection);
+  document.removeEventListener("pointercancel", stopKeySelection);
+  state.keySelectionDrag = null;
+  drag.marquee.classList.remove("active");
+  if (!drag.moved) {
+    if (Number.isInteger(drag.startKey)) {
+      const selection = new Set(drag.initial);
+      if (drag.ctrl && selection.has(drag.startKey) && selection.size > 1) {
+        selection.delete(drag.startKey);
+      } else {
+        if (!drag.ctrl) selection.clear();
+        selection.add(drag.startKey);
+      }
+      commitKeySelection(selection, drag.startKey);
+    } else if (!drag.ctrl) {
+      state.selectedKeys.clear();
+      refreshKeySelection();
+    }
+  }
+  render();
+  if (connected())
+    readSelectedKey()
+      .then(() => render())
+      .catch((error) => showToast(error.message, true));
+}
+function beginKeySelection(event) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  const surface = event.currentTarget,
+    startKey = Number(event.target.closest("[data-key]")?.dataset.key);
+  state.keySelectionDrag = {
+    surface,
+    marquee: surface.querySelector(".key-selection-marquee"),
+    startX: event.clientX,
+    startY: event.clientY,
+    startKey: Number.isInteger(startKey) ? startKey : null,
+    initial: new Set(state.selectedKeys),
+    ctrl: event.ctrlKey,
+    moved: false,
+  };
+  document.addEventListener("pointermove", updateKeyMarquee);
+  document.addEventListener("pointerup", stopKeySelection);
+  document.addEventListener("pointercancel", stopKeySelection);
+}
+function bindKeySelection() {
+  document
+    .querySelectorAll(".layout-board")
+    .forEach((node) => node.addEventListener("pointerdown", beginKeySelection));
 }
 function stopLightingSelection() {
   if (!state.selectionDrag) return;
@@ -135,14 +239,7 @@ function bindLightingSelection() {
 }
 
 function bindPage() {
-  if (state.page !== "lighting")
-    document
-      .querySelectorAll("[data-key]")
-      .forEach((button) =>
-        button.addEventListener("click", () =>
-          selectKey(Number(button.dataset.key)),
-        ),
-      );
+  if (state.page !== "lighting") bindKeySelection();
   document.querySelectorAll("[data-goto]").forEach((button) =>
     button.addEventListener("click", () => {
       state.page = button.dataset.goto;
@@ -214,11 +311,12 @@ function bindPage() {
     );
     document.querySelectorAll("[data-keycode]").forEach((button) =>
       button.addEventListener("click", () => {
-        const token = `${state.profile.layer}:${selectedKey().id}`;
-        state.profile.keycodes[state.profile.layer][selectedKey().id] = Number(
-          button.dataset.keycode,
-        );
-        state.dirty.mapping.add(token);
+        selectedKeyIds().forEach((id) => {
+          state.profile.keycodes[state.profile.layer][id] = Number(
+            button.dataset.keycode,
+          );
+          state.dirty.mapping.add(`${state.profile.layer}:${id}`);
+        });
         render();
       }),
     );
@@ -244,20 +342,24 @@ function bindPage() {
           const code = combinationKeycode(
               state.mappingCombination.modifiers,
               state.mappingCombination.trigger,
-            ),
-            token = `${state.profile.layer}:${selectedKey().id}`;
-          state.profile.keycodes[state.profile.layer][selectedKey().id] = code;
-          state.dirty.mapping.add(token);
+            );
+          selectedKeyIds().forEach((id) => {
+            state.profile.keycodes[state.profile.layer][id] = code;
+            state.dirty.mapping.add(`${state.profile.layer}:${id}`);
+          });
           render();
-          showToast(`Staged ${keycodeLabel(code)} for ${selectedKey().n}.`);
+          showToast(
+            `Staged ${keycodeLabel(code)} for ${selectedKeyIds().length} key${selectedKeyIds().length === 1 ? "" : "s"}.`,
+          );
         } catch (error) {
           showToast(error.message, true);
         }
       });
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {
-      state.profile.keycodes[state.profile.layer][selectedKey().id] =
-        defaultKeycode(selectedKey());
-      state.dirty.mapping.add(`${state.profile.layer}:${selectedKey().id}`);
+      selectedKeyIds().forEach((id) => {
+        state.profile.keycodes[state.profile.layer][id] = defaultKeycode(keys[id]);
+        state.dirty.mapping.add(`${state.profile.layer}:${id}`);
+      });
       render();
     });
   }

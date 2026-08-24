@@ -143,7 +143,10 @@ button { color: inherit; }
 .badge.deferred { border-color: rgb(128 174 252 / 35%); color: var(--blue); }
 .warning-card { border-color: rgb(255 195 109 / 34%); background: linear-gradient(145deg, rgb(65 46 23 / 45%), #0e1b27); }
 
+.layout-board { position: relative; }
 .keyboard-wrap { overflow: auto; padding: 3px 0 7px; }
+.key-selection-marquee { position: absolute; z-index: 4; display: none; border: 1px solid var(--mint); border-radius: 5px; background: rgb(115 240 192 / 13%); box-shadow: 0 0 14px rgb(115 240 192 / 16%); pointer-events: none; }
+.key-selection-marquee.active { display: block; }
 .keyboard { --unit: clamp(26px, 3.6vw, 55px); --key-gap: 6px; display: grid; gap: var(--key-gap); width: max-content; margin: 14px auto 4px; }
 .keyboard-row { display: flex; gap: var(--key-gap); }
 .key { position: relative; width: calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap)); height: calc(var(--unit) * .94); flex: 0 0 calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap)); overflow: hidden; padding: 5px; border: 1px solid #42647a; border-radius: 7px; background: linear-gradient(150deg, #29475d, #14283a); box-shadow: inset 0 -3px rgb(0 0 0 / 27%), inset 0 1px rgb(255 255 255 / 7%); color: var(--text); font-size: clamp(7px, 1vw, 12px); text-align: left; cursor: pointer; transition: .14s ease; }
