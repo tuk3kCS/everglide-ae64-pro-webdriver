@@ -10,7 +10,7 @@ The repository includes an automated GitHub Pages workflow. Before its first run
 
 [Open the GitHub Pages driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/)
 
-You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only `index.html`, `styles.css`, `protocol.js`, `app.js`, and `languages.xml`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
+You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, and the modules under `js/app/`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
 
 ## Run locally
 
@@ -27,6 +27,10 @@ Run the offline verification suite with:
 ```powershell
 node smoke-test.cjs
 ```
+
+## Project structure
+
+The driver stays dependency-free and uses ordered classic browser scripts, matching the simple deployment model that worked well in the HE30 reference driver. The AE64 application is divided by responsibility under `js/app/`, while `app.js` only binds the permanent shell and starts device discovery. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map and rules for extending it.
 
 ## Basic release scope
 

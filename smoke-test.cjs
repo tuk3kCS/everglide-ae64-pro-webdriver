@@ -7,6 +7,15 @@ const API = require("./protocol.js");
 
 const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
+const APP_FILES = [
+  "js/app/foundation.js",
+  "js/app/pages.js",
+  "js/app/interactions.js",
+  "js/app/device.js",
+  "js/app/live.js",
+  "js/app/profiles.js",
+  "app.js",
+];
 const equal = (actual, expected, message) => {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`${message}\nExpected ${JSON.stringify(expected)}\nActual   ${JSON.stringify(actual)}`);
 };
@@ -59,22 +68,34 @@ class FakeDevice {
 }
 
 async function main() {
-  for (const file of ["protocol.js", "app.js"]) new Function(read(file));
+  for (const file of ["protocol.js", ...APP_FILES]) new Function(read(file));
   const html = read("index.html");
-  const app = read("app.js");
+  const app = APP_FILES.map(read).join("\n");
   const xml = read("languages.xml");
   const pagesWorkflow = read(path.join(".github", "workflows", "pages.yml"));
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "js/app/*.js"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
+  let previousScript = -1;
+  for (const file of ["protocol.js", ...APP_FILES]) {
+    const script = `<script src="${file}"></script>`;
+    const position = html.indexOf(script);
+    if (position < 0) throw new Error(`index.html does not load ${file}.`);
+    if (position <= previousScript) throw new Error(`Application script order is invalid at ${file}.`);
+    previousScript = position;
+  }
+  for (const file of APP_FILES) {
+    const lines = read(file).split(/\r?\n/).length;
+    if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
+  }
   for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
