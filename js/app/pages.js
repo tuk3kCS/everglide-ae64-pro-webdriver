@@ -63,7 +63,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
 }
 function boardPanel(options = {}) {
   const address = position(selectedKey());
-  return `<section class="panel ${options.full ? "full-span" : ""}"><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Select a key to inspect or stage a change."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectedKey().n)}</b> · row ${address.row}, col ${address.col}</span></div></section>`;
+  return `<section class="panel layout-board ${options.full ? "full-span" : ""}"><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Select a key to inspect or stage a change."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectedKey().n)}</b> · row ${address.row}, col ${address.col}</span></div></section>`;
 }
 function selectedCard() {
   const key = selectedKey(),
@@ -418,11 +418,8 @@ function diagnosticsPage() {
 
 function render() {
   stopPolling();
-  const [title, description] = pageCopy();
-  document.querySelector("#pageKicker").textContent =
-    `AE64 PRO / ${state.page.toUpperCase()}`;
+  const [title] = pageCopy();
   document.querySelector("#pageTitle").textContent = title;
-  document.querySelector("#pageDescription").textContent = description;
   document
     .querySelectorAll("#sideNav button")
     .forEach((button) =>
