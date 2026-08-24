@@ -707,6 +707,41 @@ function selectedKey() {
 function firmwareKeyPositions(layoutStyle) {
   const positions = new Map();
   if (!Array.isArray(layoutStyle)) return positions;
+  const visualRows = new Map();
+  layoutStyle.forEach((styleRow, firmwareRow) => {
+    (styleRow || []).forEach((style, firmwareCol) => {
+      if (!Number(style?.ratio) || !Number.isFinite(Number(style?.row))) return;
+      const row = Number(style.row);
+      if (!visualRows.has(row)) visualRows.set(row, []);
+      visualRows.get(row).push({
+        firmwareRow,
+        firmwareCol,
+        visualCol: Number(style.col),
+      });
+    });
+  });
+  const groupedRows = [...visualRows.entries()].sort(([a], [b]) => a - b);
+  if (
+    groupedRows.length === layout.length &&
+    groupedRows.every(
+      ([, entries], index) => entries.length === layout[index].length,
+    )
+  ) {
+    groupedRows.forEach(([, entries], uiRow) => {
+      entries
+        .sort((a, b) => a.visualCol - b.visualCol)
+        .forEach(({ firmwareRow, firmwareCol }, visualCol) => {
+          const key = keys.find(
+            (candidate) =>
+              candidate.uiRow === uiRow && candidate.col === visualCol,
+          );
+          if (key)
+            positions.set(key.id, { row: firmwareRow, col: firmwareCol });
+        });
+    });
+    return positions;
+  }
+  if (layoutStyle.length !== layout.length) return positions;
   layoutStyle.forEach((styleRow, uiRow) => {
     const row = layout[uiRow];
     const firmwareSlots = (styleRow || [])
@@ -855,6 +890,13 @@ const t = (key) =>
   state.translations.en?.[key] ||
   key;
 const connected = () => Boolean(state.transport?.connected);
+function displayedKeycode(key, layer = state.profile.layer) {
+  const resolvedLayer = Number(layer),
+    token = `${resolvedLayer}:${key.id}`;
+  if (!state.dirty.mapping.has(token) && state.hardware.keycodes.has(token))
+    return state.hardware.keycodes.get(token);
+  return state.profile.keycodes[resolvedLayer][key.id];
+}
 const isAe64Device = (device) =>
   DEVICE_FILTERS.some(
     (filter) =>

@@ -13,7 +13,6 @@ async function selectKey(id) {
   render();
   if (!connected()) return;
   try {
-    await readKeymapLayer(state.profile.layer);
     await readSelectedKey();
     if (selectedKey().id === id) render();
   } catch (error) {
@@ -155,7 +154,7 @@ async function connectKeyboard(device = null) {
       );
     const layoutStyle = await optional("key layout style", () =>
       Promise.all(
-        [1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
+        [0, 1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
       ),
     );
     state.knownDevice = state.transport.device;
@@ -200,6 +199,7 @@ async function connectKeyboard(device = null) {
         ),
       ),
     );
+    await readKeymapLayer(state.profile.layer);
     await readSelectedKey();
     state.original = clone(state.profile);
     clearDirty();
@@ -263,23 +263,24 @@ async function readSelectedKey() {
 async function readKeymapLayer(layer = state.profile.layer) {
   if (!connected()) return 0;
   const resolvedLayer = Number(layer);
-  const rows = await Promise.all(
-    [1, 2, 3, 4, 5].map((row) =>
-      state.transport.getKeyLayout(resolvedLayer, row),
+  const records = await Promise.allSettled(
+    keys.map((key) =>
+      state.transport.getKeyCode(position(key), resolvedLayer),
     ),
   );
-  const rowsByAddress = new Map(rows.map((record) => [record.row, record]));
   let loaded = 0;
-  for (const key of keys) {
-    const address = position(key);
-    const keycode = rowsByAddress.get(address.row)?.keycodes[address.col];
-    if (!Number.isInteger(keycode)) continue;
+  records.forEach((record, id) => {
+    if (record.status !== "fulfilled") return;
+    const key = keys[id],
+      keycode = record.value.keycode;
+    if (!Number.isInteger(keycode)) return;
     const token = `${resolvedLayer}:${key.id}`;
     state.hardware.keycodes.set(token, keycode);
     if (!state.dirty.mapping.has(token))
       state.profile.keycodes[resolvedLayer][key.id] = keycode;
     loaded += 1;
-  }
+  });
+  if (!loaded) throw new Error(`Could not read layer ${resolvedLayer + 1}.`);
   log("Keymap layer read", { layer: resolvedLayer, keys: loaded });
   return loaded;
 }

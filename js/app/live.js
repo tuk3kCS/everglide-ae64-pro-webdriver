@@ -83,7 +83,7 @@ async function readLayoutStyle() {
   if (!connected()) return showToast("Connect to read layout metadata.", true);
   try {
     state.hardware.layoutStyle = await Promise.all(
-      [1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
+      [0, 1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
     );
     state.hardware.keyPositions = firmwareKeyPositions(
       state.hardware.layoutStyle,

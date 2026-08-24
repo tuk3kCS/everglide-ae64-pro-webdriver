@@ -59,6 +59,11 @@ class FakeDevice {
         reply[5 + col * 2] = keycode >>> 8;
       }
     }
+    if (packet[0] === 3 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = packet[4];
+      const keycode = 0x1000 + packet[2] * 0x100 + packet[3] * 0x10 + packet[4];
+      reply[5] = keycode & 0xff; reply[6] = keycode >>> 8;
+    }
     if (packet[0] === 2 && packet[1] === 8) {
       reply[3] = 2;
       reply.set([0, 20, 6, 15, 1, 5, 1, 38], 4);
@@ -180,9 +185,11 @@ async function main() {
       ]),
     ),
     shiftedRowPositions: (() => {
-      const style = layout.map((row) => row.map(() => ({ ratio: 4 })));
-      style[3] = [{ ratio: 0 }, ...layout[3].map(() => ({ ratio: 4 }))];
-      style[4] = [{ ratio: 0 }, ...layout[4].map(() => ({ ratio: 4 }))];
+      const style = layout.map((row, firmwareRow) =>
+        row.map((_, visualCol) => ({ row: firmwareRow, col: visualCol, ratio: 4 })),
+      );
+      style[3] = [{ ratio: 0 }, ...layout[3].map((_, visualCol) => ({ row: 3, col: visualCol, ratio: 4 }))];
+      style[4] = [{ ratio: 0 }, ...layout[4].map((_, visualCol) => ({ row: 4, col: visualCol, ratio: 4 }))];
       const positions = firmwareKeyPositions(style);
       return [
         positions.get(keys.find((key) => key.uiRow === 3 && key.col === 0).id),
@@ -233,10 +240,10 @@ async function main() {
     lighting: [0xf300, 0xf301, 0xf302, 0xf303, 0xf304, 0xf305, 0xf306, 0xf307, 0xf308, 0xf310, 0xf311, 0xf312, 0xf313, 0xf314, 0xf315, 0xf316, 0xf317, 0xf318, 0xf320, 0xf321, 0xf322, 0xf323, 0xf324, 0xf325, 0xf326, 0xf327, 0xf328, 0xf330, 0xf331, 0xf332, 0xf333, 0xf334, 0xf335, 0xf336, 0xf337, 0xf338],
   }, "Every supported non-keyboard keycode must match the original-driver HAR catalog.");
   equal(settingsEnums.shiftedRowPositions, [
+    { row: 3, col: 1 },
+    { row: 3, col: 14 },
     { row: 4, col: 1 },
-    { row: 4, col: 14 },
-    { row: 5, col: 1 },
-    { row: 5, col: 9 },
+    { row: 4, col: 9 },
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
@@ -292,6 +299,16 @@ async function main() {
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);
   const layerReadback = vm.runInContext("[state.profile.keycodes[2][0], state.profile.keycodes[2][1], state.profile.keycodes[2][63], state.hardware.keycodes.get('2:63')]", browser);
   equal(layerReadback, [0xbeef, 0x1211, 0x1258, 0x1258], "Layer read must load every physical key while preserving staged edits.");
+  const displayedReadback = vm.runInContext(`(() => {
+    const key = keys[1], token = "2:" + key.id;
+    state.profile.keycodes[2][key.id] = 0xbeef;
+    const hardwareValue = displayedKeycode(key, 2);
+    state.dirty.mapping.add(token);
+    const stagedValue = displayedKeycode(key, 2);
+    state.dirty.mapping.delete(token);
+    return [hardwareValue, stagedValue];
+  })()`, browser);
+  equal(displayedReadback, [0x1211, 0xbeef], "The keyboard preview must show refreshed hardware values unless an edit is staged.");
   vm.runInContext("clearDirty()", browser);
 
   const performance = await transport.getPerformance({ row: 2, col: 3 });

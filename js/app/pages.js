@@ -28,7 +28,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
             const key = keys.find(
               (candidate) => candidate.uiRow === uiRow && candidate.col === col,
             );
-            const code = state.profile.keycodes[layer][key.id];
+            const code = displayedKeycode(key, layer);
             const mapped =
               KEYCODE_LABELS.get(code) ||
               `0x${Number(code).toString(16).padStart(4, "0")}`;
@@ -70,7 +70,7 @@ function boardPanel(options = {}) {
 function selectedCard() {
   const key = selectedKey(),
     performance = state.profile.performance[key.id],
-    code = state.profile.keycodes[state.profile.layer][key.id],
+    code = displayedKeycode(key),
     address = position(key);
   return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(KEYCODE_LABELS.get(code) || `Keycode 0x${Number(code).toString(16)}`)} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
 }
@@ -137,7 +137,7 @@ function performancePage() {
   return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""}">${label}</button>`).join("")}</div>${performanceControls()}</section></div>`;
 }
 function keymapPage() {
-  const active = state.profile.keycodes[state.profile.layer][selectedKey().id],
+  const active = displayedKeycode(selectedKey()),
     entries = KEYCODE_GROUPS[state.mappingGroup].filter((entry) =>
       entry.label.toLowerCase().includes(state.mappingSearch.toLowerCase()),
     );
