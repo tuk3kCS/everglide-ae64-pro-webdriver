@@ -77,6 +77,8 @@ async function main() {
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
   for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
+  for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
+  if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
@@ -100,7 +102,6 @@ async function main() {
       querySelectorAll(selector) {
         if (selector === ".language-select") return [makeElement("language-1"), makeElement("language-2")];
         if (selector.includes("#connectButton")) return [makeElement("connect-buttons")];
-        if (selector.includes("#demoButton")) return [makeElement("demo-buttons")];
         return [];
       },
     },

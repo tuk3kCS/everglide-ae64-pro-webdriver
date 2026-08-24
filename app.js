@@ -1,7 +1,7 @@
 "use strict";
 
 /* AE64 Pro Control — local-first UI for the reverse-engineered WebHID protocol. */
-const { AE64HidTransport, SAVE_GROUP, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, LIGHTING_OPEN_MODE } = window.AE64Protocol;
+const { AE64HidTransport, DEVICE_FILTERS, SAVE_GROUP, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, LIGHTING_OPEN_MODE } = window.AE64Protocol;
 const STORAGE_KEY = "ae64-control-workspace-v3";
 const LANGUAGE_KEY = "ae64-control-language";
 
@@ -80,11 +80,12 @@ function position(key=selectedKey()){return{row:key.row,col:key.col}}
 function mergeDecorative(base,saved={}){return{...base,...saved,base:{...base.base,...saved.base},palette:Array.from({length:8},(_,index)=>saved.palette?.[index]||base.palette[index]),perLed:Array.from({length:DECORATIVE_COLS},(_,index)=>saved.perLed?.[index]||base.perLed[index]),customEnabled:Array.from({length:DECORATIVE_COLS},(_,index)=>Boolean(saved.customEnabled?.[index]))}}
 function loadSavedProfile(){const base=defaultProfile();try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(!saved||![3,4].includes(saved.schema))return base;return{...base,...saved,schema:4,performance:{...base.performance,...saved.performance},keycodes:Object.fromEntries(Array.from({length:4},(_,i)=>[i,{...base.keycodes[i],...saved.keycodes?.[i]}])),lighting:{...base.lighting,...saved.lighting,base:{...base.lighting.base,...saved.lighting?.base},perKey:{...base.lighting.perKey,...saved.lighting?.perKey},customEnabled:{...base.lighting.customEnabled,...saved.lighting?.customEnabled},decorative:mergeDecorative(base.lighting.decorative,saved.lighting?.decorative)},settings:{...base.settings,...saved.settings}}}catch{return base}}
 
-const state={page:"overview",performanceTab:"trigger",lightingTab:"main",stripSelected:0,lightingSelectedKeys:new Set(),stripSelection:new Set([0]),selectionDrag:null,liveLighting:true,mappingGroup:"keyboard",mappingSearch:"",profile:loadSavedProfile(),original:null,transport:null,translations:clone(FALLBACK_TRANSLATIONS),language:localStorage.getItem(LANGUAGE_KEY)||"en",hardware:{info:null,feature:null,protocol:null,precision:.001,configIndexes:[0,1,2,3],configNames:["Profile 1","Profile 2","Profile 3","Profile 4"],systemModes:[],reportRates:[],axisLibrary:[],lightingAreas:[],doubleLighting:false,customMatrix:null,decorativeMatrix:null,liveMatrix:null,liveStrip:null,liveUpdatedAt:0,advanced:null,macroSpace:null,layoutStyle:null,travelValue:0,performance:new Map(),keycodes:new Map(),logs:[]},dirty:{performance:new Set(),mapping:new Set(),lightingBase:false,lightingPalette:false,customLighting:new Set(),decorativeBase:false,decorativePalette:false,decorativeLighting:new Set(),settings:new Set()},timers:{travel:null,lighting:null,lightingGeneration:0,calibration:null},toastTimer:null};
+const state={page:"overview",performanceTab:"trigger",lightingTab:"main",stripSelected:0,lightingSelectedKeys:new Set(),stripSelection:new Set([0]),selectionDrag:null,liveLighting:true,mappingGroup:"keyboard",mappingSearch:"",profile:loadSavedProfile(),original:null,transport:null,knownDevice:null,translations:clone(FALLBACK_TRANSLATIONS),language:localStorage.getItem(LANGUAGE_KEY)||"en",hardware:{info:null,feature:null,protocol:null,precision:.001,configIndexes:[0,1,2,3],configNames:["Profile 1","Profile 2","Profile 3","Profile 4"],systemModes:[],reportRates:[],axisLibrary:[],lightingAreas:[],doubleLighting:false,customMatrix:null,decorativeMatrix:null,liveMatrix:null,liveStrip:null,liveUpdatedAt:0,advanced:null,macroSpace:null,layoutStyle:null,travelValue:0,performance:new Map(),keycodes:new Map(),logs:[]},dirty:{performance:new Set(),mapping:new Set(),lightingBase:false,lightingPalette:false,customLighting:new Set(),decorativeBase:false,decorativePalette:false,decorativeLighting:new Set(),settings:new Set()},timers:{travel:null,lighting:null,lightingGeneration:0,calibration:null},toastTimer:null};
 state.lightingSelectedKeys.add(Number(state.profile.selected));
 state.original=clone(state.profile);
 const t=(key)=>state.translations[state.language]?.[key]||state.translations.en?.[key]||key;
 const connected=()=>Boolean(state.transport?.connected);
+const isAe64Device=(device)=>DEVICE_FILTERS.some((filter)=>device?.vendorId===filter.vendorId&&device?.productId===filter.productId&&device.collections?.some((collection)=>collection.usagePage===filter.usagePage&&collection.usage===filter.usage));
 const dirtyCount=()=>state.dirty.performance.size+state.dirty.mapping.size+state.dirty.customLighting.size+state.dirty.decorativeLighting.size+Number(state.dirty.lightingBase)+Number(state.dirty.lightingPalette)+Number(state.dirty.decorativeBase)+Number(state.dirty.decorativePalette)+state.dirty.settings.size;
 const lightingKeyIds=()=>[...state.lightingSelectedKeys].filter((id)=>keys[id]).sort((a,b)=>a-b);
 const stripLedIds=()=>[...state.stripSelection].filter((index)=>index>=0&&index<DECORATIVE_COLS).sort((a,b)=>a-b);
@@ -195,11 +196,13 @@ function showProgress(title,detail=""){document.querySelector("#progressTitle").
 function hideProgress(){document.querySelector("#progressOverlay").classList.add("hidden")}
 async function optional(label,operation,fallback=null){try{return await operation()}catch(error){log(`${label} unavailable`,error.message);return fallback}}
 
-async function connectKeyboard(){
-  showProgress("Connecting to AE64 Pro","Choose the 1CA6:300A configuration interface.");
+async function connectKeyboard(device=null){
+  const targetDevice=device||state.knownDevice;
+  showProgress(targetDevice?"Opening AE64 Pro":"Connecting to AE64 Pro",targetDevice?"Opening your previously authorized keyboard.":"Choose the 1CA6:300A configuration interface.");
   try{
     if(state.transport)await state.transport.close();
-    state.transport=await AE64HidTransport.request();
+    state.transport=targetDevice?new AE64HidTransport(targetDevice):await AE64HidTransport.request();
+    if(targetDevice)await state.transport.open();
     await optional("open-web-driver handshake",()=>state.transport.openWebDriver());
     const [protocol,info,feature,precision,configIndexes,currentConfig,systemModes,systemMode,reportRates,reportRate,sleepTime,shake,axisLibrary,lightingAreas,doubleLighting,lightingBase,palette,decorativeBase,decorativePalette]=await Promise.all([
       state.transport.getProtocolVersion(),state.transport.getDeviceInfo(),state.transport.getDeviceFeature(),state.transport.getRtPrecision(),
@@ -213,6 +216,7 @@ async function connectKeyboard(){
       optional("Decorative1 palette",()=>state.transport.getLightingPalette(1),null),
     ]);
     if(info.boardIdHex.toUpperCase()!=="0030000A")throw new Error(`Unexpected board ID ${info.boardIdHex}; writes refused.`);
+    state.knownDevice=state.transport.device;
     Object.assign(state.hardware,{protocol,info,feature,precision,configIndexes:configIndexes.length?configIndexes:[0,1,2,3],systemModes,reportRates,axisLibrary,lightingAreas,doubleLighting:Boolean(doubleLighting),customMatrix:null,decorativeMatrix:null,liveMatrix:null,liveStrip:null});
     state.profile.profileIndex=currentConfig;
     state.profile.settings={systemMode,reportRate,sleepTime,shake};
@@ -222,11 +226,12 @@ async function connectKeyboard(){
     if(decorativePalette)state.profile.lighting.decorative.palette=decorativePalette.map(rgbToHex);
     state.hardware.configNames=await Promise.all(state.hardware.configIndexes.map((index)=>optional(`profile ${index+1} name`,()=>state.transport.getConfigName(index),`Profile ${index+1}`)));
     await readSelectedKey();state.original=clone(state.profile);clearDirty();
-    log("Connected",{boardId:info.boardIdHex,firmware:info.firmware,protocol,lightingAreas,doubleLighting:Boolean(doubleLighting)});
+    log("Connected",{boardId:info.boardIdHex,firmware:info.firmware,protocol,lightingAreas,doubleLighting:Boolean(doubleLighting),automatic:Boolean(targetDevice)});
     openWorkspace();showToast(`AE64 Pro connected · firmware ${info.firmware}`);
-  }catch(error){log("Connection failed",error.message);if(state.transport)await state.transport.close().catch(()=>undefined);state.transport=null;showToast(`Could not connect: ${error.message}`,true);renderStatus()}
+  }catch(error){log("Connection failed",error.message);if(state.transport)await state.transport.close().catch(()=>undefined);state.transport=null;if(targetDevice===state.knownDevice)state.knownDevice=null;showToast(`Could not connect: ${error.message}`,true);renderStatus()}
   finally{hideProgress()}
 }
+async function detectKnownKeyboard(){if(!AE64HidTransport.supported()||typeof navigator.hid.getDevices!=="function")return;try{state.knownDevice=(await navigator.hid.getDevices()).find(isAe64Device)||null;if(state.knownDevice)log("Authorized keyboard detected")}catch(error){log("Keyboard detection failed",error.message)}}
 async function readSelectedKey(){if(!connected())return;const key=selectedKey(),token=`${state.profile.layer}:${key.id}`;const [performance,keyRecord]=await Promise.all([state.transport.getPerformance(position(key)),state.transport.getKeyCode(position(key),state.profile.layer)]);state.hardware.performance.set(key.id,performance);state.hardware.keycodes.set(token,keyRecord.keycode);if(!state.dirty.performance.has(key.id))state.profile.performance[key.id]=performance;if(!state.dirty.mapping.has(token))state.profile.keycodes[state.profile.layer][key.id]=keyRecord.keycode;log("Selected key read",{key:key.n,row:key.row,col:key.col,layer:state.profile.layer})}
 function clearDirty(){state.dirty.performance.clear();state.dirty.mapping.clear();state.dirty.customLighting.clear();state.dirty.decorativeLighting.clear();state.dirty.settings.clear();state.dirty.lightingBase=false;state.dirty.lightingPalette=false;state.dirty.decorativeBase=false;state.dirty.decorativePalette=false}
 function verifyPerformance(expected,actual){return["mode","normalPress","normalRelease","rtFirstTouch","rtPress","rtRelease","pressDeadStroke","releaseDeadStroke"].every((field)=>field==="mode"?Number(expected[field])===Number(actual[field]):closeEnough(expected[field],actual[field]))}
@@ -271,8 +276,7 @@ function exportLog(){downloadJson("ae64-pro-session-log.json",{device:state.hard
 async function importProfile(file){try{const data=JSON.parse(await file.text()),imported=data.profile||data;if(!imported.performance||!imported.keycodes||!imported.lighting)throw new Error("Not an AE64 Control profile.");const base=defaultProfile();state.profile={...base,...imported,schema:4,performance:{...base.performance,...imported.performance},keycodes:Object.fromEntries(Array.from({length:4},(_,i)=>[i,{...base.keycodes[i],...imported.keycodes?.[i]}])),lighting:{...base.lighting,...imported.lighting,base:{...base.lighting.base,...imported.lighting.base},perKey:{...base.lighting.perKey,...imported.lighting.perKey},customEnabled:{...base.lighting.customEnabled,...imported.lighting.customEnabled},decorative:mergeDecorative(base.lighting.decorative,imported.lighting.decorative)}};keys.forEach((key)=>{state.dirty.performance.add(key.id);state.dirty.customLighting.add(key.id);for(let layer=0;layer<4;layer+=1)state.dirty.mapping.add(`${layer}:${key.id}`)});for(let index=0;index<DECORATIVE_COLS;index+=1)state.dirty.decorativeLighting.add(index);state.dirty.lightingBase=true;state.dirty.lightingPalette=true;state.dirty.decorativeBase=true;state.dirty.decorativePalette=true;render();showToast("Profile imported and staged. Review before applying.")}catch(error){showToast(`Import failed: ${error.message}`,true)}}
 function mountHero(){document.querySelector("#heroKeyboard").innerHTML=keyboardHtml({hero:true})}
 
-document.querySelectorAll("#connectButton,#heroConnect,#workspaceConnectButton").forEach((button)=>button.addEventListener("click",connectKeyboard));
-document.querySelectorAll("#demoButton,#heroDemo").forEach((button)=>button.addEventListener("click",openWorkspace));
+document.querySelectorAll("#connectButton,#heroConnect,#workspaceConnectButton").forEach((button)=>button.addEventListener("click",()=>connectKeyboard()));
 document.querySelector("#backHomeButton").addEventListener("click",returnHome);
 document.querySelector("#applyButton").addEventListener("click",requestApplyChanges);
 document.querySelector("#revertButton").addEventListener("click",revertChanges);
@@ -285,6 +289,6 @@ document.querySelector("#profileRenameForm").addEventListener("submit",async(eve
 document.querySelector("#layerSelect").addEventListener("change",async(event)=>{state.profile.layer=Number(event.target.value);render();if(connected())try{await readSelectedKey();render()}catch(error){showToast(error.message,true)}});
 document.querySelectorAll(".language-select").forEach((select)=>select.addEventListener("change",(event)=>setLanguage(event.target.value)));
 document.querySelector("#profileFileInput").addEventListener("change",(event)=>{const[file]=event.target.files;if(file)importProfile(file);event.target.value=""});
-if(navigator.hid)navigator.hid.addEventListener("disconnect",(event)=>{if(event.device===state.transport?.device){state.transport=null;stopPolling();log("Keyboard disconnected");renderStatus();showToast("AE64 Pro disconnected.",true)}});
+if(navigator.hid){navigator.hid.addEventListener("disconnect",(event)=>{if(event.device===state.knownDevice)state.knownDevice=null;if(event.device===state.transport?.device){state.transport=null;stopPolling();log("Keyboard disconnected");renderStatus();showToast("AE64 Pro disconnected.",true)}});navigator.hid.addEventListener("connect",(event)=>{if(isAe64Device(event.device)){state.knownDevice=event.device;log("Authorized keyboard detected")}})}
 mountHero();
-loadLanguages();
+loadLanguages().finally(detectKnownKeyboard);

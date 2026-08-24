@@ -20,7 +20,7 @@ WebHID needs a secure context. Desktop Chrome or Edge accepts `localhost`:
 python -m http.server 4173
 ```
 
-Open `http://localhost:4173`, then choose **Connect keyboard**. The picker is restricted to `1CA6:300A`, usage `FFB0:0001`. **Open demo** lets you inspect the complete interface without hardware.
+Open `http://localhost:4173`, then choose **Connect keyboard**. The picker is restricted to `1CA6:300A`, usage `FFB0:0001`. Once Chrome or Edge has authorized the keyboard for this site, later visits keep the landing page visible and the **Connect keyboard** button opens the detected keyboard directly, without the picker.
 
 Run the offline verification suite with:
 

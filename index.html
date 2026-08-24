@@ -15,13 +15,10 @@
       <span><strong>AE64 CONTROL</strong><small data-i18n="brandTagline">Independent WebHID driver</small></span>
     </a>
     <nav class="topnav" aria-label="Primary navigation">
-      <a href="#features" data-i18n="navFeatures">Features</a>
-      <a href="#protocol" data-i18n="navProtocol">Protocol</a>
       <label class="language-control compact">
         <span class="sr-only" data-i18n="language">Language</span>
         <select class="language-select" aria-label="Language"></select>
       </label>
-      <button class="button ghost" id="demoButton" type="button" data-i18n="openDemo">Open demo</button>
       <button class="button primary" id="connectButton" type="button" data-i18n="connectKeyboard">Connect keyboard</button>
     </nav>
   </header>
@@ -34,7 +31,6 @@
         <p class="lead" data-i18n="heroLead">Configure actuation, Rapid Trigger, remaps, RGB, profiles and the keyboard's hidden diagnostic controls directly through WebHID.</p>
         <div class="hero-actions">
           <button class="button primary big" id="heroConnect" type="button"><span data-i18n="connectKeyboard">Connect keyboard</span><b>→</b></button>
-          <button class="text-button" id="heroDemo" type="button" data-i18n="exploreOffline">Explore offline</button>
         </div>
         <p class="compatibility"><i></i><span data-i18n="compatibility">Desktop Chrome or Edge · HTTPS or localhost · no account required</span></p>
       </div>
@@ -49,19 +45,6 @@
       </div>
     </section>
 
-    <section class="feature-strip" id="features">
-      <article><span>01</span><h2 data-i18n="featurePerformanceTitle">Hall performance</h2><p data-i18n="featurePerformanceBody">Per-key actuation, RT, independent press/release values and both dead zones.</p></article>
-      <article><span>02</span><h2 data-i18n="featureKeymapTitle">Four key layers</h2><p data-i18n="featureKeymapBody">Keyboard, media, mouse, lighting and internal firmware functions.</p></article>
-      <article><span>03</span><h2 data-i18n="featureHiddenTitle">Advanced</h2><p data-i18n="featureHiddenBody">Calibration, raw travel, magnetic-axis metadata and advanced-key inspection stay visible.</p></article>
-    </section>
-
-    <section class="protocol-section" id="protocol">
-      <div>
-        <p class="eyebrow" data-i18n="protocolEyebrow">CAPTURE-DERIVED, DEVICE-LOCAL</p>
-        <h2 data-i18n="protocolTitle">The keyboard is the source of truth.</h2>
-      </div>
-      <p data-i18n="protocolBody">The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is intentionally excluded.</p>
-    </section>
   </main>
 
   <section class="workspace hidden" id="workspace" aria-label="AE64 Pro workspace">
