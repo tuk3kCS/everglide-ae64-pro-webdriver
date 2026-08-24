@@ -13,6 +13,7 @@ async function selectKey(id) {
   render();
   if (!connected()) return;
   try {
+    await readKeymapLayer(state.profile.layer);
     await readSelectedKey();
     if (selectedKey().id === id) render();
   } catch (error) {
@@ -258,6 +259,29 @@ async function readSelectedKey() {
     col: key.col,
     layer: state.profile.layer,
   });
+}
+async function readKeymapLayer(layer = state.profile.layer) {
+  if (!connected()) return 0;
+  const resolvedLayer = Number(layer);
+  const rows = await Promise.all(
+    [1, 2, 3, 4, 5].map((row) =>
+      state.transport.getKeyLayout(resolvedLayer, row),
+    ),
+  );
+  const rowsByAddress = new Map(rows.map((record) => [record.row, record]));
+  let loaded = 0;
+  for (const key of keys) {
+    const address = position(key);
+    const keycode = rowsByAddress.get(address.row)?.keycodes[address.col];
+    if (!Number.isInteger(keycode)) continue;
+    const token = `${resolvedLayer}:${key.id}`;
+    state.hardware.keycodes.set(token, keycode);
+    if (!state.dirty.mapping.has(token))
+      state.profile.keycodes[resolvedLayer][key.id] = keycode;
+    loaded += 1;
+  }
+  log("Keymap layer read", { layer: resolvedLayer, keys: loaded });
+  return loaded;
 }
 function clearDirty() {
   state.dirty.performance.clear();

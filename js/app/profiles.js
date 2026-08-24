@@ -339,6 +339,7 @@ async function switchProfile(index) {
         liveMatrix: null,
         liveStrip: null,
       });
+      await readKeymapLayer(state.profile.layer);
       await readSelectedKey();
       state.original = clone(state.profile);
       log("Profile switched", index);
