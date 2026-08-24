@@ -1,6 +1,6 @@
 # AE64 Pro vendor-HID report protocol
 
-This map was derived from the manufacturer JavaScript bundles captured in the two HAR files under `xsyd.top HAR files/`, then checked against `ae64pro.txt`. It describes the AE64 family; the HE30 uses a different protocol.
+This map was derived from the manufacturer JavaScript bundles captured in the two HAR files under `xsyd.top HAR files/`, checked against `ae64pro.txt`, and verified further with `captured_usb_packets.pcapng`. It describes the AE64 family; the HE30 uses a different protocol.
 
 ## Transport and identity
 
@@ -92,11 +92,17 @@ Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` c
 
 ## Lighting
 
-Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. For the main keyboard (`area 0`), the original UI presents effect indexes as zero-based `L1` through `L23` and limits the visible list to the `count` returned by `02 08 00`. Brightness and speed use the continuous range `0–100`. Direction is `0 = forward`, `1 = backward`; the captured UI does not define left/right values. Single-lighting power is `0 = off`, `1 = on`.
+Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. The manufacturer library contains 23 generic effect indexes, but this AE64's `02 08 00` reply is `02 08 00 02 00 14 06 0F 01 05 01 26`: area 0 reports **20** modes and area 1 reports **5** modes. The UI therefore exposes `L1–L20` for the keyboard and `L1–L5` for Decorative1. Brightness and speed use the continuous range `0–100`. Direction is `0 = forward`, `1 = backward`; the captured UI does not define left/right values.
+
+The main keyboard uses the manufacturer's double-lighting open enum as a bit mask: `0 = off`, `1 = lower/south-facing only`, `2 = upper/north-facing only`, and `3 = both`. The packet capture reads back value `3`, while global command `02 0A 00` reports double-lighting support as enabled. Decorative areas use the single-lighting values `0 = off`, `1 = on`.
 
 Palette configuration uses subtype `01` with exactly eight `B,G,R,hue` records. The base record's palette index selects one of those stored slots; editing a slot and selecting a slot are separate operations.
 
-The custom matrix is read as `05 03 area packet` and written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records, so the `6 × 21` address space requires nine packets. `flag = FF` enables a per-key custom override; `00` leaves that cell following the base effect/palette. Visible AE64 keys occupy firmware rows 1–5 and unused cells are preserved.
+The custom matrix and current LED framebuffer are read as `05 03 area packet` and custom overrides are written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. `flag = FF` enables a custom override; `00` leaves that LED following the base effect. During dynamic effects the RGB bytes still contain the instantaneous rendered LED color when the flag is `00`.
+
+- Keyboard area 0 uses a `6 × 21` address space and nine packets. Visible AE64 keys occupy firmware rows 1–5; unused cells are preserved.
+- Decorative1 area 1 reports a `1 × 38` address space and uses three packets.
+- The original driver repeatedly reads all packets. The Wireshark capture contains 214 complete keyboard framebuffer cycles with a median cycle-start interval of about **103 ms**, so live display is implemented at an approximately 10 Hz target without overlapping reads.
 
 ## Advanced keys and macros
 

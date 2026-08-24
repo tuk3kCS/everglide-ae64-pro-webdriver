@@ -206,17 +206,19 @@ button { color: inherit; }
 .mapping-list button:hover, .mapping-list button.active { border-color: var(--mint); color: var(--mint); }
 
 .lighting-page { display: grid; gap: 16px; }
-.lighting-command { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px 28px; overflow: hidden; background: radial-gradient(circle at 82% -35%, rgb(112 165 255 / 20%), transparent 46%), linear-gradient(135deg, #102638, #0a1825 64%); }
+.lighting-command { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(205px, auto) minmax(225px, auto); align-items: center; gap: 20px 14px; overflow: hidden; background: radial-gradient(circle at 82% -35%, rgb(112 165 255 / 20%), transparent 46%), linear-gradient(135deg, #102638, #0a1825 64%); }
 .lighting-command::after { content: ""; position: absolute; right: -70px; bottom: -115px; width: 250px; height: 250px; border: 1px solid rgb(115 240 192 / 12%); border-radius: 50%; box-shadow: 0 0 0 35px rgb(115 240 192 / 3%), 0 0 0 75px rgb(112 165 255 / 3%); pointer-events: none; }
 .lighting-command-copy { position: relative; z-index: 1; }
 .lighting-command-copy .eyebrow { display: block; margin-bottom: 9px; }
 .lighting-command-copy h2 { margin: 0; font-size: clamp(22px, 3vw, 34px); }
 .lighting-command-copy p { max-width: 650px; margin-bottom: 0; }
+.lighting-command-copy .badge { display: inline-flex; margin-top: 12px; }
 .lighting-power { position: relative; z-index: 1; display: flex; align-items: center; gap: 17px; min-width: 215px; padding: 14px 16px; border: 1px solid rgb(115 240 192 / 24%); border-radius: 12px; background: rgb(6 16 25 / 48%); }
 .lighting-power span, .lighting-power b, .lighting-power small { display: block; }
 .lighting-power span { min-width: 0; flex: 1; }
 .lighting-power b { font-size: 12px; }
 .lighting-power small { margin-top: 5px; color: var(--muted); font: 9px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.live-rgb-toggle { border-color: rgb(112 165 255 / 28%); }
 .lighting-tabs { position: relative; z-index: 1; grid-column: 1 / -1; display: flex; gap: 7px; padding-top: 16px; border-top: 1px solid rgb(255 255 255 / 7%); }
 .lighting-tabs button { display: flex; align-items: center; gap: 9px; min-width: 175px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; background: #0a1824; color: var(--muted); font-size: 11px; font-weight: 850; cursor: pointer; }
 .lighting-tabs button span { color: #668197; font: 800 9px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
@@ -268,6 +270,24 @@ button { color: inherit; }
 .key-color-editor span { color: var(--muted); font-size: 9px; }
 .key-color-editor strong { margin-top: 6px; color: var(--mint); font: 850 16px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .key-color-editor small { margin-top: 7px; color: var(--muted); font-size: 8px; }
+.capture-note { display: flex; align-items: center; gap: 14px; padding-block: 15px; border-color: rgb(112 165 255 / 24%); background: linear-gradient(100deg, rgb(112 165 255 / 9%), rgb(115 240 192 / 4%)); }
+.capture-note strong { flex: 0 0 auto; color: #a9c9ff; font-size: 11px; }
+.capture-note span { color: var(--muted); font-size: 9px; line-height: 1.5; }
+.dual-lighting-switches { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dual-lighting-switches .switch-row { margin: 0; border: 1px solid var(--line-soft); border-radius: 10px; background: #081722; }
+.dual-lighting-switches .switch-row span { display: grid; gap: 5px; }
+.dual-lighting-switches .switch-row b { font-size: 11px; }
+.dual-lighting-switches .switch-row small { color: var(--muted); font-size: 8px; }
+.strip-preview-panel { overflow: hidden; background: radial-gradient(circle at 50% 0, rgb(112 165 255 / 10%), transparent 62%), var(--panel); }
+.decorative-strip { display: grid; grid-template-columns: repeat(19, minmax(22px, 1fr)); gap: 8px; margin-top: 20px; padding: 18px; border: 1px solid var(--line-soft); border-radius: 14px; background: #06111b; }
+.decorative-strip button { position: relative; aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid color-mix(in srgb, var(--led-color) 62%, #355269); border-radius: 7px; background: color-mix(in srgb, var(--led-color) 63%, #0b1d2a); box-shadow: 0 0 12px color-mix(in srgb, var(--led-color) 42%, transparent), inset 0 -2px rgb(0 0 0 / 25%); color: color-mix(in srgb, var(--led-color) 12%, white); cursor: pointer; transition: transform .15s, box-shadow .15s, opacity .2s; }
+.decorative-strip button:hover { transform: translateY(-2px); }
+.decorative-strip button.selected { outline: 2px solid white; outline-offset: 2px; box-shadow: 0 0 0 4px rgb(115 240 192 / 22%), 0 0 22px var(--led-color); }
+.decorative-strip button.custom::after { content: ""; position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 6px var(--mint); }
+.decorative-strip button span { font: 800 7px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.lighting-page.is-off .decorative-strip button { opacity: .28; box-shadow: inset 0 -2px rgb(0 0 0 / 25%); }
+.strip-editor-grid { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(300px, 1fr); align-items: center; gap: 18px; }
+.strip-editor-grid .switch-row, .strip-editor-grid .key-color-editor { margin: 0; }
 
 .advanced-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
 .advanced-card { min-height: 155px; padding: 15px; border: 1px solid var(--line-soft); border-radius: 11px; background: #091723; }
@@ -311,6 +331,8 @@ button { color: inherit; }
   .work-actions { grid-column: auto; justify-content: start; }
   .summary-grid, .capability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .advanced-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lighting-command { grid-template-columns: 1fr 1fr; }
+  .lighting-command-copy { grid-column: 1 / -1; }
   .lighting-layout { grid-template-columns: 1fr; }
   .lighting-layout > .full-span { grid-column: auto; }
 }
@@ -331,6 +353,8 @@ button { color: inherit; }
   .advanced-grid { grid-template-columns: 1fr; }
   .mapping-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .keyboard { --unit: 34px; }
+  .dual-lighting-switches, .strip-editor-grid { grid-template-columns: 1fr; }
+  .decorative-strip { grid-template-columns: repeat(10, minmax(22px, 1fr)); }
   .palette-editor { grid-template-columns: 72px 1fr; }
   .palette-note { grid-column: 1 / -1; padding: 12px 0 0; border-top: 1px solid var(--line); border-left: 0; }
 }
@@ -355,10 +379,13 @@ button { color: inherit; }
   .key { padding: 3px; font-size: 7px; }
   .key .mapped { display: none; }
   .lighting-command { grid-template-columns: 1fr; }
+  .lighting-command-copy { grid-column: auto; }
   .lighting-power { width: 100%; }
-  .lighting-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .lighting-tabs { display: grid; grid-template-columns: 1fr; }
   .lighting-tabs button { min-width: 0; }
   .lighting-mode-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .palette { grid-template-columns: repeat(4, 1fr); }
   .palette-editor { grid-template-columns: 64px 1fr; }
+  .capture-note { align-items: flex-start; flex-direction: column; }
+  .decorative-strip { grid-template-columns: repeat(8, minmax(20px, 1fr)); gap: 6px; padding: 12px; }
 }

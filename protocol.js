@@ -12,11 +12,14 @@
   const REPORT_LENGTH = 64;
   const MATRIX_ROWS = 6;
   const MATRIX_COLS = 21;
+  const DECORATIVE_ROWS = 1;
+  const DECORATIVE_COLS = 38;
 
   const FAMILY = Object.freeze({ DEVICE: 1, GLOBAL: 2, LAYOUT: 3, PERFORMANCE: 4, LIGHTING: 5, ADVANCED: 6, MACRO: 7, CUSTOM: 10 });
   const SAVE_GROUP = Object.freeze({ ALL: 0, CALIBRATION: 1, PERFORMANCE: 2, LIGHTING: 3, LAYOUT: 4, ADVANCED: 5, MACRO: 6, AXIS: 7 });
   const AXIS_DATA = Object.freeze({ adc: 0, route: 1, calibration: 2, keyStatus: 3 });
   const ADVANCED_MODE = Object.freeze({ NONE: 0, DKS: 1, MPT: 2, MT: 3, TGL: 4, END: 5, SOCD: 6, RS: 7 });
+  const LIGHTING_OPEN_MODE = Object.freeze({ OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 });
   const DEVICE_FILTERS = Object.freeze([Object.freeze({ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 0x01 })]);
 
   function clampByte(value, field = "value") {
@@ -428,6 +431,12 @@
       return colors.slice(0, count);
     }
 
+    // Command 05:03 is also the firmware's live LED framebuffer read. During
+    // dynamic effects the RGB bytes change even when the custom flag is zero.
+    async readLiveLighting(rows = MATRIX_ROWS, cols = MATRIX_COLS, area = 0) {
+      return this.readCustomLighting(rows, cols, area);
+    }
+
     async writeCustomLighting(colors, rows = MATRIX_ROWS, cols = MATRIX_COLS, area = 0) {
       const count = rows * cols;
       const normalized = Array.from({ length: count }, (_, index) => colors[index] || { r: 0, g: 0, b: 0, custom: false });
@@ -457,7 +466,7 @@
     }
   }
 
-  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
+  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
   global.AE64Protocol = api;
   global.AE64HidTransport = AE64HidTransport;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

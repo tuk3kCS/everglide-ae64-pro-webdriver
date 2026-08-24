@@ -43,12 +43,16 @@ class FakeDevice {
       reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
     }
     if (packet[0] === 2 && packet[1] === 8) {
-      reply[3] = 1;
-      reply.set([0, 23, 6, 21], 4);
+      reply[3] = 2;
+      reply.set([0, 20, 6, 15, 1, 5, 1, 38], 4);
     }
     if (packet[0] === 5 && packet[1] === 1 && packet[3] === 0) {
       reply[2] = packet[2];
-      reply.set([1, 22, 100, 0, 1, 7], 4);
+      reply.set(packet[2] === 0 ? [3, 19, 100, 0, 1, 7] : [1, 4, 80, 50, 0, 2], 4);
+    }
+    if (packet[0] === 5 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3];
+      for (let index = 0; index < 15; index += 1) reply.set([index + packet[3], 20 + packet[2], 40 + index, 0], 4 + index * 4);
     }
     queueMicrotask(() => this.reply(reply));
   }
@@ -67,7 +71,7 @@ async function main() {
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
   if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
-  for (const privatePath of ["xsyd.top HAR files", "tasks.txt", "ae64pro.txt", ".openai"])
+  for (const privatePath of ["xsyd.top HAR files", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
@@ -113,26 +117,35 @@ async function main() {
     polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
     lightingModes: LIGHTING_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     customDefaults: Object.values(defaultProfile().lighting.customEnabled),
+    decorativeDefaults: defaultProfile().lighting.decorative.customEnabled,
     rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
   equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
-  equal(settingsEnums.lightingModes, Array.from({ length: 23 }, (_, value) => [value, `L${value + 1}`]), "Lighting modes must remain the captured L1-L23 indexes.");
+  equal(settingsEnums.lightingModes, Array.from({ length: 23 }, (_, value) => [value, `L${value + 1}`]), "The generic lighting catalog must remain L1-L23.");
   if (settingsEnums.customDefaults.some(Boolean)) throw new Error("Per-key custom overrides must be disabled by default.");
+  if (settingsEnums.decorativeDefaults.length !== 38 || settingsEnums.decorativeDefaults.some(Boolean)) throw new Error("Decorative1 must default to 38 inherited LEDs.");
   equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', 'data-lighting-mode="19"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
+  if (lightingMarkup.includes('data-lighting-mode="20"')) throw new Error("AE64 area 0 must stop at the 20 device-reported modes.");
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
   for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
+  const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
+  for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
+    if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
+  if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
   if (!read("styles.css").includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
+  equal(API.LIGHTING_OPEN_MODE, { OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 }, "Upper/lower lighting bit mapping changed.");
+  if (API.DECORATIVE_ROWS !== 1 || API.DECORATIVE_COLS !== 38) throw new Error("Decorative1 geometry changed.");
   equal(API.le16(0x1234), [0x34, 0x12], "Little-endian codec failed.");
   const encodedColors = API.encodeColors([{ r: 0x11, g: 0x22, b: 0x33, custom: true }]);
   equal(encodedColors.slice(0, 4), [0x33, 0x22, 0x11, 0xff], "Custom RGB must use B,G,R,flag order.");
@@ -158,11 +171,21 @@ async function main() {
   await transport.setCustomLightingPacket(3, [{ r: 0x11, g: 0x22, b: 0x33, custom: false }]);
   equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 0, 3, 0x33, 0x22, 0x11, 0x00], "Cleared custom-light overrides must use flag 0.");
   const lightingAreas = await transport.getLightingAreas();
-  equal(lightingAreas, [{ index: 0, count: 23, rows: 6, cols: 21 }], "Lighting-area capability decoder failed.");
+  equal(lightingAreas, [{ index: 0, count: 20, rows: 6, cols: 15 }, { index: 1, count: 5, rows: 1, cols: 38 }], "Lighting-area capability decoder failed.");
   const lightingBase = await transport.getLightingBase(0);
-  equal(lightingBase, { area: 0, open: true, openMode: 1, mode: 22, brightness: 100, speed: 0, direction: 1, paletteIndex: 7 }, "Main-light base decoder failed.");
+  equal(lightingBase, { area: 0, open: true, openMode: 3, mode: 19, brightness: 100, speed: 0, direction: 1, paletteIndex: 7 }, "Main-light base decoder failed.");
   await transport.setLightingBase(lightingBase, 0);
-  equal(device.sent.at(-1).packet.slice(0, 10), [5, 2, 0, 0, 1, 22, 100, 0, 1, 7], "Main-light base packet mapping failed.");
+  equal(device.sent.at(-1).packet.slice(0, 10), [5, 2, 0, 0, 3, 19, 100, 0, 1, 7], "Main-light dual-LED packet mapping failed.");
+  await transport.setLightingBase({ ...lightingBase, openMode: API.LIGHTING_OPEN_MODE.UPPER }, 0);
+  equal(device.sent.at(-1).packet.slice(0, 5), [5, 2, 0, 0, 2], "North-facing-only lighting must encode value 2.");
+  await transport.setLightingBase({ ...lightingBase, openMode: API.LIGHTING_OPEN_MODE.LOWER }, 0);
+  equal(device.sent.at(-1).packet.slice(0, 5), [5, 2, 0, 0, 1], "South-facing-only lighting must encode value 1.");
+  const decorativeBase = await transport.getLightingBase(1);
+  equal(decorativeBase, { area: 1, open: true, openMode: 1, mode: 4, brightness: 80, speed: 50, direction: 0, paletteIndex: 2 }, "Decorative1 base decoder failed.");
+  await transport.setCustomLightingPacket(2, [{ r: 1, g: 2, b: 3, custom: true }], 1);
+  equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 1, 2, 3, 2, 1, 0xff], "Decorative1 custom packet changed.");
+  const liveStrip = await transport.readLiveLighting(1, 38, 1);
+  if (liveStrip.length !== 38 || liveStrip[0].r !== 40 || liveStrip[15].r !== 40) throw new Error("Live Decorative1 framebuffer decoding failed.");
 
   console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
 }
