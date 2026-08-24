@@ -208,6 +208,7 @@ function bindPage() {
       button.addEventListener("click", () => {
         state.mappingGroup = button.dataset.mappingGroup;
         state.mappingSearch = "";
+        if (state.mappingGroup === "combination") syncCombinationEditor();
         render();
       }),
     );
@@ -221,6 +222,38 @@ function bindPage() {
         render();
       }),
     );
+    document.querySelectorAll("[data-combo-modifier]").forEach((button) =>
+      button.addEventListener("click", () => {
+        const modifier = Number(button.dataset.comboModifier);
+        if (state.mappingCombination.modifiers.has(modifier))
+          state.mappingCombination.modifiers.delete(modifier);
+        else state.mappingCombination.modifiers.add(modifier);
+        render();
+      }),
+    );
+    document.querySelectorAll("[data-combo-trigger]").forEach((button) =>
+      button.addEventListener("click", () => {
+        state.mappingCombination.trigger = Number(button.dataset.comboTrigger);
+        render();
+      }),
+    );
+    document
+      .querySelector("#applyCombination")
+      ?.addEventListener("click", () => {
+        try {
+          const code = combinationKeycode(
+              state.mappingCombination.modifiers,
+              state.mappingCombination.trigger,
+            ),
+            token = `${state.profile.layer}:${selectedKey().id}`;
+          state.profile.keycodes[state.profile.layer][selectedKey().id] = code;
+          state.dirty.mapping.add(token);
+          render();
+          showToast(`Staged ${keycodeLabel(code)} for ${selectedKey().n}.`);
+        } catch (error) {
+          showToast(error.message, true);
+        }
+      });
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {
       state.profile.keycodes[state.profile.layer][selectedKey().id] =
         defaultKeycode(selectedKey());
@@ -479,6 +512,9 @@ function bindPage() {
       ?.addEventListener("change", (event) =>
         stageSetting("reportRate", Number(event.target.value)),
       );
+    document
+      .querySelector("#reconnectKeyboard")
+      ?.addEventListener("click", () => connectKeyboard());
     document
       .querySelector("#sleepTime")
       ?.addEventListener("change", (event) =>
