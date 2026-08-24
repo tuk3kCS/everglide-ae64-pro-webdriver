@@ -331,11 +331,13 @@ function bindPage() {
       .querySelector("#stopCalibration")
       ?.addEventListener("click", stopCalibration);
     document
-      .querySelector("#startTravel")
-      ?.addEventListener("click", startTravel);
-    document
-      .querySelector("#stopTravel")
-      ?.addEventListener("click", stopPolling);
+      .querySelector("#livePressDistanceToggle")
+      ?.addEventListener("change", (event) => {
+        state.livePressDistance = event.target.checked;
+        if (!state.livePressDistance) stopTravelPolling(true);
+        render();
+      });
+    if (state.livePressDistance) startTravel();
   }
   if (state.page === "keymap") {
     document

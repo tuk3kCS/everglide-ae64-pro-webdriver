@@ -125,34 +125,108 @@ async function stopCalibration() {
   }
 }
 async function startTravel() {
-  if (!connected()) return showToast("Connect to read live travel.", true);
-  stopPolling();
+  if (
+    !connected() ||
+    state.page !== "performance" ||
+    !state.livePressDistance
+  )
+    return;
+  stopTravelPolling();
+  const generation = state.timers.travelGeneration,
+    rows = Array.from({ length: MATRIX_ROWS }, (_, row) => row);
   const read = async () => {
     if (
+      generation !== state.timers.travelGeneration ||
       !connected() ||
       state.page !== "performance" ||
-      state.performanceTab !== "travel"
+      !state.livePressDistance
     )
       return;
     try {
-      const key = selectedKey(),
-        data = await state.transport.getAxisData("route", key.row);
-      state.hardware.travelValue = data.values[key.col] || 0;
-      const valueNode = document.querySelector(".travel-meter .value"),
-        meter = document.querySelector(".travel-meter");
-      if (valueNode && meter) {
-        const mm = Math.min(4, state.hardware.travelValue / 1000);
-        valueNode.textContent = `${mm.toFixed(3)} mm`;
-        meter.style.setProperty("--travel", `${Math.round((mm / 4) * 100)}%`);
-      }
+      const samples = await Promise.all(
+        rows.map(async (row) => [
+          row,
+          await state.transport.getAxisData("route", row),
+        ]),
+      );
+      if (generation !== state.timers.travelGeneration) return;
+      const routes = new Map(samples.map(([row, sample]) => [row, sample.values]));
+      keys.forEach((key) => {
+        const address = position(key),
+          value = Number(routes.get(address.row)?.[address.col] || 0);
+        state.hardware.travelValues.set(key.id, value);
+      });
+      updateTravelVisuals();
     } catch (error) {
-      log("Travel poll stopped", error.message);
-      showToast(error.message, true);
+      if (generation !== state.timers.travelGeneration) return;
+      log("Live press distance retrying", error.message);
+      const status = document.querySelector("#livePressStatus");
+      if (status) {
+        status.textContent = "LIVE · RETRYING";
+        status.classList.remove("ready");
+        status.classList.add("experimental");
+      }
+      state.timers.travel = setTimeout(read, 500);
       return;
     }
-    state.timers.travel = setTimeout(read, 120);
+    state.timers.travel = setTimeout(read, 40);
   };
-  read();
+  return read();
+}
+function updateTravelVisuals() {
+  if (state.page !== "performance" || !state.livePressDistance) return;
+  document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
+    const raw = Number(
+        state.hardware.travelValues.get(Number(node.dataset.key)) || 0,
+      ),
+      percent = Math.min(100, Math.max(0, raw / 40));
+    node.style.setProperty("--press-depth", `${percent.toFixed(2)}%`);
+    node.classList.toggle("pressed", raw >= 10);
+  });
+  const selected = selectedKey(),
+    raw = Number(state.hardware.travelValues.get(selected.id) || 0),
+    mm = Math.min(4, Math.max(0, raw / 1000)),
+    panel = document.querySelector("#livePressPanel"),
+    value = document.querySelector("#livePressValue"),
+    rawNode = document.querySelector("#livePressRaw"),
+    status = document.querySelector("#livePressStatus"),
+    pressed = keys
+      .map((key) => ({
+        key,
+        mm: Math.min(
+          4,
+          Math.max(0, Number(state.hardware.travelValues.get(key.id) || 0) / 1000),
+        ),
+      }))
+      .filter((entry) => entry.mm >= 0.01)
+      .sort((a, b) => b.mm - a.mm);
+  panel?.style.setProperty(
+    "--press-distance",
+    `${((mm / 4) * 100).toFixed(2)}%`,
+  );
+  if (value) value.innerHTML = `${mm.toFixed(3)} <small>mm</small>`;
+  if (rawNode) rawNode.textContent = String(raw);
+  if (status) {
+    status.textContent = `LIVE · ${pressed.length} PRESSED`;
+    status.classList.add("ready");
+    status.classList.remove("experimental");
+  }
+  const list = document.querySelector("#pressedKeyList");
+  if (list)
+    list.innerHTML = pressed.length
+      ? pressed
+          .map(
+            ({ key, mm: distance }) =>
+              `<span><b>${esc(key.n)}</b>${distance.toFixed(3)} mm</span>`,
+          )
+          .join("")
+      : "<em>Press any key to begin.</em>";
+}
+function stopTravelPolling(clear = false) {
+  if (state.timers.travel) clearTimeout(state.timers.travel);
+  state.timers.travel = null;
+  state.timers.travelGeneration += 1;
+  if (clear) state.hardware.travelValues.clear();
 }
 function updateLiveKeyboard(matrix) {
   state.hardware.liveMatrix = matrix;
@@ -227,7 +301,6 @@ function startLightingLive() {
   read();
 }
 function stopPolling() {
-  if (state.timers.travel) clearTimeout(state.timers.travel);
-  state.timers.travel = null;
+  stopTravelPolling();
   stopLightingPolling();
 }

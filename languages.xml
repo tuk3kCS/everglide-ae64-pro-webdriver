@@ -77,6 +77,7 @@
     <string key="settings">Device settings</string>
     <string key="featureLab">Advanced</string>
     <string key="diagnostics">Diagnostics</string>
+    <string key="about">About us</string>
     <string key="stagedEdits">Staged edits</string>
     <string key="stagedEditsBody">Apply reviews the staged changes, then writes them directly to the keyboard.</string>
     <string key="profile">Profile</string>
@@ -164,6 +165,7 @@
     <string key="settings">Cài đặt thiết bị</string>
     <string key="featureLab">Phòng thí nghiệm</string>
     <string key="diagnostics">Chẩn đoán</string>
+    <string key="about">Về chúng tôi</string>
     <string key="stagedEdits">Thay đổi tạm</string>
     <string key="stagedEditsBody">Nút Áp dụng cho xem lại thay đổi rồi ghi trực tiếp vào bàn phím.</string>
     <string key="profile">Hồ sơ</string>

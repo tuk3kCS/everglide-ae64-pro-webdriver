@@ -52,6 +52,14 @@ class FakeDevice {
       reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
       reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
     }
+    if (packet[0] === 4 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3];
+      for (let col = 0; col < 30; col += 1) {
+        const route = packet[3] === 1 && col < 2 ? 1200 + col * 1100 : 0;
+        reply[4 + col * 2] = route & 0xff;
+        reply[5 + col * 2] = route >>> 8;
+      }
+    }
     if (packet[0] === 3 && packet[1] === 1) {
       reply[2] = packet[2]; reply[3] = packet[3];
       for (let col = 0; col < 30; col += 1) {
@@ -90,9 +98,9 @@ async function main() {
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "js/app/*.js"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
@@ -119,6 +127,8 @@ async function main() {
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
+  if (!html.includes('data-page="about"') || html.indexOf('data-page="about"') < html.indexOf('data-page="diagnostics"')) throw new Error("About Us must appear below Diagnostics.");
+  if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");
   for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
@@ -277,6 +287,15 @@ async function main() {
   })()`, browser);
   equal(multipleSelection, [true, 1.25, 1.25], "Multiple selected keys must share staged configuration edits.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
+  const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
+  if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");
+  const livePressMarkup = vm.runInContext(`(state.page = "performance", state.livePressDistance = true, performancePage())`, browser);
+  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"'])
+    if (!livePressMarkup.includes(required)) throw new Error(`Live press distance omitted ${required}.`);
+  if ((livePressMarkup.match(/data-travel-tick=/g) || []).length !== 41) throw new Error("The switch gauge must mark 0.0–4.0 mm in 0.1 mm steps.");
+  if (!livePressMarkup.includes('class="press-distance-fill"')) throw new Error("The virtual keyboard must render a per-key live travel fill.");
+  if (!vm.runInContext("aboutPage()", browser).includes('src="about.html"')) throw new Error("About Us must render the author-owned HTML document.");
+  vm.runInContext("state.livePressDistance = false; state.page = 'overview'", browser);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
   for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
@@ -357,6 +376,13 @@ async function main() {
   const write = device.sent.at(-1).packet;
   equal(write.slice(0, 7), [4, 2, 2, 3, 1, 0xd0, 0x07], "Performance write header/actuation encoding failed.");
   if (write.length !== 64) throw new Error("Every HID report must be zero-padded to 64 bytes.");
+  vm.runInContext("state.transport = injectedTransport; state.page = 'performance'; state.livePressDistance = true; state.hardware.keyPositions.clear()", browser);
+  await vm.runInContext("startTravel()", browser);
+  const liveTravel = vm.runInContext("[state.hardware.travelValues.get(0), state.hardware.travelValues.get(1)]", browser);
+  equal(liveTravel, [1200, 2300], "Live press distance must retain simultaneous per-key Route values.");
+  const routeRows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === 1).slice(-6).map(({ packet }) => packet[3]);
+  equal(routeRows, [0, 1, 2, 3, 4, 5], "Live press distance must sample all six firmware rows.");
+  vm.runInContext("state.livePressDistance = false; stopTravelPolling(true); state.page = 'overview'", browser);
   await transport.setKeyCode({ row: 1, col: 2 }, 0x1234, 3);
   equal(device.sent.at(-1).packet.slice(0, 7), [3, 4, 3, 1, 2, 0x34, 0x12], "Four-layer keycode write encoding failed.");
   await transport.saveParameters(API.SAVE_GROUP.LAYOUT);

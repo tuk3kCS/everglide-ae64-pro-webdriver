@@ -10,7 +10,7 @@ The repository includes an automated GitHub Pages workflow. Before its first run
 
 [Open the GitHub Pages driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/)
 
-You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, and the modules under `js/app/`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
+You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, `about.html`, the switch-axis image, and the modules under `js/app/`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
 
 ## Run locally
 
@@ -41,7 +41,7 @@ Implemented now:
 - Four keymap layers with keyboard, media, mouse, and internal function groups
 - Per-key normal press/release, Rapid Trigger, RT first touch, and independent RT press/release distances
 - Per-key top and bottom dead zones; switch-axis metadata is preserved during writes
-- Hall calibration and live raw-travel test
+- Hall calibration and toggleable live press distance: a 0.0–4.0 mm switch gauge, millimeter readout, and simultaneous per-key travel fill
 - Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one approximately 10 Hz live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling
 - Drag selection plus Ctrl-click add/remove editing for keyboard keys and light-strip LEDs, with each mode restricted to its own physical region
@@ -49,6 +49,7 @@ Implemented now:
 - Local profiles plus JSON import/export
 - Optional experimental auto apply with a short edit debounce and verified device writes
 - XML-driven English/Vietnamese language selection through `languages.xml`
+- A standalone, author-editable About Us page in `about.html`
 - Visible/read-only inspection for DKS, MPT, MT, TGL, END, SOCD, RS, and macro capacity
 
 Deliberately deferred to the advanced release:
@@ -68,3 +69,7 @@ See [AE64_PROTOCOL.md](AE64_PROTOCOL.md) for the recovered command map and confi
 ## Adding a language
 
 Copy either `<language>` section in `languages.xml`, give it a unique `code` and display `name`, and translate its `<string>` values. Missing keys fall back to English. Keep the file well-formed XML and serve the site through HTTP(S); opening `index.html` directly cannot load the XML.
+
+## Editing About Us
+
+Edit `about.html` directly. It is a normal trusted HTML document shown inside the About Us workspace page, so authors can add headings, images, links, credits, or custom styling without changing the application JavaScript.

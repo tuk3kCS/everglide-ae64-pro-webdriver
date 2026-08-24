@@ -95,7 +95,9 @@ if (navigator.hid) {
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
       state.transport = null;
-      stopPolling();
+      state.livePressDistance = false;
+      stopTravelPolling(true);
+      stopLightingPolling();
       log("Keyboard disconnected");
       renderStatus();
       showToast("AE64 Pro disconnected.", true);

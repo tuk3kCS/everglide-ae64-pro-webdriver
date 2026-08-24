@@ -19,7 +19,9 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
       lighting &&
       state.liveLighting &&
       connected() &&
-      Array.isArray(state.hardware.liveMatrix);
+      Array.isArray(state.hardware.liveMatrix),
+    showPressDistance =
+      !hero && state.page === "performance" && state.livePressDistance;
   return `<div class="keyboard" aria-label="AE64 Pro keyboard">${layout
     .map(
       (row, uiRow) =>
@@ -50,14 +52,20 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 !lighting && !hero && state.selectedKeys.has(key.id),
               selected =
                 !hero &&
-                (lighting ? lightingSelected : keySelected);
+                (lighting ? lightingSelected : keySelected),
+              pressMm = Math.min(
+                4,
+                Number(state.hardware.travelValues.get(key.id) || 0) / 1000,
+              ),
+              pressPercent = Math.max(0, (pressMm / 4) * 100);
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)}" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}><b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${showPressDistance ? "live-press-key" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -105,6 +113,10 @@ function pageCopy() {
       t("diagnostics"),
       "Feature bitmap, device metadata, protocol surface, and session log.",
     ],
+    about: [
+      t("about"),
+      "Project background, credits, links, and other author-written content.",
+    ],
   }[state.page];
 }
 
@@ -129,9 +141,46 @@ function performanceControls() {
     return `${selectedCard()}<ul class="fact-list"><li><span>Axis slot</span><strong>${value.axis}</strong></li><li><span>Axis library ID</span><strong>${value.axisV2Id || "Not reported"}</strong></li><li><span>Maximum range</span><strong>${value.axisRangeMax || "Not reported"}</strong></li><li><span>Coefficient</span><strong>${value.axisCoefficient || "Not reported"}</strong></li><li><span>Available IDs</span><strong>${state.hardware.axisLibrary.length ? state.hardware.axisLibrary.join(", ") : "Connect to read"}</strong></li></ul><p>The basic release preserves these firmware-owned fields during every performance write.</p>`;
   if (state.performanceTab === "calibration")
     return `<div class="panel-head"><div><h2>Hall sensor calibration</h2><p>Start calibration, press every key fully several times, then stop and save.</p></div><span class="badge experimental">DEVICE-WIDE</span></div><div class="calibration-grid">${keys.map(() => "<i></i>").join("")}</div><div class="apply-row"><button class="button ghost" id="stopCalibration" type="button">Stop</button><button class="button primary" id="startCalibration" type="button">Start calibration</button></div>`;
-  const raw = state.hardware.travelValue || 0,
-    mm = Math.min(4, raw / 1000);
-  return `${selectedCard()}<div class="travel-meter" style="--travel:${Math.round((mm / 4) * 100)}%;--actuation:${Math.round((1 - value.normalPress / 4) * 100)}%"><div class="fill"></div><div class="line"></div><div class="value">${mm.toFixed(3)} mm</div></div><p>Raw route values are read from the selected physical row.</p><div class="apply-row"><button class="button ghost" id="stopTravel" type="button">Stop</button><button class="button primary" id="startTravel" type="button">Start live reading</button></div>`;
+  return `${selectedCard()}<p>Select an actuation tab above to edit this switch.</p>`;
+}
+function travelGaugeTicks() {
+  return Array.from({ length: 41 }, (_, index) => {
+    const distance = index / 10,
+      major = index % 5 === 0;
+    return `<i class="${major ? "major" : ""}" data-travel-tick="${distance.toFixed(1)}" style="--tick:${index}" title="${distance.toFixed(1)} mm">${major ? `<span>${distance.toFixed(index === 0 || index === 40 ? 2 : 1)}</span>` : ""}</i>`;
+  }).join("");
+}
+function livePressDistancePanel() {
+  const selected = selectedKey(),
+    raw = Number(state.hardware.travelValues.get(selected.id) || 0),
+    mm = Math.min(4, Math.max(0, raw / 1000)),
+    percent = (mm / 4) * 100,
+    active = keys
+      .map((key) => ({
+        key,
+        mm: Math.min(
+          4,
+          Math.max(0, Number(state.hardware.travelValues.get(key.id) || 0) / 1000),
+        ),
+      }))
+      .filter(({ mm: distance }) => distance >= 0.01)
+      .sort((a, b) => b.mm - a.mm);
+  return `<section class="panel full-span live-press-panel" id="livePressPanel" style="--press-distance:${percent.toFixed(2)}%">
+    <div class="panel-head"><div><h2>Live press distance</h2><p>Every visible switch is sampled from the firmware's Route matrix. The gauge follows the selected key while the keyboard preview fills every pressed key.</p></div><span id="livePressStatus" class="badge ${connected() ? "ready" : "experimental"}">${connected() ? "LIVE · READING" : "CONNECT REQUIRED"}</span></div>
+    <div class="live-press-layout">
+      <div class="axis-visual" aria-label="Selected switch travel from zero to four millimeters">
+        <img src="assets/images/axis.png" alt="Magnetic switch axis outline">
+        <div class="axis-gauge-pole"><i class="axis-gauge-fill"></i></div>
+        <div class="axis-gauge-scale">${travelGaugeTicks()}</div>
+      </div>
+      <div class="live-press-readout">
+        <span>SELECTED SWITCH · <b id="livePressKey">${esc(selected.n)}</b></span>
+        <strong id="livePressValue">${mm.toFixed(3)} <small>mm</small></strong>
+        <div class="live-press-summary"><span><small>Raw route</small><b id="livePressRaw">${raw}</b></span><span><small>Range</small><b>0.0–4.0 mm</b></span><span><small>Resolution</small><b>0.001 mm</b></span></div>
+        <div><h3>Pressed keys</h3><p>Multiple switches remain visible at the same time.</p><div class="pressed-key-list" id="pressedKeyList">${active.length ? active.map(({ key, mm: distance }) => `<span><b>${esc(key.n)}</b>${distance.toFixed(3)} mm</span>`).join("") : "<em>Press any key to begin.</em>"}</div></div>
+      </div>
+    </div>
+  </section>`;
 }
 function performancePage() {
   const tabs = [
@@ -139,9 +188,8 @@ function performancePage() {
     ["deadzone", "Dead zones"],
     ["axis", "Switch axis"],
     ["calibration", "Calibration"],
-    ["travel", "Travel test"],
   ];
-  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""}">${label}</button>`).join("")}</div>${performanceControls()}</section></div>`;
+  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""}">${label}</button>`).join("")}</div>${performanceControls()}<label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Read every Hall switch and show simultaneous travel directly on the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() ? "" : "disabled"}></label></section>${state.livePressDistance ? livePressDistancePanel() : ""}</div>`;
 }
 function combinationEditor() {
   const combination = state.mappingCombination,
@@ -338,7 +386,7 @@ function settingsPage() {
   const systemOptions = mappedOptions(
     SYSTEM_MODE_OPTIONS,
     settings.systemMode,
-    state.hardware.systemModes,
+    [],
     (option) => option.label,
   );
   const pollingOptions = mappedOptions(
@@ -425,6 +473,9 @@ function diagnosticsPage() {
   const info = state.hardware.info || {};
   return `<div class="page-grid"><section class="panel"><div class="panel-head"><div><h2>Device identity</h2><p>Configuration HID collection metadata.</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "LIVE" : "DEMO"}</span></div><ul class="fact-list"><li><span>VID:PID</span><strong>1CA6:300A</strong></li><li><span>Board ID</span><strong>${esc(info.boardIdHex || "0030000A expected")}</strong></li><li><span>Firmware</span><strong>${esc(info.firmware || "Connect to read")}</strong></li><li><span>Protocol</span><strong>${state.hardware.protocol ? `${state.hardware.protocol.main}.${state.hardware.protocol.sub}` : "Connect to read"}</strong></li><li><span>Serial</span><strong>${esc(info.serial || "Connect to read")}</strong></li><li><span>RT precision</span><strong>${Number(state.hardware.precision || 0.001).toFixed(3)} mm</strong></li></ul><div class="apply-row"><button class="button ghost" id="readLayoutStyle" type="button">Read layout metadata</button><button class="button ghost" id="exportLog" type="button">Export session log</button></div></section><section class="panel"><div class="panel-head"><div><h2>Firmware capabilities</h2><p>Hidden generic features remain visible even when their bit is off.</p></div></div>${capabilityCards()}</section><section class="panel full-span"><div class="panel-head"><div><h2>Supported protocol surface</h2><p>Firmware upgrade and bootloader commands are intentionally absent.</p></div><span class="badge ready">NO UPDATER</span></div><div class="capability-grid">${["Device identity", "Profiles", "System settings", "Four key layers", "Hall performance", "Raw axis data", "Base RGB", "Custom RGB", "Advanced key reads", "Macro reads", "Calibration", "Read-back verify"].map((name) => `<article class="capability yes"><span>Available</span><strong>${name}</strong></article>`).join("")}</div><pre class="raw-output">${esc(JSON.stringify({ layoutStyle: state.hardware.layoutStyle, recent: state.hardware.logs.slice(0, 12) }, null, 2))}</pre></section></div>`;
 }
+function aboutPage() {
+  return `<section class="panel about-shell"><div class="panel-head"><div><h2>About us</h2><p>This page is authored as ordinary HTML in <code>about.html</code>.</p></div><span class="badge ready">AUTHOR HTML</span></div><iframe class="about-frame" src="about.html" title="About the AE64 Pro Control project"></iframe></section>`;
+}
 
 function render() {
   stopPolling();
@@ -443,6 +494,7 @@ function render() {
     settings: settingsPage,
     advanced: advancedPage,
     diagnostics: diagnosticsPage,
+    about: aboutPage,
   };
   document.querySelector("#pageContent").innerHTML = pages[state.page]();
   renderToolbar();
