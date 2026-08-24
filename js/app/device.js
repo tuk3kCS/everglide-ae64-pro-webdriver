@@ -19,6 +19,13 @@ async function selectKey(id) {
     showToast(error.message, true);
   }
 }
+async function readFnLayerTarget() {
+  if (!connected()) return null;
+  const fn = keys.find((key) => key.n === "Fn"), result = await state.transport.getKeyCode(position(fn), 0);
+  state.profile.keycodes[0][fn.id] = result.keycode;
+  state.hardware.keycodes.set(`0:${fn.id}`, result.keycode);
+  return result.keycode;
+}
 function openWorkspace() {
   document.querySelector("#topbar").classList.add("hidden");
   document.querySelector("main").classList.add("hidden");
@@ -26,7 +33,8 @@ function openWorkspace() {
   render();
   window.scrollTo({ top: 0 });
 }
-function returnHome() {
+async function returnHome() {
+  if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   stopPolling();
   document.querySelector("#workspace").classList.add("hidden");
   document.querySelector("#topbar").classList.remove("hidden");
@@ -201,6 +209,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       ),
     );
     await readKeymapLayer(state.profile.layer);
+    await optional("Fn layer target", readFnLayerTarget);
     await readSelectedKey();
     state.original = clone(state.profile);
     clearDirty();

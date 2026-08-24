@@ -19,7 +19,7 @@ document
   .forEach((button) =>
     button.addEventListener("click", () => connectKeyboard()),
   );
-document.querySelector("#backHomeButton").addEventListener("click", returnHome);
+document.querySelector("#backHomeButton").addEventListener("click", () => returnHome());
 document
   .querySelector("#applyButton")
   .addEventListener("click", requestApplyChanges);
@@ -29,9 +29,10 @@ document
 document
   .querySelector("#autoApplyToggle")
   .addEventListener("change", (event) => setAutoApply(event.target.checked));
-document.querySelector("#sideNav").addEventListener("click", (event) => {
+document.querySelector("#sideNav").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-page]");
   if (button) {
+    if (state.calibrationActive && button.dataset.page !== "performance") await stopCalibration(true);
     state.page = button.dataset.page;
     render();
   }
@@ -98,8 +99,9 @@ if (navigator.hid) {
       state.livePressDistance = false;
       stopTravelPolling(true);
       stopLightingPolling();
+      resetCalibrationSession();
       log("Keyboard disconnected");
-      renderStatus();
+      render();
       showToast("AE64 Pro disconnected.", true);
     }
   });

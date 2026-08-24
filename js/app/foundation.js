@@ -605,14 +605,14 @@ function defaultKeycode(key) {
   );
 }
 const defaultPalette = () => [
-  "#73f0c0",
-  "#70a5ff",
-  "#d17cff",
-  "#ff7894",
-  "#ffc36d",
+  "#ff0000",
+  "#00ff00",
+  "#ffff00",
+  "#0000ff",
+  "#ff00ff",
+  "#00ffff",
   "#ffffff",
-  "#33bdd0",
-  "#587482",
+  "#000000",
 ];
 const defaultProfile = () => ({
   schema: 4,
@@ -831,7 +831,7 @@ const state = {
   lightingSelectedKeys: new Set(),
   stripSelection: new Set([0]),
   selectionDrag: null,
-  liveLighting: true, livePressDistance: false,
+  liveLighting: true, livePressDistance: false, calibrationActive: false, calibrationBusy: false, theme: "mint",
   mappingGroup: "keyboard",
   mappingSearch: "",
   profile: loadSavedProfile(),
@@ -861,7 +861,7 @@ const state = {
     macroSpace: null,
     layoutStyle: null,
     keyPositions: new Map(),
-    travelValues: new Map(),
+    travelValues: new Map(), calibrationAdc: new Map(), calibrationRoute: new Map(), calibrationStatus: new Map(), fnPressed: false, fnStatus: 0,
     performance: new Map(),
     keycodes: new Map(),
     logs: [],
@@ -881,7 +881,7 @@ const state = {
     travel: null, travelGeneration: 0,
     lighting: null,
     lightingGeneration: 0,
-    calibration: null,
+    calibration: null, calibrationGeneration: 0,
   },
   toastTimer: null,
 };

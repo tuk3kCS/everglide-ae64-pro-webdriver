@@ -382,6 +382,7 @@ function revertChanges() {
   showToast("Staged changes reverted.");
 }
 async function switchProfile(index) {
+  if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   if (dirtyCount()) {
     showToast("Apply or revert changes before switching profiles.", true);
     renderToolbar();
@@ -422,6 +423,7 @@ async function switchProfile(index) {
         liveStrip: null,
       });
       await readKeymapLayer(state.profile.layer);
+      await optional("Fn layer target", readFnLayerTarget);
       await readSelectedKey();
       state.original = clone(state.profile);
       log("Profile switched", index);

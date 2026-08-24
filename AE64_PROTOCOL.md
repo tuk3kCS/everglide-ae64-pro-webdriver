@@ -90,13 +90,26 @@ Read with `04 01 row col`; write with `04 02 row col …`.
 
 Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. The basic UI edits only the decoded performance fields and preserves axis/calibration metadata from a fresh hardware read.
 
+Calibration is a device-wide live session rather than a normal staged performance write:
+
+1. Send `02 06 00` to enter calibration.
+2. For every firmware row `0…5`, repeatedly read ADC (`04 03 00 row`), Route (`04 03 01 row`), and Calibrate (`04 03 02 row`). The original driver requests all three matrices and places their values directly on the matching virtual keys.
+3. The raw ADC value is shown at the lower-left of each key. Calibration status `0` is uncalibrated/red, `1` is calibrated/blue, and `2` is newly calibrated/green. The key fill is `route / axisRangeMax`; status `2` forces a full-height fill. A missing per-key range falls back to 4,000 raw units.
+4. Send `02 06 01`, then commit save group `1`. The original driver normalizes in-memory status `2` to `1` after the session ends.
+
+The key-status matrix uses the same row/column addressing. The original driver's live travel test considers values `1…7` pressed and `0` idle.
+
 ## Lighting
 
 Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. The manufacturer library contains 23 generic effect indexes, but this AE64's `02 08 00` reply is `02 08 00 02 00 14 06 0F 01 05 01 26`: area 0 reports **20** modes and area 1 reports **5** modes. The UI therefore exposes `L1–L20` for the keyboard and `L1–L5` for Decorative1. Brightness and speed use the continuous range `0–100`. Direction is `0 = forward`, `1 = backward`; the captured UI does not define left/right values.
 
 The main keyboard uses the manufacturer's double-lighting open enum as a bit mask: `0 = off`, `1 = lower/south-facing only`, `2 = upper/north-facing only`, and `3 = both`. The packet capture reads back value `3`, while global command `02 0A 00` reports double-lighting support as enabled. Decorative areas use the single-lighting values `0 = off`, `1 = on`.
 
-Palette configuration uses subtype `01` with exactly eight `B,G,R,hue` records. The base record's palette index selects one of those stored slots; editing a slot and selecting a slot are separate operations.
+Palette configuration uses subtype `01` with exactly eight `B,G,R,hue` records. The base record's palette index selects one of those stored slots; editing a slot and selecting a slot are separate operations. In the captured AE64 response, the eight RGB records are red, green, yellow, blue, magenta, cyan, white, and black, and all eight `hue` bytes are `00`.
+
+The manufacturer's UI treats palette index `0` specially: it draws a rainbow swatch and does not offer an RGB editor for that entry. The stored red record is therefore a seed/placeholder, not the visible meaning of the selector. Rainbow is selected by base `paletteIndex = 0`; it is not encoded by a nonzero `hue` byte. Indexes `1…7` are the seven editable solid colors.
+
+Fn does not own a separate palette or lighting configuration. Keycodes `F100…F103` switch to Main/Fn1/Fn2/Fn3, and lighting keycodes mapped on the active layer operate on the same area-0 lighting state. The firmware renders any Fn-time visual response into the normal current framebuffer. The alternative driver reads the Fn key's type-3 key-status cell beside the framebuffer and uses that only to show the active layer; it never fabricates a second lighting bank.
 
 The custom matrix and current LED framebuffer are read as `05 03 area packet` and custom overrides are written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. `flag = FF` enables a custom override; `00` leaves that LED following the base effect. During dynamic effects the RGB bytes still contain the instantaneous rendered LED color when the flag is `00`.
 

@@ -44,6 +44,8 @@ Implemented now:
 - Hall calibration and toggleable live press distance: a 0.0–4.0 mm switch gauge, millimeter readout, and simultaneous per-key travel fill
 - Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one approximately 10 Hz live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling
+- Captured rainbow palette index behavior, live Fn-layer status, and firmware-rendered Fn lighting readback
+- Mint, graphite Dark, and cool Light appearances with browser-local persistence
 - Drag selection plus Ctrl-click add/remove editing for keyboard keys and light-strip LEDs, with each mode restricted to its own physical region
 - Windows/macOS system mode, 250–8,000 Hz polling rate, RGB sleep timer, and shake optimization
 - Local profiles plus JSON import/export

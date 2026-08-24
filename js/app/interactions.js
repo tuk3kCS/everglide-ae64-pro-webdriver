@@ -141,7 +141,7 @@ function stopKeySelection() {
       .catch((error) => showToast(error.message, true));
 }
 function beginKeySelection(event) {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || state.calibrationActive) return;
   event.preventDefault();
   const surface = event.currentTarget,
     startKey = Number(event.target.closest("[data-key]")?.dataset.key);
@@ -293,7 +293,8 @@ function bindPage() {
     }),
   );
   document.querySelectorAll("[data-performance-tab]").forEach((button) =>
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
+      if (state.calibrationActive && button.dataset.performanceTab !== "calibration") await stopCalibration(true);
       state.performanceTab = button.dataset.performanceTab;
       render();
     }),
@@ -324,12 +325,9 @@ function bindPage() {
         render();
         showToast("Performance settings staged for all 64 keys.");
       });
-    document
-      .querySelector("#startCalibration")
-      ?.addEventListener("click", startCalibration);
-    document
-      .querySelector("#stopCalibration")
-      ?.addEventListener("click", stopCalibration);
+    document.querySelector("#calibrationToggle")?.addEventListener("click", () =>
+      state.calibrationActive ? stopCalibration(true) : startCalibration(),
+    );
     document
       .querySelector("#livePressDistanceToggle")
       ?.addEventListener("change", (event) => {
@@ -440,6 +438,10 @@ function bindPage() {
       .querySelector("#lightingLive")
       ?.addEventListener("change", (event) => {
         state.liveLighting = event.target.checked;
+        if (!state.liveLighting) {
+          state.hardware.fnPressed = false;
+          state.hardware.fnStatus = 0;
+        }
         render();
       });
     const stageDoubleLighting = (mask, enabled) => {
@@ -514,6 +516,8 @@ function bindPage() {
       const strip = target === "strip",
         base = strip ? stripLighting.base : lighting.base,
         palette = strip ? stripLighting.palette : lighting.palette;
+      if (Number(base.paletteIndex) === 0)
+        return showToast("Rainbow is firmware palette index 0 and is not an editable RGB slot.", true);
       palette[Number(base.paletteIndex)] = color;
       if (strip) state.dirty.decorativePalette = true;
       else state.dirty.lightingPalette = true;
@@ -652,6 +656,9 @@ function bindPage() {
     if (state.liveLighting && connected()) startLightingLive();
   }
   if (state.page === "settings") {
+    document.querySelectorAll("[data-theme-choice]").forEach((button) =>
+      button.addEventListener("click", () => setTheme(button.dataset.themeChoice)),
+    );
     document
       .querySelector("#systemMode")
       ?.addEventListener("change", (event) =>

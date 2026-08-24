@@ -8,20 +8,30 @@
  * Contains keyboard markup, every page renderer, and shared status rendering.
  */
 
+const RAINBOW_PREVIEW = Object.freeze(["#ff334f", "#ff9d2e", "#ffe73d", "#37df75", "#30c8f2", "#5378ff", "#a75cff", "#f04dc1"]);
+function fnTargetLayer() {
+  const fn = keys.find((key) => key.n === "Fn"), code = fn ? displayedKeycode(fn, 0) : 0;
+  return code >= 0xf100 && code <= 0xf103 ? code - 0xf100 : 0;
+}
+function calibrationStatusMeta(value) {
+  return Number(value) === 2
+    ? { label: "New", className: "new" }
+    : Number(value) === 1
+      ? { label: "Calibrated", className: "calibrated" }
+      : { label: "Uncalibrated", className: "uncalibrated" };
+}
 function keyboardHtml({ hero = false, lighting = false } = {}) {
-  const layer = Number(state.profile.layer),
+  const layer = Number(lighting ? state.hardware.fnPressed ? fnTargetLayer() : 0 : state.profile.layer),
     light = state.profile.lighting,
-    baseColor =
-      light.palette[Number(light.base.paletteIndex)] ||
-      light.palette[0] ||
-      "#000000",
+    paletteIndex = Number(light.base.paletteIndex),
+    baseColor = light.palette[paletteIndex] || light.palette[0] || "#000000",
     live =
       lighting &&
       state.liveLighting &&
       connected() &&
       Array.isArray(state.hardware.liveMatrix),
-    showPressDistance =
-      !hero && state.page === "performance" && state.livePressDistance;
+    showCalibration = !hero && state.page === "performance" && state.performanceTab === "calibration" && state.calibrationActive,
+    showPressDistance = !showCalibration && !hero && state.page === "performance" && state.livePressDistance;
   return `<div class="keyboard" aria-label="AE64 Pro keyboard">${layout
     .map(
       (row, uiRow) =>
@@ -41,7 +51,9 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 : lighting
                   ? custom
                     ? light.perKey[key.id]
-                    : baseColor
+                    : paletteIndex === 0
+                      ? RAINBOW_PREVIEW[key.id % RAINBOW_PREVIEW.length]
+                      : baseColor
                   : light.perKey[key.id],
               lightingSelected =
                 lighting &&
@@ -57,15 +69,20 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 4,
                 Number(state.hardware.travelValues.get(key.id) || 0) / 1000,
               ),
-              pressPercent = Math.max(0, (pressMm / 4) * 100);
+              pressPercent = Math.max(0, (pressMm / 4) * 100),
+              calibrationAdc = Number(state.hardware.calibrationAdc.get(key.id) || 0),
+              calibrationRoute = Number(state.hardware.calibrationRoute.get(key.id) || 0),
+              calibrationState = calibrationStatusMeta(state.hardware.calibrationStatus.get(key.id)),
+              calibrationRange = Number(state.profile.performance[key.id]?.axisRangeMax) || 4000,
+              calibrationPercent = calibrationState.className === "new" ? 100 : Math.min(100, Math.max(0, calibrationRoute / calibrationRange * 100));
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${showPressDistance ? "live-press-key" : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : "Main palette"}"></i>` : ""}</button>`;
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span><span class="calibration-state">${calibrationState.label}</span>` : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -140,8 +157,17 @@ function performanceControls() {
   if (state.performanceTab === "axis")
     return `${selectedCard()}<ul class="fact-list"><li><span>Axis slot</span><strong>${value.axis}</strong></li><li><span>Axis library ID</span><strong>${value.axisV2Id || "Not reported"}</strong></li><li><span>Maximum range</span><strong>${value.axisRangeMax || "Not reported"}</strong></li><li><span>Coefficient</span><strong>${value.axisCoefficient || "Not reported"}</strong></li><li><span>Available IDs</span><strong>${state.hardware.axisLibrary.length ? state.hardware.axisLibrary.join(", ") : "Connect to read"}</strong></li></ul><p>The basic release preserves these firmware-owned fields during every performance write.</p>`;
   if (state.performanceTab === "calibration")
-    return `<div class="panel-head"><div><h2>Hall sensor calibration</h2><p>Start calibration, press every key fully several times, then stop and save.</p></div><span class="badge experimental">DEVICE-WIDE</span></div><div class="calibration-grid">${keys.map(() => "<i></i>").join("")}</div><div class="apply-row"><button class="button ghost" id="stopCalibration" type="button">Stop</button><button class="button primary" id="startCalibration" type="button">Start calibration</button></div>`;
+    return calibrationControls();
   return `${selectedCard()}<p>Select an actuation tab above to edit this switch.</p>`;
+}
+function calibrationControls() {
+  const statuses = keys.map((key) => Number(state.hardware.calibrationStatus.get(key.id) || 0)),
+    calibrated = statuses.filter((status) => status === 1).length,
+    fresh = statuses.filter((status) => status === 2).length,
+    maxRoute = Math.max(0, ...keys.map((key) => Number(state.hardware.calibrationRoute.get(key.id) || 0))),
+    active = state.calibrationActive,
+    buttonLabel = state.calibrationBusy ? "Working…" : active ? "Stop & save calibration" : "Start calibration";
+  return `<div class="calibration-control ${active ? "active" : ""}"><div class="panel-head"><div><h2>${active ? "Calibration in progress" : "Hall sensor calibration"}</h2><p>${active ? "Press every physical key from the top to the bottom of its travel several times. The keyboard updates each key live." : "The firmware re-measures every Hall switch. This is a live device operation, not a staged profile edit."}</p></div><span id="calibrationStatusBadge" class="badge ${active ? "ready" : "experimental"}">${active ? "LIVE · 18 MATRIX READS" : "DEVICE-WIDE"}</span></div><div class="calibration-summary"><span><small>Calibrated</small><b id="calibrationKnown">${calibrated}</b></span><span><small>New this session</small><b id="calibrationFresh">${fresh}</b></span><span><small>Maximum route</small><b id="calibrationMaxRoute">${maxRoute}</b></span></div><div class="calibration-legend"><span><i class="uncalibrated"></i>Uncalibrated</span><span><i class="calibrated"></i>Calibrated</span><span><i class="new"></i>New calibration</span></div><ol class="calibration-steps"><li>Start calibration, then use the physical keyboard.</li><li>Press every switch fully several times at a steady pace.</li><li>Blue fill follows travel; green means newly calibrated.</li><li>Stop and save only after all keys have been exercised.</li></ol><div class="apply-row"><button class="button ${active ? "ghost" : "primary"}" id="calibrationToggle" type="button" ${!connected() || state.calibrationBusy ? "disabled" : ""}>${buttonLabel}</button></div></div>`;
 }
 function travelGaugeTicks() {
   return Array.from({ length: 41 }, (_, index) => {
@@ -189,7 +215,8 @@ function performancePage() {
     ["axis", "Switch axis"],
     ["calibration", "Calibration"],
   ];
-  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""}">${label}</button>`).join("")}</div>${performanceControls()}<label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Read every Hall switch and show simultaneous travel directly on the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() ? "" : "disabled"}></label></section>${state.livePressDistance ? livePressDistancePanel() : ""}</div>`;
+  const calibration = state.performanceTab === "calibration";
+  return `<div class="page-grid">${boardPanel(calibration ? { title: state.calibrationActive ? "Live calibration matrix" : "AE64 calibration map", description: state.calibrationActive ? "Raw ADC appears at the lower left of every key. Status is centered, and the blue fill follows the captured Route value." : "Start calibration to replace the normal key labels with the firmware's live ADC, route, and calibration status." } : {})}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""} ${state.calibrationActive && id !== "calibration" ? "locked" : ""}">${label}</button>`).join("")}</div>${performanceControls()}${calibration ? "" : `<label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Read every Hall switch and show simultaneous travel directly on the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() ? "" : "disabled"}></label>`}</section>${!calibration && state.livePressDistance ? livePressDistancePanel() : ""}</div>`;
 }
 function combinationEditor() {
   const combination = state.mappingCombination,
@@ -261,9 +288,10 @@ function lightingTunePanel(base, target, area) {
 function lightingPalettePanel(base, palette, target) {
   const paletteIndex = Math.max(0, Math.min(7, Number(base.paletteIndex))),
     activeColor = palette[paletteIndex] || "#000000",
+    rainbow = paletteIndex === 0,
     colorId = target === "main" ? "paletteColor" : "stripPaletteColor",
     hexId = target === "main" ? "paletteHex" : "stripPaletteHex";
-  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>${t("lightingPaletteHint")}</p></div><span class="badge ready">SLOT ${paletteIndex + 1}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active" : ""}" style="--swatch:${esc(swatch)}" aria-label="Select palette color ${index + 1}" title="${esc(swatch)}"><span>${String(index + 1).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor"><input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}"><label class="field"><span>${t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${esc(activeColor.toUpperCase())}"><small>RGB ${parseInt(activeColor.slice(1, 3), 16)}, ${parseInt(activeColor.slice(3, 5), 16)}, ${parseInt(activeColor.slice(5, 7), 16)} · palette slot ${paletteIndex + 1}</small></label><div class="palette-note"><strong>Stored on the keyboard</strong><span>This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.</span></div></div></section>`;
+  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor ${rainbow ? "rainbow-selected" : ""}">${rainbow ? `<div class="rainbow-chip" aria-hidden="true"><input id="${colorId}" type="color" value="${esc(activeColor)}" disabled></div>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}<label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `RGB ${parseInt(activeColor.slice(1, 3), 16)}, ${parseInt(activeColor.slice(3, 5), 16)}, ${parseInt(activeColor.slice(5, 7), 16)} · firmware index ${paletteIndex}`}</small></label><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
 }
 function dualLightingControls(base) {
   const upper =
@@ -272,12 +300,18 @@ function dualLightingControls(base) {
       base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER);
   return `<section class="panel full-span dual-lighting-card"><div class="panel-head"><div><h2>Upper / lower lighting switch</h2><p>The firmware encodes the two LED orientations as bits in the main power value.</p></div><span class="badge ${state.hardware.doubleLighting ? "ready" : ""}">${state.hardware.doubleLighting ? "REPORTED" : "CAPTURED"}</span></div><div class="dual-lighting-switches"><label class="switch-row"><span><b>${t("lightingUpper")}</b><small>Original driver: Upper Lighting Switch · bit 2</small></span><input id="upperLighting" class="toggle" type="checkbox" ${upper ? "checked" : ""}></label><label class="switch-row"><span><b>${t("lightingLower")}</b><small>Original driver: Lower Lighting Switch · bit 1</small></span><input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : ""}></label></div></section>`;
 }
+function fnLightingPanel() {
+  const target = fnTargetLayer(), code = 0xf100 + target,
+    monitored = connected() && state.liveLighting,
+    pressed = monitored && state.hardware.fnPressed;
+  return `<section class="panel full-span fn-lighting-card ${pressed ? "pressed" : ""}"><div class="fn-lighting-icon">Fn</div><div><h2>Fn lighting behavior</h2><p>The Fn key is mapped to <b>${esc(keycodeLabel(code))}</b>. While it is held, firmware activates layer ${target + 1}; any lighting commands mapped there change the same keyboard lighting bank. There is no separate Fn palette.</p><small>The live framebuffer already contains the keyboard's real Fn lighting response, so the preview follows it without simulating colors.</small></div><span id="fnLightingStatus" class="badge ${pressed ? "ready" : ""}">${pressed ? `FN HELD · LAYER ${target + 1}` : monitored ? "WATCHING FN" : "LIVE VIEW REQUIRED"}</span></section>`;
+}
 function mainLightingPage() {
   const lighting = state.profile.lighting,
     base = lighting.base,
     reportedCount = lightingModeCount(0, AE64_MAIN_MODE_COUNT),
     count = LIGHTING_MODE_OPTIONS.length;
-  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingMainKeyboard"), "Controls the main keyboard LED area.")}<section class="panel full-span capture-note experimental-note"><strong>L21–L23 are experimental</strong><span>AE64 area 0 advertises values 0–19. Catalog values 20–22 are exposed for testing; Apply accepts a value only when the keyboard reads it back unchanged.</span></section>${dualLightingControls(base)}${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
+  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingMainKeyboard"), "Controls the main keyboard LED area.")}<section class="panel full-span capture-note experimental-note"><strong>L21–L23 are experimental</strong><span>AE64 area 0 advertises values 0–19. Catalog values 20–22 are exposed for testing; Apply accepts a value only when the keyboard reads it back unchanged.</span></section>${dualLightingControls(base)}${fnLightingPanel()}${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
 }
 function perKeyLightingPage() {
   const lighting = state.profile.lighting,
@@ -299,8 +333,9 @@ function perKeyLightingPage() {
 }
 function stripLedButton(index, side) {
   const lighting = state.profile.lighting.decorative,
+    paletteIndex = Number(lighting.base.paletteIndex),
     baseColor =
-      lighting.palette[Number(lighting.base.paletteIndex)] ||
+      (paletteIndex === 0 ? RAINBOW_PREVIEW[index % RAINBOW_PREVIEW.length] : lighting.palette[paletteIndex]) ||
       lighting.palette[0] ||
       "#000000",
     live =
@@ -382,7 +417,9 @@ function mappedOptions(options, current, supportedValues, labelFor) {
     .join("");
 }
 function settingsPage() {
-  const settings = state.profile.settings;
+  const settings = state.profile.settings,
+    activeProfile = state.profile.profileIndex + 1,
+    connectedLabel = connected() ? `Firmware ${esc(state.hardware.info?.firmware || "?")}` : "Offline workspace";
   const systemOptions = mappedOptions(
     SYSTEM_MODE_OPTIONS,
     settings.systemMode,
@@ -397,8 +434,9 @@ function settingsPage() {
   );
   const reconnect = connected()
     ? ""
-    : `<div class="apply-row"><button class="button primary" id="reconnectKeyboard" type="button">Reconnect keyboard</button></div>`;
-  return `<div class="page-grid three"><section class="panel"><div class="panel-head"><div><h2>USB & scanning</h2><p>General firmware settings from the original driver.</p></div></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Firmware value 0 is Windows; value 1 is macOS.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>250 to 8,000 Hz. Higher rates use more USB processing time.</small></label><label class="field"><span>RGB sleep (minutes)</span><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"></label></div><div class="switch-row"><div><h3>Shake optimization</h3><p>Firmware key-stability optimization.</p></div><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></div>${reconnect}</section><section class="panel"><div class="panel-head"><div><h2>Profiles</h2><p>Switch or rename onboard configurations.</p></div></div><label class="field"><span>Profile name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}"></label><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save name</button></div><ul class="fact-list"><li><span>Active slot</span><strong>${state.profile.profileIndex + 1}</strong></li><li><span>Available slots</span><strong>${state.hardware.configIndexes.length}</strong></li></ul></section><section class="panel"><div class="panel-head"><div><h2>Files & recovery</h2><p>Portable JSON, independent of the manufacturer cloud.</p></div></div><div class="apply-row"><button class="button ghost" id="importProfile" type="button">Import JSON</button><button class="button primary" id="exportProfile" type="button">Export JSON</button></div><hr style="border:0;border-top:1px solid var(--line);margin:22px 0"><h3>Factory restore</h3><p>This destructive command stays visible but disabled until physical-device verification.</p><button class="button danger" type="button" disabled>Restore factory settings</button></section></div>`;
+    : `<button class="button primary" id="reconnectKeyboard" type="button">Reconnect keyboard</button>`;
+  const themes = THEME_OPTIONS.map((theme) => `<button class="theme-choice ${state.theme === theme.value ? "active" : ""}" type="button" data-theme-choice="${theme.value}" aria-pressed="${state.theme === theme.value}" style="--theme-color:${theme.color}"><i><span></span></i><b>${theme.label}</b><small>${theme.hint}</small></button>`).join("");
+  return `<div class="settings-page"><section class="panel settings-hero"><div class="settings-hero-copy"><span class="eyebrow">DEVICE CONTROL CENTER</span><h2>AE64 Pro settings</h2><p>Hardware behavior, onboard profiles, local backups, and the driver's appearance in one quieter workspace.</p></div><div class="settings-connection ${connected() ? "online" : ""}"><i></i><div><small>${connected() ? "KEYBOARD CONNECTED" : "KEYBOARD OFFLINE"}</small><b>${connectedLabel}</b></div>${reconnect}</div><div class="settings-hero-facts"><span><small>Active profile</small><b>0${activeProfile}</b></span><span><small>System</small><b>${Number(settings.systemMode) === 1 ? "macOS" : "Windows"}</b></span><span><small>Polling</small><b>${POLLING_RATE_OPTIONS.find((option) => option.value === Number(settings.reportRate))?.hz.toLocaleString() || "?"} Hz</b></span></div></section><div class="settings-grid"><section class="panel settings-card settings-usb"><div class="settings-card-icon">↯</div><div class="panel-head"><div><h2>System & USB</h2><p>Firmware-owned operating mode and scan behavior.</p></div><span class="badge ready">ONBOARD</span></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Windows = 0 · macOS = 1 in the original protocol.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>Changing this restarts the USB interface and reconnects automatically.</small></label><label class="field"><span>RGB sleep timer</span><div class="input-with-unit"><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"><span>minutes</span></div><small>Use 0 only if you want the firmware to keep lighting awake.</small></label></div><label class="switch-row setting-switch"><span><b>Shake optimization</b><small>Firmware key-stability filtering for small magnetic fluctuations.</small></span><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></label></section><section class="panel settings-card settings-profile"><div class="settings-card-icon">P${activeProfile}</div><div class="panel-head"><div><h2>Onboard profile</h2><p>Rename the currently loaded configuration.</p></div><span class="badge">${state.hardware.configIndexes.length} SLOTS</span></div><label class="field"><span>Profile ${activeProfile} name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${activeProfile}`)}"><small>The quick switch remains at the top of the navigation bar.</small></label><div class="profile-slot-row">${state.hardware.configIndexes.map((index) => `<span class="${index === state.profile.profileIndex ? "active" : ""}">${index + 1}</span>`).join("")}</div><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save profile name</button></div></section><section class="panel settings-card settings-appearance"><div class="settings-card-icon">◐</div><div class="panel-head"><div><h2>Appearance</h2><p>Inspired by the token-based light and dark surfaces found in the ATK Hub capture. Stored only in this browser.</p></div><span class="badge ready">INSTANT</span></div><div class="theme-grid" role="group" aria-label="Driver appearance">${themes}</div></section><section class="panel settings-card settings-files"><div class="settings-card-icon">⇅</div><div class="panel-head"><div><h2>Backup & portability</h2><p>Keep a local JSON copy independent of the manufacturer cloud.</p></div></div><div class="file-actions"><button class="button ghost" id="importProfile" type="button"><span>Import</span><small>Open a saved JSON profile</small></button><button class="button primary" id="exportProfile" type="button"><span>Export</span><small>Download the current workspace</small></button></div></section><section class="panel settings-card settings-recovery"><div class="settings-card-icon danger">!</div><div class="panel-head"><div><h2>Recovery</h2><p>Potentially destructive device operations remain deliberately guarded.</p></div><span class="badge experimental">LOCKED</span></div><div class="recovery-row"><div><b>Factory restore</b><small>Visible for completeness, disabled until a physical-device restore packet is captured and verified.</small></div><button class="button danger" type="button" disabled>Restore factory settings</button></div></section></div></div>`;
 }
 const ADVANCED_FEATURES = [
   [
@@ -479,6 +517,10 @@ function aboutPage() {
 
 function render() {
   stopPolling();
+  if (state.page !== "lighting" || !state.liveLighting) {
+    state.hardware.fnPressed = false;
+    state.hardware.fnStatus = 0;
+  }
   const [title] = pageCopy();
   document.querySelector("#pageTitle").textContent = title;
   document

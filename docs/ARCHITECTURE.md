@@ -10,12 +10,13 @@ The EPOMAKER HE30 driver was used as the structural reference: keep a small boot
 
 1. `protocol.js` — HID transport, packet codecs, constants, and commands.
 2. `js/app/foundation.js` — layout/catalog data, translations, application state, and shared helpers.
-3. `js/app/pages.js` — page markup and keyboard/status renderers.
-4. `js/app/interactions.js` — staged edits, page controls, and RGB selection gestures.
-5. `js/app/device.js` — connection, workspace reads, key reads, and write verification helpers.
-6. `js/app/live.js` — live RGB matrices, advanced inspection, calibration, travel tests, and polling.
-7. `js/app/profiles.js` — change review, apply/revert, onboard profiles, import, and export.
-8. `app.js` — permanent shell bindings and startup only.
+3. `js/app/theme.js` — Mint/Dark/Light appearance tokens and local persistence.
+4. `js/app/pages.js` — page markup and keyboard/status renderers.
+5. `js/app/interactions.js` — staged edits, page controls, and RGB selection gestures.
+6. `js/app/device.js` — connection, workspace reads, key reads, and write verification helpers.
+7. `js/app/live.js` — live RGB matrices, Fn status, calibration, travel tests, and polling.
+8. `js/app/profiles.js` — change review, apply/revert, onboard profiles, import, and export.
+9. `app.js` — permanent shell bindings and startup only.
 
 These are classic scripts that intentionally share top-level declarations. Do not add `async`, `defer`, or `type="module"` to individual script tags without converting the whole dependency model.
 
@@ -29,6 +30,7 @@ Page controls update the staged `state.profile` and mark the relevant dirty grou
 
 - Put reusable layout data, labels, or state defaults in `foundation.js`.
 - Put page HTML generation in `pages.js` and its temporary listeners in `interactions.js`.
+- Put browser-local appearance behavior in `theme.js`; themes must never change device data.
 - Put reads/writes and connection lifecycle in `device.js`; keep live or continuously sampled features in `live.js`.
 - Put staged-change review and profile persistence in `profiles.js`.
 - Keep `app.js` limited to permanent document listeners and startup.
