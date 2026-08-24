@@ -79,6 +79,13 @@
         <button data-page="settings" type="button"><span>◉</span><b data-i18n="settings">Device settings</b></button>
         <button data-page="diagnostics" type="button"><span>≋</span><b data-i18n="diagnostics">Diagnostics</b></button>
       </nav>
+      <section class="sidebar-profile" aria-label="Quick profile switch">
+        <div>
+          <span data-i18n="quickProfile">Quick profile</span>
+          <button id="quickProfileRename" type="button" data-i18n="rename">Rename</button>
+        </div>
+        <select id="quickProfileSelect" aria-label="Quick profile switch"></select>
+      </section>
       <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
     </aside>
 
@@ -110,6 +117,35 @@
   </section>
 
   <input class="hidden" id="profileFileInput" type="file" accept="application/json,.json">
+  <dialog class="app-dialog" id="applyReviewDialog" aria-labelledby="applyReviewTitle">
+    <form method="dialog">
+      <div class="dialog-icon warning" aria-hidden="true">!</div>
+      <div class="dialog-copy">
+        <p class="eyebrow" data-i18n="writeToKeyboard">WRITE TO KEYBOARD</p>
+        <h2 id="applyReviewTitle" data-i18n="applyReviewTitle">Review changes</h2>
+        <p data-i18n="applyReviewWarning">These changes will be written to the active onboard profile immediately.</p>
+      </div>
+      <ul class="change-review-list" id="applyReviewList"></ul>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="cancel" data-i18n="cancel">Cancel</button>
+        <button class="button primary" id="confirmApplyButton" type="button" data-i18n="writeNow">Write now</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog compact-dialog" id="profileRenameDialog" aria-labelledby="profileRenameTitle">
+    <form id="profileRenameForm" method="dialog">
+      <div class="dialog-copy">
+        <p class="eyebrow" data-i18n="quickProfile">QUICK PROFILE</p>
+        <h2 id="profileRenameTitle" data-i18n="renameProfile">Rename profile</h2>
+        <p data-i18n="renameProfileHint">The new name is written directly to the active onboard profile.</p>
+      </div>
+      <label class="field"><span data-i18n="profileName">Profile name</span><input id="quickProfileName" type="text" maxlength="32" autocomplete="off" required></label>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="cancel" data-i18n="cancel">Cancel</button>
+        <button class="button primary" id="confirmProfileRename" type="submit" value="save" data-i18n="saveName">Save name</button>
+      </div>
+    </form>
+  </dialog>
   <div class="progress-overlay hidden" id="progressOverlay" aria-live="polite">
     <div class="progress-card"><span class="spinner"></span><strong id="progressTitle">Working…</strong><p id="progressDetail"></p></div>
   </div>

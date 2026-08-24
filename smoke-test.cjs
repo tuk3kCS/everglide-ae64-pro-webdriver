@@ -75,6 +75,8 @@ async function main() {
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
+    if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
@@ -118,6 +120,7 @@ async function main() {
     lightingModes: LIGHTING_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     customDefaults: Object.values(defaultProfile().lighting.customEnabled),
     decorativeDefaults: defaultProfile().lighting.decorative.customEnabled,
+    decorativeLayout: Object.fromEntries(Object.entries(DECORATIVE_LAYOUT).map(([side, indexes]) => [side, Array.from(indexes)])),
     rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
@@ -125,13 +128,21 @@ async function main() {
   equal(settingsEnums.lightingModes, Array.from({ length: 23 }, (_, value) => [value, `L${value + 1}`]), "The generic lighting catalog must remain L1-L23.");
   if (settingsEnums.customDefaults.some(Boolean)) throw new Error("Per-key custom overrides must be disabled by default.");
   if (settingsEnums.decorativeDefaults.length !== 38 || settingsEnums.decorativeDefaults.some(Boolean)) throw new Error("Decorative1 must default to 38 inherited LEDs.");
+  equal(settingsEnums.decorativeLayout, {
+    top: [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 0, 1],
+    right: [2, 3, 4, 5, 6],
+    bottom: [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7],
+    left: [26, 25, 24, 23, 22, 21],
+  }, "Decorative1 physical perimeter order changed.");
+  const perimeterIndexes = Object.values(settingsEnums.decorativeLayout).flat().sort((a, b) => a - b);
+  equal(perimeterIndexes, Array.from({ length: 38 }, (_, index) => index), "Decorative1 perimeter must contain every protocol index exactly once.");
   equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', 'data-lighting-mode="19"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
-  if (lightingMarkup.includes('data-lighting-mode="20"')) throw new Error("AE64 area 0 must stop at the 20 device-reported modes.");
+  if (!lightingMarkup.includes("UNADVERTISED") || !lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised effects must be clearly labeled as experimental.");
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
@@ -141,6 +152,13 @@ async function main() {
   for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
   if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
+  for (const side of ["top", "right", "bottom", "left"]) if (!stripMarkup.includes(`data-strip-side="${side}"`)) throw new Error(`Decorative1 omitted its ${side} physical side.`);
+  if ((stripMarkup.match(/class="key /g) || []).length !== 64) throw new Error("Decorative1 perimeter must surround the live 64-key preview.");
+  const changeSummary = vm.runInContext(`(state.dirty.lightingBase = true, state.profile.lighting.base.mode = 20, summarizeChanges())`, browser);
+  if (!changeSummary.some((entry) => entry.includes("L21") && entry.includes("experimental"))) throw new Error("Apply review must identify experimental lighting changes.");
+  vm.runInContext("clearDirty()", browser);
+  if (app.includes("Workspace saved in this browser. Connect to write it to the keyboard.")) throw new Error("Disconnected Apply must not masquerade as an onboard save.");
+  if (!app.includes("requestApplyChanges") || !app.includes("summarizeChanges")) throw new Error("Apply review-confirm-write workflow is missing.");
   if (!read("styles.css").includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
