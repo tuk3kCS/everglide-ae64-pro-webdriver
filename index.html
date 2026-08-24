@@ -53,6 +53,13 @@
         <button class="device-icon" id="backHomeButton" type="button" aria-label="Return to home" title="Home">64</button>
         <div><strong>Everglide AE64 Pro</strong><small id="connectionLabel" data-i18n="offlineWorkspace">Offline workspace</small></div>
       </div>
+      <section class="sidebar-profile" aria-label="Quick profile switch">
+        <div>
+          <span data-i18n="quickProfile">Quick profile</span>
+          <button id="quickProfileRename" type="button" data-i18n="rename">Rename</button>
+        </div>
+        <select id="quickProfileSelect" aria-label="Quick profile switch"></select>
+      </section>
       <nav id="sideNav" aria-label="Configuration pages">
         <button class="active" data-page="overview" type="button"><span>⌂</span><b data-i18n="overview">Overview</b></button>
         <button data-page="keymap" type="button"><span>⌨</span><b data-i18n="keymap">Key mapping</b></button>
@@ -62,18 +69,13 @@
         <button data-page="settings" type="button"><span>◉</span><b data-i18n="settings">Device settings</b></button>
         <button data-page="diagnostics" type="button"><span>≋</span><b data-i18n="diagnostics">Diagnostics</b></button>
       </nav>
-      <section class="sidebar-profile" aria-label="Quick profile switch">
-        <div>
-          <span data-i18n="quickProfile">Quick profile</span>
-          <button id="quickProfileRename" type="button" data-i18n="rename">Rename</button>
-        </div>
-        <select id="quickProfileSelect" aria-label="Quick profile switch"></select>
-      </section>
-      <section class="sidebar-controls" aria-label="Workspace controls">
+      <section class="sidebar-controls sidebar-layer-control hidden" id="layerControl" aria-label="Key layer controls">
         <label><span data-i18n="layer">Layer</span><select id="layerSelect"><option value="0">Main</option><option value="1">Fn1</option><option value="2">Fn2</option><option value="3">Fn3</option></select></label>
+      </section>
+      <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span id="stagedEditsBody" data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
+      <section class="sidebar-controls sidebar-language-control" aria-label="Language selection">
         <label><span data-i18n="language">Language</span><select class="language-select"></select></label>
       </section>
-      <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
     </aside>
 
     <div class="work-area">
@@ -83,6 +85,11 @@
             <h1 id="pageTitle">Overview</h1>
           </div>
           <div class="work-actions">
+            <label class="auto-apply-control" title="Experimental: write each completed edit to the keyboard automatically.">
+              <span><b data-i18n="autoApply">Auto apply</b><small data-i18n="experimental">EXPERIMENTAL</small></span>
+              <input class="toggle" id="autoApplyToggle" type="checkbox" aria-describedby="autoApplyHint">
+              <span class="sr-only" id="autoApplyHint" data-i18n="autoApplyHint">Writes completed edits to the keyboard automatically.</span>
+            </label>
             <button class="button ghost" id="revertButton" type="button" data-i18n="revert">Revert</button>
             <button class="button primary" id="applyButton" type="button" data-i18n="applyChanges">Apply changes</button>
           </div>

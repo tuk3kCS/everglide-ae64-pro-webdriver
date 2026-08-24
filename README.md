@@ -47,6 +47,7 @@ Implemented now:
 - Drag selection plus Ctrl-click add/remove editing for keyboard keys and light-strip LEDs, with each mode restricted to its own physical region
 - Windows/macOS system mode, 250–8,000 Hz polling rate, RGB sleep timer, and shake optimization
 - Local profiles plus JSON import/export
+- Optional experimental auto apply with a short edit debounce and verified device writes
 - XML-driven English/Vietnamese language selection through `languages.xml`
 - Visible/read-only inspection for DKS, MPT, MT, TGL, END, SOCD, RS, and macro capacity
 
@@ -60,7 +61,7 @@ Firmware update and bootloader commands are intentionally excluded from both the
 
 ## Write safety
 
-Changes stay staged until **Apply changes** opens a review dialog. Confirming the dialog writes immediately to the connected keyboard; a disconnected workspace cannot be mistaken for an onboard save. For performance records, the driver first reads the current key and preserves axis/calibration fields owned by the firmware. It then writes the staged fields, reads them back, and only then commits the matching flash group. Key mappings and lighting use the same explicit commit/read-back pattern. Experimental `L21–L23` values are retained only when the keyboard reads the same index back. An unexpected board ID stops the connection before configuration writes.
+By default, changes stay staged until **Apply changes** opens a review dialog. The experimental **Auto apply** toggle instead writes a completed edit after a short debounce and turns itself off if verification fails. A disconnected workspace cannot be mistaken for an onboard save. For performance records, the driver first reads the current key and preserves axis/calibration fields owned by the firmware. It then writes the staged fields, reads them back, and only then commits the matching flash group. Key mappings and lighting use the same explicit commit/read-back pattern. Experimental `L21–L23` values are retained only when the keyboard reads the same index back. An unexpected board ID stops the connection before configuration writes.
 
 See [AE64_PROTOCOL.md](AE64_PROTOCOL.md) for the recovered command map and confidence boundary.
 

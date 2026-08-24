@@ -561,6 +561,8 @@ Object.assign(FALLBACK_TRANSLATIONS.vi, {
   stagedEditsBody:
     "Nút Áp dụng cho xem lại thay đổi rồi ghi trực tiếp vào bàn phím.",
 });
+Object.assign(FALLBACK_TRANSLATIONS.en, { autoApply: "Auto apply", experimental: "EXPERIMENTAL", autoApplyHint: "Writes each completed edit to the keyboard automatically.", autoApplyActive: "Auto apply on · keyboard synchronized" });
+Object.assign(FALLBACK_TRANSLATIONS.vi, { autoApply: "Tự động áp dụng", experimental: "THỬ NGHIỆM", autoApplyHint: "Tự động ghi từng chỉnh sửa hoàn tất vào bàn phím.", autoApplyActive: "Tự động áp dụng đang bật · bàn phím đã đồng bộ" });
 
 const defaultPerformance = () => ({
   mode: 0,
