@@ -107,7 +107,7 @@ button { color: inherit; }
 .sidebar nav button:hover { color: var(--text); background: rgb(255 255 255 / 4%); }
 .sidebar nav button.active { color: var(--mint); background: rgb(115 240 192 / 8%); }
 .sidebar nav button.active > span { color: var(--mint); }
-.sidebar-profile { display: grid; gap: 8px; margin: 18px 8px 0; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.sidebar-profile { display: grid; gap: 8px; margin: 18px 8px 0; padding: 14px 0; border-top: 1px solid var(--line); }
 .sidebar-profile > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .sidebar-profile button { padding: 3px 7px; border: 1px solid #35536a; border-radius: 6px; background: #12283a; color: var(--mint); font-size: 8px; font-weight: 850; cursor: pointer; }
 .sidebar-profile select { width: 100%; min-width: 0; padding: 8px 9px; border-color: #35536a; background: #081722; font-size: 11px; }
