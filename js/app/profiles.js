@@ -339,6 +339,7 @@ async function switchProfile(index) {
         liveMatrix: null,
         liveStrip: null,
       });
+      await readKeymapLayer(state.profile.layer);
       await readSelectedKey();
       state.original = clone(state.profile);
       log("Profile switched", index);
@@ -432,7 +433,7 @@ async function importProfile(file) {
     state.profile = {
       ...base,
       ...imported,
-      schema: 4,
+      schema: base.schema,
       performance: { ...base.performance, ...imported.performance },
       keycodes: Object.fromEntries(
         Array.from({ length: 4 }, (_, i) => [

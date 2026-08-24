@@ -152,6 +152,11 @@ async function connectKeyboard(device = null) {
       throw new Error(
         `Unexpected board ID ${info.boardIdHex}; writes refused.`,
       );
+    const layoutStyle = await optional("key layout style", () =>
+      Promise.all(
+        [0, 1, 2, 3, 4, 5].map((row) => state.transport.getKeyLayoutStyle(row)),
+      ),
+    );
     state.knownDevice = state.transport.device;
     Object.assign(state.hardware, {
       protocol,
@@ -168,6 +173,8 @@ async function connectKeyboard(device = null) {
       decorativeMatrix: null,
       liveMatrix: null,
       liveStrip: null,
+      layoutStyle,
+      keyPositions: firmwareKeyPositions(layoutStyle),
     });
     state.profile.profileIndex = currentConfig;
     state.profile.settings = { systemMode, reportRate, sleepTime, shake };
@@ -192,6 +199,7 @@ async function connectKeyboard(device = null) {
         ),
       ),
     );
+    await readKeymapLayer(state.profile.layer);
     await readSelectedKey();
     state.original = clone(state.profile);
     clearDirty();
@@ -202,6 +210,7 @@ async function connectKeyboard(device = null) {
       lightingAreas,
       doubleLighting: Boolean(doubleLighting),
       automatic: Boolean(targetDevice),
+      remappedPositions: state.hardware.keyPositions.size,
     });
     openWorkspace();
     showToast(`AE64 Pro connected · firmware ${info.firmware}`);
@@ -250,6 +259,30 @@ async function readSelectedKey() {
     col: key.col,
     layer: state.profile.layer,
   });
+}
+async function readKeymapLayer(layer = state.profile.layer) {
+  if (!connected()) return 0;
+  const resolvedLayer = Number(layer);
+  const records = await Promise.allSettled(
+    keys.map((key) =>
+      state.transport.getKeyCode(position(key), resolvedLayer),
+    ),
+  );
+  let loaded = 0;
+  records.forEach((record, id) => {
+    if (record.status !== "fulfilled") return;
+    const key = keys[id],
+      keycode = record.value.keycode;
+    if (!Number.isInteger(keycode)) return;
+    const token = `${resolvedLayer}:${key.id}`;
+    state.hardware.keycodes.set(token, keycode);
+    if (!state.dirty.mapping.has(token))
+      state.profile.keycodes[resolvedLayer][key.id] = keycode;
+    loaded += 1;
+  });
+  if (!loaded) throw new Error(`Could not read layer ${resolvedLayer + 1}.`);
+  log("Keymap layer read", { layer: resolvedLayer, keys: loaded });
+  return loaded;
 }
 function clearDirty() {
   state.dirty.performance.clear();

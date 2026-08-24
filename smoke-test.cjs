@@ -51,6 +51,19 @@ class FakeDevice {
       reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
       reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
     }
+    if (packet[0] === 3 && packet[1] === 1) {
+      reply[2] = packet[2]; reply[3] = packet[3];
+      for (let col = 0; col < 30; col += 1) {
+        const keycode = 0x1000 + packet[2] * 0x100 + packet[3] * 0x10 + col;
+        reply[4 + col * 2] = keycode & 0xff;
+        reply[5 + col * 2] = keycode >>> 8;
+      }
+    }
+    if (packet[0] === 3 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = packet[4];
+      const keycode = 0x1000 + packet[2] * 0x100 + packet[3] * 0x10 + packet[4];
+      reply[5] = keycode & 0xff; reply[6] = keycode >>> 8;
+    }
     if (packet[0] === 2 && packet[1] === 8) {
       reply[3] = 2;
       reply.set([0, 20, 6, 15, 1, 5, 1, 38], 4);
@@ -146,6 +159,45 @@ async function main() {
     decorativeDefaults: defaultProfile().lighting.decorative.customEnabled,
     decorativeLayout: Object.fromEntries(Object.entries(DECORATIVE_LAYOUT).map(([side, indexes]) => [side, Array.from(indexes)])),
     rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
+    vendorKeycodes: {
+      fn1: KEYCODE_LABELS.get(0xf101),
+      fn2: KEYCODE_LABELS.get(0xf102),
+      leftAlt: KEYCODE_LABELS.get(0x00e2),
+      mute: KEYCODE_LABELS.get(0x20e2),
+      mouseLeft: KEYCODE_LABELS.get(0x4100),
+      lightingToggle: KEYCODE_LABELS.get(0xf307),
+      fnDefault: defaultKeycode(keys.find((key) => key.n === "Fn")),
+    },
+    selectorCoverage: {
+      empty: KEYCODE_LABELS.get(0),
+      transparent: KEYCODE_LABELS.get(1),
+      decorative2: KEYCODE_LABELS.get(0xf320),
+      decorative3: KEYCODE_LABELS.get(0xf338),
+      macroCount: KEYCODE_GROUPS.macro.length,
+      connectionCount: KEYCODE_GROUPS.connection.length,
+      gamepadCount: KEYCODE_GROUPS.gamepad.length,
+      gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
+    },
+    vendorCatalog: Object.fromEntries(
+      ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
+        group,
+        KEYCODE_GROUPS[group].map(({ code }) => code),
+      ]),
+    ),
+    shiftedRowPositions: (() => {
+      const style = layout.map((row, firmwareRow) =>
+        row.map((_, visualCol) => ({ row: firmwareRow, col: visualCol, ratio: 4 })),
+      );
+      style[3] = [{ ratio: 0 }, ...layout[3].map((_, visualCol) => ({ row: 3, col: visualCol, ratio: 4 }))];
+      style[4] = [{ ratio: 0 }, ...layout[4].map((_, visualCol) => ({ row: 4, col: visualCol, ratio: 4 }))];
+      const positions = firmwareKeyPositions(style);
+      return [
+        positions.get(keys.find((key) => key.uiRow === 3 && key.col === 0).id),
+        positions.get(keys.find((key) => key.uiRow === 3 && key.col === 13).id),
+        positions.get(keys.find((key) => key.uiRow === 4 && key.col === 0).id),
+        positions.get(keys.find((key) => key.uiRow === 4 && key.col === 8).id),
+      ];
+    })(),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
   equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
@@ -161,6 +213,38 @@ async function main() {
   const perimeterIndexes = Object.values(settingsEnums.decorativeLayout).flat().sort((a, b) => a - b);
   equal(perimeterIndexes, Array.from({ length: 38 }, (_, index) => index), "Decorative1 perimeter must contain every protocol index exactly once.");
   equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
+  equal(settingsEnums.vendorKeycodes, {
+    fn1: "Switch Fn1 layer",
+    fn2: "Switch Fn2 layer",
+    leftAlt: "Left Alt",
+    mute: "Mute",
+    mouseLeft: "Mouse Left",
+    lightingToggle: "Lighting on / off",
+    fnDefault: 0xf102,
+  }, "Vendor keycodes must match the values captured from the original driver.");
+  equal(settingsEnums.selectorCoverage, {
+    empty: "Empty Key",
+    transparent: "Transparent Key",
+    decorative2: "Decorative lighting 2 mode",
+    decorative3: "Decorative lighting 3 direction",
+    macroCount: 16,
+    connectionCount: 7,
+    gamepadCount: 58,
+    gamepadDpadRight: "Gamepad D-pad Right",
+  }, "The complete original-driver mapping catalog must remain selectable.");
+  equal(settingsEnums.vendorCatalog, {
+    system: [0x1152, 0x1329, 0x1807, 0x1808, 0x1815],
+    media: [0x206f, 0x2070, 0x20b5, 0x20b6, 0x20b7, 0x20cd, 0x20e2, 0x20e9, 0x20ea, 0x2183, 0x218a, 0x2192, 0x2194, 0x2223],
+    mouse: [0x4000, 0x4100, 0x4200, 0x4300, 0x4400, 0x4500, 0x4600, 0x4700, 0x4800, 0x4900, 0x4a01, 0x4b01],
+    firmware: [0xf100, 0xf101, 0xf102, 0xf103, 0xf200, 0xf201, 0xf202, 0xf203, 0xf205, 0xf206, 0xf207, 0xf208, 0xf209, 0xf20a, 0xf20c],
+    lighting: [0xf300, 0xf301, 0xf302, 0xf303, 0xf304, 0xf305, 0xf306, 0xf307, 0xf308, 0xf310, 0xf311, 0xf312, 0xf313, 0xf314, 0xf315, 0xf316, 0xf317, 0xf318, 0xf320, 0xf321, 0xf322, 0xf323, 0xf324, 0xf325, 0xf326, 0xf327, 0xf328, 0xf330, 0xf331, 0xf332, 0xf333, 0xf334, 0xf335, 0xf336, 0xf337, 0xf338],
+  }, "Every supported non-keyboard keycode must match the original-driver HAR catalog.");
+  equal(settingsEnums.shiftedRowPositions, [
+    { row: 3, col: 1 },
+    { row: 3, col: 14 },
+    { row: 4, col: 1 },
+    { row: 4, col: 9 },
+  ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
@@ -209,6 +293,23 @@ async function main() {
   await transport.open();
   const info = await transport.getDeviceInfo();
   if (info.boardIdHex !== "0030000a" || info.firmware !== "0.0.7.0") throw new Error("Device information decoder failed.");
+  browser.injectedTransport = transport;
+  vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
+  const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
+  if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);
+  const layerReadback = vm.runInContext("[state.profile.keycodes[2][0], state.profile.keycodes[2][1], state.profile.keycodes[2][63], state.hardware.keycodes.get('2:63')]", browser);
+  equal(layerReadback, [0xbeef, 0x1211, 0x1258, 0x1258], "Layer read must load every physical key while preserving staged edits.");
+  const displayedReadback = vm.runInContext(`(() => {
+    const key = keys[1], token = "2:" + key.id;
+    state.profile.keycodes[2][key.id] = 0xbeef;
+    const hardwareValue = displayedKeycode(key, 2);
+    state.dirty.mapping.add(token);
+    const stagedValue = displayedKeycode(key, 2);
+    state.dirty.mapping.delete(token);
+    return [hardwareValue, stagedValue];
+  })()`, browser);
+  equal(displayedReadback, [0x1211, 0xbeef], "The keyboard preview must show refreshed hardware values unless an edit is staged.");
+  vm.runInContext("clearDirty()", browser);
 
   const performance = await transport.getPerformance({ row: 2, col: 3 });
   if (performance.mode !== 1 || performance.normalPress !== 2 || performance.rtPress !== 0.15 || performance.axisV2Id !== 0x1234) throw new Error("Performance decoder failed.");
