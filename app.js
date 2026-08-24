@@ -39,10 +39,7 @@ const POLLING_RATE_OPTIONS = Object.freeze([{value:5,hz:250},{value:4,hz:500},{v
 const LIGHTING_MODE_OPTIONS = Object.freeze(Array.from({length:23},(_,value)=>Object.freeze({value,label:`L${value+1}`})));
 const AE64_MAIN_MODE_COUNT = 20;
 const AE64_DECORATIVE_MODE_COUNT = 5;
-const LIVE_RGB_INTERVAL = 50;
-const fps = 1000 / LIVE_RGB_INTERVAL;
-// Pass the parameter object into t()
-const hint = t("lightingLiveHint", { fps });
+const LIVE_RGB_INTERVAL = 100;
 
 // Visual order follows the keyboard case. The protocol index still travels
 // clockwise: top 27…37,0,1; right 2…6; bottom 7…20; left 21…26.
