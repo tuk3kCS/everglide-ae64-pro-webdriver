@@ -92,9 +92,11 @@ Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` c
 
 ## Lighting
 
-Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. Palette configuration uses subtype `01` with eight `B,G,R,hue` records.
+Base configuration is read with `05 01 area 00` and written with `05 02 area 00 …`; reply/config bytes 4–9 are open mode, effect, brightness, speed, direction, and palette index. For the main keyboard (`area 0`), the original UI presents effect indexes as zero-based `L1` through `L23` and limits the visible list to the `count` returned by `02 08 00`. Brightness and speed use the continuous range `0–100`. Direction is `0 = forward`, `1 = backward`; the captured UI does not define left/right values. Single-lighting power is `0 = off`, `1 = on`.
 
-The custom matrix is read as `05 03 area packet` and written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. AE64 uses the generic `6 × 21` matrix address space; visible keys occupy firmware rows 1–5 and unused cells are preserved.
+Palette configuration uses subtype `01` with exactly eight `B,G,R,hue` records. The base record's palette index selects one of those stored slots; editing a slot and selecting a slot are separate operations.
+
+The custom matrix is read as `05 03 area packet` and written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records, so the `6 × 21` address space requires nine packets. `flag = FF` enables a per-key custom override; `00` leaves that cell following the base effect/palette. Visible AE64 keys occupy firmware rows 1–5 and unused cells are preserved.
 
 ## Advanced keys and macros
 

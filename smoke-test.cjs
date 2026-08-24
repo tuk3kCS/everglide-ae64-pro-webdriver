@@ -42,6 +42,14 @@ class FakeDevice {
       reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
       reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
     }
+    if (packet[0] === 2 && packet[1] === 8) {
+      reply[3] = 1;
+      reply.set([0, 23, 6, 21], 4);
+    }
+    if (packet[0] === 5 && packet[1] === 1 && packet[3] === 0) {
+      reply[2] = packet[2];
+      reply.set([1, 22, 100, 0, 1, 7], 4);
+    }
     queueMicrotask(() => this.reply(reply));
   }
 }
@@ -103,13 +111,25 @@ async function main() {
   const settingsEnums = vm.runInContext(`({
     systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
+    lightingModes: LIGHTING_MODE_OPTIONS.map(({ value, label }) => [value, label]),
+    customDefaults: Object.values(defaultProfile().lighting.customEnabled),
     rowUnits: layout.map((row) => row.reduce((sum, key) => sum + (key.u || 1), 0)),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
   equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
+  equal(settingsEnums.lightingModes, Array.from({ length: 23 }, (_, value) => [value, `L${value + 1}`]), "Lighting modes must remain the captured L1-L23 indexes.");
+  if (settingsEnums.customDefaults.some(Boolean)) throw new Error("Per-key custom overrides must be disabled by default.");
   equal(settingsEnums.rowUnits, [15, 15, 15, 15, 15], "Keyboard rows no longer occupy the same 15-unit width.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
+  const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"'])
+    if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
+  for (const invalid of ["Effect 0", ">Left<", ">Right<"])
+    if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
+  const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
+  for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
+    if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
   if (!read("styles.css").includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
@@ -135,8 +155,16 @@ async function main() {
   equal(device.sent.at(-1).packet.slice(0, 3), [2, 2, 4], "Layout save group changed.");
   await transport.setCustomLightingPacket(2, [{ r: 0x11, g: 0x22, b: 0x33, custom: true }]);
   equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 0, 2, 0x33, 0x22, 0x11, 0xff], "Custom-light packet changed.");
+  await transport.setCustomLightingPacket(3, [{ r: 0x11, g: 0x22, b: 0x33, custom: false }]);
+  equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 0, 3, 0x33, 0x22, 0x11, 0x00], "Cleared custom-light overrides must use flag 0.");
+  const lightingAreas = await transport.getLightingAreas();
+  equal(lightingAreas, [{ index: 0, count: 23, rows: 6, cols: 21 }], "Lighting-area capability decoder failed.");
+  const lightingBase = await transport.getLightingBase(0);
+  equal(lightingBase, { area: 0, open: true, openMode: 1, mode: 22, brightness: 100, speed: 0, direction: 1, paletteIndex: 7 }, "Main-light base decoder failed.");
+  await transport.setLightingBase(lightingBase, 0);
+  equal(device.sent.at(-1).packet.slice(0, 10), [5, 2, 0, 0, 1, 22, 100, 0, 1, 7], "Main-light base packet mapping failed.");
 
-  console.log("Smoke test passed: WebHID packets, codecs, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
+  console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
 }
 
 main().catch((error) => { console.error(error.stack || error); process.exitCode = 1; });
