@@ -60,7 +60,7 @@ function summarizeChanges() {
       );
     if (field === "reportRate")
       changes.push(
-        `Polling rate: ${(POLLING_RATE_OPTIONS.find((option) => option.value === Number(value))?.hz || value).toLocaleString()} Hz`,
+        `Polling rate: ${(POLLING_RATE_OPTIONS.find((option) => option.value === Number(value))?.hz || value).toLocaleString()} Hz (keyboard reconnect required)`,
       );
     if (field === "sleepTime")
       changes.push(
@@ -262,11 +262,11 @@ async function applyChanges() {
       )
         throw new Error(`Decorative1 verification failed for LED ${index}.`);
     }
-    for (const field of state.dirty.settings) {
+    const settingsToWrite = [...state.dirty.settings],
+      pollingRateChanged = settingsToWrite.includes("reportRate");
+    for (const field of settingsToWrite.filter((field) => field !== "reportRate")) {
       if (field === "systemMode")
         await state.transport.setSystemMode(state.profile.settings[field]);
-      if (field === "reportRate")
-        await state.transport.setReportRate(state.profile.settings[field]);
       if (field === "sleepTime")
         await state.transport.setLightingSleepTime(
           state.profile.settings[field],
@@ -276,9 +276,24 @@ async function applyChanges() {
           state.profile.settings[field],
         );
     }
+    // The controller restarts its HID interface immediately after this write.
+    // Keep it last, then close our old session instead of issuing any stale
+    // commands while the keyboard re-enumerates.
+    if (pollingRateChanged)
+      await state.transport.setReportRate(state.profile.settings.reportRate);
     state.original = clone(state.profile);
     clearDirty();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    if (pollingRateChanged) {
+      const transport = state.transport;
+      state.transport = null;
+      await transport.close().catch((error) =>
+        log("Polling-rate session close failed", error.message),
+      );
+      log("Polling rate changed; reconnect required");
+      await reconnectAfterPollingRateChange();
+      return;
+    }
     log("Staged changes applied and verified");
     render();
     showToast("Changes written, committed, and verified on the AE64 Pro.");

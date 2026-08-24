@@ -513,6 +513,9 @@ function bindPage() {
         stageSetting("reportRate", Number(event.target.value)),
       );
     document
+      .querySelector("#reconnectKeyboard")
+      ?.addEventListener("click", () => connectKeyboard());
+    document
       .querySelector("#sleepTime")
       ?.addEventListener("change", (event) =>
         stageSetting("sleepTime", clamp(event.target.value, 0, 65535)),

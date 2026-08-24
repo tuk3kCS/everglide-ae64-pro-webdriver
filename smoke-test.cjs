@@ -257,6 +257,7 @@ async function main() {
     { row: 4, col: 9 },
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
+  if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
   const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const required of ["Associated keys", "Trigger key", "Apply combination"])
     if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
@@ -355,6 +356,12 @@ async function main() {
   equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 1, 2, 3, 2, 1, 0xff], "Decorative1 custom packet changed.");
   const liveStrip = await transport.readLiveLighting(1, 38, 1);
   if (liveStrip.length !== 38 || liveStrip[0].r !== 40 || liveStrip[15].r !== 40) throw new Error("Live Decorative1 framebuffer decoding failed.");
+  browser.navigator.hid.getDevices = async () => [device];
+  vm.runInContext("state.transport = injectedTransport; state.profile.settings.reportRate = 3; state.dirty.settings.add('reportRate')", browser);
+  await vm.runInContext("applyChanges()", browser);
+  if (!device.sent.some(({ packet }) => JSON.stringify(packet.slice(0, 4)) === JSON.stringify([2, 5, 2, 3]))) throw new Error("Polling-rate write encoding changed.");
+  const reconnectState = vm.runInContext("[Boolean(state.transport?.connected), state.transport !== injectedTransport, injectedTransport.device.opened]", browser);
+  equal(reconnectState, [true, true, true], "Polling-rate changes must close the stale HID session and automatically reconnect.");
 
   console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
 }

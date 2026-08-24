@@ -58,14 +58,15 @@ async function optional(label, operation, fallback = null) {
   }
 }
 
-async function connectKeyboard(device = null) {
+async function connectKeyboard(device = null, { silent = false } = {}) {
   const targetDevice = device || state.knownDevice;
-  showProgress(
-    targetDevice ? "Opening AE64 Pro" : "Connecting to AE64 Pro",
-    targetDevice
-      ? "Opening your previously authorized keyboard."
-      : "Choose the 1CA6:300A configuration interface.",
-  );
+  if (!silent)
+    showProgress(
+      targetDevice ? "Opening AE64 Pro" : "Connecting to AE64 Pro",
+      targetDevice
+        ? "Opening your previously authorized keyboard."
+        : "Choose the 1CA6:300A configuration interface.",
+    );
   try {
     if (state.transport) await state.transport.close();
     state.transport = targetDevice
@@ -214,15 +215,17 @@ async function connectKeyboard(device = null) {
     });
     openWorkspace();
     showToast(`AE64 Pro connected · firmware ${info.firmware}`);
+    return true;
   } catch (error) {
     log("Connection failed", error.message);
     if (state.transport) await state.transport.close().catch(() => undefined);
     state.transport = null;
     if (targetDevice === state.knownDevice) state.knownDevice = null;
-    showToast(`Could not connect: ${error.message}`, true);
+    if (!silent) showToast(`Could not connect: ${error.message}`, true);
     renderStatus();
+    return false;
   } finally {
-    hideProgress();
+    if (!silent) hideProgress();
   }
 }
 async function detectKnownKeyboard() {
@@ -237,6 +240,39 @@ async function detectKnownKeyboard() {
     if (state.knownDevice) log("Authorized keyboard detected");
   } catch (error) {
     log("Keyboard detection failed", error.message);
+  }
+}
+async function reconnectAfterPollingRateChange() {
+  const attempts = 20;
+  showProgress(
+    "Reconnecting AE64 Pro",
+    "Waiting for the keyboard to restart after the polling-rate change.",
+  );
+  try {
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const devices =
+          typeof navigator.hid?.getDevices === "function"
+            ? await navigator.hid.getDevices()
+            : [],
+        device = devices.find(isAe64Device) || state.knownDevice;
+      if (device) {
+        state.knownDevice = device;
+        if (await connectKeyboard(device, { silent: true })) return true;
+      }
+      document.querySelector("#progressDetail").textContent =
+        `Waiting for the keyboard to restart (${attempt}/${attempts}).`;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    render();
+    showToast("Polling rate changed. Reconnect the keyboard to continue.", true);
+    return false;
+  } catch (error) {
+    log("Automatic polling-rate reconnect failed", error.message);
+    render();
+    showToast("Polling rate changed. Reconnect the keyboard to continue.", true);
+    return false;
+  } finally {
+    hideProgress();
   }
 }
 async function readSelectedKey() {
