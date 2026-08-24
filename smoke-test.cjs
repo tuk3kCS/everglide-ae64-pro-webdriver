@@ -77,6 +77,8 @@ async function main() {
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
   for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
+  for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
+  for (const sidebarControl of ['id="backHomeButton"', 'id="layerSelect"', 'class="sidebar-controls"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");

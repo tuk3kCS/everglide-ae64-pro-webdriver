@@ -50,7 +50,7 @@
   <section class="workspace hidden" id="workspace" aria-label="AE64 Pro workspace">
     <aside class="sidebar">
       <div class="device-title">
-        <span class="device-icon">64</span>
+        <button class="device-icon" id="backHomeButton" type="button" aria-label="Return to home" title="Home">64</button>
         <div><strong>Everglide AE64 Pro</strong><small id="connectionLabel" data-i18n="offlineWorkspace">Offline workspace</small></div>
       </div>
       <nav id="sideNav" aria-label="Configuration pages">
@@ -69,6 +69,10 @@
         </div>
         <select id="quickProfileSelect" aria-label="Quick profile switch"></select>
       </section>
+      <section class="sidebar-controls" aria-label="Workspace controls">
+        <label><span data-i18n="layer">Layer</span><select id="layerSelect"><option value="0">Main</option><option value="1">Fn1</option><option value="2">Fn2</option><option value="3">Fn3</option></select></label>
+        <label><span data-i18n="language">Language</span><select class="language-select"></select></label>
+      </section>
       <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
     </aside>
 
@@ -79,14 +83,7 @@
           <h1 id="pageTitle">Overview</h1>
           <p id="pageDescription">Device state and the currently selected key.</p>
         </div>
-        <div class="work-toolbar">
-          <label><span data-i18n="profile">Profile</span><select id="profileSelect"></select></label>
-          <label><span data-i18n="layer">Layer</span><select id="layerSelect"><option value="0">Main</option><option value="1">Fn1</option><option value="2">Fn2</option><option value="3">Fn3</option></select></label>
-          <label><span data-i18n="language">Language</span><select class="language-select"></select></label>
-        </div>
         <div class="work-actions">
-          <button class="button ghost" id="backHomeButton" type="button" data-i18n="home">Home</button>
-          <button class="button ghost" id="workspaceConnectButton" type="button" data-i18n="connect">Connect</button>
           <button class="button ghost" id="revertButton" type="button" data-i18n="revert">Revert</button>
           <button class="button primary" id="applyButton" type="button" data-i18n="applyChanges">Apply changes</button>
         </div>
