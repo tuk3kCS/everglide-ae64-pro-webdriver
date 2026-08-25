@@ -1,0 +1,43 @@
+{
+  "extracted_at": "2026-08-25T04:07:36.5229022Z",
+  "har_file": "xsyd.top.har",
+  "captured_request_url": "https://api.sparklinkplayjoy.com/api/v1/getAxisListV3?board_id=0030000a&vid=1ca6&pid=300a&t=1787520722503",
+  "captured_started_at": "2026-08-23T21:32:02.503Z",
+  "response_status": 200,
+  "api_code": 200,
+  "api_message": "获取成功",
+  "group_count": 5,
+  "switch_count": 82,
+  "groups": [
+    {
+      "name": "GATERON",
+      "name_zh": "佳达隆",
+      "type_id": 415,
+      "count": 30
+    },
+    {
+      "name": "TTC",
+      "name_zh": "正牌科电",
+      "type_id": 416,
+      "count": 19
+    },
+    {
+      "name": "other",
+      "name_zh": "其它",
+      "type_id": 417,
+      "count": 28
+    },
+    {
+      "name": "WuqueStudio",
+      "name_zh": "WuqueStudio",
+      "type_id": 612,
+      "count": 4
+    },
+    {
+      "name": "Jiang Wan",
+      "name_zh": "江湾",
+      "type_id": 774,
+      "count": 1
+    }
+  ]
+}
