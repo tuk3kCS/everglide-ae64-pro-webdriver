@@ -204,6 +204,8 @@ async function main() {
       gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
     },
     selectableGroups: KEYMAP_SELECTABLE_GROUPS,
+    keyboardExtras: [116, 127, 154, 164].map((code) => KEYCODE_LABELS.get(code)),
+    keyboardCodes: KEYCODE_GROUPS.keyboard.map(({ code }) => code),
     vendorCatalog: Object.fromEntries(
       ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
         group,
@@ -258,7 +260,10 @@ async function main() {
     gamepadCount: 58,
     gamepadDpadRight: "Gamepad D-pad Right",
   }, "Known unsupported keycodes must retain labels when read from hardware.");
-  equal(settingsEnums.selectableGroups, ["keyboard", "system", "media", "mouse", "firmware", "lighting"], "Only verified keymap groups may be selected for writing.");
+  equal(settingsEnums.selectableGroups, ["keyboard", "media", "mouse", "firmware", "lighting"], "Only verified keymap groups may be selected for writing.");
+  equal(settingsEnums.keyboardExtras, ["Execute", "Keyboard Mute", "System Request / Attention", "ExSel"], "Windows virtual-key mappings must remain available in the keyboard catalog.");
+  for (const unsupportedKeyboardCode of [102, 103, 120, 121, 122, 123, 124, 125, 126, 133, 134, 160, 161])
+    if (settingsEnums.keyboardCodes.includes(unsupportedKeyboardCode)) throw new Error(`Non-Windows, non-standard keyboard mapping remains selectable: ${unsupportedKeyboardCode}.`);
   equal(settingsEnums.vendorCatalog, {
     system: [0x1152, 0x1329, 0x1807, 0x1808, 0x1815],
     media: [0x206f, 0x2070, 0x20b5, 0x20b6, 0x20b7, 0x20cd, 0x20e2, 0x20e9, 0x20ea, 0x2183, 0x218a, 0x2192, 0x2194, 0x2223],
@@ -282,6 +287,8 @@ async function main() {
   const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
     if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
+  for (const requiredKeycode of [0, 1])
+    if (!keymapMarkup.includes(`data-keycode="${requiredKeycode}"`)) throw new Error(`Required special mapping is unavailable: ${requiredKeycode}.`);
   for (const removedControl of ["Associated keys", "Trigger key", "Apply combination"])
     if (keymapMarkup.includes(removedControl)) throw new Error(`Unsupported combination editor remains visible: ${removedControl}.`);
   for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])

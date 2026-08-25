@@ -16,7 +16,6 @@ const COMBINATION_TRIGGER_KEYS = Object.freeze(
 // catalog entries remain available for decoding assignments read from hardware.
 const KEYMAP_SELECTABLE_GROUPS = Object.freeze([
   "keyboard",
-  "system",
   "media",
   "mouse",
   "firmware",
