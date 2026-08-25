@@ -189,10 +189,12 @@ button { color: inherit; }
 .key.live-press-key > b, .key.live-press-key > .mapped { position: relative; z-index: 2; }
 .key .press-distance-fill { position: absolute; z-index: 1; right: 0; bottom: 0; left: 0; height: var(--press-depth, 0%); border-top: 1px solid rgb(115 240 192 / 72%); background: linear-gradient(0deg, rgb(115 240 192 / 38%), rgb(112 165 255 / 23%)); pointer-events: none; transition: height 24ms linear; }
 .key.live-press-key.pressed { border-color: rgb(115 240 192 / 70%); box-shadow: inset 0 -3px rgb(0 0 0 / 25%), 0 0 13px rgb(115 240 192 / 18%); }
-.key .mapped { display: block; margin-top: 3px; overflow: hidden; color: var(--key-muted); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.key > .mapped { display: block; margin-top: 0; overflow: hidden; color: var(--key-text); font-size: inherit; font-weight: bolder; text-overflow: ellipsis; white-space: nowrap; }
+.key > b { display: block; margin-top: .1875rem; overflow: hidden; color: var(--key-muted); font-size: .7em; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .key .color-dot { position: absolute; right: 5px; bottom: 5px; width: 7px; height: 7px; border: 1px solid rgb(255 255 255 / 50%); border-radius: 50%; background: var(--key-color, transparent); }
 .hero-keyboard .keyboard { --unit: clamp(20px, 2.55vw, 38px); --key-gap: 5px; margin: 0 auto; }
 .hero-keyboard .key { padding: 4px; font-size: 7px; cursor: default; }
+.hero-keyboard .key > b { display: inline; margin: 0; overflow: visible; color: inherit; font-size: inherit; font-weight: bolder; white-space: normal; }
 .board-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; color: var(--muted); font-size: 11px; }
 .selected-name { color: var(--mint); }
 
