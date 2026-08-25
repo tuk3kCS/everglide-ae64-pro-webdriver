@@ -19,6 +19,13 @@ async function selectKey(id) {
     showToast(error.message, true);
   }
 }
+async function readFnLayerTarget() {
+  if (!connected()) return null;
+  const fn = keys.find((key) => key.n === "Fn"), result = await state.transport.getKeyCode(position(fn), 0);
+  state.profile.keycodes[0][fn.id] = result.keycode;
+  state.hardware.keycodes.set(`0:${fn.id}`, result.keycode);
+  return result.keycode;
+}
 function openWorkspace() {
   document.querySelector("#topbar").classList.add("hidden");
   document.querySelector("main").classList.add("hidden");
@@ -26,7 +33,8 @@ function openWorkspace() {
   render();
   window.scrollTo({ top: 0 });
 }
-function returnHome() {
+async function returnHome() {
+  if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   stopPolling();
   document.querySelector("#workspace").classList.add("hidden");
   document.querySelector("#topbar").classList.remove("hidden");
@@ -159,6 +167,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       ),
     );
     state.knownDevice = state.transport.device;
+    state.hardware.keycodes.clear();
     Object.assign(state.hardware, {
       protocol,
       info,
@@ -201,6 +210,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       ),
     );
     await readKeymapLayer(state.profile.layer);
+    await optional("Fn layer target", readFnLayerTarget);
     await readSelectedKey();
     state.original = clone(state.profile);
     clearDirty();
@@ -298,23 +308,25 @@ async function readSelectedKey() {
 }
 async function readKeymapLayer(layer = state.profile.layer) {
   if (!connected()) return 0;
-  const resolvedLayer = Number(layer);
+  const resolvedLayer = Number(layer),
+    rows = [...new Set(keys.map((key) => position(key).row))];
   const records = await Promise.allSettled(
-    keys.map((key) =>
-      state.transport.getKeyCode(position(key), resolvedLayer),
-    ),
+    rows.map((row) => state.transport.getKeyLayout(resolvedLayer, row)),
   );
   let loaded = 0;
-  records.forEach((record, id) => {
+  records.forEach((record, rowIndex) => {
     if (record.status !== "fulfilled") return;
-    const key = keys[id],
-      keycode = record.value.keycode;
-    if (!Number.isInteger(keycode)) return;
-    const token = `${resolvedLayer}:${key.id}`;
-    state.hardware.keycodes.set(token, keycode);
-    if (!state.dirty.mapping.has(token))
-      state.profile.keycodes[resolvedLayer][key.id] = keycode;
-    loaded += 1;
+    const row = rows[rowIndex],
+      keycodes = record.value.keycodes;
+    keys.filter((key) => position(key).row === row).forEach((key) => {
+      const keycode = keycodes[position(key).col];
+      if (!Number.isInteger(keycode)) return;
+      const token = `${resolvedLayer}:${key.id}`;
+      state.hardware.keycodes.set(token, keycode);
+      if (!state.dirty.mapping.has(token))
+        state.profile.keycodes[resolvedLayer][key.id] = keycode;
+      loaded += 1;
+    });
   });
   if (!loaded) throw new Error(`Could not read layer ${resolvedLayer + 1}.`);
   log("Keymap layer read", { layer: resolvedLayer, keys: loaded });

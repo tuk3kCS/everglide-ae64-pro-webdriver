@@ -19,16 +19,20 @@ document
   .forEach((button) =>
     button.addEventListener("click", () => connectKeyboard()),
   );
-document.querySelector("#backHomeButton").addEventListener("click", returnHome);
+document.querySelector("#backHomeButton").addEventListener("click", () => returnHome());
 document
   .querySelector("#applyButton")
   .addEventListener("click", requestApplyChanges);
 document
   .querySelector("#revertButton")
   .addEventListener("click", revertChanges);
-document.querySelector("#sideNav").addEventListener("click", (event) => {
+document
+  .querySelector("#autoApplyToggle")
+  .addEventListener("change", (event) => setAutoApply(event.target.checked));
+document.querySelector("#sideNav").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-page]");
   if (button) {
+    if (state.calibrationActive && button.dataset.page !== "performance") await stopCalibration(true);
     state.page = button.dataset.page;
     render();
   }
@@ -54,32 +58,15 @@ document
       closeDialog(document.querySelector("#profileRenameDialog"));
   });
 document
-  .querySelector("#layerSelect")
-  .addEventListener("change", async (event) => {
-    state.profile.layer = Number(event.target.value);
-    if (connected()) {
-      showProgress(
-        `Reading layer ${state.profile.layer + 1}`,
-        "Loading all 64 physical key assignments from the keyboard.",
-      );
-      try {
-        await readKeymapLayer(state.profile.layer);
-        await readSelectedKey();
-      } catch (error) {
-        showToast(error.message, true);
-      } finally {
-        hideProgress();
-      }
-    }
-    render();
-  });
-document
   .querySelectorAll(".language-select")
   .forEach((select) =>
     select.addEventListener("change", (event) =>
       setLanguage(event.target.value),
     ),
   );
+document
+  .querySelector("#sidebarThemeSelect")
+  .addEventListener("change", (event) => setTheme(event.target.value));
 document
   .querySelector("#profileFileInput")
   .addEventListener("change", (event) => {
@@ -92,9 +79,12 @@ if (navigator.hid) {
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
       state.transport = null;
-      stopPolling();
+      state.livePressDistance = false;
+      stopTravelPolling(true);
+      stopLightingPolling();
+      resetCalibrationSession();
       log("Keyboard disconnected");
-      renderStatus();
+      render();
       showToast("AE64 Pro disconnected.", true);
     }
   });

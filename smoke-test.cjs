@@ -9,6 +9,7 @@ const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
   "js/app/foundation.js",
+  "js/app/theme.js",
   "js/app/mapping.js",
   "js/app/pages.js",
   "js/app/interactions.js",
@@ -29,6 +30,7 @@ class FakeDevice {
     this.collections = [{ usagePage: 0xffb0, usage: 0x01 }];
     this.listeners = new Map();
     this.sent = [];
+    this.pressedKey = { row: 5, col: 5, status: 3 };
   }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
   removeEventListener(type) { this.listeners.delete(type); }
@@ -51,6 +53,18 @@ class FakeDevice {
     if (packet[0] === 4 && packet[1] === 1) {
       reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
       reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
+    }
+    if (packet[0] === 4 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3];
+      for (let col = 0; col < 30; col += 1) {
+        let value = 0;
+        if (packet[2] === 0) value = 700 + packet[3] * 100 + col;
+        if (packet[2] === 1 && packet[3] === 1 && col < 2) value = 1200 + col * 1100;
+        if (packet[2] === 2 && packet[3] === 1 && col < 2) value = col === 0 ? 2 : 1;
+        if (packet[2] === 3 && packet[3] === this.pressedKey.row && col === this.pressedKey.col) value = this.pressedKey.status;
+        reply[4 + col * 2] = value & 0xff;
+        reply[5 + col * 2] = value >>> 8;
+      }
     }
     if (packet[0] === 3 && packet[1] === 1) {
       reply[2] = packet[2]; reply[3] = packet[3];
@@ -90,9 +104,9 @@ async function main() {
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "js/app/*.js"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
@@ -110,13 +124,19 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
-  for (const sidebarControl of ['id="backHomeButton"', 'id="layerSelect"', 'class="sidebar-controls"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  for (const removedSidebarControl of ['id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (html.includes(removedSidebarControl)) throw new Error(`Removed sidebar layer/language layout remains: ${removedSidebarControl}.`);
+  if (html.indexOf('class="sidebar-profile"') > html.indexOf('id="sideNav"')) throw new Error("Quick profiles must appear above Overview in the sidebar.");
+  if (html.indexOf('sidebar-preferences') < html.indexOf('class="sidebar-note"')) throw new Error("Language and theme selection must remain at the bottom of the sidebar.");
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
+  if (!html.includes('data-page="about"') || html.indexOf('data-page="about"') < html.indexOf('data-page="diagnostics"')) throw new Error("About Us must appear below Diagnostics.");
+  if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");
+  for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
 
@@ -134,7 +154,7 @@ async function main() {
     localStorage: { getItem() { return null; }, setItem() {} },
     navigator: { hid: { addEventListener() {} } },
     document: {
-      documentElement: {},
+      documentElement: { dataset: {}, style: {}, setAttribute() {} },
       querySelector: makeElement,
       querySelectorAll(selector) {
         if (selector === ".language-select") return [makeElement("language-1"), makeElement("language-2")];
@@ -152,6 +172,10 @@ async function main() {
   vm.runInContext(app, browser, { filename: "app.js" });
   const renderedKeys = (elements.get("#heroKeyboard").innerHTML.match(/class="key /g) || []).length;
   if (renderedKeys !== 64) throw new Error(`Browser bootstrap rendered ${renderedKeys} keys instead of 64.`);
+  const autoToggleState = vm.runInContext(`(state.dirty.lightingBase = true, setAutoApply(true), [state.autoApply, document.querySelector("#autoApplyToggle").checked, document.querySelector("#applyButton").disabled])`, browser);
+  equal(autoToggleState, [true, true, true], "Enabling experimental auto apply must update its state and disable manual Apply.");
+  vm.runInContext("clearDirty(); setAutoApply(false)", browser);
+  if (!app.includes("selectMappingLayer") || app.includes("#layerSelect")) throw new Error("Layer selection must use the Key Mapping page's layer row.");
   const settingsEnums = vm.runInContext(`({
     systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
@@ -258,9 +282,17 @@ async function main() {
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
+  for (const required of ['class="settings-page"', 'id="systemMode"', 'id="reportRate"', 'id="profileName"', 'data-theme-choice="mint"', 'data-theme-choice="dark"', 'data-theme-choice="light"'])
+    if (!settingsMarkup.includes(required)) throw new Error(`Device settings overhaul omitted ${required}.`);
+  const themeState = vm.runInContext(`(setTheme("light"), [state.theme, document.documentElement.dataset.theme, document.documentElement.style.colorScheme])`, browser);
+  equal(themeState, ["light", "light", "light"], "Appearance switching must update state and the document immediately.");
+  vm.runInContext('applyTheme("mint")', browser);
   const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const required of ["Associated keys", "Trigger key", "Apply combination"])
     if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
+  for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
+    if (!combinationMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
+  if ((combinationMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
   const multipleSelection = vm.runInContext(`(() => {
     state.selectedKeys = new Set([1, 2]);
     stagePerformance("normalPress", 1.25);
@@ -270,39 +302,113 @@ async function main() {
   })()`, browser);
   equal(multipleSelection, [true, 1.25, 1.25], "Multiple selected keys must share staged configuration edits.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
+  const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
+  if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");
+  const livePressMarkup = vm.runInContext(`(state.page = "performance", state.livePressDistance = true, performancePage())`, browser);
+  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"', 'class="axis-actuation-marker"', 'id="livePressActuation"', 'Actuation tuning', 'Actuation & Rapid Trigger', 'Dead zones'])
+    if (!livePressMarkup.includes(required)) throw new Error(`Live press distance omitted ${required}.`);
+  for (const removedPerformanceTab of ['data-performance-tab=', 'Switch axis', '>Calibration</button>'])
+    if (livePressMarkup.includes(removedPerformanceTab)) throw new Error(`Removed Performance tab remains: ${removedPerformanceTab}.`);
+  if ((livePressMarkup.match(/data-travel-tick=/g) || []).length !== 41) throw new Error("The switch gauge must mark 0.0–4.0 mm in 0.1 mm steps.");
+  if (!livePressMarkup.includes('class="press-distance-fill"')) throw new Error("The virtual keyboard must render a per-key live travel fill.");
+  const focusRules = vm.runInContext(`(() => {
+    state.hardware.travelValues.set(0, 500);
+    state.hardware.travelValues.set(1, 2400);
+    state.hardware.travelValues.set(2, 1800);
+    state.selectedKeys = new Set();
+    const all = liveTravelTarget();
+    state.selectedKeys = new Set([0, 2]);
+    const selected = liveTravelTarget();
+    return [[all.key.id, all.raw, all.selectedCount], [selected.key.id, selected.raw, selected.selectedCount]];
+  })()`, browser);
+  equal(focusRules, [[1, 2400, 0], [2, 1800, 2]], "The live gauge must follow the furthest key globally or within a multi-key selection.");
+  const calibrationMarkup = vm.runInContext(`(() => {
+    state.calibrationActive = true;
+    state.hardware.calibrationAdc.set(0, 913);
+    state.hardware.calibrationRoute.set(0, 2000);
+    state.hardware.calibrationStatus.set(0, 2);
+    return performancePage();
+  })()`, browser);
+  for (const required of ['id="calibrationToggle"', 'class="calibration-fill"', 'class="calibration-adc"', '>913</span>', 'Live calibration matrix', 'Calibration status colors'])
+    if (!calibrationMarkup.includes(required)) throw new Error(`Firmware calibration view omitted ${required}.`);
+  if (calibrationMarkup.includes('class="calibration-state"')) throw new Error("Calibration keys must use status color instead of status text.");
+  if ((calibrationMarkup.match(/calibration-key/g) || []).length !== 64) throw new Error("Calibration must annotate all 64 physical keys.");
+  vm.runInContext("state.calibrationActive = false", browser);
+  if (!vm.runInContext("aboutPage()", browser).includes('src="about.html"')) throw new Error("About Us must render the author-owned HTML document.");
+  vm.runInContext("state.livePressDistance = false; state.page = 'overview'", browser);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow', 'class="area-power-banks"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
-  if (!lightingMarkup.includes("UNADVERTISED") || !lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised effects must be clearly labeled as experimental.");
+  if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
+  for (const removedLightingPanel of ['dual-lighting-card', 'fn-lighting-card', 'fnLightingStatus', 'class="panel full-span capture-note experimental-note"'])
+    if (lightingMarkup.includes(removedLightingPanel)) throw new Error(`Removed Lighting panel remains: ${removedLightingPanel}.`);
+  if (!lightingMarkup.includes("UNADVERTISED") || lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised modes must remain labeled without an always-visible warning.");
+  const experimentalLightingMarkup = vm.runInContext(`(state.profile.lighting.base.mode = 20, lightingPage())`, browser);
+  if (!experimentalLightingMarkup.includes('class="capture-note experimental-note lighting-mode-warning"') || !experimentalLightingMarkup.includes("L21–L23 are experimental")) throw new Error("Selecting L21–L23 must reveal the contextual warning inside Lighting mode.");
+  if (experimentalLightingMarkup.indexOf("lighting-mode-grid") > experimentalLightingMarkup.indexOf("lighting-mode-warning")) throw new Error("The experimental warning must appear below the Lighting mode grid.");
+  vm.runInContext("state.profile.lighting.base.mode = 1", browser);
+  const fnMappingRules = vm.runInContext(`(() => {
+    const saved = clone(state.profile.keycodes), inheritedKey = keys[0], trigger = keys[8];
+    state.hardware.keycodes.clear();
+    state.profile.keycodes[0][inheritedKey.id] = 4;
+    state.profile.keycodes[1][inheritedKey.id] = 1;
+    state.profile.keycodes[2][inheritedKey.id] = 5;
+    state.profile.keycodes[3][inheritedKey.id] = 4;
+    state.profile.keycodes[0][trigger.id] = 0xf101;
+    const result = [
+      fnLightingKeyMeta(inheritedKey, 1),
+      fnLightingKeyMeta(inheritedKey, 2),
+      fnLightingKeyMeta(inheritedKey, 3),
+      fnTriggerMappings().find((entry) => entry.key.id === trigger.id)?.layer,
+    ];
+    state.profile.keycodes = saved;
+    state.hardware.keycodes.clear();
+    return result;
+  })()`, browser);
+  equal(fnMappingRules, [
+    { raw: 1, inherited: 4, resolved: 4, override: false },
+    { raw: 5, inherited: 4, resolved: 5, override: true },
+    { raw: 4, inherited: 5, resolved: 4, override: true },
+    1,
+  ], "Fn lighting must inherit transparent keys and identify only changed non-empty mappings as overrides.");
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
   for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
-  if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("Drag across keyboard keys")) throw new Error("Per-key must reuse the unified preview and explain drag selection.");
+  if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("rectangular marquee") || !perKeyMarkup.includes('class="lighting-selection-marquee"')) throw new Error("Per-key must reuse the unified preview and explain rectangular marquee selection.");
   const perKeyMultiMarkup = vm.runInContext(`(state.lightingSelectedKeys = new Set([0, 1, 2]), lightingPage())`, browser);
   if (!perKeyMultiMarkup.includes("3 keys") || !perKeyMultiMarkup.includes("3 SELECTED")) throw new Error("Per-key multi-selection is not reflected in its editor.");
   const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
   for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
   if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
-  if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("Drag only across the four light-strip sides")) throw new Error("Light strip must reuse the unified preview and scope selection to its four sides.");
+  if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("rectangular marquee over any of the four sides")) throw new Error("Light strip must reuse the unified preview and scope marquee selection to its four sides.");
   for (const side of ["top", "right", "bottom", "left"]) if (!stripMarkup.includes(`data-strip-side="${side}"`)) throw new Error(`Decorative1 omitted its ${side} physical side.`);
   if ((stripMarkup.match(/class="key /g) || []).length !== 64) throw new Error("Decorative1 perimeter must surround the live 64-key preview.");
   const stripMultiMarkup = vm.runInContext(`(state.stripSelection = new Set([2, 3, 4, 5]), lightingPage())`, browser);
   if (!stripMultiMarkup.includes("4 light strip LEDs selected") || !stripMultiMarkup.includes("4 SELECTED")) throw new Error("Light-strip multi-selection is not reflected in its editor.");
-  for (const selectionFeature of ["beginLightingSelection", "moveLightingSelection", "event.ctrlKey", "bindLightingSelection"])
+  for (const selectionFeature of ["beginLightingSelection", "updateLightingMarquee", "marqueeSelection", "event.ctrlKey", "bindLightingSelection"])
     if (!app.includes(selectionFeature)) throw new Error(`Lighting selection omitted ${selectionFeature}.`);
+  const marqueeSets = vm.runInContext(`([
+    [...marqueeSelection(new Set([1, 2]), [2, 3], true)].sort((a, b) => a - b),
+    [...marqueeSelection(new Set([1, 2]), [4, 5], false)].sort((a, b) => a - b),
+  ])`, browser);
+  equal(marqueeSets, [[1, 3], [4, 5]], "Lighting marquee must replace normally and toggle with Ctrl.");
   const changeSummary = vm.runInContext(`(state.dirty.lightingBase = true, state.profile.lighting.base.mode = 20, summarizeChanges())`, browser);
   if (!changeSummary.some((entry) => entry.includes("L21") && entry.includes("experimental"))) throw new Error("Apply review must identify experimental lighting changes.");
   vm.runInContext("clearDirty()", browser);
   if (app.includes("Workspace saved in this browser. Connect to write it to the keyboard.")) throw new Error("Disconnected Apply must not masquerade as an onboard save.");
   if (!app.includes("requestApplyChanges") || !app.includes("summarizeChanges")) throw new Error("Apply review-confirm-write workflow is missing.");
+  for (const autoApplyFeature of ["scheduleAutoApply", "flushAutoApply", "setAutoApply", "automatic = false"])
+    if (!app.includes(autoApplyFeature)) throw new Error(`Experimental auto apply omitted ${autoApplyFeature}.`);
   const css = read("styles.css");
   if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
-  for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]"])
+  for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]", ".lighting-selection-marquee"])
     if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
+  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker"])
+    if (!css.includes(themeRule)) throw new Error(`Appearance/select styling omitted ${themeRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
   equal(API.LIGHTING_OPEN_MODE, { OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 }, "Upper/lower lighting bit mapping changed.");
@@ -317,6 +423,9 @@ async function main() {
   const info = await transport.getDeviceInfo();
   if (info.boardIdHex !== "0030000a" || info.firmware !== "0.0.7.0") throw new Error("Device information decoder failed.");
   browser.injectedTransport = transport;
+  vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
+  const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
+  equal(autoApplied, [true, 0, true, 12], "Experimental auto apply must write, verify, and clear a completed edit.");
   vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
   const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);
@@ -334,12 +443,58 @@ async function main() {
   equal(displayedReadback, [0x1211, 0xbeef], "The keyboard preview must show refreshed hardware values unless an edit is staged.");
   vm.runInContext("clearDirty()", browser);
 
+  const arbitraryFnAddress = vm.runInContext(`(() => {
+    const trigger = keys[8], changed = keys[9], physicalFn = keys.find((key) => key.n === "Fn");
+    state.hardware.keycodes.clear();
+    keys.forEach((key) => {
+      state.hardware.keycodes.set("0:" + key.id, key.id === physicalFn.id ? 0 : defaultKeycode(key));
+      state.hardware.keycodes.set("1:" + key.id, 1);
+    });
+    state.hardware.keycodes.set("0:" + trigger.id, 0xf101);
+    state.hardware.keycodes.set("1:" + changed.id, 0x20e9);
+    return { ...position(trigger), id: trigger.id, changedId: changed.id };
+  })()`, browser);
+  device.pressedKey = { row: arbitraryFnAddress.row, col: arbitraryFnAddress.col, status: 3 };
+  const liveFnState = await vm.runInContext("readFnLightingState()", browser);
+  equal(liveFnState, { status: 3, layer: 1, triggerId: arbitraryFnAddress.id }, "Live Fn monitoring must follow any physical key mapped to an Fn layer, not only the key named Fn.");
+  const appliedFnState = vm.runInContext(`(() => {
+    updateFnLightingState(${liveFnState.status}, ${liveFnState.layer}, ${liveFnState.triggerId});
+    const meta = fnLightingKeyMeta(keys[${arbitraryFnAddress.changedId}], state.hardware.fnLayer);
+    return [state.hardware.fnPressed, state.hardware.fnLayer, state.hardware.fnTriggerId, meta.override, meta.resolved];
+  })()`, browser);
+  equal(appliedFnState, [true, 1, arbitraryFnAddress.id, true, 0x20e9], "The live Fn layer must expose changed mappings while preserving their firmware framebuffer colors.");
+  const fnStatusRows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === 3).slice(-1).map(({ packet }) => packet[3]);
+  equal(fnStatusRows, [arbitraryFnAddress.row], "Fn monitoring should read only rows containing active-layer trigger mappings.");
+  vm.runInContext("updateFnLightingState(0); state.hardware.keycodes.clear()", browser);
+  device.pressedKey = { row: 5, col: 5, status: 3 };
+
   const performance = await transport.getPerformance({ row: 2, col: 3 });
   if (performance.mode !== 1 || performance.normalPress !== 2 || performance.rtPress !== 0.15 || performance.axisV2Id !== 0x1234) throw new Error("Performance decoder failed.");
   await transport.setPerformance({ row: 2, col: 3 }, performance);
   const write = device.sent.at(-1).packet;
   equal(write.slice(0, 7), [4, 2, 2, 3, 1, 0xd0, 0x07], "Performance write header/actuation encoding failed.");
   if (write.length !== 64) throw new Error("Every HID report must be zero-padded to 64 bytes.");
+  vm.runInContext("state.transport = injectedTransport; state.page = 'performance'; state.livePressDistance = true; state.hardware.keyPositions.clear()", browser);
+  await vm.runInContext("startTravel()", browser);
+  const liveTravel = vm.runInContext("[state.hardware.travelValues.get(0), state.hardware.travelValues.get(1)]", browser);
+  equal(liveTravel, [1200, 2300], "Live press distance must retain simultaneous per-key Route values.");
+  const routeRows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === 1).slice(-6).map(({ packet }) => packet[3]);
+  equal(routeRows, [0, 1, 2, 3, 4, 5], "Live press distance must sample all six firmware rows.");
+  vm.runInContext("state.livePressDistance = false; stopTravelPolling(true); state.page = 'overview'", browser);
+  vm.runInContext("state.page = 'performance'; state.transport = injectedTransport", browser);
+  await vm.runInContext("startCalibration()", browser);
+  vm.runInContext("stopCalibrationPolling()", browser);
+  await vm.runInContext("startCalibrationPolling()", browser);
+  const calibrationValues = vm.runInContext("[state.hardware.calibrationAdc.get(0), state.hardware.calibrationRoute.get(0), state.hardware.calibrationStatus.get(0), state.hardware.calibrationStatus.get(1)]", browser);
+  equal(calibrationValues, [800, 1200, 2, 1], "Calibration must combine ADC, Route, and Calibrate matrices for every key.");
+  for (const type of [0, 1, 2]) {
+    const rows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === type).slice(-6).map(({ packet }) => packet[3]);
+    equal(rows, [0, 1, 2, 3, 4, 5], `Calibration axis-data type ${type} must sample all six firmware rows.`);
+  }
+  await vm.runInContext("stopCalibration(true)", browser);
+  if (!device.sent.some(({ packet }) => packet[0] === 2 && packet[1] === 6 && packet[2] === 0) || !device.sent.some(({ packet }) => packet[0] === 2 && packet[1] === 6 && packet[2] === 1)) throw new Error("Calibration start/end commands changed.");
+  if (!device.sent.some(({ packet }) => packet[0] === 2 && packet[1] === 2 && packet[2] === 1)) throw new Error("Calibration save group changed.");
+  vm.runInContext("state.page = 'overview'", browser);
   await transport.setKeyCode({ row: 1, col: 2 }, 0x1234, 3);
   equal(device.sent.at(-1).packet.slice(0, 7), [3, 4, 3, 1, 2, 0x34, 0x12], "Four-layer keycode write encoding failed.");
   await transport.saveParameters(API.SAVE_GROUP.LAYOUT);

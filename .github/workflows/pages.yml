@@ -34,9 +34,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _site/js/app
-          cp index.html styles.css protocol.js app.js languages.xml _site/
+          mkdir -p _site/js/app _site/assets/images
+          cp index.html styles.css protocol.js app.js languages.xml about.html _site/
           cp js/app/*.js _site/js/app/
+          cp assets/images/axis.png _site/assets/images/
           touch _site/.nojekyll
 
       - name: Upload GitHub Pages artifact

@@ -96,63 +96,240 @@ async function readLayoutStyle() {
 }
 async function startCalibration() {
   if (!connected()) return showToast("Connect before calibration.", true);
+  if (state.calibrationActive || state.calibrationBusy) return;
+  state.calibrationBusy = true;
+  state.livePressDistance = false;
+  stopPolling();
+  state.hardware.calibrationAdc.clear();
+  state.hardware.calibrationRoute.clear();
+  state.hardware.calibrationStatus.clear();
+  render();
   try {
     await state.transport.setCalibration(true);
+    state.calibrationActive = true;
+    state.calibrationBusy = false;
     log("Calibration started");
     showToast("Calibration active. Press every key fully several times.");
-    let cursor = 0;
-    const cells = [...document.querySelectorAll(".calibration-grid i")];
-    state.timers.calibration = setInterval(() => {
-      cells
-        .slice(0, (cursor += 2))
-        .forEach((cell) => cell.classList.add("done"));
-    }, 250);
+    render();
+    startCalibrationPolling();
   } catch (error) {
+    state.calibrationActive = false;
+    state.calibrationBusy = false;
+    render();
     showToast(error.message, true);
   }
 }
-async function stopCalibration() {
-  if (state.timers.calibration) clearInterval(state.timers.calibration);
+function stopCalibrationPolling(clear = false) {
+  if (state.timers.calibration) clearTimeout(state.timers.calibration);
   state.timers.calibration = null;
-  if (!connected()) return;
+  state.timers.calibrationGeneration += 1;
+  if (clear) {
+    state.hardware.calibrationAdc.clear();
+    state.hardware.calibrationRoute.clear();
+    state.hardware.calibrationStatus.clear();
+  }
+}
+function resetCalibrationSession(clear = true) {
+  stopCalibrationPolling(clear);
+  state.calibrationActive = false;
+  state.calibrationBusy = false;
+}
+async function stopCalibration(save = true) {
+  if (!state.calibrationActive && !state.calibrationBusy) return;
+  stopCalibrationPolling();
+  state.calibrationBusy = true;
+  render();
   try {
-    await state.transport.setCalibration(false);
-    await state.transport.saveParameters(SAVE_GROUP.CALIBRATION);
-    log("Calibration stopped and saved");
-    showToast("Calibration stopped and saved.");
+    if (connected()) {
+      await state.transport.setCalibration(false);
+      if (save) await state.transport.saveParameters(SAVE_GROUP.CALIBRATION);
+    }
+    state.hardware.calibrationStatus.forEach((status, key) => {
+      if (Number(status) === 2) state.hardware.calibrationStatus.set(key, 1);
+    });
+    log(save ? "Calibration stopped and saved" : "Calibration stopped");
+    showToast(save ? "Calibration stopped and saved." : "Calibration stopped.");
   } catch (error) {
     showToast(error.message, true);
+  } finally {
+    state.calibrationActive = false;
+    state.calibrationBusy = false;
+    render();
   }
+}
+function updateCalibrationVisuals() {
+  if (!state.calibrationActive || state.page !== "performance") return;
+  document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
+    const id = Number(node.dataset.key),
+      status = Number(state.hardware.calibrationStatus.get(id) || 0),
+      meta = calibrationStatusMeta(status),
+      route = Number(state.hardware.calibrationRoute.get(id) || 0),
+      range = Number(state.profile.performance[id]?.axisRangeMax) || 4000,
+      percent = status === 2 ? 100 : Math.min(100, Math.max(0, route / range * 100));
+    node.classList.remove("calibration-uncalibrated", "calibration-calibrated", "calibration-new");
+    node.classList.add(`calibration-${meta.className}`);
+    node.style.setProperty("--calibration-depth", `${percent.toFixed(2)}%`);
+    const adc = node.querySelector(".calibration-adc");
+    if (adc) adc.textContent = String(Number(state.hardware.calibrationAdc.get(id) || 0));
+  });
+  const statuses = keys.map((key) => Number(state.hardware.calibrationStatus.get(key.id) || 0)),
+    known = document.querySelector("#calibrationKnown"),
+    fresh = document.querySelector("#calibrationFresh"),
+    max = document.querySelector("#calibrationMaxRoute");
+  if (known) known.textContent = String(statuses.filter((status) => status === 1).length);
+  if (fresh) fresh.textContent = String(statuses.filter((status) => status === 2).length);
+  if (max) max.textContent = String(Math.max(0, ...keys.map((key) => Number(state.hardware.calibrationRoute.get(key.id) || 0))));
+}
+async function startCalibrationPolling() {
+  stopCalibrationPolling();
+  if (!connected() || !state.calibrationActive || state.page !== "performance") return;
+  const generation = state.timers.calibrationGeneration,
+    rows = Array.from({ length: MATRIX_ROWS }, (_, row) => row);
+  const read = async () => {
+    if (generation !== state.timers.calibrationGeneration || !connected() || !state.calibrationActive || state.page !== "performance") return;
+    try {
+      const samples = await Promise.all(rows.map(async (row) => [row, await Promise.all([
+        state.transport.getAxisData("adc", row),
+        state.transport.getAxisData("route", row),
+        state.transport.getAxisData("calibration", row),
+      ])]));
+      if (generation !== state.timers.calibrationGeneration) return;
+      const matrices = new Map(samples.map(([row, values]) => [row, values.map((sample) => sample.values)]));
+      keys.forEach((key) => {
+        const address = position(key), values = matrices.get(address.row);
+        state.hardware.calibrationAdc.set(key.id, Number(values?.[0]?.[address.col] || 0));
+        state.hardware.calibrationRoute.set(key.id, Number(values?.[1]?.[address.col] || 0));
+        state.hardware.calibrationStatus.set(key.id, Number(values?.[2]?.[address.col] || 0));
+      });
+      updateCalibrationVisuals();
+    } catch (error) {
+      if (generation !== state.timers.calibrationGeneration) return;
+      log("Calibration telemetry retrying", error.message);
+      const badge = document.querySelector("#calibrationStatusBadge");
+      if (badge) { badge.textContent = "LIVE · RETRYING"; badge.classList.remove("ready"); badge.classList.add("experimental"); }
+      state.timers.calibration = setTimeout(read, 500);
+      return;
+    }
+    state.timers.calibration = setTimeout(read, 40);
+  };
+  return read();
 }
 async function startTravel() {
-  if (!connected()) return showToast("Connect to read live travel.", true);
-  stopPolling();
+  if (
+    !connected() ||
+    state.page !== "performance" ||
+    !state.livePressDistance
+  )
+    return;
+  stopTravelPolling();
+  const generation = state.timers.travelGeneration,
+    rows = Array.from({ length: MATRIX_ROWS }, (_, row) => row);
   const read = async () => {
     if (
+      generation !== state.timers.travelGeneration ||
       !connected() ||
       state.page !== "performance" ||
-      state.performanceTab !== "travel"
+      !state.livePressDistance
     )
       return;
     try {
-      const key = selectedKey(),
-        data = await state.transport.getAxisData("route", key.row);
-      state.hardware.travelValue = data.values[key.col] || 0;
-      const valueNode = document.querySelector(".travel-meter .value"),
-        meter = document.querySelector(".travel-meter");
-      if (valueNode && meter) {
-        const mm = Math.min(4, state.hardware.travelValue / 1000);
-        valueNode.textContent = `${mm.toFixed(3)} mm`;
-        meter.style.setProperty("--travel", `${Math.round((mm / 4) * 100)}%`);
-      }
+      const samples = await Promise.all(
+        rows.map(async (row) => [
+          row,
+          await state.transport.getAxisData("route", row),
+        ]),
+      );
+      if (generation !== state.timers.travelGeneration) return;
+      const routes = new Map(samples.map(([row, sample]) => [row, sample.values]));
+      keys.forEach((key) => {
+        const address = position(key),
+          value = Number(routes.get(address.row)?.[address.col] || 0);
+        state.hardware.travelValues.set(key.id, value);
+      });
+      updateTravelVisuals();
     } catch (error) {
-      log("Travel poll stopped", error.message);
-      showToast(error.message, true);
+      if (generation !== state.timers.travelGeneration) return;
+      log("Live press distance retrying", error.message);
+      const status = document.querySelector("#livePressStatus");
+      if (status) {
+        status.textContent = "LIVE · RETRYING";
+        status.classList.remove("ready");
+        status.classList.add("experimental");
+      }
+      state.timers.travel = setTimeout(read, 500);
       return;
     }
-    state.timers.travel = setTimeout(read, 120);
+    state.timers.travel = setTimeout(read, 40);
   };
-  read();
+  return read();
+}
+function updateTravelVisuals() {
+  if (state.page !== "performance" || !state.livePressDistance) return;
+  document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
+    const raw = Number(
+        state.hardware.travelValues.get(Number(node.dataset.key)) || 0,
+      ),
+      percent = Math.min(100, Math.max(0, raw / 40));
+    node.style.setProperty("--press-depth", `${percent.toFixed(2)}%`);
+    node.classList.toggle("pressed", raw >= 10);
+  });
+  const focus = liveTravelTarget(),
+    { key, raw, mm, actuation, selectedCount } = focus,
+    panel = document.querySelector("#livePressPanel"),
+    value = document.querySelector("#livePressValue"),
+    rawNode = document.querySelector("#livePressRaw"),
+    keyNode = document.querySelector("#livePressKey"),
+    actuationNode = document.querySelector("#livePressActuation"),
+    actuationMarker = document.querySelector("#liveActuationMarkerLabel"),
+    scopeNode = document.querySelector("#livePressScope"),
+    status = document.querySelector("#livePressStatus"),
+    pressed = keys
+      .map((key) => ({
+        key,
+        mm: Math.min(
+          4,
+          Math.max(0, Number(state.hardware.travelValues.get(key.id) || 0) / 1000),
+        ),
+      }))
+      .filter((entry) => entry.mm >= 0.01)
+      .sort((a, b) => b.mm - a.mm);
+  panel?.style.setProperty(
+    "--press-distance",
+    `${((mm / 4) * 100).toFixed(2)}%`,
+  );
+  panel?.style.setProperty(
+    "--actuation-distance",
+    `${((actuation / 4) * 100).toFixed(2)}%`,
+  );
+  panel?.classList.toggle("actuated", mm >= actuation && mm >= 0.01);
+  if (keyNode) keyNode.textContent = key.n;
+  if (value) value.innerHTML = `${mm.toFixed(3)} <small>mm</small>`;
+  if (rawNode) rawNode.textContent = String(raw);
+  if (actuationNode) actuationNode.textContent = `${actuation.toFixed(2)} mm`;
+  if (actuationMarker) actuationMarker.textContent = `AP ${actuation.toFixed(2)}`;
+  if (scopeNode)
+    scopeNode.textContent = selectedCount ? `${selectedCount} selected` : "All keys";
+  if (status) {
+    status.textContent = `LIVE · ${pressed.length} PRESSED`;
+    status.classList.add("ready");
+    status.classList.remove("experimental");
+  }
+  const list = document.querySelector("#pressedKeyList");
+  if (list)
+    list.innerHTML = pressed.length
+      ? pressed
+          .map(
+            ({ key, mm: distance }) =>
+              `<span><b>${esc(key.n)}</b>${distance.toFixed(3)} mm</span>`,
+          )
+          .join("")
+      : "<em>Press any key to begin.</em>";
+}
+function stopTravelPolling(clear = false) {
+  if (state.timers.travel) clearTimeout(state.timers.travel);
+  state.timers.travel = null;
+  state.timers.travelGeneration += 1;
+  if (clear) state.hardware.travelValues.clear();
 }
 function updateLiveKeyboard(matrix) {
   state.hardware.liveMatrix = matrix;
@@ -173,6 +350,66 @@ function updateLiveStrip(matrix) {
       node.title = `LED ${Number(node.dataset.stripLed)} · ${rgbToHex(record).toUpperCase()}`;
     }
   });
+}
+function hardwareLayerReady(layer) {
+  return keys.every((key) => state.hardware.keycodes.has(`${layer}:${key.id}`));
+}
+function fnTriggerMappings() {
+  return keys
+    .map((key) => ({
+      key,
+      layer: fnLayerFromKeycode(resolvedLayerKeycode(key, 0)),
+    }))
+    .filter(({ layer }) => Number(layer) > 0);
+}
+async function ensureFnLightingMappings() {
+  if (!hardwareLayerReady(0)) await readKeymapLayer(0);
+  const triggers = fnTriggerMappings(),
+    layers = [...new Set(triggers.map(({ layer }) => layer))];
+  for (const layer of layers)
+    if (!hardwareLayerReady(layer)) await readKeymapLayer(layer);
+  return triggers;
+}
+async function readFnLightingState() {
+  const triggers = await ensureFnLightingMappings();
+  if (!triggers.length) return { status: 0, layer: 0, triggerId: null };
+  const rows = [...new Set(triggers.map(({ key }) => position(key).row))],
+    replies = await Promise.all(
+      rows.map((row) => state.transport.getAxisData("keyStatus", row)),
+    ),
+    valuesByRow = new Map(rows.map((row, index) => [row, replies[index].values])),
+    active = triggers.find(({ key }) => {
+      const address = position(key),
+        status = Number(valuesByRow.get(address.row)?.[address.col] || 0);
+      return status > 0 && status < 8;
+    });
+  if (!active) return { status: 0, layer: 0, triggerId: null };
+  const address = position(active.key),
+    status = Number(valuesByRow.get(address.row)?.[address.col] || 0);
+  return { status, layer: active.layer, triggerId: active.key.id };
+}
+function updateFnLightingState(status, targetLayer = 0, triggerId = null) {
+  const pressed = Number(status) > 0 && Number(status) < 8 && Number(targetLayer) > 0,
+    activeLayer = pressed ? Number(targetLayer) : 0;
+  state.hardware.fnStatus = Number(status) || 0;
+  state.hardware.fnPressed = pressed;
+  state.hardware.fnLayer = activeLayer;
+  state.hardware.fnTriggerId = pressed ? Number(triggerId) : null;
+  document.querySelectorAll(".unified-lighting-preview [data-key]").forEach((node) => {
+    const key = keys[Number(node.dataset.key)],
+      label = node.querySelector(".mapped"),
+      meta = key && pressed ? fnLightingKeyMeta(key, activeLayer) : null;
+    node.classList.toggle("fn-held", pressed && key?.id === Number(triggerId));
+    node.classList.toggle("fn-layer-override", Boolean(meta?.override));
+    node.classList.toggle("fn-layer-inherited", Boolean(meta && !meta.override));
+    if (key && label)
+      label.textContent = keycodeLabel(meta ? meta.resolved : displayedKeycode(key, 0));
+  });
+  const badge = document.querySelector(".unified-lighting-preview .badge");
+  if (badge)
+    badge.textContent = pressed
+      ? `KEYBOARD + 38 LEDS · FN${activeLayer}`
+      : "KEYBOARD + 38 LEDS";
 }
 function updateLiveStatus(message, error = false) {
   const node = document.querySelector("#liveRgbStatus");
@@ -213,8 +450,18 @@ function startLightingLive() {
       );
       if (generation !== state.timers.lightingGeneration) return;
       updateLiveStrip(stripMatrix);
+      try {
+        const fnState = await readFnLightingState();
+        if (generation !== state.timers.lightingGeneration) return;
+        updateFnLightingState(fnState.status, fnState.layer, fnState.triggerId);
+        state.hardware.fnReadError = null;
+      } catch (error) {
+        if (state.hardware.fnReadError !== error.message) log("Fn status read unavailable", error.message);
+        state.hardware.fnReadError = error.message;
+        updateFnLightingState(0);
+      }
       state.hardware.liveError = null;
-      updateLiveStatus("LIVE · ≈10 FPS");
+      updateLiveStatus(state.hardware.fnPressed ? `LIVE · FN${state.hardware.fnLayer}` : "LIVE · ≈10 FPS");
     } catch (error) {
       if (generation !== state.timers.lightingGeneration) return;
       if (state.hardware.liveError !== error.message)
@@ -227,7 +474,6 @@ function startLightingLive() {
   read();
 }
 function stopPolling() {
-  if (state.timers.travel) clearTimeout(state.timers.travel);
-  state.timers.travel = null;
+  stopTravelPolling();
   stopLightingPolling();
 }
