@@ -381,6 +381,34 @@ function revertChanges() {
   render();
   showToast("Staged changes reverted.");
 }
+async function reloadProfileFromDevice(index) {
+  state.profile.profileIndex = index;
+  state.hardware.keycodes.clear();
+  const [lightingBase, palette, decorativeBase, decorativePalette] =
+    await Promise.all([
+      state.transport.getLightingBase(0),
+      state.transport.getLightingPalette(0),
+      state.transport.getLightingBase(1),
+      state.transport.getLightingPalette(1),
+    ]);
+  state.profile.lighting.base = { ...state.profile.lighting.base, ...lightingBase };
+  state.profile.lighting.palette = palette.map(rgbToHex);
+  state.profile.lighting.decorative.base = {
+    ...state.profile.lighting.decorative.base,
+    ...decorativeBase,
+  };
+  state.profile.lighting.decorative.palette = decorativePalette.map(rgbToHex);
+  keys.forEach((key) => { state.profile.lighting.customEnabled[key.id] = false; });
+  state.profile.lighting.decorative.customEnabled.fill(false);
+  Object.assign(state.hardware, {
+    customMatrix: null, decorativeMatrix: null, liveMatrix: null, liveStrip: null,
+  });
+  await readKeymapLayer(state.profile.layer);
+  await optional("Fn layer target", readFnLayerTarget);
+  await readSelectedKey();
+  state.original = clone(state.profile);
+  clearDirty();
+}
 async function switchProfile(index) {
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   if (dirtyCount()) {
@@ -390,43 +418,11 @@ async function switchProfile(index) {
   }
   if (connected()) {
     stopPolling();
+    stopProfilePolling();
     showProgress("Switching profile", `Loading profile ${index + 1}.`);
     try {
       await state.transport.switchConfig(index);
-      state.profile.profileIndex = index;
-      state.hardware.keycodes.clear();
-      const [lightingBase, palette, decorativeBase, decorativePalette] =
-        await Promise.all([
-          state.transport.getLightingBase(0),
-          state.transport.getLightingPalette(0),
-          state.transport.getLightingBase(1),
-          state.transport.getLightingPalette(1),
-        ]);
-      state.profile.lighting.base = {
-        ...state.profile.lighting.base,
-        ...lightingBase,
-      };
-      state.profile.lighting.palette = palette.map(rgbToHex);
-      state.profile.lighting.decorative.base = {
-        ...state.profile.lighting.decorative.base,
-        ...decorativeBase,
-      };
-      state.profile.lighting.decorative.palette =
-        decorativePalette.map(rgbToHex);
-      keys.forEach((key) => {
-        state.profile.lighting.customEnabled[key.id] = false;
-      });
-      state.profile.lighting.decorative.customEnabled.fill(false);
-      Object.assign(state.hardware, {
-        customMatrix: null,
-        decorativeMatrix: null,
-        liveMatrix: null,
-        liveStrip: null,
-      });
-      await readKeymapLayer(state.profile.layer);
-      await optional("Fn layer target", readFnLayerTarget);
-      await readSelectedKey();
-      state.original = clone(state.profile);
+      await reloadProfileFromDevice(index);
       log("Profile switched", index);
       showToast(
         `Profile ${index + 1} loaded. Live RGB readback has restarted.`,
@@ -436,6 +432,7 @@ async function switchProfile(index) {
     } finally {
       hideProgress();
       render();
+      startProfilePolling();
     }
   } else {
     state.profile.profileIndex = index;

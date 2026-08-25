@@ -31,6 +31,7 @@ class FakeDevice {
     this.listeners = new Map();
     this.sent = [];
     this.pressedKey = { row: 5, col: 5, status: 3 };
+    this.currentConfig = 0;
   }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
   removeEventListener(type) { this.listeners.delete(type); }
@@ -49,6 +50,14 @@ class FakeDevice {
     if (packet[0] === 1 && packet[1] === 2) {
       reply.set([0x00, 0x30, 0x00, 0x0a], 4);
       reply.set([0, 0, 7, 0], 8);
+    }
+    if (packet[0] === 2 && packet[1] === 3) {
+      if (packet[2] === 0) reply[3] = 4;
+      if (packet[2] === 1) reply[3] = this.currentConfig;
+      if (packet[2] === 2) {
+        this.currentConfig = packet[3];
+        reply[3] = this.currentConfig;
+      }
     }
     if (packet[0] === 4 && packet[1] === 1) {
       reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
@@ -431,6 +440,9 @@ async function main() {
   vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
   const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
   equal(autoApplied, [true, 0, true, 12], "Experimental auto apply must write, verify, and clear a completed edit.");
+  device.currentConfig = 2;
+  const physicalProfileSync = await vm.runInContext("syncPhysicalProfile().then((changed) => [changed, state.profile.profileIndex, state.original.profileIndex])", browser);
+  equal(physicalProfileSync, [true, 2, 2], "A physical profile switch must reload the active profile without a key press.");
   vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
   const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);

@@ -26,6 +26,44 @@ async function readFnLayerTarget() {
   state.hardware.keycodes.set(`0:${fn.id}`, result.keycode);
   return result.keycode;
 }
+function stopProfilePolling() {
+  if (state.timers.profile) clearTimeout(state.timers.profile);
+  state.timers.profile = null;
+  state.timers.profileGeneration += 1;
+}
+async function syncPhysicalProfile() {
+  if (!connected() || dirtyCount() || state.profileSyncInFlight) return false;
+  const index = await state.transport.getCurrentConfig();
+  if (Number(index) === Number(state.profile.profileIndex)) return false;
+  if (!state.hardware.configIndexes.includes(Number(index))) return false;
+  state.profileSyncInFlight = true;
+  stopPolling();
+  try {
+    await reloadProfileFromDevice(Number(index));
+    log("Physical profile switch detected", index);
+    render();
+    showToast(`Profile ${Number(index) + 1} loaded from keyboard.`);
+    return true;
+  } finally {
+    state.profileSyncInFlight = false;
+  }
+}
+function startProfilePolling() {
+  stopProfilePolling();
+  if (!connected()) return;
+  const generation = state.timers.profileGeneration;
+  const read = async () => {
+    if (generation !== state.timers.profileGeneration || !connected()) return;
+    try {
+      await syncPhysicalProfile();
+    } catch (error) {
+      log("Physical profile check failed", error.message);
+    }
+    if (generation === state.timers.profileGeneration && connected())
+      state.timers.profile = setTimeout(read, 250);
+  };
+  read();
+}
 function openWorkspace() {
   document.querySelector("#topbar").classList.add("hidden");
   document.querySelector("main").classList.add("hidden");
@@ -36,6 +74,7 @@ function openWorkspace() {
 async function returnHome() {
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   stopPolling();
+  stopProfilePolling();
   document.querySelector("#workspace").classList.add("hidden");
   document.querySelector("#topbar").classList.remove("hidden");
   document.querySelector("main").classList.remove("hidden");
@@ -76,6 +115,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
         : "Choose the 1CA6:300A configuration interface.",
     );
   try {
+    stopProfilePolling();
     if (state.transport) await state.transport.close();
     state.transport = targetDevice
       ? new AE64HidTransport(targetDevice)
@@ -224,12 +264,14 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       remappedPositions: state.hardware.keyPositions.size,
     });
     openWorkspace();
+    startProfilePolling();
     showToast(`AE64 Pro connected · firmware ${info.firmware}`);
     return true;
   } catch (error) {
     log("Connection failed", error.message);
     if (state.transport) await state.transport.close().catch(() => undefined);
     state.transport = null;
+    stopProfilePolling();
     if (targetDevice === state.knownDevice) state.knownDevice = null;
     if (!silent) showToast(`Could not connect: ${error.message}`, true);
     renderStatus();

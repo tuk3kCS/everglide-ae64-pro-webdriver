@@ -872,7 +872,8 @@ const state = {
     travel: null, travelGeneration: 0,
     lighting: null,
     lightingGeneration: 0,
-    calibration: null, calibrationGeneration: 0,
+  calibration: null, calibrationGeneration: 0,
+    profile: null, profileGeneration: 0,
   },
   toastTimer: null,
 };
