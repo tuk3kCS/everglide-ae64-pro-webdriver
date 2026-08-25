@@ -9,9 +9,35 @@
  */
 
 const RAINBOW_PREVIEW = Object.freeze(["#ff334f", "#ff9d2e", "#ffe73d", "#37df75", "#30c8f2", "#5378ff", "#a75cff", "#f04dc1"]);
+function fnLayerFromKeycode(keycode) {
+  const code = Number(keycode);
+  return code >= 0xf100 && code <= 0xf103 ? code - 0xf100 : null;
+}
+function resolvedLayerKeycode(key, layer) {
+  for (let current = Math.max(0, Number(layer)); current >= 0; current -= 1) {
+    const code = displayedKeycode(key, current);
+    if (code !== 1) return code;
+  }
+  return 0;
+}
+function fnLightingKeyMeta(key, targetLayer) {
+  const layer = Math.max(1, Math.min(3, Number(targetLayer))),
+    raw = displayedKeycode(key, layer),
+    inherited = resolvedLayerKeycode(key, layer - 1),
+    resolved = raw === 1 ? inherited : raw;
+  return {
+    raw,
+    inherited,
+    resolved,
+    override: raw > 1 && raw !== inherited,
+  };
+}
 function fnTargetLayer() {
-  const fn = keys.find((key) => key.n === "Fn"), code = fn ? displayedKeycode(fn, 0) : 0;
-  return code >= 0xf100 && code <= 0xf103 ? code - 0xf100 : 0;
+  if (state.hardware.fnPressed && Number(state.hardware.fnLayer) > 0)
+    return Number(state.hardware.fnLayer);
+  const fn = keys.find((key) => key.n === "Fn"),
+    layer = fnLayerFromKeycode(fn ? resolvedLayerKeycode(fn, 0) : 0);
+  return layer ?? 0;
 }
 function calibrationStatusMeta(value) {
   return Number(value) === 2
@@ -40,7 +66,10 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
             const key = keys.find(
               (candidate) => candidate.uiRow === uiRow && candidate.col === col,
             );
-            const code = displayedKeycode(key, layer);
+            const fnMeta = lighting && state.hardware.fnPressed
+                ? fnLightingKeyMeta(key, layer)
+                : null,
+              code = fnMeta ? fnMeta.resolved : displayedKeycode(key, layer);
             const mapped = keycodeLabel(code);
             const custom = Boolean(light.customEnabled?.[key.id]),
               liveColor = live
@@ -81,7 +110,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
               ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
@@ -280,17 +309,23 @@ function lightingRange(id, label, value, hint) {
 function lightingTabs() {
   return `<div class="lighting-tabs" role="tablist" aria-label="Lighting sections"><button type="button" role="tab" data-lighting-tab="main" aria-selected="${state.lightingTab === "main"}" class="${state.lightingTab === "main" ? "active" : ""}"><span>01</span>${t("lightingMainKeyboard")}</button><button type="button" role="tab" data-lighting-tab="perKey" aria-selected="${state.lightingTab === "perKey"}" class="${state.lightingTab === "perKey" ? "active" : ""}"><span>02</span>${t("lightingPerKey")}</button><button type="button" role="tab" data-lighting-tab="strip" aria-selected="${state.lightingTab === "strip"}" class="${state.lightingTab === "strip" ? "active" : ""}"><span>03</span>${t("lightingDecorative")}</button></div>`;
 }
-function lightingPowerPanel(base, title, description) {
-  return `<section class="panel full-span area-power-panel"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div><label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label></section>`;
+function lightingPowerPanel(base, title, description, includeLedBanks = false) {
+  const upper = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER),
+    lower = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER),
+    ledBanks = includeLedBanks
+      ? `<div class="area-power-banks"><div class="area-power-banks-head"><div><h3>North / south LED banks</h3><p>The main power byte independently controls both physical LED orientations.</p></div><span class="badge ${state.hardware.doubleLighting ? "ready" : ""}">${state.hardware.doubleLighting ? "REPORTED" : "CAPTURED"}</span></div><div class="dual-lighting-switches"><label class="switch-row"><span><b>${t("lightingUpper")}</b><small>Original driver: Upper Lighting Switch · bit 2</small></span><input id="upperLighting" class="toggle" type="checkbox" ${upper ? "checked" : ""}></label><label class="switch-row"><span><b>${t("lightingLower")}</b><small>Original driver: Lower Lighting Switch · bit 1</small></span><input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : ""}></label></div></div>`
+      : "";
+  return `<section class="panel full-span area-power-panel"><div class="area-power-summary"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div><label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label></div>${ledBanks}</section>`;
 }
 function lightingModePanel(base, count, target, area, reportedCount = count) {
-  const modes = LIGHTING_MODE_OPTIONS.slice(0, count);
+  const modes = LIGHTING_MODE_OPTIONS.slice(0, count),
+    showExperimental = target === "main" && Number(base.mode) >= reportedCount;
   return `<section class="panel lighting-mode-panel"><div class="panel-head"><div><h2>${t("lightingMode")}</h2><p>${t("lightingModeHint")}</p></div><span class="badge ready">${count} MODES</span></div><div class="lighting-mode-grid">${modes
     .map((mode) => {
       const experimental = mode.value >= reportedCount;
       return `<button type="button" data-lighting-mode="${mode.value}" data-lighting-target="${target}" class="${mode.value === Number(base.mode) ? "active " : ""}${experimental ? "experimental" : ""}"><span>${mode.label}${experimental ? " *" : ""}</span><small>${experimental ? "UNADVERTISED" : "Area " + area} · value ${mode.value}</small></button>`;
     })
-    .join("")}</div></section>`;
+    .join("")}</div>${showExperimental ? '<div class="capture-note experimental-note lighting-mode-warning"><strong>L21–L23 are experimental</strong><span>AE64 area 0 advertises values 0–19. Catalog values 20–22 are exposed for testing; Apply accepts a value only when the keyboard reads it back unchanged.</span></div>' : ""}</section>`;
 }
 function lightingDirection(base, target) {
   return `<div class="lighting-direction"><span><b>${t("lightingDirection")}</b><small>One firmware bit; no left/right variants.</small></span><div><button type="button" data-lighting-direction="0" data-lighting-target="${target}" class="${Number(base.direction) === 0 ? "active" : ""}">→ ${t("lightingForward")}</button><button type="button" data-lighting-direction="1" data-lighting-target="${target}" class="${Number(base.direction) === 1 ? "active" : ""}">← ${t("lightingBackward")}</button></div></div>`;
@@ -307,25 +342,12 @@ function lightingPalettePanel(base, palette, target) {
     hexId = target === "main" ? "paletteHex" : "stripPaletteHex";
   return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor ${rainbow ? "rainbow-selected" : ""}">${rainbow ? `<div class="rainbow-chip" aria-hidden="true"><input id="${colorId}" type="color" value="${esc(activeColor)}" disabled></div>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}<label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `RGB ${parseInt(activeColor.slice(1, 3), 16)}, ${parseInt(activeColor.slice(3, 5), 16)}, ${parseInt(activeColor.slice(5, 7), 16)} · firmware index ${paletteIndex}`}</small></label><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
 }
-function dualLightingControls(base) {
-  const upper =
-      base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER),
-    lower =
-      base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER);
-  return `<section class="panel full-span dual-lighting-card"><div class="panel-head"><div><h2>Upper / lower lighting switch</h2><p>The firmware encodes the two LED orientations as bits in the main power value.</p></div><span class="badge ${state.hardware.doubleLighting ? "ready" : ""}">${state.hardware.doubleLighting ? "REPORTED" : "CAPTURED"}</span></div><div class="dual-lighting-switches"><label class="switch-row"><span><b>${t("lightingUpper")}</b><small>Original driver: Upper Lighting Switch · bit 2</small></span><input id="upperLighting" class="toggle" type="checkbox" ${upper ? "checked" : ""}></label><label class="switch-row"><span><b>${t("lightingLower")}</b><small>Original driver: Lower Lighting Switch · bit 1</small></span><input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : ""}></label></div></section>`;
-}
-function fnLightingPanel() {
-  const target = fnTargetLayer(), code = 0xf100 + target,
-    monitored = connected() && state.liveLighting,
-    pressed = monitored && state.hardware.fnPressed;
-  return `<section class="panel full-span fn-lighting-card ${pressed ? "pressed" : ""}"><div class="fn-lighting-icon">Fn</div><div><h2>Fn lighting behavior</h2><p>The Fn key is mapped to <b>${esc(keycodeLabel(code))}</b>. While it is held, firmware activates layer ${target + 1}; any lighting commands mapped there change the same keyboard lighting bank. There is no separate Fn palette.</p><small>The live framebuffer already contains the keyboard's real Fn lighting response, so the preview follows it without simulating colors.</small></div><span id="fnLightingStatus" class="badge ${pressed ? "ready" : ""}">${pressed ? `FN HELD · LAYER ${target + 1}` : monitored ? "WATCHING FN" : "LIVE VIEW REQUIRED"}</span></section>`;
-}
 function mainLightingPage() {
   const lighting = state.profile.lighting,
     base = lighting.base,
     reportedCount = lightingModeCount(0, AE64_MAIN_MODE_COUNT),
     count = LIGHTING_MODE_OPTIONS.length;
-  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingMainKeyboard"), "Controls the main keyboard LED area.")}<section class="panel full-span capture-note experimental-note"><strong>L21–L23 are experimental</strong><span>AE64 area 0 advertises values 0–19. Catalog values 20–22 are exposed for testing; Apply accepts a value only when the keyboard reads it back unchanged.</span></section>${dualLightingControls(base)}${fnLightingPanel()}${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
+  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingMainKeyboard"), "Controls the main keyboard LED area.", true)}${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
 }
 function perKeyLightingPage() {
   const lighting = state.profile.lighting,
@@ -534,6 +556,8 @@ function render() {
   if (state.page !== "lighting" || !state.liveLighting) {
     state.hardware.fnPressed = false;
     state.hardware.fnStatus = 0;
+    state.hardware.fnLayer = 0;
+    state.hardware.fnTriggerId = null;
   }
   const [title] = pageCopy();
   document.querySelector("#pageTitle").textContent = title;

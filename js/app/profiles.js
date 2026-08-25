@@ -394,6 +394,7 @@ async function switchProfile(index) {
     try {
       await state.transport.switchConfig(index);
       state.profile.profileIndex = index;
+      state.hardware.keycodes.clear();
       const [lightingBase, palette, decorativeBase, decorativePalette] =
         await Promise.all([
           state.transport.getLightingBase(0),

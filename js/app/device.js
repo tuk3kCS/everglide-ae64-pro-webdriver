@@ -167,6 +167,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       ),
     );
     state.knownDevice = state.transport.device;
+    state.hardware.keycodes.clear();
     Object.assign(state.hardware, {
       protocol,
       info,
@@ -307,23 +308,25 @@ async function readSelectedKey() {
 }
 async function readKeymapLayer(layer = state.profile.layer) {
   if (!connected()) return 0;
-  const resolvedLayer = Number(layer);
+  const resolvedLayer = Number(layer),
+    rows = [...new Set(keys.map((key) => position(key).row))];
   const records = await Promise.allSettled(
-    keys.map((key) =>
-      state.transport.getKeyCode(position(key), resolvedLayer),
-    ),
+    rows.map((row) => state.transport.getKeyLayout(resolvedLayer, row)),
   );
   let loaded = 0;
-  records.forEach((record, id) => {
+  records.forEach((record, rowIndex) => {
     if (record.status !== "fulfilled") return;
-    const key = keys[id],
-      keycode = record.value.keycode;
-    if (!Number.isInteger(keycode)) return;
-    const token = `${resolvedLayer}:${key.id}`;
-    state.hardware.keycodes.set(token, keycode);
-    if (!state.dirty.mapping.has(token))
-      state.profile.keycodes[resolvedLayer][key.id] = keycode;
-    loaded += 1;
+    const row = rows[rowIndex],
+      keycodes = record.value.keycodes;
+    keys.filter((key) => position(key).row === row).forEach((key) => {
+      const keycode = keycodes[position(key).col];
+      if (!Number.isInteger(keycode)) return;
+      const token = `${resolvedLayer}:${key.id}`;
+      state.hardware.keycodes.set(token, keycode);
+      if (!state.dirty.mapping.has(token))
+        state.profile.keycodes[resolvedLayer][key.id] = keycode;
+      loaded += 1;
+    });
   });
   if (!loaded) throw new Error(`Could not read layer ${resolvedLayer + 1}.`);
   log("Keymap layer read", { layer: resolvedLayer, keys: loaded });

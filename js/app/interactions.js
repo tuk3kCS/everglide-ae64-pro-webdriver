@@ -458,6 +458,8 @@ function bindPage() {
         if (!state.liveLighting) {
           state.hardware.fnPressed = false;
           state.hardware.fnStatus = 0;
+          state.hardware.fnLayer = 0;
+          state.hardware.fnTriggerId = null;
         }
         render();
       });

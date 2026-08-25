@@ -351,22 +351,65 @@ function updateLiveStrip(matrix) {
     }
   });
 }
-function updateFnLightingState(status) {
-  const pressed = Number(status) > 0 && Number(status) < 8,
-    targetLayer = pressed ? fnTargetLayer() : 0;
+function hardwareLayerReady(layer) {
+  return keys.every((key) => state.hardware.keycodes.has(`${layer}:${key.id}`));
+}
+function fnTriggerMappings() {
+  return keys
+    .map((key) => ({
+      key,
+      layer: fnLayerFromKeycode(resolvedLayerKeycode(key, 0)),
+    }))
+    .filter(({ layer }) => Number(layer) > 0);
+}
+async function ensureFnLightingMappings() {
+  if (!hardwareLayerReady(0)) await readKeymapLayer(0);
+  const triggers = fnTriggerMappings(),
+    layers = [...new Set(triggers.map(({ layer }) => layer))];
+  for (const layer of layers)
+    if (!hardwareLayerReady(layer)) await readKeymapLayer(layer);
+  return triggers;
+}
+async function readFnLightingState() {
+  const triggers = await ensureFnLightingMappings();
+  if (!triggers.length) return { status: 0, layer: 0, triggerId: null };
+  const rows = [...new Set(triggers.map(({ key }) => position(key).row))],
+    replies = await Promise.all(
+      rows.map((row) => state.transport.getAxisData("keyStatus", row)),
+    ),
+    valuesByRow = new Map(rows.map((row, index) => [row, replies[index].values])),
+    active = triggers.find(({ key }) => {
+      const address = position(key),
+        status = Number(valuesByRow.get(address.row)?.[address.col] || 0);
+      return status > 0 && status < 8;
+    });
+  if (!active) return { status: 0, layer: 0, triggerId: null };
+  const address = position(active.key),
+    status = Number(valuesByRow.get(address.row)?.[address.col] || 0);
+  return { status, layer: active.layer, triggerId: active.key.id };
+}
+function updateFnLightingState(status, targetLayer = 0, triggerId = null) {
+  const pressed = Number(status) > 0 && Number(status) < 8 && Number(targetLayer) > 0,
+    activeLayer = pressed ? Number(targetLayer) : 0;
   state.hardware.fnStatus = Number(status) || 0;
   state.hardware.fnPressed = pressed;
+  state.hardware.fnLayer = activeLayer;
+  state.hardware.fnTriggerId = pressed ? Number(triggerId) : null;
   document.querySelectorAll(".unified-lighting-preview [data-key]").forEach((node) => {
-    const key = keys[Number(node.dataset.key)], label = node.querySelector(".mapped");
-    node.classList.toggle("fn-held", pressed && key?.n === "Fn");
-    if (key && label) label.textContent = keycodeLabel(displayedKeycode(key, targetLayer));
+    const key = keys[Number(node.dataset.key)],
+      label = node.querySelector(".mapped"),
+      meta = key && pressed ? fnLightingKeyMeta(key, activeLayer) : null;
+    node.classList.toggle("fn-held", pressed && key?.id === Number(triggerId));
+    node.classList.toggle("fn-layer-override", Boolean(meta?.override));
+    node.classList.toggle("fn-layer-inherited", Boolean(meta && !meta.override));
+    if (key && label)
+      label.textContent = keycodeLabel(meta ? meta.resolved : displayedKeycode(key, 0));
   });
-  const card = document.querySelector(".fn-lighting-card"), badge = document.querySelector("#fnLightingStatus");
-  card?.classList.toggle("pressed", pressed);
-  if (badge) {
-    badge.textContent = pressed ? `FN HELD · LAYER ${targetLayer + 1}` : "WATCHING FN";
-    badge.classList.toggle("ready", pressed);
-  }
+  const badge = document.querySelector(".unified-lighting-preview .badge");
+  if (badge)
+    badge.textContent = pressed
+      ? `KEYBOARD + 38 LEDS · FN${activeLayer}`
+      : "KEYBOARD + 38 LEDS";
 }
 function updateLiveStatus(message, error = false) {
   const node = document.querySelector("#liveRgbStatus");
@@ -407,17 +450,18 @@ function startLightingLive() {
       );
       if (generation !== state.timers.lightingGeneration) return;
       updateLiveStrip(stripMatrix);
-      const fn = keys.find((key) => key.n === "Fn"), address = position(fn);
       try {
-        const keyStatus = await state.transport.getAxisData("keyStatus", address.row);
+        const fnState = await readFnLightingState();
         if (generation !== state.timers.lightingGeneration) return;
-        updateFnLightingState(keyStatus.values[address.col]);
+        updateFnLightingState(fnState.status, fnState.layer, fnState.triggerId);
+        state.hardware.fnReadError = null;
       } catch (error) {
         if (state.hardware.fnReadError !== error.message) log("Fn status read unavailable", error.message);
         state.hardware.fnReadError = error.message;
+        updateFnLightingState(0);
       }
       state.hardware.liveError = null;
-      updateLiveStatus("LIVE · ≈10 FPS");
+      updateLiveStatus(state.hardware.fnPressed ? `LIVE · FN${state.hardware.fnLayer}` : "LIVE · ≈10 FPS");
     } catch (error) {
       if (generation !== state.timers.lightingGeneration) return;
       if (state.hardware.liveError !== error.message)

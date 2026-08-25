@@ -861,7 +861,7 @@ const state = {
     macroSpace: null,
     layoutStyle: null,
     keyPositions: new Map(),
-    travelValues: new Map(), calibrationAdc: new Map(), calibrationRoute: new Map(), calibrationStatus: new Map(), fnPressed: false, fnStatus: 0,
+    travelValues: new Map(), calibrationAdc: new Map(), calibrationRoute: new Map(), calibrationStatus: new Map(), fnPressed: false, fnStatus: 0, fnLayer: 0, fnTriggerId: null,
     performance: new Map(),
     keycodes: new Map(),
     logs: [],

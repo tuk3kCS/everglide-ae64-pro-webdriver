@@ -30,6 +30,7 @@ class FakeDevice {
     this.collections = [{ usagePage: 0xffb0, usage: 0x01 }];
     this.listeners = new Map();
     this.sent = [];
+    this.pressedKey = { row: 5, col: 5, status: 3 };
   }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
   removeEventListener(type) { this.listeners.delete(type); }
@@ -60,7 +61,7 @@ class FakeDevice {
         if (packet[2] === 0) value = 700 + packet[3] * 100 + col;
         if (packet[2] === 1 && packet[3] === 1 && col < 2) value = 1200 + col * 1100;
         if (packet[2] === 2 && packet[3] === 1 && col < 2) value = col === 0 ? 2 : 1;
-        if (packet[2] === 3 && packet[3] === 5 && col === 5) value = 3;
+        if (packet[2] === 3 && packet[3] === this.pressedKey.row && col === this.pressedKey.col) value = this.pressedKey.status;
         reply[4 + col * 2] = value & 0xff;
         reply[5 + col * 2] = value >>> 8;
       }
@@ -336,10 +337,41 @@ async function main() {
   if (!vm.runInContext("aboutPage()", browser).includes('src="about.html"')) throw new Error("About Us must render the author-owned HTML document.");
   vm.runInContext("state.livePressDistance = false; state.page = 'overview'", browser);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow', 'Fn lighting behavior', 'id="fnLightingStatus"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow', 'class="area-power-banks"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
-  if (!lightingMarkup.includes("UNADVERTISED") || !lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised effects must be clearly labeled as experimental.");
+  if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
+  for (const removedLightingPanel of ['dual-lighting-card', 'fn-lighting-card', 'fnLightingStatus', 'class="panel full-span capture-note experimental-note"'])
+    if (lightingMarkup.includes(removedLightingPanel)) throw new Error(`Removed Lighting panel remains: ${removedLightingPanel}.`);
+  if (!lightingMarkup.includes("UNADVERTISED") || lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised modes must remain labeled without an always-visible warning.");
+  const experimentalLightingMarkup = vm.runInContext(`(state.profile.lighting.base.mode = 20, lightingPage())`, browser);
+  if (!experimentalLightingMarkup.includes('class="capture-note experimental-note lighting-mode-warning"') || !experimentalLightingMarkup.includes("L21–L23 are experimental")) throw new Error("Selecting L21–L23 must reveal the contextual warning inside Lighting mode.");
+  if (experimentalLightingMarkup.indexOf("lighting-mode-grid") > experimentalLightingMarkup.indexOf("lighting-mode-warning")) throw new Error("The experimental warning must appear below the Lighting mode grid.");
+  vm.runInContext("state.profile.lighting.base.mode = 1", browser);
+  const fnMappingRules = vm.runInContext(`(() => {
+    const saved = clone(state.profile.keycodes), inheritedKey = keys[0], trigger = keys[8];
+    state.hardware.keycodes.clear();
+    state.profile.keycodes[0][inheritedKey.id] = 4;
+    state.profile.keycodes[1][inheritedKey.id] = 1;
+    state.profile.keycodes[2][inheritedKey.id] = 5;
+    state.profile.keycodes[3][inheritedKey.id] = 4;
+    state.profile.keycodes[0][trigger.id] = 0xf101;
+    const result = [
+      fnLightingKeyMeta(inheritedKey, 1),
+      fnLightingKeyMeta(inheritedKey, 2),
+      fnLightingKeyMeta(inheritedKey, 3),
+      fnTriggerMappings().find((entry) => entry.key.id === trigger.id)?.layer,
+    ];
+    state.profile.keycodes = saved;
+    state.hardware.keycodes.clear();
+    return result;
+  })()`, browser);
+  equal(fnMappingRules, [
+    { raw: 1, inherited: 4, resolved: 4, override: false },
+    { raw: 5, inherited: 4, resolved: 5, override: true },
+    { raw: 4, inherited: 5, resolved: 4, override: true },
+    1,
+  ], "Fn lighting must inherit transparent keys and identify only changed non-empty mappings as overrides.");
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
@@ -410,6 +442,31 @@ async function main() {
   })()`, browser);
   equal(displayedReadback, [0x1211, 0xbeef], "The keyboard preview must show refreshed hardware values unless an edit is staged.");
   vm.runInContext("clearDirty()", browser);
+
+  const arbitraryFnAddress = vm.runInContext(`(() => {
+    const trigger = keys[8], changed = keys[9], physicalFn = keys.find((key) => key.n === "Fn");
+    state.hardware.keycodes.clear();
+    keys.forEach((key) => {
+      state.hardware.keycodes.set("0:" + key.id, key.id === physicalFn.id ? 0 : defaultKeycode(key));
+      state.hardware.keycodes.set("1:" + key.id, 1);
+    });
+    state.hardware.keycodes.set("0:" + trigger.id, 0xf101);
+    state.hardware.keycodes.set("1:" + changed.id, 0x20e9);
+    return { ...position(trigger), id: trigger.id, changedId: changed.id };
+  })()`, browser);
+  device.pressedKey = { row: arbitraryFnAddress.row, col: arbitraryFnAddress.col, status: 3 };
+  const liveFnState = await vm.runInContext("readFnLightingState()", browser);
+  equal(liveFnState, { status: 3, layer: 1, triggerId: arbitraryFnAddress.id }, "Live Fn monitoring must follow any physical key mapped to an Fn layer, not only the key named Fn.");
+  const appliedFnState = vm.runInContext(`(() => {
+    updateFnLightingState(${liveFnState.status}, ${liveFnState.layer}, ${liveFnState.triggerId});
+    const meta = fnLightingKeyMeta(keys[${arbitraryFnAddress.changedId}], state.hardware.fnLayer);
+    return [state.hardware.fnPressed, state.hardware.fnLayer, state.hardware.fnTriggerId, meta.override, meta.resolved];
+  })()`, browser);
+  equal(appliedFnState, [true, 1, arbitraryFnAddress.id, true, 0x20e9], "The live Fn layer must expose changed mappings while preserving their firmware framebuffer colors.");
+  const fnStatusRows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === 3).slice(-1).map(({ packet }) => packet[3]);
+  equal(fnStatusRows, [arbitraryFnAddress.row], "Fn monitoring should read only rows containing active-layer trigger mappings.");
+  vm.runInContext("updateFnLightingState(0); state.hardware.keycodes.clear()", browser);
+  device.pressedKey = { row: 5, col: 5, status: 3 };
 
   const performance = await transport.getPerformance({ row: 2, col: 3 });
   if (performance.mode !== 1 || performance.normalPress !== 2 || performance.rtPress !== 0.15 || performance.axisV2Id !== 0x1234) throw new Error("Performance decoder failed.");
