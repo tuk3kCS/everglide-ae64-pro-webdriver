@@ -139,9 +139,11 @@ async function main() {
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
   for (const removedSidebarControl of ['id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (html.includes(removedSidebarControl)) throw new Error(`Removed sidebar layer/language layout remains: ${removedSidebarControl}.`);
   if (html.indexOf('class="sidebar-profile"') > html.indexOf('id="sideNav"')) throw new Error("Quick profiles must appear above Overview in the sidebar.");
-  if (html.indexOf('sidebar-preferences') < html.indexOf('class="sidebar-note"')) throw new Error("Language and theme selection must remain at the bottom of the sidebar.");
+  if (html.includes('class="sidebar-note"')) throw new Error("The removed staged-edits sidebar note remains.");
+  if (app.includes("#stagedEditsBody")) throw new Error("Application code still updates the removed staged-edits sidebar note.");
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
+  if (!app.includes('navigator.hid.addEventListener("disconnect", async') || !app.includes("await returnHome()")) throw new Error("A keyboard disconnect must return the workspace to its landing page.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
   if (!html.includes('data-page="about"') || html.indexOf('data-page="about"') < html.indexOf('data-page="diagnostics"')) throw new Error("About Us must appear below Diagnostics.");
   if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");

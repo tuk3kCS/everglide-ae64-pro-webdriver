@@ -75,7 +75,7 @@ document
     event.target.value = "";
   });
 if (navigator.hid) {
-  navigator.hid.addEventListener("disconnect", (event) => {
+  navigator.hid.addEventListener("disconnect", async (event) => {
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
       state.transport = null;
@@ -85,7 +85,8 @@ if (navigator.hid) {
       stopProfilePolling();
       resetCalibrationSession();
       log("Keyboard disconnected");
-      render();
+      await returnHome();
+      renderStatus();
       showToast("AE64 Pro disconnected.", true);
     }
   });

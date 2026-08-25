@@ -612,9 +612,6 @@ function renderStatus() {
   const autoApplyToggle = document.querySelector("#autoApplyToggle");
   autoApplyToggle.checked = autoApply;
   autoApplyToggle.disabled = writing;
-  document.querySelector("#stagedEditsBody").textContent = autoApply
-    ? t("autoApplyHint")
-    : t("stagedEditsBody");
   document.querySelector("#connectionLabel").textContent = connected()
     ? `Connected · FW ${state.hardware.info?.firmware || "?"}`
     : t("offlineWorkspace");
