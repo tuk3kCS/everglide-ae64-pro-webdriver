@@ -203,11 +203,7 @@ async function main() {
       gamepadCount: KEYCODE_GROUPS.gamepad.length,
       gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
     },
-    combination: {
-      encoded: combinationKeycode(new Set([0x01, 0x02]), 4),
-      label: keycodeLabel(0x0304),
-      triggerCount: COMBINATION_TRIGGER_KEYS.length,
-    },
+    selectableGroups: KEYMAP_SELECTABLE_GROUPS,
     vendorCatalog: Object.fromEntries(
       ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
         group,
@@ -261,12 +257,8 @@ async function main() {
     connectionCount: 7,
     gamepadCount: 58,
     gamepadDpadRight: "Gamepad D-pad Right",
-  }, "The complete original-driver mapping catalog must remain selectable.");
-  equal(settingsEnums.combination, {
-    encoded: 0x0304,
-    label: "Ctrl + Shift + A",
-    triggerCount: 119,
-  }, "Combination mappings must encode HID modifiers and the trigger key in one 16-bit keycode.");
+  }, "Known unsupported keycodes must retain labels when read from hardware.");
+  equal(settingsEnums.selectableGroups, ["keyboard", "system", "media", "mouse", "firmware", "lighting"], "Only verified keymap groups may be selected for writing.");
   equal(settingsEnums.vendorCatalog, {
     system: [0x1152, 0x1329, 0x1807, 0x1808, 0x1815],
     media: [0x206f, 0x2070, 0x20b5, 0x20b6, 0x20b7, 0x20cd, 0x20e2, 0x20e9, 0x20ea, 0x2183, 0x218a, 0x2192, 0x2194, 0x2223],
@@ -287,12 +279,14 @@ async function main() {
   const themeState = vm.runInContext(`(setTheme("light"), [state.theme, document.documentElement.dataset.theme, document.documentElement.style.colorScheme])`, browser);
   equal(themeState, ["light", "light", "light"], "Appearance switching must update state and the document immediately.");
   vm.runInContext('applyTheme("mint")', browser);
-  const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
-  for (const required of ["Associated keys", "Trigger key", "Apply combination"])
-    if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
+  const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
+  for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
+    if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
+  for (const removedControl of ["Associated keys", "Trigger key", "Apply combination"])
+    if (keymapMarkup.includes(removedControl)) throw new Error(`Unsupported combination editor remains visible: ${removedControl}.`);
   for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
-    if (!combinationMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
-  if ((combinationMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
+    if (!keymapMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
+  if ((keymapMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
   const multipleSelection = vm.runInContext(`(() => {
     state.selectedKeys = new Set([1, 2]);
     stagePerformance("normalPress", 1.25);

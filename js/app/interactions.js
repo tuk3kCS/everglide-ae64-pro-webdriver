@@ -368,7 +368,6 @@ function bindPage() {
       button.addEventListener("click", () => {
         state.mappingGroup = button.dataset.mappingGroup;
         state.mappingSearch = "";
-        if (state.mappingGroup === "combination") syncCombinationEditor();
         render();
       }),
     );
@@ -383,41 +382,6 @@ function bindPage() {
         render();
       }),
     );
-    document.querySelectorAll("[data-combo-modifier]").forEach((button) =>
-      button.addEventListener("click", () => {
-        const modifier = Number(button.dataset.comboModifier);
-        if (state.mappingCombination.modifiers.has(modifier))
-          state.mappingCombination.modifiers.delete(modifier);
-        else state.mappingCombination.modifiers.add(modifier);
-        render();
-      }),
-    );
-    document.querySelectorAll("[data-combo-trigger]").forEach((button) =>
-      button.addEventListener("click", () => {
-        state.mappingCombination.trigger = Number(button.dataset.comboTrigger);
-        render();
-      }),
-    );
-    document
-      .querySelector("#applyCombination")
-      ?.addEventListener("click", () => {
-        try {
-          const code = combinationKeycode(
-              state.mappingCombination.modifiers,
-              state.mappingCombination.trigger,
-            );
-          selectedKeyIds().forEach((id) => {
-            state.profile.keycodes[state.profile.layer][id] = code;
-            state.dirty.mapping.add(`${state.profile.layer}:${id}`);
-          });
-          render();
-          showToast(
-            `Staged ${keycodeLabel(code)} for ${selectedKeyIds().length} key${selectedKeyIds().length === 1 ? "" : "s"}.`,
-          );
-        } catch (error) {
-          showToast(error.message, true);
-        }
-      });
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {
       selectedKeyIds().forEach((id) => {
         state.profile.keycodes[state.profile.layer][id] = defaultKeycode(keys[id]);
