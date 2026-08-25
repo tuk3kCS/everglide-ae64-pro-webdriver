@@ -33,6 +33,8 @@ function applyTheme(value, { persist = false, announce = false } = {}) {
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+  const sidebarSelect = document.querySelector("#sidebarThemeSelect");
+  if (sidebarSelect) sidebarSelect.value = theme;
   if (announce) showToast(`${option.label} appearance enabled.`);
 }
 function setTheme(value) {

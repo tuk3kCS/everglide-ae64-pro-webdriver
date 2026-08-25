@@ -158,7 +158,7 @@ async function stopCalibration(save = true) {
   }
 }
 function updateCalibrationVisuals() {
-  if (!state.calibrationActive || state.page !== "performance" || state.performanceTab !== "calibration") return;
+  if (!state.calibrationActive || state.page !== "performance") return;
   document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
     const id = Number(node.dataset.key),
       status = Number(state.hardware.calibrationStatus.get(id) || 0),
@@ -169,9 +169,8 @@ function updateCalibrationVisuals() {
     node.classList.remove("calibration-uncalibrated", "calibration-calibrated", "calibration-new");
     node.classList.add(`calibration-${meta.className}`);
     node.style.setProperty("--calibration-depth", `${percent.toFixed(2)}%`);
-    const adc = node.querySelector(".calibration-adc"), label = node.querySelector(".calibration-state");
+    const adc = node.querySelector(".calibration-adc");
     if (adc) adc.textContent = String(Number(state.hardware.calibrationAdc.get(id) || 0));
-    if (label) label.textContent = meta.label;
   });
   const statuses = keys.map((key) => Number(state.hardware.calibrationStatus.get(key.id) || 0)),
     known = document.querySelector("#calibrationKnown"),
@@ -183,11 +182,11 @@ function updateCalibrationVisuals() {
 }
 async function startCalibrationPolling() {
   stopCalibrationPolling();
-  if (!connected() || !state.calibrationActive || state.page !== "performance" || state.performanceTab !== "calibration") return;
+  if (!connected() || !state.calibrationActive || state.page !== "performance") return;
   const generation = state.timers.calibrationGeneration,
     rows = Array.from({ length: MATRIX_ROWS }, (_, row) => row);
   const read = async () => {
-    if (generation !== state.timers.calibrationGeneration || !connected() || !state.calibrationActive || state.page !== "performance" || state.performanceTab !== "calibration") return;
+    if (generation !== state.timers.calibrationGeneration || !connected() || !state.calibrationActive || state.page !== "performance") return;
     try {
       const samples = await Promise.all(rows.map(async (row) => [row, await Promise.all([
         state.transport.getAxisData("adc", row),
@@ -274,12 +273,15 @@ function updateTravelVisuals() {
     node.style.setProperty("--press-depth", `${percent.toFixed(2)}%`);
     node.classList.toggle("pressed", raw >= 10);
   });
-  const selected = selectedKey(),
-    raw = Number(state.hardware.travelValues.get(selected.id) || 0),
-    mm = Math.min(4, Math.max(0, raw / 1000)),
+  const focus = liveTravelTarget(),
+    { key, raw, mm, actuation, selectedCount } = focus,
     panel = document.querySelector("#livePressPanel"),
     value = document.querySelector("#livePressValue"),
     rawNode = document.querySelector("#livePressRaw"),
+    keyNode = document.querySelector("#livePressKey"),
+    actuationNode = document.querySelector("#livePressActuation"),
+    actuationMarker = document.querySelector("#liveActuationMarkerLabel"),
+    scopeNode = document.querySelector("#livePressScope"),
     status = document.querySelector("#livePressStatus"),
     pressed = keys
       .map((key) => ({
@@ -295,8 +297,18 @@ function updateTravelVisuals() {
     "--press-distance",
     `${((mm / 4) * 100).toFixed(2)}%`,
   );
+  panel?.style.setProperty(
+    "--actuation-distance",
+    `${((actuation / 4) * 100).toFixed(2)}%`,
+  );
+  panel?.classList.toggle("actuated", mm >= actuation && mm >= 0.01);
+  if (keyNode) keyNode.textContent = key.n;
   if (value) value.innerHTML = `${mm.toFixed(3)} <small>mm</small>`;
   if (rawNode) rawNode.textContent = String(raw);
+  if (actuationNode) actuationNode.textContent = `${actuation.toFixed(2)} mm`;
+  if (actuationMarker) actuationMarker.textContent = `AP ${actuation.toFixed(2)}`;
+  if (scopeNode)
+    scopeNode.textContent = selectedCount ? `${selectedCount} selected` : "All keys";
   if (status) {
     status.textContent = `LIVE · ${pressed.length} PRESSED`;
     status.classList.add("ready");

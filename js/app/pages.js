@@ -30,7 +30,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
       state.liveLighting &&
       connected() &&
       Array.isArray(state.hardware.liveMatrix),
-    showCalibration = !hero && state.page === "performance" && state.performanceTab === "calibration" && state.calibrationActive,
+    showCalibration = !hero && state.page === "performance" && state.calibrationActive,
     showPressDistance = !showCalibration && !hero && state.page === "performance" && state.livePressDistance;
   return `<div class="keyboard" aria-label="AE64 Pro keyboard">${layout
     .map(
@@ -82,7 +82,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               ) ||
               state.dirty.customLighting.has(key.id);
             return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span><span class="calibration-state">${calibrationState.label}</span>` : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -96,8 +96,32 @@ function boardPanel(options = {}) {
         ? "No keys selected"
         : selected.length === 1
         ? `${selectedKey().n} · row ${address.row}, col ${address.col}`
-        : `${selected.length} keys selected · primary: ${selectedKey().n}`;
-  return `<section class="panel layout-board ${options.full ? "full-span" : ""}"><i class="key-selection-marquee" aria-hidden="true"></i><div class="panel-head"><div><h2>${options.title || "AE64 Pro"}</h2><p>${options.description || "Drag anywhere in this card to draw a selection box. Hold Ctrl and click to add or remove keys."}</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span></div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div><div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectionLabel)}</b></span></div></section>`;
+        : `${selected.length} keys selected · primary: ${selectedKey().n}`,
+    calibration = Boolean(options.performance && state.calibrationActive),
+    calibrationBusy = Boolean(options.performance && state.calibrationBusy),
+    statuses = options.performance
+      ? keys.map((key) => Number(state.hardware.calibrationStatus.get(key.id) || 0))
+      : [],
+    calibrated = statuses.filter((status) => status === 1).length,
+    fresh = statuses.filter((status) => status === 2).length,
+    maxRoute = options.performance
+      ? Math.max(0, ...keys.map((key) => Number(state.hardware.calibrationRoute.get(key.id) || 0)))
+      : 0,
+    title = options.performance
+      ? calibration ? "Live calibration matrix" : "AE64 Pro performance map"
+      : options.title || "AE64 Pro",
+    description = options.performance
+      ? calibration
+        ? "Each key is colored by firmware status. The centered number is its raw Hall ADC reading; the fill follows measured travel."
+        : "Select keys to tune them, or start a device-wide Hall calibration from this keyboard panel."
+      : options.description || "Drag anywhere in this card to draw a selection box. Hold Ctrl and click to add or remove keys.",
+    headAction = options.performance
+      ? `<div class="calibration-board-action"><span id="calibrationStatusBadge" class="badge ${calibration ? "ready" : "experimental"}">${calibration ? "CALIBRATING" : "CALIBRATION READY"}</span><button class="button ${calibration ? "ghost" : "primary"} small" id="calibrationToggle" type="button" ${!connected() || calibrationBusy ? "disabled" : ""}>${calibrationBusy ? "Working…" : calibration ? "Stop & save" : "Start calibration"}</button></div>`
+      : `<span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span>`,
+    calibrationGuide = options.performance
+      ? `<div class="calibration-board-guide"><div class="calibration-legend" aria-label="Calibration status colors"><span><i class="uncalibrated"></i>Uncalibrated</span><span><i class="calibrated"></i>Calibrated</span><span><i class="new"></i>New calibration</span></div><div class="calibration-board-stats"><span><small>Calibrated</small><b id="calibrationKnown">${calibrated}</b></span><span><small>New</small><b id="calibrationFresh">${fresh}</b></span><span><small>Max route</small><b id="calibrationMaxRoute">${maxRoute}</b></span></div></div>`
+      : "";
+  return `<section class="panel layout-board ${options.full ? "full-span" : ""} ${options.performance ? "performance-board" : ""} ${calibration ? "calibration-active" : ""}"><i class="key-selection-marquee" aria-hidden="true"></i><div class="panel-head"><div><h2>${title}</h2><p>${description}</p></div>${headAction}</div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div>${calibrationGuide}<div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectionLabel)}</b></span></div></section>`;
 }
 function selectedCard() {
   const key = selectedKey(),
@@ -114,7 +138,7 @@ function pageCopy() {
     ],
     performance: [
       t("performance"),
-      "Per-key Hall actuation, Rapid Trigger, dead zones, calibration, and raw travel.",
+      "Per-key Hall actuation, Rapid Trigger, dead zones, calibration, and live travel.",
     ],
     keymap: [t("keymap"), "Stage assignments across all four firmware layers."],
     lighting: [t("lighting"), t("lightingDescription")],
@@ -150,24 +174,7 @@ function numberField(id, label, value, min, max, step, hint = "") {
 }
 function performanceControls() {
   const value = state.profile.performance[selectedKey().id];
-  if (state.performanceTab === "trigger")
-    return `${selectedCard()}<div class="switch-row"><div><h3>Rapid Trigger</h3><p>Reset as soon as the key reverses direction.</p></div><input id="performanceMode" class="toggle" type="checkbox" ${value.mode === 1 ? "checked" : ""}></div><div class="form-grid">${numberField("normalPress", "Normal press", value.normalPress, 0.1, 4, 0.01, "Used when Rapid Trigger is off.")}${numberField("normalRelease", "Normal release", value.normalRelease, 0, 4, 0.01, "Independent release point.")}${numberField("rtFirstTouch", "RT first touch", value.rtFirstTouch, 0.1, 4, 0.01)}${numberField("rtPress", "RT press delta", value.rtPress, 0.01, 2, 0.01)}${numberField("rtRelease", "RT release delta", value.rtRelease, 0.01, 2, 0.01)}</div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy to every key</button></div>`;
-  if (state.performanceTab === "deadzone")
-    return `${selectedCard()}<div class="form-grid">${numberField("pressDeadStroke", "Top dead zone", value.pressDeadStroke, 0, 1, 0.01, "Ignored movement near the top.")}${numberField("releaseDeadStroke", "Bottom dead zone", value.releaseDeadStroke, 0, 1, 0.01, "Ignored movement near full travel.")}</div>`;
-  if (state.performanceTab === "axis")
-    return `${selectedCard()}<ul class="fact-list"><li><span>Axis slot</span><strong>${value.axis}</strong></li><li><span>Axis library ID</span><strong>${value.axisV2Id || "Not reported"}</strong></li><li><span>Maximum range</span><strong>${value.axisRangeMax || "Not reported"}</strong></li><li><span>Coefficient</span><strong>${value.axisCoefficient || "Not reported"}</strong></li><li><span>Available IDs</span><strong>${state.hardware.axisLibrary.length ? state.hardware.axisLibrary.join(", ") : "Connect to read"}</strong></li></ul><p>The basic release preserves these firmware-owned fields during every performance write.</p>`;
-  if (state.performanceTab === "calibration")
-    return calibrationControls();
-  return `${selectedCard()}<p>Select an actuation tab above to edit this switch.</p>`;
-}
-function calibrationControls() {
-  const statuses = keys.map((key) => Number(state.hardware.calibrationStatus.get(key.id) || 0)),
-    calibrated = statuses.filter((status) => status === 1).length,
-    fresh = statuses.filter((status) => status === 2).length,
-    maxRoute = Math.max(0, ...keys.map((key) => Number(state.hardware.calibrationRoute.get(key.id) || 0))),
-    active = state.calibrationActive,
-    buttonLabel = state.calibrationBusy ? "Working…" : active ? "Stop & save calibration" : "Start calibration";
-  return `<div class="calibration-control ${active ? "active" : ""}"><div class="panel-head"><div><h2>${active ? "Calibration in progress" : "Hall sensor calibration"}</h2><p>${active ? "Press every physical key from the top to the bottom of its travel several times. The keyboard updates each key live." : "The firmware re-measures every Hall switch. This is a live device operation, not a staged profile edit."}</p></div><span id="calibrationStatusBadge" class="badge ${active ? "ready" : "experimental"}">${active ? "LIVE · 18 MATRIX READS" : "DEVICE-WIDE"}</span></div><div class="calibration-summary"><span><small>Calibrated</small><b id="calibrationKnown">${calibrated}</b></span><span><small>New this session</small><b id="calibrationFresh">${fresh}</b></span><span><small>Maximum route</small><b id="calibrationMaxRoute">${maxRoute}</b></span></div><div class="calibration-legend"><span><i class="uncalibrated"></i>Uncalibrated</span><span><i class="calibrated"></i>Calibrated</span><span><i class="new"></i>New calibration</span></div><ol class="calibration-steps"><li>Start calibration, then use the physical keyboard.</li><li>Press every switch fully several times at a steady pace.</li><li>Blue fill follows travel; green means newly calibrated.</li><li>Stop and save only after all keys have been exercised.</li></ol><div class="apply-row"><button class="button ${active ? "ghost" : "primary"}" id="calibrationToggle" type="button" ${!connected() || state.calibrationBusy ? "disabled" : ""}>${buttonLabel}</button></div></div>`;
+  return `${selectedCard()}<div class="actuation-tuning-columns"><section class="tuning-column"><div class="tuning-column-head"><span>01</span><div><h3>Actuation & Rapid Trigger</h3><p>Set the normal thresholds and the magnetic reset behavior.</p></div></div><label class="switch-row"><span><b>Rapid Trigger</b><small>Reset as soon as the key reverses direction.</small></span><input id="performanceMode" class="toggle" type="checkbox" ${value.mode === 1 ? "checked" : ""}></label><div class="tuning-fields">${numberField("normalPress", "Normal press", value.normalPress, 0.1, 4, 0.01, "Also shown as the actuation marker in Live press distance.")}${numberField("normalRelease", "Normal release", value.normalRelease, 0, 4, 0.01, "Independent release point.")}${numberField("rtFirstTouch", "RT first touch", value.rtFirstTouch, 0.1, 4, 0.01)}${numberField("rtPress", "RT press delta", value.rtPress, 0.01, 2, 0.01)}${numberField("rtRelease", "RT release delta", value.rtRelease, 0.01, 2, 0.01)}</div></section><section class="tuning-column"><div class="tuning-column-head"><span>02</span><div><h3>Dead zones</h3><p>Ignore unstable movement at the top and bottom of switch travel.</p></div></div><div class="tuning-fields">${numberField("pressDeadStroke", "Top dead zone", value.pressDeadStroke, 0, 1, 0.01, "Ignored movement near the top.")}${numberField("releaseDeadStroke", "Bottom dead zone", value.releaseDeadStroke, 0, 1, 0.01, "Ignored movement near full travel.")}</div><div class="axis-metadata-note"><span>Firmware axis metadata</span><b>Slot ${value.axis} · Range ${value.axisRangeMax || "not reported"}</b><small>Preserved automatically during every performance write.</small></div></section></div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy tuning to every key</button></div>`;
 }
 function travelGaugeTicks() {
   return Array.from({ length: 41 }, (_, index) => {
@@ -176,11 +183,24 @@ function travelGaugeTicks() {
     return `<i class="${major ? "major" : ""}" data-travel-tick="${distance.toFixed(1)}" style="--tick:${index}" title="${distance.toFixed(1)} mm">${major ? `<span>${distance.toFixed(index === 0 || index === 40 ? 2 : 1)}</span>` : ""}</i>`;
   }).join("");
 }
-function livePressDistancePanel() {
-  const selected = selectedKey(),
-    raw = Number(state.hardware.travelValues.get(selected.id) || 0),
+function liveTravelTarget() {
+  const selectedIds = selectedKeyIds(),
+    candidates = selectedIds.length ? selectedIds.map((id) => keys[id]) : keys,
+    key = candidates.reduce((furthest, candidate) => {
+      const value = Number(state.hardware.travelValues.get(candidate.id) || 0),
+        furthestValue = Number(state.hardware.travelValues.get(furthest.id) || 0);
+      return value > furthestValue ? candidate : furthest;
+    }, candidates[0] || keys[0]),
+    raw = Number(state.hardware.travelValues.get(key.id) || 0),
     mm = Math.min(4, Math.max(0, raw / 1000)),
+    actuation = Math.min(4, Math.max(0, Number(state.profile.performance[key.id]?.normalPress) || 0));
+  return { key, raw, mm, actuation, selectedCount: selectedIds.length };
+}
+function livePressDistancePanel() {
+  const focus = liveTravelTarget(),
+    { key, raw, mm, actuation, selectedCount } = focus,
     percent = (mm / 4) * 100,
+    actuationPercent = (actuation / 4) * 100,
     active = keys
       .map((key) => ({
         key,
@@ -191,32 +211,25 @@ function livePressDistancePanel() {
       }))
       .filter(({ mm: distance }) => distance >= 0.01)
       .sort((a, b) => b.mm - a.mm);
-  return `<section class="panel full-span live-press-panel" id="livePressPanel" style="--press-distance:${percent.toFixed(2)}%">
-    <div class="panel-head"><div><h2>Live press distance</h2><p>Every visible switch is sampled from the firmware's Route matrix. The gauge follows the selected key while the keyboard preview fills every pressed key.</p></div><span id="livePressStatus" class="badge ${connected() ? "ready" : "experimental"}">${connected() ? "LIVE · READING" : "CONNECT REQUIRED"}</span></div>
+  return `<section class="panel live-press-panel compact" id="livePressPanel" style="--press-distance:${percent.toFixed(2)}%;--actuation-distance:${actuationPercent.toFixed(2)}%">
+    <div class="panel-head"><div><h2>Live press distance</h2><p>The gauge follows the furthest pressed key ${selectedCount ? "inside the current selection" : "across the whole keyboard"}.</p></div><span id="livePressStatus" class="badge ${connected() ? "ready" : "experimental"}">${connected() ? "LIVE" : "CONNECT"}</span></div>
     <div class="live-press-layout">
-      <div class="axis-visual" aria-label="Selected switch travel from zero to four millimeters">
+      <div class="axis-visual" aria-label="Focused switch travel and actuation point from zero to four millimeters">
         <img src="assets/images/axis.png" alt="Magnetic switch axis outline">
         <div class="axis-gauge-pole"><i class="axis-gauge-fill"></i></div>
-        <div class="axis-gauge-scale">${travelGaugeTicks()}</div>
+        <div class="axis-gauge-scale">${travelGaugeTicks()}<span class="axis-actuation-marker"><b id="liveActuationMarkerLabel">AP ${actuation.toFixed(2)}</b></span></div>
       </div>
       <div class="live-press-readout">
-        <span>SELECTED SWITCH · <b id="livePressKey">${esc(selected.n)}</b></span>
+        <span>TRACKING · <b id="livePressKey">${esc(key.n)}</b></span>
         <strong id="livePressValue">${mm.toFixed(3)} <small>mm</small></strong>
-        <div class="live-press-summary"><span><small>Raw route</small><b id="livePressRaw">${raw}</b></span><span><small>Range</small><b>0.0–4.0 mm</b></span><span><small>Resolution</small><b>0.001 mm</b></span></div>
+        <div class="live-press-summary"><span><small>Raw route</small><b id="livePressRaw">${raw}</b></span><span><small>Actuation</small><b id="livePressActuation">${actuation.toFixed(2)} mm</b></span><span><small>Scope</small><b id="livePressScope">${selectedCount ? `${selectedCount} selected` : "All keys"}</b></span></div>
         <div><h3>Pressed keys</h3><p>Multiple switches remain visible at the same time.</p><div class="pressed-key-list" id="pressedKeyList">${active.length ? active.map(({ key, mm: distance }) => `<span><b>${esc(key.n)}</b>${distance.toFixed(3)} mm</span>`).join("") : "<em>Press any key to begin.</em>"}</div></div>
       </div>
     </div>
   </section>`;
 }
 function performancePage() {
-  const tabs = [
-    ["trigger", "Actuation & RT"],
-    ["deadzone", "Dead zones"],
-    ["axis", "Switch axis"],
-    ["calibration", "Calibration"],
-  ];
-  const calibration = state.performanceTab === "calibration";
-  return `<div class="page-grid">${boardPanel(calibration ? { title: state.calibrationActive ? "Live calibration matrix" : "AE64 calibration map", description: state.calibrationActive ? "Raw ADC appears at the lower left of every key. Status is centered, and the blue fill follows the captured Route value." : "Start calibration to replace the normal key labels with the firmware's live ADC, route, and calibration status." } : {})}<section class="panel"><div class="tab-bar">${tabs.map(([id, label]) => `<button type="button" data-performance-tab="${id}" class="${state.performanceTab === id ? "active" : ""} ${state.calibrationActive && id !== "calibration" ? "locked" : ""}">${label}</button>`).join("")}</div>${performanceControls()}${calibration ? "" : `<label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Read every Hall switch and show simultaneous travel directly on the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() ? "" : "disabled"}></label>`}</section>${!calibration && state.livePressDistance ? livePressDistancePanel() : ""}</div>`;
+  return `<div class="performance-page"><div class="performance-primary ${state.livePressDistance ? "with-live-monitor" : ""}">${boardPanel({ performance: true })}${state.livePressDistance ? livePressDistancePanel() : ""}</div><section class="panel performance-tuning"><div class="panel-head"><div><span class="eyebrow">PER-KEY HALL SETTINGS</span><h2>Actuation tuning</h2><p>Actuation, Rapid Trigger, and both dead zones are edited together for the selected keys.</p></div><label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Show the compact gauge beside the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() && !state.calibrationActive && !state.calibrationBusy ? "" : "disabled"}></label></div>${performanceControls()}</section></div>`;
 }
 function combinationEditor() {
   const combination = state.mappingCombination,
@@ -238,7 +251,8 @@ function keymapPage() {
       state.mappingGroup === "combination"
         ? combinationEditor()
         : `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
-  return `<div class="page-grid">${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on layer ${Number(state.profile.layer) + 1}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
+  const layers = ["Main", "Fn1", "Fn2", "Fn3"];
+  return `<div class="page-grid"><div class="layer-bar full-span"><div class="layer-tabs" role="tablist" aria-label="Key mapping layer">${layers.map((label, layer) => `<button type="button" role="tab" data-layer="${layer}" aria-selected="${layer === Number(state.profile.layer)}" class="${layer === Number(state.profile.layer) ? "active" : ""}"><span>0${layer + 1}</span>${label}</button>`).join("")}</div><span>Choose a layer, then select one or more physical keys.</span></div>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
 }
 
 function lightingArea(index) {
@@ -552,10 +566,8 @@ function renderToolbar() {
     .join("");
   const select = document.querySelector("#quickProfileSelect");
   if (select) select.innerHTML = profiles;
-  document.querySelector("#layerSelect").value = String(state.profile.layer);
-  document
-    .querySelector("#layerControl")
-    .classList.toggle("hidden", !["keymap", "advanced"].includes(state.page));
+  const themeSelect = document.querySelector("#sidebarThemeSelect");
+  if (themeSelect) themeSelect.value = state.theme;
   document.querySelectorAll(".language-select").forEach((select) => {
     select.value = state.language;
   });

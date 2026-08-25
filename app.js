@@ -58,32 +58,15 @@ document
       closeDialog(document.querySelector("#profileRenameDialog"));
   });
 document
-  .querySelector("#layerSelect")
-  .addEventListener("change", async (event) => {
-    state.profile.layer = Number(event.target.value);
-    if (connected()) {
-      showProgress(
-        `Reading layer ${state.profile.layer + 1}`,
-        "Loading all 64 physical key assignments from the keyboard.",
-      );
-      try {
-        await readKeymapLayer(state.profile.layer);
-        await readSelectedKey();
-      } catch (error) {
-        showToast(error.message, true);
-      } finally {
-        hideProgress();
-      }
-    }
-    render();
-  });
-document
   .querySelectorAll(".language-select")
   .forEach((select) =>
     select.addEventListener("change", (event) =>
       setLanguage(event.target.value),
     ),
   );
+document
+  .querySelector("#sidebarThemeSelect")
+  .addEventListener("change", (event) => setTheme(event.target.value));
 document
   .querySelector("#profileFileInput")
   .addEventListener("change", (event) => {

@@ -126,9 +126,10 @@ async function main() {
   for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
-  for (const sidebarControl of ['id="backHomeButton"', 'id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
+  for (const removedSidebarControl of ['id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (html.includes(removedSidebarControl)) throw new Error(`Removed sidebar layer/language layout remains: ${removedSidebarControl}.`);
   if (html.indexOf('class="sidebar-profile"') > html.indexOf('id="sideNav"')) throw new Error("Quick profiles must appear above Overview in the sidebar.");
-  if (html.indexOf('sidebar-language-control') < html.indexOf('class="sidebar-note"')) throw new Error("Language selection must remain at the bottom of the sidebar.");
+  if (html.indexOf('sidebar-preferences') < html.indexOf('class="sidebar-note"')) throw new Error("Language and theme selection must remain at the bottom of the sidebar.");
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
@@ -173,7 +174,7 @@ async function main() {
   const autoToggleState = vm.runInContext(`(state.dirty.lightingBase = true, setAutoApply(true), [state.autoApply, document.querySelector("#autoApplyToggle").checked, document.querySelector("#applyButton").disabled])`, browser);
   equal(autoToggleState, [true, true, true], "Enabling experimental auto apply must update its state and disable manual Apply.");
   vm.runInContext("clearDirty(); setAutoApply(false)", browser);
-  if (!app.includes('["keymap", "advanced"].includes(state.page)')) throw new Error("Layer selection must be limited to Key Mapping and Advanced.");
+  if (!app.includes("selectMappingLayer") || app.includes("#layerSelect")) throw new Error("Layer selection must use the Key Mapping page's layer row.");
   const settingsEnums = vm.runInContext(`({
     systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
     polling: POLLING_RATE_OPTIONS.map(({ value, hz }) => [value, hz]),
@@ -288,6 +289,9 @@ async function main() {
   const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const required of ["Associated keys", "Trigger key", "Apply combination"])
     if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
+  for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
+    if (!combinationMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
+  if ((combinationMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
   const multipleSelection = vm.runInContext(`(() => {
     state.selectedKeys = new Set([1, 2]);
     stagePerformance("normalPress", 1.25);
@@ -300,22 +304,35 @@ async function main() {
   const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
   if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");
   const livePressMarkup = vm.runInContext(`(state.page = "performance", state.livePressDistance = true, performancePage())`, browser);
-  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"'])
+  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"', 'class="axis-actuation-marker"', 'id="livePressActuation"', 'Actuation tuning', 'Actuation & Rapid Trigger', 'Dead zones'])
     if (!livePressMarkup.includes(required)) throw new Error(`Live press distance omitted ${required}.`);
+  for (const removedPerformanceTab of ['data-performance-tab=', 'Switch axis', '>Calibration</button>'])
+    if (livePressMarkup.includes(removedPerformanceTab)) throw new Error(`Removed Performance tab remains: ${removedPerformanceTab}.`);
   if ((livePressMarkup.match(/data-travel-tick=/g) || []).length !== 41) throw new Error("The switch gauge must mark 0.0–4.0 mm in 0.1 mm steps.");
   if (!livePressMarkup.includes('class="press-distance-fill"')) throw new Error("The virtual keyboard must render a per-key live travel fill.");
+  const focusRules = vm.runInContext(`(() => {
+    state.hardware.travelValues.set(0, 500);
+    state.hardware.travelValues.set(1, 2400);
+    state.hardware.travelValues.set(2, 1800);
+    state.selectedKeys = new Set();
+    const all = liveTravelTarget();
+    state.selectedKeys = new Set([0, 2]);
+    const selected = liveTravelTarget();
+    return [[all.key.id, all.raw, all.selectedCount], [selected.key.id, selected.raw, selected.selectedCount]];
+  })()`, browser);
+  equal(focusRules, [[1, 2400, 0], [2, 1800, 2]], "The live gauge must follow the furthest key globally or within a multi-key selection.");
   const calibrationMarkup = vm.runInContext(`(() => {
-    state.performanceTab = "calibration";
     state.calibrationActive = true;
     state.hardware.calibrationAdc.set(0, 913);
     state.hardware.calibrationRoute.set(0, 2000);
     state.hardware.calibrationStatus.set(0, 2);
     return performancePage();
   })()`, browser);
-  for (const required of ['id="calibrationToggle"', 'class="calibration-fill"', 'class="calibration-adc"', '>913</span>', '>New</span>', 'Live calibration matrix'])
+  for (const required of ['id="calibrationToggle"', 'class="calibration-fill"', 'class="calibration-adc"', '>913</span>', 'Live calibration matrix', 'Calibration status colors'])
     if (!calibrationMarkup.includes(required)) throw new Error(`Firmware calibration view omitted ${required}.`);
+  if (calibrationMarkup.includes('class="calibration-state"')) throw new Error("Calibration keys must use status color instead of status text.");
   if ((calibrationMarkup.match(/calibration-key/g) || []).length !== 64) throw new Error("Calibration must annotate all 64 physical keys.");
-  vm.runInContext("state.calibrationActive = false; state.performanceTab = 'trigger'", browser);
+  vm.runInContext("state.calibrationActive = false", browser);
   if (!vm.runInContext("aboutPage()", browser).includes('src="about.html"')) throw new Error("About Us must render the author-owned HTML document.");
   vm.runInContext("state.livePressDistance = false; state.page = 'overview'", browser);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
@@ -358,7 +375,7 @@ async function main() {
   if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
   for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]", ".lighting-selection-marquee"])
     if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
-  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active"])
+  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker"])
     if (!css.includes(themeRule)) throw new Error(`Appearance/select styling omitted ${themeRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
@@ -407,7 +424,7 @@ async function main() {
   const routeRows = device.sent.filter(({ packet }) => packet[0] === 4 && packet[1] === 3 && packet[2] === 1).slice(-6).map(({ packet }) => packet[3]);
   equal(routeRows, [0, 1, 2, 3, 4, 5], "Live press distance must sample all six firmware rows.");
   vm.runInContext("state.livePressDistance = false; stopTravelPolling(true); state.page = 'overview'", browser);
-  vm.runInContext("state.page = 'performance'; state.performanceTab = 'calibration'; state.transport = injectedTransport", browser);
+  vm.runInContext("state.page = 'performance'; state.transport = injectedTransport", browser);
   await vm.runInContext("startCalibration()", browser);
   vm.runInContext("stopCalibrationPolling()", browser);
   await vm.runInContext("startCalibrationPolling()", browser);

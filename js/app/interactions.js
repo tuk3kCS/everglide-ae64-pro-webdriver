@@ -32,6 +32,27 @@ function bindNumberPair(id, field) {
   number.addEventListener("input", () => update(number, range));
   range.addEventListener("input", () => update(range, number));
 }
+async function selectMappingLayer(layer) {
+  const resolvedLayer = Number(layer);
+  if (!Number.isInteger(resolvedLayer) || resolvedLayer < 0 || resolvedLayer > 3)
+    return;
+  state.profile.layer = resolvedLayer;
+  if (connected()) {
+    showProgress(
+      `Reading ${resolvedLayer ? `Fn${resolvedLayer}` : "Main"}`,
+      "Loading all 64 physical key assignments from the keyboard.",
+    );
+    try {
+      await readKeymapLayer(resolvedLayer);
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      hideProgress();
+    }
+  }
+  syncCombinationEditor();
+  render();
+}
 
 function refreshLightingSelection() {
   document
@@ -292,13 +313,6 @@ function bindPage() {
       render();
     }),
   );
-  document.querySelectorAll("[data-performance-tab]").forEach((button) =>
-    button.addEventListener("click", async () => {
-      if (state.calibrationActive && button.dataset.performanceTab !== "calibration") await stopCalibration(true);
-      state.performanceTab = button.dataset.performanceTab;
-      render();
-    }),
-  );
   if (state.page === "performance") {
     document
       .querySelector("#performanceMode")
@@ -338,6 +352,9 @@ function bindPage() {
     if (state.livePressDistance) startTravel();
   }
   if (state.page === "keymap") {
+    document.querySelectorAll("[data-layer]").forEach((button) =>
+      button.addEventListener("click", () => selectMappingLayer(button.dataset.layer)),
+    );
     document
       .querySelector("#mappingSearch")
       ?.addEventListener("input", (event) => {
