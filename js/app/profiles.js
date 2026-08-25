@@ -140,6 +140,50 @@ function requestApplyChanges() {
     .join("");
   openDialog(dialog);
 }
+function requestRestoreProfileLayout() {
+  if (!connected())
+    return showToast("Connect the AE64 Pro before restoring its layout.", true);
+  if (state.writeInFlight) return;
+  const profile = Number(state.profile.profileIndex) + 1,
+    description = document.querySelector("#restoreLayoutDescription");
+  description.textContent = `Restore Profile ${profile}'s four mapping layers to the keyboard's original ${Number(state.profile.settings.systemMode) === 1 ? "macOS" : "Windows"} layout? Other profiles, Hall settings, RGB, and profile names are not changed.`;
+  openDialog(document.querySelector("#restoreLayoutDialog"));
+}
+async function restoreProfileLayout() {
+  if (!connected()) return showToast("The keyboard is not connected.", true);
+  if (state.writeInFlight) return;
+  if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
+  state.writeInFlight = true;
+  stopPolling();
+  stopProfilePolling();
+  showProgress("Restoring profile layout", "Reading the keyboard's original layout.");
+  try {
+    const system = Number(state.profile.settings.systemMode),
+      rows = [...new Set(keys.map((key) => position(key).row))];
+    state.dirty.mapping.clear();
+    for (let layer = 0; layer < 4; layer += 1) {
+      for (const row of rows) {
+        document.querySelector("#progressDetail").textContent = `Restoring layer ${layer + 1} · row ${row}`;
+        const defaults = await state.transport.getDefaultKeyLayout(system, layer, row);
+        await state.transport.setKeyLayout(layer, row, defaults.keycodes);
+      }
+    }
+    await state.transport.saveParameters(SAVE_GROUP.LAYOUT);
+    state.hardware.keycodes.clear();
+    for (let layer = 0; layer < 4; layer += 1) await readKeymapLayer(layer);
+    state.original.keycodes = clone(state.profile.keycodes);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    showToast(`Profile ${Number(state.profile.profileIndex) + 1} layout restored.`);
+    log("Profile layout restored", state.profile.profileIndex);
+  } catch (error) {
+    showToast(`Layout restore failed: ${error.message}`, true);
+  } finally {
+    state.writeInFlight = false;
+    hideProgress();
+    render();
+    startProfilePolling();
+  }
+}
 
 async function applyChanges({ automatic = false } = {}) {
   if (!dirtyCount()) return false;

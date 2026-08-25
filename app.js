@@ -49,6 +49,10 @@ document.querySelector("#confirmApplyButton").addEventListener("click", () => {
   closeDialog(document.querySelector("#applyReviewDialog"));
   applyChanges();
 });
+document.querySelector("#confirmRestoreLayout").addEventListener("click", () => {
+  closeDialog(document.querySelector("#restoreLayoutDialog"));
+  restoreProfileLayout();
+});
 document
   .querySelector("#profileRenameForm")
   .addEventListener("submit", async (event) => {

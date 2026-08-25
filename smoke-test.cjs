@@ -135,6 +135,9 @@ async function main() {
   }
   for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
+  for (const control of ['id="restoreLayoutDialog"', 'id="confirmRestoreLayout"'])
+    if (!html.includes(control)) throw new Error(`Profile-only layout restore control is missing ${control}.`);
+  if (!app.includes('id="restoreProfileLayout"')) throw new Error("Key Mapping omits the profile-only layout restore control.");
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
   for (const removedSidebarControl of ['id="layerControl"', 'id="layerSelect"', 'sidebar-language-control']) if (html.includes(removedSidebarControl)) throw new Error(`Removed sidebar layer/language layout remains: ${removedSidebarControl}.`);
@@ -445,6 +448,23 @@ async function main() {
   device.currentConfig = 2;
   const physicalProfileSync = await vm.runInContext("syncPhysicalProfile().then((changed) => [changed, state.profile.profileIndex, state.original.profileIndex])", browser);
   equal(physicalProfileSync, [true, 2, 2], "A physical profile switch must reload the active profile without a key press.");
+  const restoreStart = device.sent.length;
+  const restoredProfile = await vm.runInContext(`(() => {
+    state.transport = injectedTransport;
+    state.profile.performance[0].normalPress = 1.73;
+    state.dirty.performance.add(0);
+    state.profile.keycodes[0][0] = 0xbeef;
+    state.dirty.mapping.add("0:0");
+    return restoreProfileLayout().then(() => [state.profile.profileIndex, state.dirty.mapping.size, state.profile.performance[0].normalPress, state.dirty.performance.has(0)]);
+  })()`, browser);
+  equal(restoredProfile, [2, 0, 1.73, true], "Layout restore must reset only the active profile mappings and preserve staged Hall settings.");
+  const restorePackets = device.sent.slice(restoreStart),
+    defaultLayoutReads = restorePackets.filter(({ packet }) => packet[0] === 3 && packet[1] === 6),
+    layoutWrites = restorePackets.filter(({ packet }) => packet[0] === 3 && packet[1] === 2),
+    layoutSaves = restorePackets.filter(({ packet }) => packet[0] === 2 && packet[1] === 2 && packet[2] === 4);
+  if (defaultLayoutReads.length !== 20 || layoutWrites.length !== 20 || layoutSaves.length !== 1)
+    throw new Error("Profile layout restore must read and write all four mapping layers, then save only the layout group.");
+  vm.runInContext("clearDirty()", browser);
   vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
   const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);

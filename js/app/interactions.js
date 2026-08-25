@@ -407,6 +407,9 @@ function bindPage() {
       });
       render();
     });
+    document
+      .querySelector("#restoreProfileLayout")
+      ?.addEventListener("click", requestRestoreProfileLayout);
   }
   if (state.page === "lighting") {
     const lighting = state.profile.lighting,
