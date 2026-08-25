@@ -82,6 +82,7 @@ if (navigator.hid) {
       state.livePressDistance = false;
       stopTravelPolling(true);
       stopLightingPolling();
+      stopProfilePolling();
       resetCalibrationSession();
       log("Keyboard disconnected");
       render();
