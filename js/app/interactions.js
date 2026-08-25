@@ -373,6 +373,7 @@ function bindPage() {
     );
     document.querySelectorAll("[data-keycode]").forEach((button) =>
       button.addEventListener("click", () => {
+        const mappingListScrollTop = document.querySelector(".mapping-list")?.scrollTop || 0;
         selectedKeyIds().forEach((id) => {
           state.profile.keycodes[state.profile.layer][id] = Number(
             button.dataset.keycode,
@@ -380,6 +381,8 @@ function bindPage() {
           state.dirty.mapping.add(`${state.profile.layer}:${id}`);
         });
         render();
+        const mappingList = document.querySelector(".mapping-list");
+        if (mappingList) mappingList.scrollTop = mappingListScrollTop;
       }),
     );
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {

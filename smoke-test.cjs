@@ -204,7 +204,7 @@ async function main() {
       gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
     },
     selectableGroups: KEYMAP_SELECTABLE_GROUPS,
-    keyboardExtras: [116, 127, 154, 164].map((code) => KEYCODE_LABELS.get(code)),
+    keyboardCodes: KEYCODE_GROUPS.keyboard.map(({ code }) => code),
     keyboardCodes: KEYCODE_GROUPS.keyboard.map(({ code }) => code),
     vendorCatalog: Object.fromEntries(
       ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
@@ -261,7 +261,8 @@ async function main() {
     gamepadDpadRight: "Gamepad D-pad Right",
   }, "Known unsupported keycodes must retain labels when read from hardware.");
   equal(settingsEnums.selectableGroups, ["keyboard", "media", "mouse", "firmware", "lighting"], "Only verified keymap groups may be selected for writing.");
-  equal(settingsEnums.keyboardExtras, ["Execute", "Keyboard Mute", "System Request / Attention", "ExSel"], "Windows virtual-key mappings must remain available in the keyboard catalog.");
+  for (const unsupportedKeyboardCode of [102, 103, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 133, 134, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164])
+    if (settingsEnums.keyboardCodes.includes(unsupportedKeyboardCode)) throw new Error(`Non-standard keyboard mapping remains selectable: ${unsupportedKeyboardCode}.`);
   for (const unsupportedKeyboardCode of [102, 103, 120, 121, 122, 123, 124, 125, 126, 133, 134, 160, 161])
     if (settingsEnums.keyboardCodes.includes(unsupportedKeyboardCode)) throw new Error(`Non-Windows, non-standard keyboard mapping remains selectable: ${unsupportedKeyboardCode}.`);
   equal(settingsEnums.vendorCatalog, {
