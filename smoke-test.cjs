@@ -296,13 +296,16 @@ async function main() {
     if (!keymapMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
   if ((keymapMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
   const multipleSelection = vm.runInContext(`(() => {
+    state.profile.selected = 2;
     state.selectedKeys = new Set([1, 2]);
     stagePerformance("normalPress", 1.25);
-    const result = [keymapPage().includes("Assign 2 keys"), state.profile.performance[1].normalPress, state.profile.performance[2].normalPress];
+    const performanceMulti = performancePage().includes("2 keys selected");
+    const keymapSingle = !keymapPage().includes("Assign 2 keys");
+    const result = [performanceMulti, keymapSingle, [...state.selectedKeys], state.profile.performance[1].normalPress, state.profile.performance[2].normalPress];
     clearDirty();
     return result;
   })()`, browser);
-  equal(multipleSelection, [true, 1.25, 1.25], "Multiple selected keys must share staged configuration edits.");
+  equal(multipleSelection, [true, true, [2], 1.25, 1.25], "Only Performance may retain multi-key selection for shared staged edits.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
   if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");

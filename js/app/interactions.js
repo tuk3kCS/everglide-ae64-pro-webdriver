@@ -185,6 +185,20 @@ function bindKeySelection() {
     .querySelectorAll(".layout-board")
     .forEach((node) => node.addEventListener("pointerdown", beginKeySelection));
 }
+function selectMappingKey(event) {
+  const key = event.target.closest("[data-key]"), id = Number(key?.dataset.key);
+  if (!Number.isInteger(id)) return;
+  state.selectedKeys = new Set([id]);
+  state.profile.selected = id;
+  render();
+  if (connected())
+    readSelectedKey()
+      .then(() => render())
+      .catch((error) => showToast(error.message, true));
+}
+function bindMappingKeySelection() {
+  document.querySelector(".layout-board")?.addEventListener("click", selectMappingKey);
+}
 function marqueeSelection(initial, inside, ctrl) {
   if (!ctrl) return new Set(inside);
   const selection = new Set(initial);
@@ -306,7 +320,8 @@ function bindLightingSelection() {
 }
 
 function bindPage() {
-  if (state.page !== "lighting") bindKeySelection();
+  if (state.page === "performance") bindKeySelection();
+  if (state.page === "keymap") bindMappingKeySelection();
   document.querySelectorAll("[data-goto]").forEach((button) =>
     button.addEventListener("click", () => {
       state.page = button.dataset.goto;
