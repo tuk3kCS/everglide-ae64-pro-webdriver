@@ -9,8 +9,11 @@
  */
 
 function stagePerformance(field, value) {
+  stagePerformanceFields({ [field]: value });
+}
+function stagePerformanceFields(values) {
   selectedKeyIds().forEach((id) => {
-    state.profile.performance[id][field] = value;
+    Object.assign(state.profile.performance[id], values);
     state.dirty.performance.add(id);
   });
   renderStatus();
@@ -20,17 +23,89 @@ function stageSetting(field, value) {
   state.dirty.settings.add(field);
   renderStatus();
 }
-function bindNumberPair(id, field) {
+function bindNumberPair(id, fields) {
   const number = document.querySelector(`#${id}`),
     range = document.querySelector(`[data-range-for="${id}"]`);
   if (!number || !range) return;
   const update = (source, other) => {
     const value = clamp(source.value, Number(source.min), Number(source.max));
     other.value = value;
-    stagePerformance(field, value);
+    stagePerformanceFields(
+      Object.fromEntries(
+        (Array.isArray(fields) ? fields : [fields]).map((field) => [field, value]),
+      ),
+    );
   };
   number.addEventListener("input", () => update(number, range));
   range.addEventListener("input", () => update(range, number));
+}
+function setRapidTriggerForSelection(enabled) {
+  stagePerformance("mode", enabled ? 1 : 0);
+  render();
+}
+function setRtIndependenceForSelection(enabled) {
+  selectedKeyIds().forEach((id) => {
+    const token = rtIndependenceToken(id);
+    if (enabled) {
+      state.rtIndependentKeys.add(token);
+    } else {
+      state.rtIndependentKeys.delete(token);
+      const item = state.profile.performance[id];
+      if (Number(item.rtRelease) !== Number(item.rtPress)) {
+        item.rtRelease = item.rtPress;
+        state.dirty.performance.add(id);
+      }
+    }
+  });
+  render();
+}
+function deadZoneMemoryToken(id) {
+  return `${Number(state.profile.profileIndex)}:${Number(id)}`;
+}
+function setDeadZonesForSelection(enabled) {
+  selectedKeyIds().forEach((id) => {
+    const item = state.profile.performance[id],
+      token = deadZoneMemoryToken(id);
+    if (enabled) {
+      const saved = state.deadZoneMemory.get(token) || {
+        pressDeadStroke: 0.1,
+        releaseDeadStroke: 0.1,
+      },
+        press = clamp(saved.pressDeadStroke, 0, 1),
+        release = clamp(saved.releaseDeadStroke, 0, 1),
+        hasEnabledValue = press > 0 || release > 0;
+      item.pressDeadStroke = hasEnabledValue ? press : 0.1;
+      item.releaseDeadStroke = hasEnabledValue ? release : 0.1;
+    } else {
+      if (deadZonesEnabled(item)) {
+        state.deadZoneMemory.set(token, {
+          pressDeadStroke: Number(item.pressDeadStroke) || 0,
+          releaseDeadStroke: Number(item.releaseDeadStroke) || 0,
+        });
+      }
+      item.pressDeadStroke = 0;
+      item.releaseDeadStroke = 0;
+    }
+    state.dirty.performance.add(id);
+  });
+  render();
+}
+function assignSwitchProfile(axisV2Id) {
+  const profile = switchCatalogEntry(axisV2Id);
+  if (!profile) return showToast("That switch profile is no longer available.", true);
+  selectedKeyIds().forEach((id) => {
+    Object.assign(state.profile.performance[id], {
+      axisV2Id: profile.axisV2Id,
+      axisRangeMax: profile.axisRangeMax,
+      axisCoefficient: profile.axisCoefficient,
+    });
+    state.switchAssignmentKeys.add(id);
+    state.dirty.performance.add(id);
+  });
+  render();
+  showToast(
+    `${profile.name} staged for ${selectedKeyIds().length} key${selectedKeyIds().length === 1 ? "" : "s"}. Recalibrate after applying.`,
+  );
 }
 async function selectMappingLayer(layer) {
   const resolvedLayer = Number(layer);
@@ -163,6 +238,8 @@ function stopKeySelection() {
 }
 function beginKeySelection(event) {
   if (event.button !== 0 || state.calibrationActive) return;
+  const keyboardSurface = event.target.closest(".keyboard-wrap");
+  if (!keyboardSurface || !event.currentTarget.contains(keyboardSurface)) return;
   event.preventDefault();
   const surface = event.currentTarget,
     startKey = Number(event.target.closest("[data-key]")?.dataset.key);
@@ -329,31 +406,107 @@ function bindPage() {
     }),
   );
   if (state.page === "performance") {
+    const performance = state.profile.performance[selectedKey().id],
+      rapidTrigger = Number(performance.mode) === 1,
+      independentRt = rtIndependentForKey(selectedKey().id, performance);
+    document.querySelectorAll("[data-performance-workspace]").forEach((button) =>
+      button.addEventListener("click", async () => {
+        state.performanceWorkspace = button.dataset.performanceWorkspace;
+        if (
+          state.performanceWorkspace === "switches" &&
+          state.switchAssignmentsStatus === "error"
+        ) state.switchAssignmentsStatus = "idle";
+        render();
+        if (
+          state.performanceWorkspace === "switches" &&
+          connected() &&
+          state.switchAssignmentsStatus === "idle"
+        ) {
+          try {
+            await readAllPerformanceRecords();
+          } catch (error) {
+            showToast(error.message, true);
+          }
+        }
+      }),
+    );
     document
       .querySelector("#performanceMode")
       ?.addEventListener("change", (event) =>
-        stagePerformance("mode", event.target.checked ? 1 : 0),
+        setRapidTriggerForSelection(event.target.checked),
       );
-    [
-      "normalPress",
-      "normalRelease",
-      "rtFirstTouch",
-      "rtPress",
-      "rtRelease",
-      "pressDeadStroke",
-      "releaseDeadStroke",
-    ].forEach((field) => bindNumberPair(field, field));
+    document
+      .querySelector("#syncRt")
+      ?.addEventListener("change", (event) =>
+        setRtIndependenceForSelection(!event.target.checked),
+      );
+    document
+      .querySelector("#normalReleaseExperiment")
+      ?.addEventListener("change", (event) => {
+        state.showNormalReleaseExperimental = event.target.checked;
+        render();
+      });
+    document
+      .querySelector("#deadZoneToggle")
+      ?.addEventListener("change", (event) =>
+        setDeadZonesForSelection(event.target.checked),
+      );
+    bindNumberPair(
+      "actuationDistance",
+      rapidTrigger ? "rtFirstTouch" : "normalPress",
+    );
+    if (!rapidTrigger && state.showNormalReleaseExperimental)
+      bindNumberPair("normalRelease", "normalRelease");
+    if (rapidTrigger) {
+      bindNumberPair("rtPress", independentRt ? "rtPress" : ["rtPress", "rtRelease"]);
+      bindNumberPair("rtRelease", "rtRelease");
+    }
+    ["pressDeadStroke", "releaseDeadStroke"].forEach((field) =>
+      bindNumberPair(field, field),
+    );
     document
       .querySelector("[data-copy-performance]")
       ?.addEventListener("click", () => {
-        const source = clone(state.profile.performance[selectedKey().id]);
+        const source = state.profile.performance[selectedKey().id],
+          tuningFields = [
+            "mode",
+            "normalPress",
+            "normalRelease",
+            "rtFirstTouch",
+            "rtPress",
+            "rtRelease",
+            "pressDeadStroke",
+            "releaseDeadStroke",
+          ];
         keys.forEach((key) => {
-          state.profile.performance[key.id] = clone(source);
+          tuningFields.forEach((field) => {
+            state.profile.performance[key.id][field] = source[field];
+          });
           state.dirty.performance.add(key.id);
         });
         render();
         showToast("Performance settings staged for all 64 keys.");
       });
+    document
+      .querySelector("#switchSearch")
+      ?.addEventListener("input", (event) => {
+        state.switchSearch = event.target.value;
+        render();
+        const search = document.querySelector("#switchSearch");
+        search?.focus();
+        search?.setSelectionRange(search.value.length, search.value.length);
+      });
+    document.querySelectorAll("[data-switch-brand]").forEach((button) =>
+      button.addEventListener("click", () => {
+        state.switchBrand = button.dataset.switchBrand;
+        render();
+      }),
+    );
+    document.querySelectorAll("[data-axis-v2-id]").forEach((button) =>
+      button.addEventListener("click", () =>
+        assignSwitchProfile(Number(button.dataset.axisV2Id)),
+      ),
+    );
     document.querySelector("#calibrationToggle")?.addEventListener("click", () =>
       state.calibrationActive ? stopCalibration(true) : startCalibration(),
     );
@@ -365,6 +518,14 @@ function bindPage() {
         render();
       });
     if (state.livePressDistance) startTravel();
+    if (
+      state.performanceWorkspace === "switches" &&
+      connected() &&
+      state.switchAssignmentsStatus === "idle"
+    )
+      queueMicrotask(() =>
+        readAllPerformanceRecords().catch((error) => showToast(error.message, true)),
+      );
   }
   if (state.page === "keymap") {
     document.querySelectorAll("[data-layer]").forEach((button) =>
@@ -657,6 +818,11 @@ function bindPage() {
     if (state.liveLighting && connected()) startLightingLive();
   }
   if (state.page === "settings") {
+    document.querySelectorAll("[data-profile-slot]").forEach((button) =>
+      button.addEventListener("click", () =>
+        switchProfile(Number(button.dataset.profileSlot)),
+      ),
+    );
     document.querySelectorAll("[data-theme-choice]").forEach((button) =>
       button.addEventListener("click", () => setTheme(button.dataset.themeChoice)),
     );

@@ -1,8 +1,8 @@
 {
-  "extracted_at": "2026-08-25T04:07:36.5229022Z",
+  "extracted_at": "2026-08-25T20:15:08.2292768Z",
   "har_file": "xsyd.top.har",
-  "captured_request_url": "https://api.sparklinkplayjoy.com/api/v1/getAxisListV3?board_id=0030000a&vid=1ca6&pid=300a&t=1787520722503",
-  "captured_started_at": "2026-08-23T21:32:02.503Z",
+  "captured_request_url": "https://api.sparklinkplayjoy.com/api/v1/getAxisListV3?board_id=0030000a&vid=1ca6&pid=300a&t=1787681940488",
+  "captured_started_at": "2026-08-25T18:19:00.489Z",
   "response_status": 200,
   "api_code": 200,
   "api_message": "获取成功",

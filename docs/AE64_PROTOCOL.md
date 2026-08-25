@@ -88,7 +88,13 @@ Read with `04 01 row col`; write with `04 02 row col …`.
 | Axis range maximum | 23–24 | uint16 LE |
 | Axis coefficient | 25–26 | uint16 LE |
 
-Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. The basic UI edits only the decoded performance fields and preserves axis/calibration metadata from a fresh hardware read.
+The packet contains both `normalPress` and `normalRelease`, but the captured AE64 application treats standard mode as a single **Trigger Travel** control: it reads and edits `normalPress` and leaves `normalRelease` untouched. In Rapid Trigger mode it hides `normalPress`, uses `rtFirstTouch` as the initial actuation distance, and exposes `rtPress` / `rtRelease` as the downstroke and upstroke movement sensitivities. The alternative UI keeps one Actuation distance control visible and maps it to the field used by the active mode. It also provides an explicitly experimental fixed-mode `normalRelease` control so that field can be tested without implying that the manufacturer UI normally edits it.
+
+The original application writes only performance mode `0` (standard) or `1` (Rapid Trigger). No AE64 capability reply, UI branch, or captured write proves a mode equivalent to Wooting's Continuous Rapid Trigger. Mode `2` exists on the unrelated HE30 protocol, but is deliberately not sent to AE64 hardware without an AE64-specific capture.
+
+Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. Ordinary tuning writes preserve axis/calibration metadata from a fresh hardware read.
+
+The captured `getAxisListV3` response for board `0030000a`, VID `1ca6`, PID `300a` contains 82 switch profiles in five brand groups. In the original driver, choosing a switch copies `aixsDetail[0].axis_id`, `axis_range_max`, and `axis_coefficient` into `axisV2Id`, `axisRangeMax`, and `axisCoefficient` for every selected key, while preserving `calibrate` and every trigger/dead-zone value. The alternative selector follows that exact three-field update. Captured data lives in `assets/hall-effect-switches/supported-switches.json`; English names, aliases, colors, and local images are separate in `catalog-overrides.json` so the capture can be regenerated without losing editorial work.
 
 Calibration is a device-wide live session rather than a normal staged performance write:
 

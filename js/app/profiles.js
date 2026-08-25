@@ -69,6 +69,18 @@ function summarizeChanges() {
     changes.push(
       `Performance settings: ${state.dirty.performance.size} key${state.dirty.performance.size === 1 ? "" : "s"} (${names(state.dirty.performance)})`,
     );
+  if (state.switchAssignmentKeys.size) {
+    const assignments = new Map();
+    [...state.switchAssignmentKeys].forEach((id) => {
+      const performance = state.profile.performance[id],
+        profile = switchCatalogEntry(performance.axisV2Id),
+        label = profile?.name || `Axis ${performance.axisV2Id}`;
+      assignments.set(label, (assignments.get(label) || 0) + 1);
+    });
+    changes.push(
+      `Magnetic switch: ${[...assignments].map(([label, count]) => `${label} (${count} key${count === 1 ? "" : "s"})`).join(", ")}`,
+    );
+  }
   if (state.dirty.mapping.size)
     changes.push(
       `Key assignments: ${state.dirty.mapping.size} mapping${state.dirty.mapping.size === 1 ? "" : "s"} (${names(state.dirty.mapping)})`,
@@ -158,7 +170,8 @@ async function applyChanges({ automatic = false } = {}) {
     "Reading existing records and preserving firmware-owned fields.",
   );
   try {
-    const performanceIds = [...state.dirty.performance];
+    const performanceIds = [...state.dirty.performance],
+      performanceNormalizations = [];
     for (let index = 0; index < performanceIds.length; index += 1) {
       const id = performanceIds[index],
         key = keys[id];
@@ -172,14 +185,30 @@ async function applyChanges({ automatic = false } = {}) {
         ...state.profile.performance[id],
         axis: current.axis,
         calibrate: current.calibrate,
-        axisV2Id: current.axisV2Id,
-        axisRangeMax: current.axisRangeMax,
-        axisCoefficient: current.axisCoefficient,
+        ...(state.switchAssignmentKeys.has(id)
+          ? {}
+          : {
+              axisV2Id: current.axisV2Id,
+              axisRangeMax: current.axisRangeMax,
+              axisCoefficient: current.axisCoefficient,
+            }),
       };
       await state.transport.setPerformance(position(key), desired);
-      const verified = await state.transport.getPerformance(position(key));
-      if (!verifyPerformance(desired, verified))
-        throw new Error(`Performance verification failed for ${key.n}.`);
+      const verified = await state.transport.getPerformance(position(key)),
+        comparison = performanceReadbackComparison(
+          desired,
+          verified,
+          state.switchAssignmentKeys.has(id),
+        );
+      if (!comparison.valid)
+        throw new Error(
+          `Performance verification failed for ${key.n}: ${comparison.hard.join(", ")}.`,
+        );
+      if (comparison.normalized.length) {
+        const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+        performanceNormalizations.push(warning);
+        log("Firmware normalized performance read-back", warning);
+      }
       state.profile.performance[id] = verified;
       state.hardware.performance.set(id, verified);
     }
@@ -347,10 +376,11 @@ async function applyChanges({ automatic = false } = {}) {
     }
     log("Staged changes applied and verified");
     render();
+    const normalizationNote = performanceNormalizations.length
+      ? ` Firmware normalized ${performanceNormalizations.length} key${performanceNormalizations.length === 1 ? "" : "s"}: ${performanceNormalizations.slice(0, 2).join("; ")}${performanceNormalizations.length > 2 ? `; +${performanceNormalizations.length - 2} more` : ""}.`
+      : "";
     showToast(
-      automatic
-        ? "Auto apply wrote and verified the completed edit."
-        : "Changes written, committed, and verified on the AE64 Pro.",
+      `${automatic ? "Auto apply wrote and verified the completed edit." : "Changes written, committed, and verified on the AE64 Pro."}${normalizationNote}`,
     );
     return true;
   } catch (error) {
@@ -384,6 +414,9 @@ function revertChanges() {
 async function reloadProfileFromDevice(index) {
   state.profile.profileIndex = index;
   state.hardware.keycodes.clear();
+  state.hardware.performance.clear();
+  state.switchAssignmentsStatus = "idle";
+  state.switchAssignmentsError = "";
   const [lightingBase, palette, decorativeBase, decorativePalette] =
     await Promise.all([
       state.transport.getLightingBase(0),

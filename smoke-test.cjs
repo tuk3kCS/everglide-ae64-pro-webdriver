@@ -9,6 +9,7 @@ const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
   "js/app/foundation.js",
+  "js/app/switches.js",
   "js/app/theme.js",
   "js/app/mapping.js",
   "js/app/pages.js",
@@ -110,14 +111,58 @@ async function main() {
   const app = APP_FILES.map(read).join("\n");
   const xml = read("languages.xml");
   const pagesWorkflow = read(path.join(".github", "workflows", "pages.yml"));
+  const tutorialVideos = [
+    "dks-DCE7s5Id.webm", "end-BnYhFisg.webm", "mpt-B978ec99.webm",
+    "mt-CgpY_PQr.webm", "rs-Ck_H-6K8.webm", "socd_a-Dd9SIFLd.webm",
+    "socd_b-DcBid0XC.webm", "socd_neutral-dyit9BC-.webm",
+    "socd_thick-cFkI1N7-.webm", "tgl-mmsTAuVF.webm",
+  ];
+  const downloadedVideos = fs.readdirSync(path.join(root, "assets", "tutorial-videos"))
+    .filter((name) => name.endsWith(".webm")).sort();
+  equal(downloadedVideos, tutorialVideos.slice().sort(), "The manufacturer tutorial-video inventory is incomplete.");
+  tutorialVideos.forEach((name) => {
+    const bytes = fs.readFileSync(path.join(root, "assets", "tutorial-videos", name));
+    if (bytes.length < 10000 || bytes.subarray(0, 4).toString("hex") !== "1a45dfa3")
+      throw new Error(`Tutorial video ${name} is truncated or is not WebM.`);
+  });
+  const capturedHar = JSON.parse(read("xsyd.top.har"));
+  const capturedAxisEntry = capturedHar.log.entries.find(
+    (entry) => entry.request.url.includes("getAxisListV3") && entry.response.status === 200,
+  );
+  if (!capturedAxisEntry) throw new Error("The AE64 HAR has no populated getAxisListV3 response.");
+  const capturedAxisProfiles = JSON.parse(capturedAxisEntry.response.content.text).data
+    .flatMap((group) => group.list.map((entry) => ({
+      axis_id: entry.axis_id,
+      detail_axis_id: entry.aixsDetail[0].axis_id,
+      axis_range_max: entry.aixsDetail[0].axis_range_max,
+      axis_coefficient: entry.aixsDetail[0].axis_coefficient,
+    })))
+    .sort((a, b) => a.detail_axis_id - b.detail_axis_id);
+  const derivedAxisProfiles = JSON.parse(read("assets/hall-effect-switches/supported-switches.json"))
+    .map(({ axis_id, detail_axis_id, axis_range_max, axis_coefficient }) => ({ axis_id, detail_axis_id, axis_range_max, axis_coefficient }))
+    .sort((a, b) => a.detail_axis_id - b.detail_axis_id);
+  equal(derivedAxisProfiles, capturedAxisProfiles, "The switch catalog must use the current HAR's detailed firmware axis values.");
+  const switchOverrides = JSON.parse(read("assets/hall-effect-switches/catalog-overrides.json")),
+    overrideIds = Object.keys(switchOverrides).map(Number).sort((a, b) => a - b),
+    capturedIds = capturedAxisProfiles.map((entry) => entry.detail_axis_id).sort((a, b) => a - b);
+  equal(overrideIds, capturedIds, "The editable override catalog must contain one record for every captured switch ID.");
+  for (const [id, override] of Object.entries(switchOverrides)) {
+    if (
+      typeof override.name !== "string" ||
+      !Array.isArray(override.aliases) ||
+      typeof override.image !== "string" ||
+      typeof override._captured_name !== "string" ||
+      typeof override._captured_brand !== "string"
+    ) throw new Error(`Switch override ${id} does not follow the editable catalog schema.`);
+  }
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
-  for (const privatePath of ["xsyd.top HAR files", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
+  for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
@@ -150,6 +195,7 @@ async function main() {
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
 
   const elements = new Map();
+  const documentListeners = new Map();
   const makeElement = (selector) => {
     if (elements.has(selector)) return elements.get(selector);
     const node = { innerHTML: "", textContent: "", value: "", disabled: false, dataset: {}, files: [],
@@ -164,6 +210,11 @@ async function main() {
     navigator: { hid: { addEventListener() {} } },
     document: {
       documentElement: { dataset: {}, style: {}, setAttribute() {} },
+      addEventListener(type, listener) {
+        if (!documentListeners.has(type)) documentListeners.set(type, []);
+        documentListeners.get(type).push(listener);
+      },
+      removeEventListener() {},
       querySelector: makeElement,
       querySelectorAll(selector) {
         if (selector === ".language-select") return [makeElement("language-1"), makeElement("language-2")];
@@ -179,6 +230,37 @@ async function main() {
   browser.AE64Protocol = API;
   vm.createContext(browser);
   vm.runInContext(app, browser, { filename: "app.js" });
+  for (const type of ["keydown", "keypress", "keyup"])
+    if (documentListeners.get(type)?.length !== 1) throw new Error(`Page-level ${type} suppression is not installed.`);
+  const blockedKeyboardEvent = {
+    target: { closest() { return null; } },
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopImmediatePropagation() { this.stopped = true; },
+  };
+  documentListeners.get("keydown")[0](blockedKeyboardEvent);
+  equal([blockedKeyboardEvent.prevented, blockedKeyboardEvent.stopped], [true, true], "Physical key strokes must not scroll or activate page controls.");
+  const searchKeyboardEvent = {
+    target: { closest() { return {}; } },
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopImmediatePropagation() { this.stopped = true; },
+  };
+  documentListeners.get("keydown")[0](searchKeyboardEvent);
+  equal([searchKeyboardEvent.prevented, searchKeyboardEvent.stopped], [false, false], "The mapping search field must remain keyboard-enabled.");
+  const calibrationButtonPointer = {
+    button: 0,
+    target: { closest() { return null; } },
+    currentTarget: { contains() { return true; } },
+    prevented: false,
+    preventDefault() { this.prevented = true; },
+  };
+  vm.runInContext("state.keySelectionDrag = null", browser);
+  browser.calibrationButtonPointer = calibrationButtonPointer;
+  vm.runInContext("beginKeySelection(calibrationButtonPointer)", browser);
+  equal([calibrationButtonPointer.prevented, vm.runInContext("state.keySelectionDrag", browser)], [false, null], "The calibration button must not be intercepted by keyboard marquee selection.");
   const renderedKeys = (elements.get("#heroKeyboard").innerHTML.match(/class="key /g) || []).length;
   if (renderedKeys !== 64) throw new Error(`Browser bootstrap rendered ${renderedKeys} keys instead of 64.`);
   const autoToggleState = vm.runInContext(`(state.dirty.lightingBase = true, setAutoApply(true), [state.autoApply, document.querySelector("#autoApplyToggle").checked, document.querySelector("#applyButton").disabled])`, browser);
@@ -291,6 +373,7 @@ async function main() {
   if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
   for (const required of ['class="settings-page"', 'id="systemMode"', 'id="reportRate"', 'id="profileName"', 'data-theme-choice="mint"', 'data-theme-choice="dark"', 'data-theme-choice="light"'])
     if (!settingsMarkup.includes(required)) throw new Error(`Device settings overhaul omitted ${required}.`);
+  if ((settingsMarkup.match(/data-profile-slot=/g) || []).length !== 4) throw new Error("All four profile numbers in Device Settings must be clickable.");
   const themeState = vm.runInContext(`(setTheme("light"), [state.theme, document.documentElement.dataset.theme, document.documentElement.style.colorScheme])`, browser);
   equal(themeState, ["light", "light", "light"], "Appearance switching must update state and the document immediately.");
   vm.runInContext('applyTheme("mint")', browser);
@@ -315,15 +398,161 @@ async function main() {
     return result;
   })()`, browser);
   equal(multipleSelection, [true, true, [2], 1.25, 1.25], "Only Performance may retain multi-key selection for shared staged edits.");
+  const performanceWorkflow = vm.runInContext(`(() => {
+    state.page = "performance";
+    state.profile.selected = 0;
+    state.selectedKeys = new Set([0]);
+    state.rtIndependentKeys.clear();
+    state.showNormalReleaseExperimental = false;
+    Object.assign(state.profile.performance[0], {
+      mode: 0, normalPress: 1.25, normalRelease: 0.75,
+      rtFirstTouch: 1.8, rtPress: 0.12, rtRelease: 0.12,
+    });
+    const standard = performanceControls();
+    state.showNormalReleaseExperimental = true;
+    const experimentalRelease = performanceControls();
+    setRapidTriggerForSelection(true);
+    const rapid = performanceControls();
+    state.profile.performance[0].rtRelease = 0.28;
+    state.rtIndependentKeys.add(rtIndependenceToken(0));
+    const independent = performanceControls();
+    setRtIndependenceForSelection(false);
+    const linked = performanceControls();
+    const result = {
+      standard: standard.includes('id="actuationDistance"') && standard.includes('value="1.25"') && standard.includes('id="normalReleaseExperiment"') && !standard.includes('id="rtPress"') && !standard.includes('id="normalRelease"'),
+      experimentalRelease: experimentalRelease.includes('id="normalRelease"') && experimentalRelease.includes('value="0.75"') && experimentalRelease.includes("Experimental fixed-mode release value"),
+      rapid: rapid.includes('id="actuationDistance"') && rapid.includes('value="1.8"') && rapid.includes('id="rtPress"') && rapid.includes('id="rtRelease"') && rapid.includes('id="syncRt"') && rapid.includes('type="checkbox" checked'),
+      noContinuousClaim: !rapid.includes("Continuous Rapid Trigger"),
+      independent: independent.includes('id="syncRt"') && !independent.includes('id="syncRt" class="toggle" type="checkbox" checked') && independent.includes('id="rtRelease"') && independent.includes('value="0.28"'),
+      linked: linked.includes('id="rtRelease"') && linked.includes('disabled') && state.profile.performance[0].rtPress === state.profile.performance[0].rtRelease,
+      normalReleasePreserved: state.profile.performance[0].normalRelease,
+    };
+    state.showNormalReleaseExperimental = false;
+    clearDirty();
+    return result;
+  })()`, browser);
+  equal(performanceWorkflow, {
+    standard: true, experimentalRelease: true, rapid: true, noContinuousClaim: true, independent: true,
+    linked: true, normalReleasePreserved: 0.75,
+  }, "Performance workflow must expose normalRelease experimentally and use intuitive synced or independent RT sensitivity.");
+  const performanceReadback = vm.runInContext(`(() => {
+    const expected = {
+      mode: 0, normalPress: 1.2, normalRelease: 0.3,
+      rtFirstTouch: 1.8, rtPress: 0.12, rtRelease: 0.12,
+      pressDeadStroke: 0, releaseDeadStroke: 0,
+      axisV2Id: 4352, axisRangeMax: 3440, axisCoefficient: 19100,
+    };
+    const normalized = performanceReadbackComparison(expected, {
+      ...expected, normalRelease: 0.25, rtPress: 0.2,
+      pressDeadStroke: 0.01, axisRangeMax: 3430,
+    }, true);
+    const rejectedTuning = performanceReadbackComparison(expected, {
+      ...expected, normalPress: 1.3,
+    }, false);
+    const rejectedAxis = performanceReadbackComparison(expected, {
+      ...expected, axisV2Id: 4608,
+    }, true);
+    return { normalized, rejectedTuning, rejectedAxis };
+  })()`, browser);
+  equal(performanceReadback, {
+    normalized: {
+      valid: true,
+      hard: [],
+      normalized: [
+        "experimental normal release 0.3→0.25",
+        "top dead zone 0→0.01",
+        "switch range 3440→3430",
+      ],
+    },
+    rejectedTuning: {
+      valid: false,
+      hard: ["actuation 1.2→1.3"],
+      normalized: [],
+    },
+    rejectedAxis: {
+      valid: false,
+      hard: ["switch axis ID 4352→4608"],
+      normalized: [],
+    },
+  }, "Performance verification must reject active-setting or switch-identity failures while accepting authoritative firmware normalization.");
+  const deadZoneWorkflow = vm.runInContext(`(() => {
+    state.profile.selected = 0;
+    state.selectedKeys = new Set([0]);
+    Object.assign(state.profile.performance[0], { pressDeadStroke: 0.22, releaseDeadStroke: 0.31 });
+    setDeadZonesForSelection(false);
+    const off = performanceControls();
+    const zeroed = [state.profile.performance[0].pressDeadStroke, state.profile.performance[0].releaseDeadStroke];
+    setDeadZonesForSelection(true);
+    const restored = [state.profile.performance[0].pressDeadStroke, state.profile.performance[0].releaseDeadStroke];
+    const result = {
+      off: off.includes('id="deadZoneToggle"') && off.includes('value="0"') && off.includes("disabled"),
+      zeroed,
+      restored,
+    };
+    clearDirty();
+    return result;
+  })()`, browser);
+  equal(deadZoneWorkflow, { off: true, zeroed: [0, 0], restored: [0.22, 0.31] }, "Disabling dead zones must write zero to both fields and restore the prior values when re-enabled.");
+  const performanceIndicators = vm.runInContext(`(() => {
+    state.page = "performance";
+    const saved = clone(state.profile.performance);
+    keys.forEach((key) => Object.assign(state.profile.performance[key.id], {
+      mode: 0, normalPress: 2, pressDeadStroke: 0, releaseDeadStroke: 0,
+    }));
+    state.profile.performance[0].normalPress = 1.23;
+    const actuationOnly = keyboardHtml();
+    Object.assign(state.profile.performance[0], { mode: 1, rtFirstTouch: 1.45 });
+    state.profile.performance[1].pressDeadStroke = 0.1;
+    const flagged = keyboardHtml();
+    state.profile.performance = saved;
+    return {
+      actuationOnly: actuationOnly.includes('<strong>1.23</strong><small>mm</small>') && !actuationOnly.includes('performance-flag'),
+      rt: flagged.includes('class="performance-flag rt"'),
+      dz: flagged.includes('class="performance-flag dz"'),
+      values: (flagged.match(/class="performance-actuation"/g) || []).length,
+    };
+  })()`, browser);
+  equal(performanceIndicators, { actuationOnly: true, rt: true, dz: true, values: 64 }, "The performance keyboard must show actuation values plus RT and DZ corner indicators.");
+  const switchKeyboard = vm.runInContext(`(() => {
+    state.page = "performance";
+    state.performanceWorkspace = "switches";
+    state.livePressDistance = true;
+    state.switchCatalog = [{ axisV2Id: 4352, name: "Gateron Qilin HE" }];
+    keys.forEach((key) => Object.assign(state.profile.performance[key.id], {
+      axisV2Id: 4352, mode: 1, rtFirstTouch: 1.45,
+      pressDeadStroke: 0.1, releaseDeadStroke: 0.1,
+    }));
+    const markup = keyboardHtml();
+    state.performanceWorkspace = "tuning";
+    state.livePressDistance = false;
+    return {
+      names: (markup.match(/class="switch-key-name"/g) || []).length,
+      named: markup.includes("Gateron Qilin HE"),
+      actuation: markup.includes("performance-actuation"),
+      rtOrDz: markup.includes("performance-flag"),
+      travel: markup.includes("press-distance-fill"),
+    };
+  })()`, browser);
+  equal(switchKeyboard, { names: 64, named: true, actuation: false, rtOrDz: false, travel: false }, "Switch Selector mode must replace every virtual-key tuning indicator with its assigned switch name.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
   if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");
-  const livePressMarkup = vm.runInContext(`(state.page = "performance", state.livePressDistance = true, performancePage())`, browser);
-  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"', 'class="axis-actuation-marker"', 'id="livePressActuation"', 'Actuation tuning', 'Actuation & Rapid Trigger', 'Dead zones'])
+  const livePressMarkup = vm.runInContext(`(() => {
+    state.page = "performance";
+    state.performanceWorkspace = "tuning";
+    state.livePressDistance = true;
+    state.selectedKeys = new Set([0]);
+    state.switchCatalog = [];
+    state.profile.performance[0].axisRangeMax = 3310;
+    return performancePage();
+  })()`, browser);
+  for (const required of ['id="livePressDistanceToggle"', 'id="livePressPanel"', 'assets/images/axis.png', 'id="livePressValue"', 'id="pressedKeyList"', 'class="axis-actuation-marker"', 'id="livePressActuation"', 'Actuation tuning', 'Magnetic Switch Selector', 'Actuation & Rapid Trigger', 'Dead zones'])
     if (!livePressMarkup.includes(required)) throw new Error(`Live press distance omitted ${required}.`);
+  if (livePressMarkup.includes('class="calibration-board-guide"')) throw new Error("Calibration legend must stay hidden until calibration starts.");
   for (const removedPerformanceTab of ['data-performance-tab=', 'Switch axis', '>Calibration</button>'])
     if (livePressMarkup.includes(removedPerformanceTab)) throw new Error(`Removed Performance tab remains: ${removedPerformanceTab}.`);
-  if ((livePressMarkup.match(/data-travel-tick=/g) || []).length !== 41) throw new Error("The switch gauge must mark 0.0–4.0 mm in 0.1 mm steps.");
+  if ((livePressMarkup.match(/data-travel-tick=/g) || []).length !== 35 || !livePressMarkup.includes('data-travel-max="3.310"') || !livePressMarkup.includes('>3.31</span>'))
+    throw new Error("The switch gauge must use the focused key's exact 3.310 mm travel, with 0.1 mm ticks plus the exact endpoint.");
   if (!livePressMarkup.includes('class="press-distance-fill"')) throw new Error("The virtual keyboard must render a per-key live travel fill.");
   const focusRules = vm.runInContext(`(() => {
     state.hardware.travelValues.set(0, 500);
@@ -333,9 +562,9 @@ async function main() {
     const all = liveTravelTarget();
     state.selectedKeys = new Set([0, 2]);
     const selected = liveTravelTarget();
-    return [[all.key.id, all.raw, all.selectedCount], [selected.key.id, selected.raw, selected.selectedCount]];
+    return [[all.key.id, all.raw, all.travelMax, all.selectedCount], [selected.key.id, selected.raw, selected.travelMax, selected.selectedCount]];
   })()`, browser);
-  equal(focusRules, [[1, 2400, 0], [2, 1800, 2]], "The live gauge must follow the furthest key globally or within a multi-key selection.");
+  equal(focusRules, [[1, 2400, 4, 0], [2, 1800, 4, 2]], "The live gauge must follow the furthest key globally or within a multi-key selection.");
   const calibrationMarkup = vm.runInContext(`(() => {
     state.calibrationActive = true;
     state.hardware.calibrationAdc.set(0, 913);
@@ -348,10 +577,99 @@ async function main() {
   if (calibrationMarkup.includes('class="calibration-state"')) throw new Error("Calibration keys must use status color instead of status text.");
   if ((calibrationMarkup.match(/calibration-key/g) || []).length !== 64) throw new Error("Calibration must annotate all 64 physical keys.");
   vm.runInContext("state.calibrationActive = false", browser);
+  browser.switchCatalogSource = JSON.parse(read("assets/hall-effect-switches/supported-switches.json"));
+  browser.switchCatalogOverrides = { "4352": { name: "Gateron Qilin HE", aliases: ["Kirin"], image: "assets/hall-effect-switches/images/qilin.webp" } };
+  const switchSelector = vm.runInContext(`(() => {
+    state.switchCatalog = switchCatalogSource.map((entry) => normalizeSwitchCatalogEntry(entry, switchCatalogOverrides));
+    state.switchCatalogStatus = "ready";
+    state.performanceWorkspace = "switches";
+    state.switchBrand = "all";
+    state.switchSearch = "";
+    state.selectedKeys = new Set([0, 1]);
+    state.profile.selected = 0;
+    const markup = performancePage();
+    assignSwitchProfile(4352);
+    const assigned = [0, 1].map((id) => ({
+      id: state.profile.performance[id].axisV2Id,
+      range: state.profile.performance[id].axisRangeMax,
+      coefficient: state.profile.performance[id].axisCoefficient,
+      tracked: state.switchAssignmentKeys.has(id),
+    }));
+    const result = {
+      count: state.switchCatalog.length,
+      cards: (markup.match(/data-axis-v2-id=/g) || []).length,
+      tabs: markup.includes('data-performance-workspace="tuning"') && markup.includes('data-performance-workspace="switches"'),
+      override: markup.includes("Gateron Qilin HE") && markup.includes("qilin.webp"),
+      review: summarizeChanges().some((entry) => entry.includes("Magnetic switch: Gateron Qilin HE (2 keys)")),
+      assigned,
+    };
+    state.performanceWorkspace = "tuning";
+    clearDirty();
+    return result;
+  })()`, browser);
+  equal(switchSelector, {
+    count: 82, cards: 82, tabs: true, override: true, review: true,
+    assigned: [
+      { id: 4352, range: 3440, coefficient: 19100, tracked: true },
+      { id: 4352, range: 3440, coefficient: 19100, tracked: true },
+    ],
+  }, "The magnetic switch selector must load all 82 captured profiles and stage the original driver's three axis metadata fields.");
+  const completeSwitchRead = await vm.runInContext(`(async () => {
+    const savedTransport = state.transport,
+      savedPerformance = clone(state.profile.performance),
+      savedHardware = new Map(state.hardware.performance),
+      savedPage = state.page,
+      savedWorkspace = state.performanceWorkspace;
+    state.page = "overview";
+    state.performanceWorkspace = "switches";
+    state.hardware.performance.clear();
+    state.switchAssignmentsStatus = "idle";
+    state.switchCatalog = [
+      { axisV2Id: 4352, name: "Gateron Qilin HE", color: "#44dd99", axisRangeMax: 3440 },
+      { axisV2Id: 4608, name: "Gateron Jade HE", color: "#ff77bb", axisRangeMax: 3400 },
+    ];
+    state.transport = {
+      connected: true,
+      getPerformance: async (address) => {
+        const key = keys.find((candidate) => {
+          const mapped = position(candidate);
+          return mapped.row === address.row && mapped.col === address.col;
+        });
+        return {
+          ...state.profile.performance[key.id],
+          axisV2Id: key.id % 2 ? 4352 : 4608,
+          axisRangeMax: key.id % 2 ? 3440 : 3400,
+          axisCoefficient: key.id % 2 ? 19100 : 18800,
+        };
+      },
+    };
+    const loaded = await readAllPerformanceRecords();
+    state.switchCatalog = [
+      { axisV2Id: 4352, name: "Gateron Qilin HE", color: "#44dd99", axisRangeMax: 3440 },
+      { axisV2Id: 4608, name: "Gateron Jade HE", color: "#ff77bb", axisRangeMax: 3400 },
+    ];
+    state.page = "performance";
+    const markup = keyboardHtml();
+    const result = {
+      loaded,
+      cached: state.hardware.performance.size,
+      ready: state.switchAssignmentsStatus,
+      named: !markup.includes("Unassigned") && markup.includes("Gateron Qilin HE") && markup.includes("Gateron Jade HE"),
+      colored: markup.includes("--switch-color:#44dd99") && markup.includes("--switch-color:#ff77bb"),
+    };
+    state.transport = savedTransport;
+    state.profile.performance = savedPerformance;
+    state.hardware.performance = savedHardware;
+    state.page = savedPage;
+    state.performanceWorkspace = savedWorkspace;
+    state.switchAssignmentsStatus = "idle";
+    return result;
+  })()`, browser);
+  equal(completeSwitchRead, { loaded: 64, cached: 64, ready: "ready", named: true, colored: true }, "Switch Selector must read and color all 64 assigned switch records without requiring individual key clicks.");
   if (!vm.runInContext("aboutPage()", browser).includes('src="about.html"')) throw new Error("About Us must render the author-owned HTML document.");
   vm.runInContext("state.livePressDistance = false; state.page = 'overview'", browser);
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
-  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow', 'class="area-power-banks"'])
+  for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
   if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
@@ -421,7 +739,7 @@ async function main() {
   if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
   for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]", ".lighting-selection-marquee"])
     if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
-  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker"])
+  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker", ".performance-workspace-tabs", ".switch-catalog-grid", ".profile-slot-row button", "grid-template-columns: repeat(6, minmax(0, 1fr))"])
     if (!css.includes(themeRule)) throw new Error(`Appearance/select styling omitted ${themeRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");

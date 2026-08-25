@@ -10,7 +10,7 @@ The repository includes an automated GitHub Pages workflow. Before its first run
 
 [Open the GitHub Pages driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/)
 
-You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, `about.html`, the switch-axis image, and the modules under `js/app/`; protocol notes, task files, source captures, and hosting metadata are not made public by Pages.
+You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, `about.html`, the switch-axis image, the captured switch catalog plus its local overrides/images, and the modules under `js/app/`; protocol notes, task files, source captures, tutorial videos, and hosting metadata are not made public by Pages.
 
 ## Run locally
 
@@ -30,7 +30,7 @@ node smoke-test.cjs
 
 ## Project structure
 
-The driver stays dependency-free and uses ordered classic browser scripts, matching the simple deployment model that worked well in the HE30 reference driver. The AE64 application is divided by responsibility under `js/app/`, while `app.js` only binds the permanent shell and starts device discovery. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map and rules for extending it.
+The driver stays dependency-free and uses ordered classic browser scripts, matching the simple deployment model that worked well in the HE30 reference driver. The AE64 application is divided by responsibility under `js/app/`, while `app.js` only binds the permanent shell and starts device discovery. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map and rules for extending it. Switch catalog editors should use [docs/SWITCH_CATALOG_OVERRIDES.md](docs/SWITCH_CATALOG_OVERRIDES.md); the captured Wooting comparison is in [docs/SWITCH_SELECTOR_COMPARISON.md](docs/SWITCH_SELECTOR_COMPARISON.md).
 
 ## Basic release scope
 
@@ -39,10 +39,11 @@ Implemented now:
 - Device identity, firmware/protocol version, feature bitmap, and diagnostics
 - Four onboard profiles (switching and names)
 - Four keymap layers with keyboard, media, mouse, and internal function groups
-- Per-key normal press/release, Rapid Trigger, RT first touch, and independent RT press/release distances
-- Per-key top and bottom dead zones; switch-axis metadata is preserved during writes
+- Per-key actuation distance, Rapid Trigger first-touch actuation, intuitive synchronized/independent RT press/release sensitivity, and an experimental fixed `normalRelease` editor
+- Toggleable per-key top and bottom dead zones; disabling them writes `0.00 mm` to both fields
+- Magnetic switch selector backed by all 82 AE64 profiles captured from the manufacturer API, with upgrade-safe English-name and local-image overrides
 - Hall calibration and toggleable live press distance: a 0.0–4.0 mm switch gauge, millimeter readout, and simultaneous per-key travel fill
-- Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one approximately 10 Hz live preview combining the keyboard with 38 addressable perimeter LEDs
+- Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one 24 fps live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling
 - Captured rainbow palette behavior plus firmware-rendered Fn overlays with transparent-layer inheritance and remapped Fn-trigger detection
 - Mint, graphite Dark, and cool Light appearances with browser-local persistence

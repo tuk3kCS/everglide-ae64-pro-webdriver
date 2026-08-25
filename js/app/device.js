@@ -227,6 +227,9 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       keyPositions: firmwareKeyPositions(layoutStyle),
     });
     state.profile.profileIndex = currentConfig;
+    state.hardware.performance.clear();
+    state.switchAssignmentsStatus = "idle";
+    state.switchAssignmentsError = "";
     state.profile.settings = { systemMode, reportRate, sleepTime, shake };
     state.profile.lighting.base = {
       ...state.profile.lighting.base,
@@ -348,6 +351,56 @@ async function readSelectedKey() {
     layer: state.profile.layer,
   });
 }
+async function readAllPerformanceRecords() {
+  if (!connected() || state.switchAssignmentsStatus === "loading") return 0;
+  const targets = keys.filter(
+    (key) =>
+      !state.hardware.performance.has(key.id) &&
+      !state.dirty.performance.has(key.id),
+  );
+  if (!targets.length) {
+    state.switchAssignmentsStatus = "ready";
+    state.switchAssignmentsError = "";
+    return 0;
+  }
+  state.switchAssignmentsStatus = "loading";
+  state.switchAssignmentsError = "";
+  render();
+  try {
+    const results = await Promise.allSettled(
+      targets.map(async (key) => [
+        key,
+        await state.transport.getPerformance(position(key)),
+      ]),
+    );
+    let loaded = 0;
+    const failed = [];
+    results.forEach((result, index) => {
+      if (result.status !== "fulfilled") {
+        failed.push(targets[index].n);
+        return;
+      }
+      const [key, performance] = result.value;
+      state.hardware.performance.set(key.id, performance);
+      if (!state.dirty.performance.has(key.id))
+        state.profile.performance[key.id] = performance;
+      loaded += 1;
+    });
+    if (failed.length)
+      throw new Error(
+        `Could not read switch assignments for ${failed.length} key${failed.length === 1 ? "" : "s"}.`,
+      );
+    state.switchAssignmentsStatus = "ready";
+    log("All switch assignments read", { keys: loaded });
+    return loaded;
+  } catch (error) {
+    state.switchAssignmentsStatus = "error";
+    state.switchAssignmentsError = error.message;
+    throw error;
+  } finally {
+    render();
+  }
+}
 async function readKeymapLayer(layer = state.profile.layer) {
   if (!connected()) return 0;
   const resolvedLayer = Number(layer),
@@ -376,6 +429,7 @@ async function readKeymapLayer(layer = state.profile.layer) {
 }
 function clearDirty() {
   state.dirty.performance.clear();
+  state.switchAssignmentKeys.clear();
   state.dirty.mapping.clear();
   state.dirty.customLighting.clear();
   state.dirty.decorativeLighting.clear();
@@ -385,21 +439,55 @@ function clearDirty() {
   state.dirty.decorativeBase = false;
   state.dirty.decorativePalette = false;
 }
-function verifyPerformance(expected, actual) {
-  return [
-    "mode",
-    "normalPress",
-    "normalRelease",
-    "rtFirstTouch",
-    "rtPress",
-    "rtRelease",
-    "pressDeadStroke",
-    "releaseDeadStroke",
-  ].every((field) =>
-    field === "mode"
-      ? Number(expected[field]) === Number(actual[field])
-      : closeEnough(expected[field], actual[field]),
+function performanceReadbackComparison(expected, actual, verifyAxis = false) {
+  const hard = [],
+    normalized = [],
+    rapidTrigger = Number(expected.mode) === 1,
+    labels = {
+      mode: "mode",
+      normalPress: "actuation",
+      normalRelease: "experimental normal release",
+      rtFirstTouch: "RT first touch",
+      rtPress: "RT press",
+      rtRelease: "RT release",
+      pressDeadStroke: "top dead zone",
+      releaseDeadStroke: "bottom dead zone",
+      axisV2Id: "switch axis ID",
+      axisRangeMax: "switch range",
+      axisCoefficient: "switch coefficient",
+    },
+    integerFields = new Set([
+      "mode",
+      "axisV2Id",
+      "axisRangeMax",
+      "axisCoefficient",
+    ]),
+    differs = (field) =>
+      integerFields.has(field)
+        ? Number(expected[field]) !== Number(actual[field])
+        : !closeEnough(expected[field], actual[field]),
+    describe = (field) =>
+      `${labels[field]} ${Number(expected[field])}→${Number(actual[field])}`;
+
+  const strictTuning = rapidTrigger
+    ? ["mode", "rtFirstTouch", "rtPress", "rtRelease"]
+    : ["mode", "normalPress"];
+  strictTuning.forEach((field) => {
+    if (differs(field)) hard.push(describe(field));
+  });
+  ["normalRelease", "pressDeadStroke", "releaseDeadStroke"].forEach(
+    (field) => {
+      if (differs(field)) normalized.push(describe(field));
+    },
   );
+  if (verifyAxis) {
+    if (differs("axisV2Id")) hard.push(describe("axisV2Id"));
+    else
+      ["axisRangeMax", "axisCoefficient"].forEach((field) => {
+        if (differs(field)) normalized.push(describe(field));
+      });
+  }
+  return { valid: hard.length === 0, hard, normalized };
 }
 function verifyLightingBase(expected, actual) {
   const expectedOpenMode = expected.open

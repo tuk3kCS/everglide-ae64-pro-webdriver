@@ -14,6 +14,26 @@ function mountHero() {
   });
 }
 
+function keyboardInputAllowed(target) {
+  return Boolean(
+    target?.closest?.('input[type="search"], [data-keyboard-input="allow"]'),
+  );
+}
+
+function suppressPageKeyboardInput(event) {
+  if (keyboardInputAllowed(event.target)) return;
+  event.preventDefault();
+  if (typeof event.stopImmediatePropagation === "function")
+    event.stopImmediatePropagation();
+  else event.stopPropagation?.();
+}
+
+// The physical keyboard is the device under test. Do not let its reports
+// activate focused controls, scroll the page, or trigger page shortcuts.
+["keydown", "keypress", "keyup"].forEach((type) =>
+  document.addEventListener(type, suppressPageKeyboardInput, true),
+);
+
 document
   .querySelectorAll("#connectButton,#heroConnect")
   .forEach((button) =>
@@ -97,4 +117,6 @@ if (navigator.hid) {
   });
 }
 mountHero();
-loadLanguages().finally(detectKnownKeyboard);
+Promise.allSettled([loadLanguages(), loadSwitchCatalog()]).finally(
+  detectKnownKeyboard,
+);

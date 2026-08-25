@@ -100,6 +100,7 @@ async function startCalibration() {
   state.calibrationBusy = true;
   state.livePressDistance = false;
   stopPolling();
+  stopProfilePolling();
   state.hardware.calibrationAdc.clear();
   state.hardware.calibrationRoute.clear();
   state.hardware.calibrationStatus.clear();
@@ -117,6 +118,7 @@ async function startCalibration() {
     state.calibrationBusy = false;
     render();
     showToast(error.message, true);
+    if (connected()) startProfilePolling();
   }
 }
 function stopCalibrationPolling(clear = false) {
@@ -155,6 +157,7 @@ async function stopCalibration(save = true) {
     state.calibrationActive = false;
     state.calibrationBusy = false;
     render();
+    if (connected()) startProfilePolling();
   }
 }
 function updateCalibrationVisuals() {
@@ -266,16 +269,20 @@ async function startTravel() {
 function updateTravelVisuals() {
   if (state.page !== "performance" || !state.livePressDistance) return;
   document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
-    const raw = Number(
+    const key = keys[Number(node.dataset.key)],
+      raw = Number(
         state.hardware.travelValues.get(Number(node.dataset.key)) || 0,
       ),
-      percent = Math.min(100, Math.max(0, raw / 40));
+      range = key ? keySwitchTravel(key) * 1000 : 4000,
+      percent = Math.min(100, Math.max(0, raw / range * 100));
     node.style.setProperty("--press-depth", `${percent.toFixed(2)}%`);
     node.classList.toggle("pressed", raw >= 10);
   });
   const focus = liveTravelTarget(),
-    { key, raw, mm, actuation, selectedCount } = focus,
+    { key, raw, mm, actuation, travelMax, selectedCount } = focus,
     panel = document.querySelector("#livePressPanel"),
+    visual = panel?.querySelector(".axis-visual"),
+    scale = panel?.querySelector(".axis-gauge-scale"),
     value = document.querySelector("#livePressValue"),
     rawNode = document.querySelector("#livePressRaw"),
     keyNode = document.querySelector("#livePressKey"),
@@ -287,19 +294,29 @@ function updateTravelVisuals() {
       .map((key) => ({
         key,
         mm: Math.min(
-          4,
+          keySwitchTravel(key),
           Math.max(0, Number(state.hardware.travelValues.get(key.id) || 0) / 1000),
         ),
       }))
       .filter((entry) => entry.mm >= 0.01)
       .sort((a, b) => b.mm - a.mm);
+  if (scale && scale.dataset.travelMax !== travelMax.toFixed(3)) {
+    scale.querySelectorAll("[data-travel-tick]").forEach((tick) => tick.remove());
+    scale.insertAdjacentHTML("afterbegin", travelGaugeTicks(travelMax));
+    scale.dataset.travelMax = travelMax.toFixed(3);
+  }
+  if (visual)
+    visual.setAttribute(
+      "aria-label",
+      `Focused switch travel and actuation point from zero to ${travelRangeLabel(travelMax)} millimeters`,
+    );
   panel?.style.setProperty(
     "--press-distance",
-    `${((mm / 4) * 100).toFixed(2)}%`,
+    `${((mm / travelMax) * 100).toFixed(2)}%`,
   );
   panel?.style.setProperty(
     "--actuation-distance",
-    `${((actuation / 4) * 100).toFixed(2)}%`,
+    `${((actuation / travelMax) * 100).toFixed(2)}%`,
   );
   panel?.classList.toggle("actuated", mm >= actuation && mm >= 0.01);
   if (keyNode) keyNode.textContent = key.n;

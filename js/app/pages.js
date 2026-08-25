@@ -46,6 +46,31 @@ function calibrationStatusMeta(value) {
       ? { label: "Calibrated", className: "calibrated" }
       : { label: "Uncalibrated", className: "uncalibrated" };
 }
+function activeActuationDistance(performance) {
+  return Number(performance?.mode) === 1
+    ? Number(performance?.rtFirstTouch) || 0
+    : Number(performance?.normalPress) || 0;
+}
+function rtIndependenceToken(id) {
+  return `${Number(state.profile.profileIndex)}:${Number(id)}`;
+}
+function rtIndependentForKey(id, performance = state.profile.performance[id]) {
+  return (
+    state.rtIndependentKeys.has(rtIndependenceToken(id)) ||
+    Math.abs(Number(performance?.rtPress || 0) - Number(performance?.rtRelease || 0)) > 0.0005
+  );
+}
+function deadZonesEnabled(performance) {
+  return (
+    Number(performance?.pressDeadStroke) > 0 ||
+    Number(performance?.releaseDeadStroke) > 0
+  );
+}
+function switchCatalogEntry(axisV2Id) {
+  return state.switchCatalog.find(
+    (entry) => Number(entry.axisV2Id) === Number(axisV2Id),
+  );
+}
 function keyboardHtml({ hero = false, lighting = false } = {}) {
   const layer = Number(lighting ? state.hardware.fnPressed ? fnTargetLayer() : 0 : state.profile.layer),
     light = state.profile.lighting,
@@ -57,7 +82,24 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
       connected() &&
       Array.isArray(state.hardware.liveMatrix),
     showCalibration = !hero && state.page === "performance" && state.calibrationActive,
-    showPressDistance = !showCalibration && !hero && state.page === "performance" && state.livePressDistance;
+    showSwitchProfiles =
+      !hero &&
+      !lighting &&
+      state.page === "performance" &&
+      !showCalibration &&
+      state.performanceWorkspace === "switches",
+    showPerformance =
+      !hero &&
+      !lighting &&
+      state.page === "performance" &&
+      !showCalibration &&
+      !showSwitchProfiles,
+    showPressDistance =
+      !showCalibration &&
+      !showSwitchProfiles &&
+      !hero &&
+      state.page === "performance" &&
+      state.livePressDistance;
   return `<div class="keyboard" aria-label="AE64 Pro keyboard">${layout
     .map(
       (row, uiRow) =>
@@ -67,8 +109,8 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               (candidate) => candidate.uiRow === uiRow && candidate.col === col,
             );
             const fnMeta = lighting && state.hardware.fnPressed
-                ? fnLightingKeyMeta(key, layer)
-                : null,
+              ? fnLightingKeyMeta(key, layer)
+              : null,
               code = fnMeta ? fnMeta.resolved : displayedKeycode(key, layer);
             const mapped = keycodeLabel(code);
             const custom = Boolean(light.customEnabled?.[key.id]),
@@ -94,24 +136,45 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               selected =
                 !hero &&
                 (lighting ? lightingSelected : keySelected),
+              pressMax = keySwitchTravel(key),
               pressMm = Math.min(
-                4,
+                pressMax,
                 Number(state.hardware.travelValues.get(key.id) || 0) / 1000,
               ),
-              pressPercent = Math.max(0, (pressMm / 4) * 100),
+              pressPercent = Math.max(0, (pressMm / pressMax) * 100),
               calibrationAdc = Number(state.hardware.calibrationAdc.get(key.id) || 0),
               calibrationRoute = Number(state.hardware.calibrationRoute.get(key.id) || 0),
               calibrationState = calibrationStatusMeta(state.hardware.calibrationStatus.get(key.id)),
               calibrationRange = Number(state.profile.performance[key.id]?.axisRangeMax) || 4000,
-              calibrationPercent = calibrationState.className === "new" ? 100 : Math.min(100, Math.max(0, calibrationRoute / calibrationRange * 100));
+              calibrationPercent = calibrationState.className === "new" ? 100 : Math.min(100, Math.max(0, calibrationRoute / calibrationRange * 100)),
+              performance = state.profile.performance[key.id],
+              rapidTrigger = Number(performance?.mode) === 1,
+              deadZone = Number(performance?.pressDeadStroke) > 0 || Number(performance?.releaseDeadStroke) > 0,
+              actuation = activeActuationDistance(performance),
+              switchProfile = switchCatalogEntry(performance?.axisV2Id),
+              switchRecordPending =
+                showSwitchProfiles &&
+                connected() &&
+                ["idle", "loading"].includes(state.switchAssignmentsStatus) &&
+                !state.hardware.performance.has(key.id) &&
+                !state.dirty.performance.has(key.id),
+              switchName = switchRecordPending
+                ? "Reading…"
+                : switchProfile?.name ||
+                  (Number(performance?.axisV2Id)
+                    ? `Axis ${Number(performance.axisV2Id)}`
+                    : "Unassigned"),
+              switchColor = switchRecordPending
+                ? "var(--key-muted)"
+                : switchProfile?.color || "var(--mint)";
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -124,8 +187,8 @@ function boardPanel(options = {}) {
       selected.length === 0
         ? "No keys selected"
         : selected.length === 1
-        ? `${selectedKey().n} · row ${address.row}, col ${address.col}`
-        : `${selected.length} keys selected · primary: ${selectedKey().n}`,
+          ? `${selectedKey().n} · row ${address.row}, col ${address.col}`
+          : `${selected.length} keys selected · primary: ${selectedKey().n}`,
     calibration = Boolean(options.performance && state.calibrationActive),
     calibrationBusy = Boolean(options.performance && state.calibrationBusy),
     statuses = options.performance
@@ -147,7 +210,7 @@ function boardPanel(options = {}) {
     headAction = options.performance
       ? `<div class="calibration-board-action"><span id="calibrationStatusBadge" class="badge ${calibration ? "ready" : "experimental"}">${calibration ? "CALIBRATING" : "CALIBRATION READY"}</span><button class="button ${calibration ? "ghost" : "primary"} small" id="calibrationToggle" type="button" ${!connected() || calibrationBusy ? "disabled" : ""}>${calibrationBusy ? "Working…" : calibration ? "Stop & save" : "Start calibration"}</button></div>`
       : `<span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span>`,
-    calibrationGuide = options.performance
+    calibrationGuide = options.performance && calibration
       ? `<div class="calibration-board-guide"><div class="calibration-legend" aria-label="Calibration status colors"><span><i class="uncalibrated"></i>Uncalibrated</span><span><i class="calibrated"></i>Calibrated</span><span><i class="new"></i>New calibration</span></div><div class="calibration-board-stats"><span><small>Calibrated</small><b id="calibrationKnown">${calibrated}</b></span><span><small>New</small><b id="calibrationFresh">${fresh}</b></span><span><small>Max route</small><b id="calibrationMaxRoute">${maxRoute}</b></span></div></div>`
       : "";
   return `<section class="panel layout-board ${options.full ? "full-span" : ""} ${options.performance ? "performance-board" : ""} ${calibration ? "calibration-active" : ""}"><i class="key-selection-marquee" aria-hidden="true"></i><div class="panel-head"><div><h2>${title}</h2><p>${description}</p></div>${headAction}</div><div class="keyboard-wrap ${options.lighting ? "lighting-preview" : ""}">${keyboardHtml({ lighting: options.lighting })}</div>${calibrationGuide}<div class="board-footer"><span>Layer ${Number(state.profile.layer) + 1}</span><span>Selected: <b class="selected-name">${esc(selectionLabel)}</b></span></div></section>`;
@@ -157,7 +220,7 @@ function selectedCard() {
     performance = state.profile.performance[key.id],
     code = displayedKeycode(key),
     address = position(key);
-  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(keycodeLabel(code))} · ${performance.normalPress.toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
+  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(keycodeLabel(code))} · ${activeActuationDistance(performance).toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
 }
 function pageCopy() {
   return {
@@ -196,20 +259,98 @@ function overviewPage() {
     rtCount = Object.values(state.profile.performance).filter(
       (item) => item.mode === 1,
     ).length;
-  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${perf.normalPress.toFixed(2)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
+  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(2)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
 }
-function numberField(id, label, value, min, max, step, hint = "") {
-  return `<label class="field"><span>${label}</span><div class="range-pair"><input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-range-for="${id}"><input id="${id}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"></div>${hint ? `<small>${hint}</small>` : ""}</label>`;
+function numberField(id, label, value, min, max, step, hint = "", disabled = false) {
+  const inactive = disabled ? " disabled" : "";
+  return `<label class="field ${disabled ? "disabled-field" : ""}"><span>${label}</span><div class="range-pair"><input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-range-for="${id}"${inactive}><input id="${id}" type="number" min="${min}" max="${max}" step="${step}" value="${value}"${inactive}></div>${hint ? `<small>${hint}</small>` : ""}</label>`;
 }
 function performanceControls() {
-  const value = state.profile.performance[selectedKey().id];
-  return `${selectedCard()}<div class="actuation-tuning-columns"><section class="tuning-column"><div class="tuning-column-head"><span>01</span><div><h3>Actuation & Rapid Trigger</h3><p>Set the normal thresholds and the magnetic reset behavior.</p></div></div><label class="switch-row"><span><b>Rapid Trigger</b><small>Reset as soon as the key reverses direction.</small></span><input id="performanceMode" class="toggle" type="checkbox" ${value.mode === 1 ? "checked" : ""}></label><div class="tuning-fields">${numberField("normalPress", "Normal press", value.normalPress, 0.1, 4, 0.01, "Also shown as the actuation marker in Live press distance.")}${numberField("normalRelease", "Normal release", value.normalRelease, 0, 4, 0.01, "Independent release point.")}${numberField("rtFirstTouch", "RT first touch", value.rtFirstTouch, 0.1, 4, 0.01)}${numberField("rtPress", "RT press delta", value.rtPress, 0.01, 2, 0.01)}${numberField("rtRelease", "RT release delta", value.rtRelease, 0.01, 2, 0.01)}</div></section><section class="tuning-column"><div class="tuning-column-head"><span>02</span><div><h3>Dead zones</h3><p>Ignore unstable movement at the top and bottom of switch travel.</p></div></div><div class="tuning-fields">${numberField("pressDeadStroke", "Top dead zone", value.pressDeadStroke, 0, 1, 0.01, "Ignored movement near the top.")}${numberField("releaseDeadStroke", "Bottom dead zone", value.releaseDeadStroke, 0, 1, 0.01, "Ignored movement near full travel.")}</div><div class="axis-metadata-note"><span>Firmware axis metadata</span><b>Slot ${value.axis} · Range ${value.axisRangeMax || "not reported"}</b><small>Preserved automatically during every performance write.</small></div></section></div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy tuning to every key</button></div>`;
+  const key = selectedKey(),
+    value = state.profile.performance[key.id],
+    rapidTrigger = Number(value.mode) === 1,
+    independentRt = rtIndependentForKey(key.id, value),
+    syncRt = !independentRt,
+    deadZoneOn = deadZonesEnabled(value),
+    actuationHint = rapidTrigger
+      ? "The firmware's First Trigger Travel: RT starts only after this depth is crossed."
+      : "The fixed depth that actuates this key in standard mode.";
+  const standardRelease = !rapidTrigger
+    ? `<label class="switch-row experimental-performance-toggle"><span><b>Expose normal release</b><small>Experimental: edit the firmware's normally hidden fixed release distance.</small></span><input id="normalReleaseExperiment" class="toggle" type="checkbox" ${state.showNormalReleaseExperimental ? "checked" : ""}></label>${state.showNormalReleaseExperimental ? `<div class="tuning-fields experimental-performance-field">${numberField("normalRelease", "Normal release", value.normalRelease, 0, 4, 0.01, "Experimental fixed-mode release value captured in the performance packet.")}</div>` : ""}`
+    : "";
+  const rapidSettings = rapidTrigger
+    ? `<div class="rt-settings"><label class="switch-row independent-rt-toggle"><span><b>Sync RT Press & Release</b><small>Keeps both RT sensitivity values identical. Turn off to tune them separately.</small></span><input id="syncRt" class="toggle" type="checkbox" ${syncRt ? "checked" : ""}></label><div class="tuning-fields">${numberField("rtPress", "RT Press", value.rtPress, 0.01, 2, 0.01, "Downstroke movement required to reactuate.")}${numberField("rtRelease", "RT Release", syncRt ? value.rtPress : value.rtRelease, 0.01, 2, 0.01, syncRt ? "Synced to RT Press." : "Upstroke movement required to reset.", syncRt)}</div></div>`
+    : "";
+  return `${selectedCard()}<div class="actuation-tuning-columns"><section class="tuning-column"><div class="tuning-column-head"><span>01</span><div><h3>Actuation & Rapid Trigger</h3><p>Choose the initial actuation point, then optionally add dynamic press and release sensitivity.</p></div></div><label class="switch-row"><span><b>Rapid Trigger</b><small>Reset and reactuate from movement instead of fixed return points.</small></span><input id="performanceMode" class="toggle" type="checkbox" ${rapidTrigger ? "checked" : ""}></label><div class="tuning-fields actuation-distance-field">${numberField("actuationDistance", "Actuation distance", activeActuationDistance(value), 0.1, 4, 0.01, actuationHint)}</div>${standardRelease}${rapidSettings}</section><section class="tuning-column"><div class="tuning-column-head"><span>02</span><div><h3>Dead zones</h3><p>Ignore unstable movement at the top and bottom of switch travel.</p></div></div><label class="switch-row dead-zone-toggle-row"><span><b>Dead zones</b><small>Off writes 0.00 mm to both top and bottom dead-zone fields.</small></span><input id="deadZoneToggle" class="toggle" type="checkbox" ${deadZoneOn ? "checked" : ""}></label><div class="tuning-fields">${numberField("pressDeadStroke", "Top dead zone", deadZoneOn ? value.pressDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near the top." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}${numberField("releaseDeadStroke", "Bottom dead zone", deadZoneOn ? value.releaseDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near full travel." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}</div></section></div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy tuning to every key</button></div>`;
 }
-function travelGaugeTicks() {
-  return Array.from({ length: 41 }, (_, index) => {
-    const distance = index / 10,
-      major = index % 5 === 0;
-    return `<i class="${major ? "major" : ""}" data-travel-tick="${distance.toFixed(1)}" style="--tick:${index}" title="${distance.toFixed(1)} mm">${major ? `<span>${distance.toFixed(index === 0 || index === 40 ? 2 : 1)}</span>` : ""}</i>`;
+function switchSelectorControls() {
+  const selected = selectedKey(),
+    performance = state.profile.performance[selected.id],
+    current = switchCatalogEntry(performance.axisV2Id),
+    currentPending =
+      connected() &&
+      ["idle", "loading"].includes(state.switchAssignmentsStatus) &&
+      !state.hardware.performance.has(selected.id) &&
+      !state.dirty.performance.has(selected.id),
+    query = state.switchSearch.trim().toLowerCase(),
+    brands = [...new Set(state.switchCatalog.map((entry) => entry.brand))].sort(
+      (a, b) => a.localeCompare(b),
+    ),
+    visible = state.switchCatalog.filter((entry) => {
+      const inBrand = state.switchBrand === "all" || entry.brand === state.switchBrand,
+        haystack = [entry.name, entry.originalName, entry.brand, ...entry.aliases]
+          .join(" ")
+          .toLowerCase();
+      return inBrand && (!query || haystack.includes(query));
+    });
+  if (state.switchCatalogStatus === "loading")
+    return `${selectedCard()}<div class="switch-catalog-state"><span class="spinner"></span><b>Loading magnetic switch profiles…</b></div>`;
+  if (state.switchCatalogStatus === "error")
+    return `${selectedCard()}<div class="switch-catalog-state error"><b>Switch catalog unavailable</b><small>${esc(state.switchCatalogError || "The local catalog could not be loaded.")}</small></div>`;
+  const cards = visible
+    .map((entry) => {
+      const active = Number(performance.axisV2Id) === Number(entry.axisV2Id),
+        image = entry.image
+          ? `<img src="${esc(entry.image)}" alt="${esc(entry.name)}">`
+          : `<i class="switch-placeholder" style="--switch-color:${esc(entry.color || "#73f0c0")}"><span></span></i>`,
+        original = entry.name !== entry.originalName
+          ? `<small title="Captured name">${esc(entry.originalName)}</small>`
+          : "";
+      return `<button class="switch-catalog-card ${active ? "active" : ""}" style="--switch-color:${esc(entry.color || "var(--mint)")}" type="button" data-axis-v2-id="${entry.axisV2Id}" aria-pressed="${active}"><span class="switch-card-media">${image}</span><span class="switch-card-copy"><b>${esc(entry.name)}</b>${original}<em>${esc(entry.brand)} · ${(entry.axisRangeMax / 1000).toFixed(3)} mm</em></span><span class="switch-card-status">${active ? "SELECTED" : `ID ${entry.axisV2Id}`}</span></button>`;
+    })
+    .join("");
+  const readStatus = connected() && state.switchAssignmentsStatus !== "ready"
+    ? `<div class="switch-assignment-read ${state.switchAssignmentsStatus}"><span class="spinner"></span><div><b>${state.switchAssignmentsStatus === "error" ? "Some assignments could not be read" : "Reading all 64 switch assignments"}</b><small>${state.switchAssignmentsStatus === "error" ? esc(state.switchAssignmentsError) : "The keyboard map will update once; selecting individual keys is not required."}</small></div></div>`
+    : "";
+  return `${selectedCard()}${readStatus}<div class="switch-selector-summary"><div><span>CURRENT SWITCH PROFILE</span><b>${currentPending ? "Reading…" : current ? esc(current.name) : `Unknown axis ${Number(performance.axisV2Id) || 0}`}</b><small>${currentPending ? "Loading the selected key's switch record from the keyboard." : current ? `${esc(current.brand)} · ${(current.axisRangeMax / 1000).toFixed(3)} mm travel · coefficient ${current.axisCoefficient}` : "The keyboard-reported axis ID is not present in this captured catalog."}</small></div><span class="badge ${current ? "ready" : "experimental"}">${selectedKeyIds().length} KEY${selectedKeyIds().length === 1 ? "" : "S"}</span></div><div class="switch-catalog-toolbar"><input class="search-input" id="switchSearch" type="search" placeholder="Search switch, brand, or alias" value="${esc(state.switchSearch)}"><div class="switch-brand-tabs" role="tablist" aria-label="Magnetic switch brand"><button type="button" data-switch-brand="all" class="${state.switchBrand === "all" ? "active" : ""}">All <span>${state.switchCatalog.length}</span></button>${brands.map((brand) => `<button type="button" data-switch-brand="${esc(brand)}" class="${state.switchBrand === brand ? "active" : ""}">${esc(brand)} <span>${state.switchCatalog.filter((entry) => entry.brand === brand).length}</span></button>`).join("")}</div></div><div class="switch-catalog-grid">${cards || '<div class="switch-catalog-empty"><b>No switch profiles match this filter.</b><small>Try another brand or search term.</small></div>'}</div><div class="switch-selector-note"><b>Firmware behavior</b><span>Selecting a profile stages its detailed axis ID, range, and coefficient for every selected key—the same three fields used by the original driver. Recalibrate after installing a different switch.</span></div>`;
+}
+function performanceWorkspaceTabs() {
+  const tabs = [
+    ["tuning", "Actuation tuning"],
+    ["switches", "Magnetic Switch Selector"],
+  ];
+  return `<div class="performance-workspace-tabs" role="tablist" aria-label="Performance settings mode">${tabs.map(([value, label]) => `<button type="button" role="tab" data-performance-workspace="${value}" aria-selected="${state.performanceWorkspace === value}" class="${state.performanceWorkspace === value ? "active" : ""}">${label}</button>`).join("")}</div>`;
+}
+function keySwitchTravel(key) {
+  const performance = state.profile.performance[key.id],
+    catalog = switchCatalogEntry(performance?.axisV2Id),
+    rawRange = Number(catalog?.axisRangeMax || performance?.axisRangeMax || 4000);
+  return rawRange > 0 ? rawRange / 1000 : 4;
+}
+function travelRangeLabel(distance) {
+  return Number(distance).toFixed(3).replace(/0$/, "");
+}
+function travelGaugeTicks(maxTravel = 4) {
+  const range = Math.max(0.1, Number(maxTravel) || 4),
+    lastTenth = Math.floor((range + 0.0000001) * 10),
+    distances = Array.from({ length: lastTenth + 1 }, (_, index) => index / 10);
+  if (range - distances.at(-1) > 0.0005) distances.push(range);
+  return distances.map((distance, index) => {
+    const endpoint = Math.abs(distance - range) <= 0.0005,
+      major = index === 0 || index % 5 === 0 || endpoint,
+      label = endpoint ? travelRangeLabel(range) : distance.toFixed(1),
+      position = Math.min(100, Math.max(0, distance / range * 100));
+    return `<i class="${major ? "major" : ""} ${endpoint ? "endpoint" : ""}" data-travel-tick="${distance.toFixed(3)}" style="--tick-position:${position.toFixed(4)}%" title="${label} mm">${major ? `<span>${label}</span>` : ""}</i>`;
   }).join("");
 }
 function liveTravelTarget() {
@@ -221,20 +362,21 @@ function liveTravelTarget() {
       return value > furthestValue ? candidate : furthest;
     }, candidates[0] || keys[0]),
     raw = Number(state.hardware.travelValues.get(key.id) || 0),
-    mm = Math.min(4, Math.max(0, raw / 1000)),
-    actuation = Math.min(4, Math.max(0, Number(state.profile.performance[key.id]?.normalPress) || 0));
-  return { key, raw, mm, actuation, selectedCount: selectedIds.length };
+    travelMax = keySwitchTravel(key),
+    mm = Math.min(travelMax, Math.max(0, raw / 1000)),
+    actuation = Math.min(travelMax, Math.max(0, activeActuationDistance(state.profile.performance[key.id])));
+  return { key, raw, mm, actuation, travelMax, selectedCount: selectedIds.length };
 }
 function livePressDistancePanel() {
   const focus = liveTravelTarget(),
-    { key, raw, mm, actuation, selectedCount } = focus,
-    percent = (mm / 4) * 100,
-    actuationPercent = (actuation / 4) * 100,
+    { key, raw, mm, actuation, travelMax, selectedCount } = focus,
+    percent = (mm / travelMax) * 100,
+    actuationPercent = (actuation / travelMax) * 100,
     active = keys
       .map((key) => ({
         key,
         mm: Math.min(
-          4,
+          keySwitchTravel(key),
           Math.max(0, Number(state.hardware.travelValues.get(key.id) || 0) / 1000),
         ),
       }))
@@ -243,10 +385,10 @@ function livePressDistancePanel() {
   return `<section class="panel live-press-panel compact" id="livePressPanel" style="--press-distance:${percent.toFixed(2)}%;--actuation-distance:${actuationPercent.toFixed(2)}%">
     <div class="panel-head"><div><h2>Live press distance</h2><p>The gauge follows the furthest pressed key ${selectedCount ? "inside the current selection" : "across the whole keyboard"}.</p></div><span id="livePressStatus" class="badge ${connected() ? "ready" : "experimental"}">${connected() ? "LIVE" : "CONNECT"}</span></div>
     <div class="live-press-layout">
-      <div class="axis-visual" aria-label="Focused switch travel and actuation point from zero to four millimeters">
+      <div class="axis-visual" aria-label="Focused switch travel and actuation point from zero to ${travelRangeLabel(travelMax)} millimeters">
         <img src="assets/images/axis.png" alt="Magnetic switch axis outline">
         <div class="axis-gauge-pole"><i class="axis-gauge-fill"></i></div>
-        <div class="axis-gauge-scale">${travelGaugeTicks()}<span class="axis-actuation-marker"><b id="liveActuationMarkerLabel">AP ${actuation.toFixed(2)}</b></span></div>
+        <div class="axis-gauge-scale" data-travel-max="${travelMax.toFixed(3)}">${travelGaugeTicks(travelMax)}<span class="axis-actuation-marker"><b id="liveActuationMarkerLabel">AP ${actuation.toFixed(2)}</b></span></div>
       </div>
       <div class="live-press-readout">
         <span>TRACKING · <b id="livePressKey">${esc(key.n)}</b></span>
@@ -258,7 +400,8 @@ function livePressDistancePanel() {
   </section>`;
 }
 function performancePage() {
-  return `<div class="performance-page"><div class="performance-primary ${state.livePressDistance ? "with-live-monitor" : ""}">${boardPanel({ performance: true })}${state.livePressDistance ? livePressDistancePanel() : ""}</div><section class="panel performance-tuning"><div class="panel-head"><div><span class="eyebrow">PER-KEY HALL SETTINGS</span><h2>Actuation tuning</h2><p>Actuation, Rapid Trigger, and both dead zones are edited together for the selected keys.</p></div><label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Show the compact gauge beside the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() && !state.calibrationActive && !state.calibrationBusy ? "" : "disabled"}></label></div>${performanceControls()}</section></div>`;
+  const switchMode = state.performanceWorkspace === "switches";
+  return `<div class="performance-page"><div class="performance-primary ${state.livePressDistance ? "with-live-monitor" : ""}">${boardPanel({ performance: true })}${state.livePressDistance ? livePressDistancePanel() : ""}</div><section class="panel performance-tuning"><div class="panel-head"><div><span class="eyebrow">PER-KEY HALL SETTINGS</span><h2>${switchMode ? "Magnetic Switch Selector" : "Actuation tuning"}</h2><p>${switchMode ? "Assign captured AE64 Pro magnetic-switch calibration metadata to the selected keys." : "Actuation, Rapid Trigger, and both dead zones are edited together for the selected keys."}</p></div><label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Show the compact gauge beside the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() && !state.calibrationActive && !state.calibrationBusy ? "" : "disabled"}></label></div>${performanceWorkspaceTabs()}${switchMode ? switchSelectorControls() : performanceControls()}</section></div>`;
 }
 function keymapPage() {
   const primaryKey = selectedKey().id;
@@ -307,9 +450,23 @@ function lightingPowerPanel(base, title, description, includeLedBanks = false) {
   const upper = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER),
     lower = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER),
     ledBanks = includeLedBanks
-      ? `<div class="area-power-banks"><div class="area-power-banks-head"><div><h3>North / south LED banks</h3><p>The main power byte independently controls both physical LED orientations.</p></div><span class="badge ${state.hardware.doubleLighting ? "ready" : ""}">${state.hardware.doubleLighting ? "REPORTED" : "CAPTURED"}</span></div><div class="dual-lighting-switches"><label class="switch-row"><span><b>${t("lightingUpper")}</b><small>Original driver: Upper Lighting Switch · bit 2</small></span><input id="upperLighting" class="toggle" type="checkbox" ${upper ? "checked" : ""}></label><label class="switch-row"><span><b>${t("lightingLower")}</b><small>Original driver: Lower Lighting Switch · bit 1</small></span><input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : ""}></label></div></div>`
+      ? `<label class="lighting-power">
+    <span>
+        <b>${t("lightingUpper")}</b>
+        <small>bit 2</small>
+    </span>
+    <input id="upperLighting" class="toggle" type="checkbox" ${upper ? "checked" : "" }>
+</label>
+
+<label class="lighting-power">
+    <span>
+        <b>${t("lightingLower")}</b>
+        <small>bit 1</small>
+    </span>
+    <input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : "" }>
+</label>`
       : "";
-  return `<section class="panel full-span area-power-panel"><div class="area-power-summary"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div><label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label></div>${ledBanks}</section>`;
+  return `<section class="panel full-span area-power-panel"><div class="area-power-summary"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div><label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label>${ledBanks}</div></section>`;
 }
 function lightingModePanel(base, count, target, area, reportedCount = count) {
   const modes = LIGHTING_MODE_OPTIONS.slice(0, count),
@@ -466,7 +623,7 @@ function settingsPage() {
     ? ""
     : `<button class="button primary" id="reconnectKeyboard" type="button">Reconnect keyboard</button>`;
   const themes = THEME_OPTIONS.map((theme) => `<button class="theme-choice ${state.theme === theme.value ? "active" : ""}" type="button" data-theme-choice="${theme.value}" aria-pressed="${state.theme === theme.value}" style="--theme-color:${theme.color}"><i><span></span></i><b>${theme.label}</b><small>${theme.hint}</small></button>`).join("");
-  return `<div class="settings-page"><section class="panel settings-hero"><div class="settings-hero-copy"><span class="eyebrow">DEVICE CONTROL CENTER</span><h2>AE64 Pro settings</h2><p>Hardware behavior, onboard profiles, local backups, and the driver's appearance in one quieter workspace.</p></div><div class="settings-connection ${connected() ? "online" : ""}"><i></i><div><small>${connected() ? "KEYBOARD CONNECTED" : "KEYBOARD OFFLINE"}</small><b>${connectedLabel}</b></div>${reconnect}</div><div class="settings-hero-facts"><span><small>Active profile</small><b>0${activeProfile}</b></span><span><small>System</small><b>${Number(settings.systemMode) === 1 ? "macOS" : "Windows"}</b></span><span><small>Polling</small><b>${POLLING_RATE_OPTIONS.find((option) => option.value === Number(settings.reportRate))?.hz.toLocaleString() || "?"} Hz</b></span></div></section><div class="settings-grid"><section class="panel settings-card settings-usb"><div class="settings-card-icon">↯</div><div class="panel-head"><div><h2>System & USB</h2><p>Firmware-owned operating mode and scan behavior.</p></div><span class="badge ready">ONBOARD</span></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Windows = 0 · macOS = 1 in the original protocol.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>Changing this restarts the USB interface and reconnects automatically.</small></label><label class="field"><span>RGB sleep timer</span><div class="input-with-unit"><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"><span>minutes</span></div><small>Use 0 only if you want the firmware to keep lighting awake.</small></label></div><label class="switch-row setting-switch"><span><b>Shake optimization</b><small>Firmware key-stability filtering for small magnetic fluctuations.</small></span><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></label></section><section class="panel settings-card settings-profile"><div class="settings-card-icon">P${activeProfile}</div><div class="panel-head"><div><h2>Onboard profile</h2><p>Rename the currently loaded configuration.</p></div><span class="badge">${state.hardware.configIndexes.length} SLOTS</span></div><label class="field"><span>Profile ${activeProfile} name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${activeProfile}`)}"><small>The quick switch remains at the top of the navigation bar.</small></label><div class="profile-slot-row">${state.hardware.configIndexes.map((index) => `<span class="${index === state.profile.profileIndex ? "active" : ""}">${index + 1}</span>`).join("")}</div><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save profile name</button></div></section><section class="panel settings-card settings-appearance"><div class="settings-card-icon">◐</div><div class="panel-head"><div><h2>Appearance</h2><p>Inspired by the token-based light and dark surfaces found in the ATK Hub capture. Stored only in this browser.</p></div><span class="badge ready">INSTANT</span></div><div class="theme-grid" role="group" aria-label="Driver appearance">${themes}</div></section><section class="panel settings-card settings-files"><div class="settings-card-icon">⇅</div><div class="panel-head"><div><h2>Backup & portability</h2><p>Keep a local JSON copy independent of the manufacturer cloud.</p></div></div><div class="file-actions"><button class="button ghost" id="importProfile" type="button"><span>Import</span><small>Open a saved JSON profile</small></button><button class="button primary" id="exportProfile" type="button"><span>Export</span><small>Download the current workspace</small></button></div></section><section class="panel settings-card settings-recovery"><div class="settings-card-icon danger">!</div><div class="panel-head"><div><h2>Recovery</h2><p>Potentially destructive device operations remain deliberately guarded.</p></div><span class="badge experimental">LOCKED</span></div><div class="recovery-row"><div><b>Factory restore</b><small>Visible for completeness, disabled until a physical-device restore packet is captured and verified.</small></div><button class="button danger" type="button" disabled>Restore factory settings</button></div></section></div></div>`;
+  return `<div class="settings-page"><section class="panel settings-hero"><div class="settings-hero-copy"><span class="eyebrow">DEVICE CONTROL CENTER</span><h2>AE64 Pro settings</h2><p>Hardware behavior, onboard profiles, local backups, and the driver's appearance in one quieter workspace.</p></div><div class="settings-connection ${connected() ? "online" : ""}"><i></i><div><small>${connected() ? "KEYBOARD CONNECTED" : "KEYBOARD OFFLINE"}</small><b>${connectedLabel}</b></div>${reconnect}</div><div class="settings-hero-facts"><span><small>Active profile</small><b>0${activeProfile}</b></span><span><small>System</small><b>${Number(settings.systemMode) === 1 ? "macOS" : "Windows"}</b></span><span><small>Polling</small><b>${POLLING_RATE_OPTIONS.find((option) => option.value === Number(settings.reportRate))?.hz.toLocaleString() || "?"} Hz</b></span></div></section><div class="settings-grid"><section class="panel settings-card settings-usb"><div class="settings-card-icon">↯</div><div class="panel-head"><div><h2>System & USB</h2><p>Firmware-owned operating mode and scan behavior.</p></div><span class="badge ready">ONBOARD</span></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Windows = 0 · macOS = 1 in the original protocol.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>Changing this restarts the USB interface and reconnects automatically.</small></label><label class="field"><span>RGB sleep timer</span><div class="input-with-unit"><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"><span>minutes</span></div><small>Use 0 only if you want the firmware to keep lighting awake.</small></label></div><label class="switch-row setting-switch"><span><b>Shake optimization</b><small>Firmware key-stability filtering for small magnetic fluctuations.</small></span><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></label></section><section class="panel settings-card settings-profile"><div class="settings-card-icon">P${activeProfile}</div><div class="panel-head"><div><h2>Onboard profile</h2><p>Rename or switch the loaded configuration.</p></div><span class="badge">${state.hardware.configIndexes.length} SLOTS</span></div><label class="field"><span>Profile ${activeProfile} name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${activeProfile}`)}"><small>The quick switch remains at the top of the navigation bar.</small></label><div class="profile-slot-row" role="group" aria-label="Onboard profile">${state.hardware.configIndexes.map((index) => `<button type="button" data-profile-slot="${index}" class="${index === state.profile.profileIndex ? "active" : ""}" aria-pressed="${index === state.profile.profileIndex}" title="Switch to profile ${index + 1}">${index + 1}</button>`).join("")}</div><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save profile name</button></div></section><section class="panel settings-card settings-appearance"><div class="settings-card-icon">◐</div><div class="panel-head"><div><h2>Appearance</h2><p>Inspired by the token-based light and dark surfaces found in the ATK Hub capture. Stored only in this browser.</p></div><span class="badge ready">INSTANT</span></div><div class="theme-grid" role="group" aria-label="Driver appearance">${themes}</div></section><section class="panel settings-card settings-files"><div class="settings-card-icon">⇅</div><div class="panel-head"><div><h2>Backup & portability</h2><p>Keep a local JSON copy independent of the manufacturer cloud.</p></div></div><div class="file-actions"><button class="button ghost" id="importProfile" type="button"><span>Import</span><small>Open a saved JSON profile</small></button><button class="button primary" id="exportProfile" type="button"><span>Export</span><small>Download the current workspace</small></button></div></section><section class="panel settings-card settings-recovery"><div class="settings-card-icon danger">!</div><div class="panel-head"><div><h2>Recovery</h2><p>Potentially destructive device operations remain deliberately guarded.</p></div><span class="badge experimental">LOCKED</span></div><div class="recovery-row"><div><b>Factory restore</b><small>Visible for completeness, disabled until a physical-device restore packet is captured and verified.</small></div><button class="button danger" type="button" disabled>Restore factory settings</button></div></section></div></div>`;
 }
 const ADVANCED_FEATURES = [
   [

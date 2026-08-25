@@ -1,5 +1,5 @@
 param(
-    [string]$HarPath = "../xsyd.top HAR files/xsyd.top.har"
+    [string]$HarPath = "../../xsyd.top.har"
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,7 +24,7 @@ $switches = @(
                 group_name_zh = $group.type_name
                 brand = $switch.brand
                 switch_name = $switch.axis_name
-                axis_range_max = $switch.axis_range_max
+                axis_range_max = $switch.aixsDetail[0].axis_range_max
                 magnetic_flux = $switch.magnetic_flux
                 axis_color = $switch.axis_color
                 image_url = $switch.image_url
@@ -37,6 +37,38 @@ $switches = @(
 
 if ($switches.Count -ne 82) {
     throw "Expected 82 switches but extracted $($switches.Count)"
+}
+
+# Keep the editable catalog complete without overwriting names, aliases, or
+# images that an author has already supplied. The underscore-prefixed fields
+# are reference-only context from the latest capture and are ignored by the UI.
+$overridesPath = Join-Path $outputDirectory "catalog-overrides.json"
+$existingOverrides = @{}
+if (Test-Path -LiteralPath $overridesPath) {
+    $parsedOverrides = Get-Content -Raw -LiteralPath $overridesPath | ConvertFrom-Json
+    if ($parsedOverrides) {
+        foreach ($property in $parsedOverrides.PSObject.Properties) {
+            $existingOverrides[$property.Name] = $property.Value
+        }
+    }
+}
+$catalogOverrides = [ordered]@{}
+foreach ($switch in $switches) {
+    $id = [string]$switch.detail_axis_id
+    $existing = $existingOverrides[$id]
+    $override = [ordered]@{
+        name = if ($null -ne $existing -and $null -ne $existing.name) { [string]$existing.name } else { "" }
+        aliases = @(if ($null -ne $existing -and $null -ne $existing.aliases) { $existing.aliases })
+        image = if ($null -ne $existing -and $null -ne $existing.image) { [string]$existing.image } else { "" }
+        _captured_name = [string]$switch.switch_name
+        _captured_brand = [string]$switch.brand
+    }
+    foreach ($optionalField in @("brand", "color")) {
+        if ($null -ne $existing -and $null -ne $existing.$optionalField) {
+            $override[$optionalField] = [string]$existing.$optionalField
+        }
+    }
+    $catalogOverrides[$id] = $override
 }
 
 $metadata = [ordered]@{
@@ -63,6 +95,7 @@ $response | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 -LiteralPath (
 $switches | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 -LiteralPath (Join-Path $outputDirectory "supported-switches.json")
 $switches | Export-Csv -NoTypeInformation -Encoding utf8 -LiteralPath (Join-Path $outputDirectory "supported-switches.csv")
 $metadata | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 -LiteralPath (Join-Path $outputDirectory "source-metadata.json")
+$catalogOverrides | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 -LiteralPath $overridesPath
 
 $lines = [System.Collections.Generic.List[string]]::new()
 $lines.Add("# Supported Hall-effect switches")
