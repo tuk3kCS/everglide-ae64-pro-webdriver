@@ -203,11 +203,9 @@ async function main() {
       gamepadCount: KEYCODE_GROUPS.gamepad.length,
       gamepadDpadRight: KEYCODE_LABELS.get(0x5208),
     },
-    combination: {
-      encoded: combinationKeycode(new Set([0x01, 0x02]), 4),
-      label: keycodeLabel(0x0304),
-      triggerCount: COMBINATION_TRIGGER_KEYS.length,
-    },
+    selectableGroups: KEYMAP_SELECTABLE_GROUPS,
+    keyboardCodes: KEYCODE_GROUPS.keyboard.map(({ code }) => code),
+    keyboardCodes: KEYCODE_GROUPS.keyboard.map(({ code }) => code),
     vendorCatalog: Object.fromEntries(
       ["system", "media", "mouse", "firmware", "lighting"].map((group) => [
         group,
@@ -261,12 +259,12 @@ async function main() {
     connectionCount: 7,
     gamepadCount: 58,
     gamepadDpadRight: "Gamepad D-pad Right",
-  }, "The complete original-driver mapping catalog must remain selectable.");
-  equal(settingsEnums.combination, {
-    encoded: 0x0304,
-    label: "Ctrl + Shift + A",
-    triggerCount: 119,
-  }, "Combination mappings must encode HID modifiers and the trigger key in one 16-bit keycode.");
+  }, "Known unsupported keycodes must retain labels when read from hardware.");
+  equal(settingsEnums.selectableGroups, ["keyboard", "media", "mouse", "firmware", "lighting"], "Only verified keymap groups may be selected for writing.");
+  for (const unsupportedKeyboardCode of [102, 103, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 133, 134, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164])
+    if (settingsEnums.keyboardCodes.includes(unsupportedKeyboardCode)) throw new Error(`Non-standard keyboard mapping remains selectable: ${unsupportedKeyboardCode}.`);
+  for (const unsupportedKeyboardCode of [102, 103, 120, 121, 122, 123, 124, 125, 126, 133, 134, 160, 161])
+    if (settingsEnums.keyboardCodes.includes(unsupportedKeyboardCode)) throw new Error(`Non-Windows, non-standard keyboard mapping remains selectable: ${unsupportedKeyboardCode}.`);
   equal(settingsEnums.vendorCatalog, {
     system: [0x1152, 0x1329, 0x1807, 0x1808, 0x1815],
     media: [0x206f, 0x2070, 0x20b5, 0x20b6, 0x20b7, 0x20cd, 0x20e2, 0x20e9, 0x20ea, 0x2183, 0x218a, 0x2192, 0x2194, 0x2223],
@@ -287,20 +285,27 @@ async function main() {
   const themeState = vm.runInContext(`(setTheme("light"), [state.theme, document.documentElement.dataset.theme, document.documentElement.style.colorScheme])`, browser);
   equal(themeState, ["light", "light", "light"], "Appearance switching must update state and the document immediately.");
   vm.runInContext('applyTheme("mint")', browser);
-  const combinationMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
-  for (const required of ["Associated keys", "Trigger key", "Apply combination"])
-    if (!combinationMarkup.includes(required)) throw new Error(`Combination editor omitted ${required}.`);
+  const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
+  for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
+    if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
+  for (const requiredKeycode of [0, 1])
+    if (!keymapMarkup.includes(`data-keycode="${requiredKeycode}"`)) throw new Error(`Required special mapping is unavailable: ${requiredKeycode}.`);
+  for (const removedControl of ["Associated keys", "Trigger key", "Apply combination"])
+    if (keymapMarkup.includes(removedControl)) throw new Error(`Unsupported combination editor remains visible: ${removedControl}.`);
   for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
-    if (!combinationMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
-  if ((combinationMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
+    if (!keymapMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
+  if ((keymapMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
   const multipleSelection = vm.runInContext(`(() => {
+    state.profile.selected = 2;
     state.selectedKeys = new Set([1, 2]);
     stagePerformance("normalPress", 1.25);
-    const result = [keymapPage().includes("Assign 2 keys"), state.profile.performance[1].normalPress, state.profile.performance[2].normalPress];
+    const performanceMulti = performancePage().includes("2 keys selected");
+    const keymapSingle = !keymapPage().includes("Assign 2 keys");
+    const result = [performanceMulti, keymapSingle, [...state.selectedKeys], state.profile.performance[1].normalPress, state.profile.performance[2].normalPress];
     clearDirty();
     return result;
   })()`, browser);
-  equal(multipleSelection, [true, 1.25, 1.25], "Multiple selected keys must share staged configuration edits.");
+  equal(multipleSelection, [true, true, [2], 1.25, 1.25], "Only Performance may retain multi-key selection for shared staged edits.");
   for (const label of ["Windows", "macOS", "250 Hz", "500 Hz", "1,000 Hz", "2,000 Hz", "4,000 Hz", "8,000 Hz"]) if (!settingsMarkup.includes(label)) throw new Error(`Device settings omitted mapped label ${label}.`);
   const limitedSystemMarkup = vm.runInContext(`(state.hardware.systemModes = [0], settingsPage())`, browser);
   if (!limitedSystemMarkup.includes("macOS")) throw new Error("macOS must remain selectable even when the device capability reply lists only Windows.");

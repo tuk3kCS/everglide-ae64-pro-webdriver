@@ -12,6 +12,15 @@ const COMBINATION_MODIFIERS = Object.freeze([
 const COMBINATION_TRIGGER_KEYS = Object.freeze(
   KEYCODE_GROUPS.keyboard.filter(({ code }) => code >= 4 && code < 224),
 );
+// These are the groups with verified write behavior on the AE64 Pro. Other
+// catalog entries remain available for decoding assignments read from hardware.
+const KEYMAP_SELECTABLE_GROUPS = Object.freeze([
+  "keyboard",
+  "media",
+  "mouse",
+  "firmware",
+  "lighting",
+]);
 state.mappingCombination = { modifiers: new Set([0x01]), trigger: 4 };
 state.selectedKeys = new Set([Number(state.profile.selected)]);
 state.keySelectionDrag = null;

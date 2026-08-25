@@ -185,6 +185,20 @@ function bindKeySelection() {
     .querySelectorAll(".layout-board")
     .forEach((node) => node.addEventListener("pointerdown", beginKeySelection));
 }
+function selectMappingKey(event) {
+  const key = event.target.closest("[data-key]"), id = Number(key?.dataset.key);
+  if (!Number.isInteger(id)) return;
+  state.selectedKeys = new Set([id]);
+  state.profile.selected = id;
+  render();
+  if (connected())
+    readSelectedKey()
+      .then(() => render())
+      .catch((error) => showToast(error.message, true));
+}
+function bindMappingKeySelection() {
+  document.querySelector(".layout-board")?.addEventListener("click", selectMappingKey);
+}
 function marqueeSelection(initial, inside, ctrl) {
   if (!ctrl) return new Set(inside);
   const selection = new Set(initial);
@@ -306,7 +320,8 @@ function bindLightingSelection() {
 }
 
 function bindPage() {
-  if (state.page !== "lighting") bindKeySelection();
+  if (state.page === "performance") bindKeySelection();
+  if (state.page === "keymap") bindMappingKeySelection();
   document.querySelectorAll("[data-goto]").forEach((button) =>
     button.addEventListener("click", () => {
       state.page = button.dataset.goto;
@@ -368,12 +383,12 @@ function bindPage() {
       button.addEventListener("click", () => {
         state.mappingGroup = button.dataset.mappingGroup;
         state.mappingSearch = "";
-        if (state.mappingGroup === "combination") syncCombinationEditor();
         render();
       }),
     );
     document.querySelectorAll("[data-keycode]").forEach((button) =>
       button.addEventListener("click", () => {
+        const mappingListScrollTop = document.querySelector(".mapping-list")?.scrollTop || 0;
         selectedKeyIds().forEach((id) => {
           state.profile.keycodes[state.profile.layer][id] = Number(
             button.dataset.keycode,
@@ -381,43 +396,10 @@ function bindPage() {
           state.dirty.mapping.add(`${state.profile.layer}:${id}`);
         });
         render();
+        const mappingList = document.querySelector(".mapping-list");
+        if (mappingList) mappingList.scrollTop = mappingListScrollTop;
       }),
     );
-    document.querySelectorAll("[data-combo-modifier]").forEach((button) =>
-      button.addEventListener("click", () => {
-        const modifier = Number(button.dataset.comboModifier);
-        if (state.mappingCombination.modifiers.has(modifier))
-          state.mappingCombination.modifiers.delete(modifier);
-        else state.mappingCombination.modifiers.add(modifier);
-        render();
-      }),
-    );
-    document.querySelectorAll("[data-combo-trigger]").forEach((button) =>
-      button.addEventListener("click", () => {
-        state.mappingCombination.trigger = Number(button.dataset.comboTrigger);
-        render();
-      }),
-    );
-    document
-      .querySelector("#applyCombination")
-      ?.addEventListener("click", () => {
-        try {
-          const code = combinationKeycode(
-              state.mappingCombination.modifiers,
-              state.mappingCombination.trigger,
-            );
-          selectedKeyIds().forEach((id) => {
-            state.profile.keycodes[state.profile.layer][id] = code;
-            state.dirty.mapping.add(`${state.profile.layer}:${id}`);
-          });
-          render();
-          showToast(
-            `Staged ${keycodeLabel(code)} for ${selectedKeyIds().length} key${selectedKeyIds().length === 1 ? "" : "s"}.`,
-          );
-        } catch (error) {
-          showToast(error.message, true);
-        }
-      });
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {
       selectedKeyIds().forEach((id) => {
         state.profile.keycodes[state.profile.layer][id] = defaultKeycode(keys[id]);

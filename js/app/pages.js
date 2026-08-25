@@ -111,7 +111,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               ) ||
               state.dirty.customLighting.has(key.id);
             return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}<b>${esc(key.n)}</b>${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -143,7 +143,7 @@ function boardPanel(options = {}) {
       ? calibration
         ? "Each key is colored by firmware status. The centered number is its raw Hall ADC reading; the fill follows measured travel."
         : "Select keys to tune them, or start a device-wide Hall calibration from this keyboard panel."
-      : options.description || "Drag anywhere in this card to draw a selection box. Hold Ctrl and click to add or remove keys.",
+      : options.description || "Select one key to inspect or change its mapping.",
     headAction = options.performance
       ? `<div class="calibration-board-action"><span id="calibrationStatusBadge" class="badge ${calibration ? "ready" : "experimental"}">${calibration ? "CALIBRATING" : "CALIBRATION READY"}</span><button class="button ${calibration ? "ghost" : "primary"} small" id="calibrationToggle" type="button" ${!connected() || calibrationBusy ? "disabled" : ""}>${calibrationBusy ? "Working…" : calibration ? "Stop & save" : "Start calibration"}</button></div>`
       : `<span class="badge ${connected() ? "ready" : ""}">${connected() ? "HARDWARE" : "OFFLINE"}</span>`,
@@ -260,28 +260,22 @@ function livePressDistancePanel() {
 function performancePage() {
   return `<div class="performance-page"><div class="performance-primary ${state.livePressDistance ? "with-live-monitor" : ""}">${boardPanel({ performance: true })}${state.livePressDistance ? livePressDistancePanel() : ""}</div><section class="panel performance-tuning"><div class="panel-head"><div><span class="eyebrow">PER-KEY HALL SETTINGS</span><h2>Actuation tuning</h2><p>Actuation, Rapid Trigger, and both dead zones are edited together for the selected keys.</p></div><label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Show the compact gauge beside the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() && !state.calibrationActive && !state.calibrationBusy ? "" : "disabled"}></label></div>${performanceControls()}</section></div>`;
 }
-function combinationEditor() {
-  const combination = state.mappingCombination,
-    modifiers = combination.modifiers,
-    trigger = combination.trigger,
-    preview = modifiers.size
-      ? keycodeLabel(combinationKeycode(modifiers, trigger))
-      : "Choose modifier keys and a trigger key";
-  return `<section class="combination-editor" aria-label="Key combination editor"><div class="combination-heading"><div><span>Associated keys</span><strong>${esc(preview)}</strong></div><small>Uses the keyboard's standard modifier-bitmask mapping.</small></div><div class="combination-modifiers">${COMBINATION_MODIFIERS.map(({ label, value }) => `<button type="button" data-combo-modifier="${value}" aria-pressed="${modifiers.has(value)}" class="${modifiers.has(value) ? "active" : ""}">${label}</button>`).join("")}</div><div class="combination-trigger"><div><span>Trigger key</span><small>Select the key pressed with the associated modifiers.</small></div><div class="combination-key-grid">${COMBINATION_TRIGGER_KEYS.map(({ label, code }) => `<button type="button" data-combo-trigger="${code}" aria-pressed="${trigger === code}" class="${trigger === code ? "active" : ""}">${esc(label)}</button>`).join("")}</div></div><div class="apply-row"><button class="button primary" id="applyCombination" type="button" ${modifiers.size ? "" : "disabled"}>Apply combination</button></div></section>`;
-}
 function keymapPage() {
+  const primaryKey = selectedKey().id;
+  if (state.selectedKeys.size !== 1 || !state.selectedKeys.has(primaryKey))
+    state.selectedKeys = new Set([primaryKey]);
   const active = displayedKeycode(selectedKey()),
     selected = selectedKeyIds(),
-    groups = [...Object.keys(KEYCODE_GROUPS), "combination"],
-    entries = (KEYCODE_GROUPS[state.mappingGroup] || []).filter((entry) =>
+    mappingGroup = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingGroup)
+      ? state.mappingGroup
+      : KEYMAP_SELECTABLE_GROUPS[0],
+    groups = KEYMAP_SELECTABLE_GROUPS,
+    entries = KEYCODE_GROUPS[mappingGroup].filter((entry) =>
       entry.label.toLowerCase().includes(state.mappingSearch.toLowerCase()),
     ),
-    editor =
-      state.mappingGroup === "combination"
-        ? combinationEditor()
-        : `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
+    editor = `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
   const layers = ["Main", "Fn1", "Fn2", "Fn3"];
-  return `<div class="page-grid"><div class="layer-bar full-span"><div class="layer-tabs" role="tablist" aria-label="Key mapping layer">${layers.map((label, layer) => `<button type="button" role="tab" data-layer="${layer}" aria-selected="${layer === Number(state.profile.layer)}" class="${layer === Number(state.profile.layer) ? "active" : ""}"><span>0${layer + 1}</span>${label}</button>`).join("")}</div><span>Choose a layer, then select one or more physical keys.</span></div>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === state.mappingGroup ? "active" : ""}">${group === "combination" ? "Combination" : group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
+  return `<div class="page-grid"><div class="layer-bar full-span"><div class="layer-tabs" role="tablist" aria-label="Key mapping layer">${layers.map((label, layer) => `<button type="button" role="tab" data-layer="${layer}" aria-selected="${layer === Number(state.profile.layer)}" class="${layer === Number(state.profile.layer) ? "active" : ""}"><span>0${layer + 1}</span>${label}</button>`).join("")}</div><span>Choose a layer, then select one physical key.</span></div>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === mappingGroup ? "active" : ""}">${group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
 }
 
 function lightingArea(index) {
