@@ -15,6 +15,40 @@ Object.assign(state, {
 });
 state.timers.autoApply = null;
 
+function toggleAdvancedRemoval(value) {
+  const ids = String(value).split(",").map(Number)
+      .filter((id) => keys.some((key) => key.id === id)),
+    expanded = new Set(ids);
+  ids.forEach((id) => {
+    const record = state.hardware.advancedByKey.get(id);
+    if (![ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(record?.mode))) return;
+    const partner = keyAtFirmwarePosition(record.pairedRow, record.pairedCol);
+    if (partner) expanded.add(partner.id);
+  });
+  if (!expanded.size) return;
+  const resolved = [...expanded],
+    undo = resolved.every((id) => state.dirty.advancedRemovals.has(id));
+  if (undo) resolved.forEach((id) => state.dirty.advancedRemovals.delete(id));
+  else {
+    const stagedPair = [Number(state.advancedDraft.keyAId), Number(state.advancedDraft.keyBId)];
+    if (state.dirty.advanced && resolved.every((id) => stagedPair.includes(id)) && stagedPair.every((id) => resolved.includes(id))) {
+      state.dirty.advanced = false;
+      render();
+      showToast("Staged advanced assignment discarded.");
+      return;
+    }
+    resolved.forEach((id) => {
+      if (state.hardware.advancedByKey.has(id)) state.dirty.advancedRemovals.add(id);
+    });
+  }
+  render();
+  showToast(undo
+    ? "Advanced assignment removal canceled."
+    : state.dirty.advancedRemovals.size
+      ? "Advanced assignment removal staged. Apply changes to write it."
+      : "Staged advanced assignment discarded.");
+}
+
 function scheduleAutoApply() {
   clearTimeout(state.timers.autoApply);
   state.timers.autoApply = null;
@@ -110,6 +144,19 @@ function summarizeChanges() {
   if (state.dirty.decorativeLighting.size)
     changes.push(
       `Decorative1: ${state.dirty.decorativeLighting.size} perimeter LED override${state.dirty.decorativeLighting.size === 1 ? "" : "s"}`,
+    );
+  if (state.dirty.advanced) {
+    const draft = state.advancedDraft,
+      keyA = keys[draft.keyAId],
+      keyB = keys[draft.keyBId],
+      mode = SOCD_MODES[Number(draft.socdMode)]?.name || `mode ${draft.socdMode}`;
+    changes.push(
+      `SOCD: ${keyA?.n || "Key A"} + ${keyB?.n || "Key B"}, ${mode}, ${Number(draft.delay) || 0} ms delay`,
+    );
+  }
+  if (state.dirty.advancedRemovals.size)
+    changes.push(
+      `Remove advanced assignments from ${state.dirty.advancedRemovals.size} key${state.dirty.advancedRemovals.size === 1 ? "" : "s"} (${names(state.dirty.advancedRemovals)})`,
     );
   for (const field of state.dirty.settings) {
     const value = state.profile.settings[field];
@@ -229,6 +276,151 @@ async function applyChanges({ automatic = false } = {}) {
     }
     if (mappingTokens.length)
       await state.transport.saveParameters(SAVE_GROUP.LAYOUT);
+    const advancedRemovalKeys = [...state.dirty.advancedRemovals]
+      .map((id) => keys[Number(id)])
+      .filter(Boolean);
+    if (advancedRemovalKeys.length) {
+      const tuningSnapshots = new Map();
+      for (let index = 0; index < advancedRemovalKeys.length; index += 1) {
+        const key = advancedRemovalKeys[index];
+        document.querySelector("#progressDetail").textContent =
+          `Removing advanced assignment ${index + 1} of ${advancedRemovalKeys.length}: ${key.n}`;
+        tuningSnapshots.set(
+          key.id,
+          await state.transport.getPerformance(position(key)),
+        );
+        await state.transport.clearAdvancedKey(position(key));
+        const verified = await state.transport.getAdvancedKey(position(key));
+        if (Number(verified.mode) !== ADVANCED_MODE.NONE)
+          throw new Error(`Advanced removal verification failed for ${key.n}.`);
+        state.hardware.advancedByKey.delete(key.id);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.ADVANCED);
+      for (const key of advancedRemovalKeys) {
+        const expected = tuningSnapshots.get(key.id),
+          current = await state.transport.getPerformance(position(key)),
+          desired = {
+            ...current,
+            ...expected,
+            axis: current.axis,
+            calibrate: current.calibrate,
+          };
+        await state.transport.setPerformance(position(key), desired);
+        const restored = await state.transport.getPerformance(position(key)),
+          comparison = performanceReadbackComparison(desired, restored, true);
+        if (!comparison.valid)
+          throw new Error(
+            `Advanced assignment was removed but ${key.n} tuning could not be restored: ${comparison.hard.join(", ")}.`,
+          );
+        if (comparison.normalized.length) {
+          const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+          performanceNormalizations.push(warning);
+          log("Firmware normalized advanced-removal Hall read-back", warning);
+        }
+        state.profile.performance[key.id] = restored;
+        state.hardware.performance.set(key.id, restored);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+      const selectedAdvancedKey = keys.find((key) => {
+        const address = position(key);
+        return (
+          Number(address.row) === Number(state.hardware.advanced?.row) &&
+          Number(address.col) === Number(state.hardware.advanced?.col)
+        );
+      });
+      if (selectedAdvancedKey && state.dirty.advancedRemovals.has(selectedAdvancedKey.id))
+        state.hardware.advanced = null;
+    }
+    if (state.dirty.advanced) {
+      const draft = state.advancedDraft,
+        keyA = keys[draft.keyAId],
+        keyB = keys[draft.keyBId];
+      if (!keyA || !keyB || keyA.id === keyB.id)
+        throw new Error("SOCD requires two different physical keys.");
+      document.querySelector("#progressDetail").textContent =
+        `SOCD: checking ${keyA.n} and ${keyB.n}`;
+      const firstPosition = position(keyA),
+        secondPosition = position(keyB),
+        [currentA, currentB, tuningA, tuningB] = await Promise.all([
+          state.transport.getAdvancedKey(firstPosition),
+          state.transport.getAdvancedKey(secondPosition),
+          state.transport.getPerformance(firstPosition),
+          state.transport.getPerformance(secondPosition),
+        ]),
+        pairedWith = (record, target) =>
+          Number(record.pairedRow) === Number(target.row) &&
+          Number(record.pairedCol) === Number(target.col),
+        compatible = (record, target) =>
+          Number(record.mode) === ADVANCED_MODE.NONE ||
+          (Number(record.mode) === ADVANCED_MODE.SOCD && pairedWith(record, target));
+      if (!compatible(currentA, secondPosition))
+        throw new Error(`${keyA.n} already has another advanced assignment. Clear it before creating this SOCD pair.`);
+      if (!compatible(currentB, firstPosition))
+        throw new Error(`${keyB.n} already has another advanced assignment. Clear it before creating this SOCD pair.`);
+      const keycodes = Array.isArray(draft.keycodes)
+          ? draft.keycodes
+          : [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)],
+        mode = Number(draft.socdMode),
+        delay = clamp(draft.delay, 0, 50);
+      await state.transport.setSocdPair({
+        first: firstPosition,
+        second: secondPosition,
+        keycodes,
+        delay,
+        mode,
+      });
+      await state.transport.saveParameters(SAVE_GROUP.ADVANCED);
+      const [verifiedA, verifiedB] = await Promise.all([
+          state.transport.getAdvancedKey(firstPosition),
+          state.transport.getAdvancedKey(secondPosition),
+        ]),
+        pairModes = SOCD_PAIR_MODES[mode],
+        verified =
+          verifiedA.mode === ADVANCED_MODE.SOCD &&
+          verifiedB.mode === ADVANCED_MODE.SOCD &&
+          pairedWith(verifiedA, secondPosition) &&
+          pairedWith(verifiedB, firstPosition) &&
+          verifiedA.socdMode === pairModes[0] &&
+          verifiedB.socdMode === pairModes[1] &&
+          verifiedA.delay === delay &&
+          verifiedB.delay === delay &&
+          verifiedA.keycodes[0] === keycodes[0] &&
+          verifiedA.keycodes[1] === keycodes[1] &&
+          verifiedB.keycodes[0] === keycodes[1] &&
+          verifiedB.keycodes[1] === keycodes[0];
+      if (!verified) throw new Error("SOCD read-back verification failed.");
+      state.hardware.advanced = verifiedA;
+      state.hardware.advancedByKey.set(keyA.id, verifiedA);
+      state.hardware.advancedByKey.set(keyB.id, verifiedB);
+      state.advancedDraft = { ...draft, delay, socdMode: mode, keycodes: [...keycodes] };
+      document.querySelector("#progressDetail").textContent =
+        `SOCD: restoring Hall tuning for ${keyA.n} and ${keyB.n}`;
+      for (const key of [keyA, keyB]) {
+        const expected = key.id === keyA.id ? tuningA : tuningB,
+          current = await state.transport.getPerformance(position(key)),
+          desired = {
+            ...current,
+            ...expected,
+            axis: current.axis,
+            calibrate: current.calibrate,
+          };
+        await state.transport.setPerformance(position(key), desired);
+        const restored = await state.transport.getPerformance(position(key)),
+          comparison = performanceReadbackComparison(desired, restored, true);
+        if (!comparison.valid)
+          throw new Error(
+            `SOCD preserved the pair but could not restore ${key.n} tuning: ${comparison.hard.join(", ")}.`,
+          );
+        if (comparison.normalized.length) {
+          const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+          performanceNormalizations.push(warning);
+          log("Firmware normalized SOCD Hall read-back", warning);
+        }
+        state.profile.performance[key.id] = restored;
+        state.hardware.performance.set(key.id, restored);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+    }
     if (state.dirty.lightingBase || state.dirty.lightingPalette) {
       if (state.dirty.lightingBase) {
         await state.transport.setLightingBase(state.profile.lighting.base, 0);
@@ -407,12 +599,35 @@ function revertChanges() {
   clearTimeout(state.timers.autoApply);
   state.timers.autoApply = null;
   state.profile = clone(state.original);
+  state.advancedDraft = defaultSocdDraft();
+  if (state.hardware.advanced?.mode === ADVANCED_MODE.SOCD) {
+    const record = state.hardware.advanced,
+      first = keys.find((key) => {
+        const address = position(key);
+        return address.row === record.row && address.col === record.col;
+      }),
+      second = keys.find((key) => {
+        const address = position(key);
+        return address.row === record.pairedRow && address.col === record.pairedCol;
+      });
+    if (first && second)
+      state.advancedDraft = {
+        keyAId: first.id,
+        keyBId: second.id,
+        delay: record.delay,
+        socdMode: record.socdMode,
+        keycodes: [...record.keycodes],
+      };
+  }
   clearDirty();
   render();
   showToast("Staged changes reverted.");
 }
 async function reloadProfileFromDevice(index) {
   state.profile.profileIndex = index;
+  state.hardware.advanced = null;
+  state.hardware.advancedByKey.clear();
+  state.advancedDraft = defaultSocdDraft();
   state.hardware.keycodes.clear();
   state.hardware.performance.clear();
   state.switchAssignmentsStatus = "idle";
@@ -439,8 +654,19 @@ async function reloadProfileFromDevice(index) {
   await readKeymapLayer(state.profile.layer);
   await optional("Fn layer target", readFnLayerTarget);
   await readSelectedKey();
+  await optional(
+    "calibration status",
+    () => readAllPerformanceRecords({ renderDuringLoad: false }),
+    0,
+  );
+  await optional(
+    "advanced key assignments",
+    () => readAllAdvancedRecords({ renderDuringLoad: false }),
+    0,
+  );
   state.original = clone(state.profile);
   clearDirty();
+  maybeShowCalibrationRecommendation();
 }
 async function switchProfile(index) {
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);

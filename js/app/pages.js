@@ -71,6 +71,46 @@ function switchCatalogEntry(axisV2Id) {
     (entry) => Number(entry.axisV2Id) === Number(axisV2Id),
   );
 }
+function advancedKeyMeta(key) {
+  const draft = state.advancedDraft;
+  if (
+    state.dirty.advanced &&
+    (Number(draft.keyAId) === key.id || Number(draft.keyBId) === key.id)
+  ) {
+    const partnerId = Number(draft.keyAId) === key.id
+      ? Number(draft.keyBId)
+      : Number(draft.keyAId);
+    return {
+      feature: ADVANCED_FEATURES.find((item) => item.code === "SOCD"),
+      staged: true,
+      removing: false,
+      partner: keys[partnerId]?.n || "paired key",
+    };
+  }
+  const record = state.hardware.advancedByKey.get(key.id);
+  const feature = ADVANCED_FEATURES.find(
+    (item) => Number(item.mode) === Number(record?.mode),
+  );
+  if (!feature) return null;
+  const paired = [ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(
+      Number(record.mode),
+    ),
+    partner = paired
+      ? keys.find((candidate) => {
+          const address = position(candidate);
+          return (
+            Number(address.row) === Number(record.pairedRow) &&
+            Number(address.col) === Number(record.pairedCol)
+          );
+        })
+      : null;
+  return {
+    feature,
+    staged: false,
+    removing: state.dirty.advancedRemovals.has(key.id),
+    partner: partner?.n || "",
+  };
+}
 function keyboardHtml({ hero = false, lighting = false } = {}) {
   const layer = Number(lighting ? state.hardware.fnPressed ? fnTargetLayer() : 0 : state.profile.layer),
     light = state.profile.lighting,
@@ -166,15 +206,25 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                     : "Unassigned"),
               switchColor = switchRecordPending
                 ? "var(--key-muted)"
-                : switchProfile?.color || "var(--mint)";
+                : switchProfile?.color || "var(--mint)",
+              advanced =
+                !hero &&
+                !lighting &&
+                !showCalibration &&
+                !showSwitchProfiles
+                  ? advancedKeyMeta(key)
+                  : null;
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
                 token.endsWith(`:${key.id}`),
               ) ||
               state.dirty.customLighting.has(key.id);
-            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
+            const advancedTitle = advanced
+              ? `${advanced.feature.title} ${advanced.removing ? "removal staged" : advanced.staged ? "staged" : "enabled"}${advanced.partner ? ` with ${advanced.partner}` : ""}`
+              : "";
+            return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -259,7 +309,7 @@ function overviewPage() {
     rtCount = Object.values(state.profile.performance).filter(
       (item) => item.mode === 1,
     ).length;
-  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(2)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
+  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${layerBar("Choose a layer to inspect its assignments on the keyboard.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(2)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
 }
 function numberField(id, label, value, min, max, step, hint = "", disabled = false) {
   const inactive = disabled ? " disabled" : "";
@@ -407,6 +457,10 @@ function performancePage() {
   const switchMode = state.performanceWorkspace === "switches";
   return `<div class="performance-page"><div class="performance-primary ${state.livePressDistance ? "with-live-monitor" : ""}">${boardPanel({ performance: true })}${state.livePressDistance ? livePressDistancePanel() : ""}</div><section class="panel performance-tuning"><div class="panel-head"><div><span class="eyebrow">PER-KEY HALL SETTINGS</span><h2>${switchMode ? "Magnetic Switch Selector" : "Actuation tuning"}</h2><p>${switchMode ? "Assign captured AE64 Pro magnetic-switch calibration metadata to the selected keys." : "Actuation, Rapid Trigger, and both dead zones are edited together for the selected keys."}</p></div><label class="switch-row live-press-toggle"><span><b>Live press distance</b><small>Show the compact gauge beside the keyboard.</small></span><input id="livePressDistanceToggle" class="toggle" type="checkbox" ${state.livePressDistance ? "checked" : ""} ${connected() && !state.calibrationActive && !state.calibrationBusy ? "" : "disabled"}></label></div>${performanceWorkspaceTabs()}${switchMode ? switchSelectorControls() : performanceControls()}</section></div>`;
 }
+function layerBar(description) {
+  const layers = ["Main", "Fn1", "Fn2", "Fn3"];
+  return `<div class="layer-bar full-span"><div class="layer-tabs" role="tablist" aria-label="Keyboard layer">${layers.map((label, layer) => `<button type="button" role="tab" data-layer="${layer}" aria-selected="${layer === Number(state.profile.layer)}" class="${layer === Number(state.profile.layer) ? "active" : ""}"><span>0${layer + 1}</span>${label}</button>`).join("")}</div><span>${description}</span></div>`;
+}
 function keymapPage() {
   const primaryKey = selectedKey().id;
   if (state.selectedKeys.size !== 1 || !state.selectedKeys.has(primaryKey))
@@ -422,7 +476,7 @@ function keymapPage() {
     ),
     editor = `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
   const layers = ["Main", "Fn1", "Fn2", "Fn3"];
-  return `<div class="page-grid"><div class="layer-bar full-span"><div class="layer-tabs" role="tablist" aria-label="Key mapping layer">${layers.map((label, layer) => `<button type="button" role="tab" data-layer="${layer}" aria-selected="${layer === Number(state.profile.layer)}" class="${layer === Number(state.profile.layer) ? "active" : ""}"><span>0${layer + 1}</span>${label}</button>`).join("")}</div><span>Choose a layer, then select one physical key.</span></div>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === mappingGroup ? "active" : ""}">${group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
+  return `<div class="page-grid">${layerBar("Choose a layer, then select one physical key.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === mappingGroup ? "active" : ""}">${group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
 }
 
 function lightingArea(index) {
@@ -630,36 +684,129 @@ function settingsPage() {
   return `<div class="settings-page"><section class="panel settings-hero"><div class="settings-hero-copy"><span class="eyebrow">DEVICE CONTROL CENTER</span><h2>AE64 Pro settings</h2><p>Hardware behavior, onboard profiles, local backups, and the driver's appearance in one quieter workspace.</p></div><div class="settings-connection ${connected() ? "online" : ""}"><i></i><div><small>${connected() ? "KEYBOARD CONNECTED" : "KEYBOARD OFFLINE"}</small><b>${connectedLabel}</b></div>${reconnect}</div><div class="settings-hero-facts"><span><small>Active profile</small><b>0${activeProfile}</b></span><span><small>System</small><b>${Number(settings.systemMode) === 1 ? "macOS" : "Windows"}</b></span><span><small>Polling</small><b>${POLLING_RATE_OPTIONS.find((option) => option.value === Number(settings.reportRate))?.hz.toLocaleString() || "?"} Hz</b></span></div></section><div class="settings-grid"><section class="panel settings-card settings-usb"><div class="settings-card-icon">↯</div><div class="panel-head"><div><h2>System & USB</h2><p>Firmware-owned operating mode and scan behavior.</p></div><span class="badge ready">ONBOARD</span></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Windows = 0 · macOS = 1 in the original protocol.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>Changing this restarts the USB interface and reconnects automatically.</small></label><label class="field"><span>RGB sleep timer</span><div class="input-with-unit"><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"><span>minutes</span></div><small>Use 0 only if you want the firmware to keep lighting awake.</small></label></div><label class="switch-row setting-switch"><span><b>Shake optimization</b><small>Firmware key-stability filtering for small magnetic fluctuations.</small></span><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></label></section><section class="panel settings-card settings-profile"><div class="settings-card-icon">P${activeProfile}</div><div class="panel-head"><div><h2>Onboard profile</h2><p>Rename or switch the loaded configuration.</p></div><span class="badge">${state.hardware.configIndexes.length} SLOTS</span></div><label class="field"><span>Profile ${activeProfile} name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${activeProfile}`)}"><small>The quick switch remains at the top of the navigation bar.</small></label><div class="profile-slot-row" role="group" aria-label="Onboard profile">${state.hardware.configIndexes.map((index) => `<button type="button" data-profile-slot="${index}" class="${index === state.profile.profileIndex ? "active" : ""}" aria-pressed="${index === state.profile.profileIndex}" title="Switch to profile ${index + 1}">${index + 1}</button>`).join("")}</div><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save profile name</button></div></section><section class="panel settings-card settings-appearance"><div class="settings-card-icon">◐</div><div class="panel-head"><div><h2>Appearance</h2><p>Inspired by the token-based light and dark surfaces found in the ATK Hub capture. Stored only in this browser.</p></div><span class="badge ready">INSTANT</span></div><div class="theme-grid" role="group" aria-label="Driver appearance">${themes}</div></section><section class="panel settings-card settings-files"><div class="settings-card-icon">⇅</div><div class="panel-head"><div><h2>Backup & portability</h2><p>Keep a local JSON copy independent of the manufacturer cloud.</p></div></div><div class="file-actions"><button class="button ghost" id="importProfile" type="button"><span>Import</span><small>Open a saved JSON profile</small></button><button class="button primary" id="exportProfile" type="button"><span>Export</span><small>Download the current workspace</small></button></div></section><section class="panel settings-card settings-recovery"><div class="settings-card-icon danger">!</div><div class="panel-head"><div><h2>Recovery</h2><p>Potentially destructive device operations remain deliberately guarded.</p></div><span class="badge experimental">LOCKED</span></div><div class="recovery-row"><div><b>Factory restore</b><small>Visible for completeness, disabled until a physical-device restore packet is captured and verified.</small></div><button class="button danger" type="button" disabled>Restore factory settings</button></div></section></div></div>`;
 }
 const ADVANCED_FEATURES = [
-  [
-    "DKS",
-    "Dynamic Keystroke",
-    "Up to four keycodes at multiple press/release points.",
-  ],
-  [
-    "MPT",
-    "Multi-point Trigger",
-    "Three key actions at distinct travel depths.",
-  ],
-  [
-    "MT",
-    "Mod-Tap",
-    "Tap one function and hold another after a time threshold.",
-  ],
-  ["TGL", "Toggle Key", "Latch a key action with firmware timing."],
-  ["END", "End Key", "Trigger paired actions with an end delay."],
-  [
-    "SOCD",
-    "SOCD Resolution",
-    "Resolve two opposing keys using firmware priority modes.",
-  ],
-  [
-    "RS",
-    "Rappy Snappy",
-    "Compare two keys by travel and prefer the deeper input.",
-  ],
+  { code: "DKS", title: "Dynamic Keystroke", body: "Up to four keycodes at multiple press/release points.", mode: 1, color: "#ff6f91" },
+  { code: "MPT", title: "Multi-point Trigger", body: "Three key actions at distinct travel depths.", mode: 2, color: "#ffb454" },
+  { code: "MT", title: "Mod-Tap", body: "Tap one function and hold another after a time threshold.", mode: 3, color: "#0035f5" },
+  { code: "TGL", title: "Toggle Key", body: "Latch a key action with firmware timing.", mode: 4, color: "#52c7ff" },
+  { code: "END", title: "End Key", body: "Trigger paired actions with an end delay.", mode: 5, color: "#44d6a3" },
+  { code: "SOCD", title: "SOCD Resolution", body: "Resolve two opposing keys using one of four captured firmware modes.", mode: 6, color: "#8d86ff", ready: true },
+  { code: "RS", title: "Rappy Snappy", body: "Compare two keys by travel and prefer the deeper input.", mode: 7, color: "#f27bd2" },
+  { code: "MACRO", title: "Macros", body: "Placeholder for recording and assigning multi-action sequences.", color: "#d49a62", placeholder: true },
+  { code: "COMBO", title: "Key Combination", body: "Placeholder for assigning a modifier and key combination.", color: "#58d1d6", placeholder: true },
 ];
+const SOCD_MODES = [
+  { value: SOCD_MODE.LAST_OVERRIDE, id: "last-override", name: "Last Override", body: "The most recently pressed direction replaces the earlier one." },
+  { value: SOCD_MODE.A_PRIORITY, id: "a-priority", name: "A Priority", body: "Key A remains active whenever A and B are held together." },
+  { value: SOCD_MODE.B_PRIORITY, id: "b-priority", name: "B Priority", body: "Key B remains active whenever A and B are held together." },
+  { value: SOCD_MODE.NEUTRAL, id: "neutral", name: "Neutral", body: "Holding both keys cancels both outputs." },
+];
+const ADVANCED_FEATURE_INFO = Object.fromEntries(
+  ADVANCED_FEATURES.map((feature) => [
+    feature.code,
+    {
+      title: `${feature.title}${feature.code.length <= 5 ? ` (${feature.code})` : ""}`,
+      body: `<p>Detailed guidance for this feature will be added in a later advanced-feature release.</p>`,
+    },
+  ]),
+);
+ADVANCED_FEATURE_INFO.SOCD = {
+  title: "Simultaneous Opposite Cardinal Directions (SOCD)",
+  body: `<div class="feature-info-lead"><p>SOCD resolves two opposing inputs when both are pressed. The captured manufacturer tutorial describes it as “intelligent handling of opposite command conflicts.” Its English tutorial text lists:</p><ul><li>When pressing ←→ simultaneously: prioritize the last key.</li><li>When pressing ↑↓ simultaneously: output a neutral command.</li><li>Customizable conflict-resolution strategy.</li><li>E-sports-level anti-misoperation algorithm.</li></ul><p>The two keys, delay, and strategy are stored as reciprocal firmware records. The tutorial also warns that competitive games such as CS2 may restrict SOCD and that using it may risk account penalties.</p></div><div class="socd-tutorial-grid">${[
+    ["Last Override", "Last input command completely overrides the previous command.", "assets/tutorial-videos/socd_last-override.webm"],
+    ["A Priority", "Original tutorial wording: “Prioritize the first pressed command.” The captured packet behavior is fixed Key A priority.", "assets/tutorial-videos/socd_a-priority.webm"],
+    ["B Priority", "Original tutorial wording: “Prioritize the last pressed command.” The captured packet behavior is fixed Key B priority.", "assets/tutorial-videos/socd_b-priority.webm"],
+    ["Neutral", "Opposite commands output a neutral value while both keys are held.", "assets/tutorial-videos/socd_neutral.webm"],
+  ].map(([name, text, video]) => `<article><video controls preload="metadata" playsinline src="${video}" aria-label="${name} SOCD tutorial"></video><div><strong>${name}</strong><p>${text}</p></div></article>`).join("")}</div>`,
+};
+function advancedFeatureInfoMarkup(code) {
+  return ADVANCED_FEATURE_INFO[code] || {
+    title: "Advanced feature",
+    body: "<p>Documentation will be added later.</p>",
+  };
+}
+function socdPickerKeyboardHtml() {
+  const draft = state.advancedDraft,
+    pair = [Number(draft.keyAId), Number(draft.keyBId)],
+    activeSlot = Number(state.socdPickerSlot) === 1 ? 1 : 0;
+  return `<div class="socd-picker-board"><div class="keyboard socd-picker-keyboard" aria-label="Choose the two physical keys for SOCD">${layout.map((row, uiRow) => `<div class="keyboard-row">${row.map((_, col) => {
+    const key = keys.find(
+        (candidate) => candidate.uiRow === uiRow && candidate.col === col,
+      ),
+      pairPosition = pair.indexOf(key.id),
+      mapped = keycodeLabel(displayedKeycode(key, 0));
+    return `<button class="key socd-picker-key ${pairPosition === 0 ? "pair-a" : pairPosition === 1 ? "pair-b" : ""}" type="button" data-socd-picker-key="${key.id}" aria-pressed="${pairPosition >= 0}" aria-label="Set SOCD Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}" title="Set Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}"><span class="mapped">${esc(key.n)}</span><b>${esc(mapped)}</b>${pairPosition >= 0 ? `<i class="socd-pair-marker" aria-hidden="true">${pairPosition ? "B" : "A"}</i>` : ""}</button>`;
+  }).join("")}</div>`).join("")}</div></div>`;
+}
+function socdEditor() {
+  const draft = state.advancedDraft,
+    keyA = keys[draft.keyAId] || keys[0],
+    keyB = keys[draft.keyBId] || keys[1],
+    keycodes = Array.isArray(draft.keycodes) ? draft.keycodes : [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)],
+    activeSlot = Number(state.socdPickerSlot) === 1 ? 1 : 0;
+  return `<div class="socd-editor"><div class="panel-head"><div><span class="eyebrow">CAPTURE-VERIFIED EDITOR</span><h2>SOCD pair</h2><p>Select Key A or Key B, then choose its physical position on the keyboard. Add a resolution mode and an optional 0–50 ms delay.</p></div><span class="badge ready">4 MODES</span></div><div class="socd-picker-heading"><div><h3>Physical key pair</h3><p>After choosing Key A, the picker advances to Key B automatically.</p></div><div class="socd-pair-slots" role="tablist" aria-label="SOCD pair position"><button type="button" role="tab" data-socd-picker-slot="0" class="${activeSlot === 0 ? "active" : ""}" aria-selected="${activeSlot === 0}"><i>A</i><span><b>Key A</b><strong>${esc(keyA.n)}</strong><small>${esc(keycodeLabel(keycodes[0]))}</small></span></button><button type="button" role="tab" data-socd-picker-slot="1" class="${activeSlot === 1 ? "active" : ""}" aria-selected="${activeSlot === 1}"><i>B</i><span><b>Key B</b><strong>${esc(keyB.n)}</strong><small>${esc(keycodeLabel(keycodes[1]))}</small></span></button></div></div>${socdPickerKeyboardHtml()}<div class="socd-picker-legend"><span><i class="pair-a"></i>Key A</span><span><i class="pair-b"></i>Key B</span><strong>Choosing the other slot’s key swaps A and B.</strong></div><div class="socd-mode-grid" role="group" aria-label="SOCD resolution mode">${SOCD_MODES.map((mode) => `<button class="socd-mode ${Number(draft.socdMode) === mode.value ? "active" : ""}" type="button" data-socd-mode="${mode.value}" aria-pressed="${Number(draft.socdMode) === mode.value}"><b>${mode.name}</b><small>${mode.body}</small></button>`).join("")}</div><div class="socd-footer"><label class="field socd-delay"><span>SOCD delay</span><div class="input-with-unit"><input id="socdDelay" type="number" min="0" max="50" step="1" value="${clamp(draft.delay, 0, 50)}"><span>ms</span></div></label><div class="apply-row"><button class="button ghost" id="readAdvanced" type="button" ${connected() ? "" : "disabled"}>Read selected record</button><button class="button primary" id="stageSocd" type="button">Stage SOCD pair</button></div></div>${state.dirty.advanced ? '<p class="socd-stage-note">This complete SOCD pair is staged. Use Apply changes, or let experimental Auto apply write and verify it.</p>' : ""}</div>`;
+}
+function keyAtFirmwarePosition(row, col) {
+  return keys.find((key) => {
+    const address = position(key);
+    return Number(address.row) === Number(row) && Number(address.col) === Number(col);
+  });
+}
+function advancedAssignmentEntries() {
+  const entries = [],
+    seen = new Set();
+  keys.forEach((key) => {
+    const record = state.hardware.advancedByKey.get(key.id),
+      feature = ADVANCED_FEATURES.find(
+        (item) => Number(item.mode) === Number(record?.mode),
+      );
+    if (!feature) return;
+    const partner = [ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(
+        Number(record.mode),
+      )
+        ? keyAtFirmwarePosition(record.pairedRow, record.pairedCol)
+        : null,
+      ids = partner ? [key.id, partner.id].sort((a, b) => a - b) : [key.id],
+      token = `${feature.code}:${ids.join(":")}`;
+    if (seen.has(token)) return;
+    seen.add(token);
+    const details = Number(record.mode) === ADVANCED_MODE.SOCD
+      ? `${SOCD_MODES[Number(record.socdMode)]?.name || "SOCD mode"} · ${Number(record.delay) || 0} ms delay`
+      : `Firmware mode ${record.mode}${partner ? " · paired action" : ""}`;
+    entries.push({
+      feature,
+      ids,
+      keys: ids.map((id) => keys[id]).filter(Boolean),
+      details,
+      staged: false,
+      removing: ids.some((id) => state.dirty.advancedRemovals.has(id)),
+    });
+  });
+  if (state.dirty.advanced) {
+    const draft = state.advancedDraft,
+      ids = [Number(draft.keyAId), Number(draft.keyBId)].sort((a, b) => a - b),
+      feature = ADVANCED_FEATURES.find((item) => item.code === "SOCD"),
+      existing = entries.findIndex(
+        (entry) => entry.feature.code === "SOCD" && entry.ids.join(":") === ids.join(":"),
+      ),
+      staged = {
+        feature,
+        ids,
+        keys: ids.map((id) => keys[id]).filter(Boolean),
+        details: `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
+        staged: true,
+        removing: false,
+      };
+    if (existing >= 0) entries.splice(existing, 1, staged);
+    else entries.push(staged);
+  }
+  return entries;
+}
+function advancedAssignmentsPanel() {
+  const entries = advancedAssignmentEntries();
+  return `<section class="panel full-span advanced-assignments"><div class="panel-head"><div><h2>Assigned advanced features</h2><p>Detected onboard assignments are grouped by action. Removals stay staged until Apply changes.</p></div><span class="badge ${entries.length ? "ready" : ""}">${entries.length} ASSIGNED</span></div><div class="advanced-assignment-list">${entries.length ? entries.map((entry) => `<article class="advanced-assignment ${entry.removing ? "removing" : ""}" data-advanced-assignment="${entry.feature.code}" style="--advanced-color:${entry.feature.color}"><i class="advanced-assignment-color"></i><div><span>${entry.staged ? "STAGED" : entry.removing ? "REMOVAL STAGED" : "ONBOARD"}</span><strong>${entry.feature.title}</strong><p>${entry.keys.map((key) => esc(key.n)).join(" + ")} · ${esc(entry.details)}</p></div><button class="button ${entry.removing ? "ghost" : "danger"} small" type="button" data-remove-advanced="${entry.ids.join(",")}">${entry.removing ? "Undo removal" : entry.staged ? "Discard" : "Remove"}</button></article>`).join("") : `<div class="advanced-assignment-empty"><b>No advanced assignments detected</b><p>${connected() ? "Configure SOCD from the feature selector or reconnect to refresh onboard records." : "Connect the keyboard to read its onboard advanced records."}</p></div>`}</div></section>`;
+}
 function advancedPage() {
-  return `<div class="page-grid"><section class="panel full-span warning-card"><div class="panel-head"><div><h2>Advanced Hall-key modes</h2><p>All seven shipped features are visible. This basic release safely decodes them without unverified writes.</p></div><span class="badge experimental">VISIBLE · READ ONLY</span></div></section>${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected-key record</h2><p>Decoded directly from family 0x06.</p></div></div>${selectedCard()}<div class="apply-row"><button class="button ghost" id="readMacroSpace" type="button">Read macro capacity</button><button class="button primary" id="readAdvanced" type="button">Read advanced record</button></div><pre class="raw-output">${esc(JSON.stringify({ advanced: state.hardware.advanced || "Connect and read", macroSpace: state.hardware.macroSpace || "Not read" }, null, 2))}</pre></section><section class="panel full-span"><div class="advanced-grid">${ADVANCED_FEATURES.map(([code, title, body], i) => `<article class="advanced-card"><header><h3>${code}</h3><span class="badge deferred">EDITOR NEXT</span></header><strong>${title}</strong><p>${body}</p><small>family 06 · mode ${i + 1}</small></article>`).join("")}</div></section></div>`;
+  return `<div class="page-grid">${boardPanel({ full: true, title: "Advanced key map", description: "Colored key indicators match the compact feature selector below." })}<section class="panel full-span advanced-feature-panel"><div class="panel-head"><div><h2>Advanced features</h2><p>Click an available feature to configure it. The information button opens its guide.</p></div><span class="badge">9 FEATURES</span></div><div class="advanced-grid compact">${ADVANCED_FEATURES.map((feature) => `<article class="advanced-card compact ${feature.ready ? "ready" : ""}" style="--advanced-color:${feature.color}" ${feature.ready ? `data-advanced-config="${feature.code}"` : ""}><i class="advanced-feature-color"></i><div class="advanced-card-copy"><header><h3>${feature.code}</h3><span>${feature.ready ? "AVAILABLE" : feature.placeholder ? "PLACEHOLDER" : "READ ONLY"}</span></header><strong>${feature.title}</strong></div><button class="advanced-info-button" type="button" data-feature-info="${feature.code}" aria-label="About ${esc(feature.title)}" title="How ${esc(feature.title)} works">i</button></article>`).join("")}</div></section>${advancedAssignmentsPanel()}</div>`;
 }
 function capabilityCards() {
   const feature = state.hardware.feature;

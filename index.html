@@ -132,6 +132,51 @@
       </div>
     </form>
   </dialog>
+  <dialog class="app-dialog feature-info-dialog" id="advancedInfoDialog" aria-labelledby="advancedInfoTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">ADVANCED FEATURE GUIDE</p>
+          <h2 id="advancedInfoTitle">Advanced feature</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close feature guide">×</button>
+      </div>
+      <div class="feature-info-body" id="advancedInfoBody"></div>
+      <div class="dialog-actions">
+        <button class="button primary" type="submit" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog socd-config-dialog" id="socdConfigDialog" aria-labelledby="socdConfigTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">ADVANCED KEY CONFIGURATION</p>
+          <h2 id="socdConfigTitle">Configure SOCD</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close SOCD configuration">×</button>
+      </div>
+      <div id="socdConfigBody"></div>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog calibration-recommendation-dialog" id="calibrationRecommendationDialog" aria-labelledby="calibrationRecommendationTitle">
+    <form method="dialog">
+      <div class="dialog-icon warning" aria-hidden="true">!</div>
+      <div class="dialog-copy">
+        <p class="eyebrow">NOTICE</p>
+        <h2 id="calibrationRecommendationTitle">Recalibration recommended</h2>
+        <p>For a better experience, please recalibrate your keyboard.</p>
+        <p id="calibrationRecommendationDetail"></p>
+      </div>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="cancel">Cancel</button>
+        <button class="button primary" id="confirmCalibrationRecommendation" type="button">Open calibration</button>
+      </div>
+    </form>
+  </dialog>
   <div class="progress-overlay hidden" id="progressOverlay" aria-live="polite">
     <div class="progress-card"><span class="spinner"></span><strong id="progressTitle">Working…</strong><p id="progressDetail"></p></div>
   </div>

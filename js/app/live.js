@@ -62,12 +62,100 @@ async function readAdvanced() {
   if (!connected())
     return showToast("Connect to read the advanced-key record.", true);
   try {
-    state.hardware.advanced = await state.transport.getAdvancedKey(position());
+    const key = selectedKey();
+    state.hardware.advanced = await state.transport.getAdvancedKey(position(key));
+    if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.NONE)
+      state.hardware.advancedByKey.delete(key.id);
+    else state.hardware.advancedByKey.set(key.id, state.hardware.advanced);
+    if (
+      state.hardware.advanced.mode === ADVANCED_MODE.SOCD &&
+      !state.dirty.advanced
+    ) {
+      const first = keys.find((key) => {
+          const address = position(key);
+          return address.row === state.hardware.advanced.row && address.col === state.hardware.advanced.col;
+        }),
+        second = keys.find((key) => {
+          const address = position(key);
+          return address.row === state.hardware.advanced.pairedRow && address.col === state.hardware.advanced.pairedCol;
+        });
+      if (first && second) {
+        state.advancedDraft = {
+          keyAId: first.id,
+          keyBId: second.id,
+          delay: clamp(state.hardware.advanced.delay, 0, 50),
+          socdMode: clamp(state.hardware.advanced.socdMode, SOCD_MODE.LAST_OVERRIDE, SOCD_MODE.NEUTRAL),
+          keycodes: [...state.hardware.advanced.keycodes],
+        };
+      }
+    }
     log("Advanced record read", state.hardware.advanced);
     render();
   } catch (error) {
     showToast(error.message, true);
   }
+}
+
+async function readAllAdvancedRecords({ renderDuringLoad = true } = {}) {
+  if (!connected()) return 0;
+  const results = await Promise.allSettled(
+    keys.map(async (key) => [
+      key,
+      await state.transport.getAdvancedKey(position(key)),
+    ]),
+  );
+  const failed = [];
+  let loaded = 0;
+  state.hardware.advancedByKey.clear();
+  results.forEach((result, index) => {
+    if (result.status !== "fulfilled") {
+      failed.push(keys[index].n);
+      return;
+    }
+    const [key, record] = result.value;
+    if (Number(record.mode) !== ADVANCED_MODE.NONE)
+      state.hardware.advancedByKey.set(key.id, record);
+    loaded += 1;
+  });
+  if (failed.length)
+    throw new Error(
+      `Could not read advanced assignments for ${failed.length} key${failed.length === 1 ? "" : "s"}.`,
+    );
+  log("All advanced key assignments read", {
+    keys: loaded,
+    configured: state.hardware.advancedByKey.size,
+  });
+  if (renderDuringLoad) render();
+  return loaded;
+}
+
+function calibrationRecommendation() {
+  const checked = keys.filter((key) => state.hardware.performance.has(key.id)),
+    uncalibrated = checked.filter(
+      (key) => Number(state.hardware.performance.get(key.id)?.calibrate) === 0,
+    );
+  return {
+    checked: checked.length,
+    uncalibrated,
+    needed: uncalibrated.length > 0,
+  };
+}
+function maybeShowCalibrationRecommendation() {
+  if (!connected() || state.calibrationActive || state.calibrationBusy) return false;
+  const profile = Number(state.profile.profileIndex),
+    result = calibrationRecommendation();
+  if (!result.needed || state.calibrationPromptedProfiles.has(profile)) return false;
+  state.calibrationPromptedProfiles.add(profile);
+  const detail = document.querySelector("#calibrationRecommendationDetail");
+  if (detail)
+    detail.textContent = `${result.uncalibrated.length} of ${result.checked} readable physical keys report firmware calibration value 0.`;
+  openDialog(document.querySelector("#calibrationRecommendationDialog"));
+  log("Calibration recommended", {
+    profile,
+    checked: result.checked,
+    uncalibrated: result.uncalibrated.map((key) => key.n),
+  });
+  return true;
 }
 async function readMacroSpace() {
   if (!connected()) return showToast("Connect to read macro capacity.", true);

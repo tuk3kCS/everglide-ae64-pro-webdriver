@@ -70,6 +70,19 @@ document.querySelector("#confirmApplyButton").addEventListener("click", () => {
   applyChanges();
 });
 document
+  .querySelector("#advancedInfoDialog")
+  .addEventListener("close", (event) => {
+    event.currentTarget.querySelectorAll?.("video").forEach((video) => video.pause());
+  });
+document
+  .querySelector("#confirmCalibrationRecommendation")
+  .addEventListener("click", () => {
+    closeDialog(document.querySelector("#calibrationRecommendationDialog"));
+    state.page = "performance";
+    render();
+    document.querySelector("#calibrationToggle")?.focus();
+  });
+document
   .querySelector("#profileRenameForm")
   .addEventListener("submit", async (event) => {
     if (event.submitter?.value === "cancel") return;

@@ -33,6 +33,8 @@ class FakeDevice {
     this.sent = [];
     this.pressedKey = { row: 5, col: 5, status: 3 };
     this.currentConfig = 0;
+    this.advanced = new Map();
+    this.performance = new Map();
   }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
   removeEventListener(type) { this.listeners.delete(type); }
@@ -61,8 +63,18 @@ class FakeDevice {
       }
     }
     if (packet[0] === 4 && packet[1] === 1) {
-      reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
-      reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
+      const stored = this.performance.get(`${packet[2]}:${packet[3]}`);
+      if (stored) {
+        reply.set(stored);
+        reply[0] = 4; reply[1] = 1;
+      } else {
+        reply[2] = packet[2]; reply[3] = packet[3]; reply[4] = 1;
+        reply.set([0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0, 0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a], 5);
+      }
+    }
+    if (packet[0] === 4 && packet[1] === 2) {
+      this.performance.set(`${packet[2]}:${packet[3]}`, packet.slice(0, 27));
+      reply.set(packet.slice(0, 27));
     }
     if (packet[0] === 4 && packet[1] === 3) {
       reply[2] = packet[2]; reply[3] = packet[3];
@@ -101,6 +113,24 @@ class FakeDevice {
       reply[2] = packet[2]; reply[3] = packet[3];
       for (let index = 0; index < 15; index += 1) reply.set([index + packet[3], 20 + packet[2], 40 + index, 0], 4 + index * 4);
     }
+    if (packet[0] === 6 && packet[1] === 1) {
+      const stored = this.advanced.get(`${packet[2]}:${packet[3]}`);
+      if (stored) {
+        reply.set(stored);
+        reply[0] = 6; reply[1] = 1;
+      }
+      else reply.set([6, 1, packet[2], packet[3], 0]);
+    }
+    if (packet[0] === 6 && packet[1] === 2) {
+      const stored = packet.slice(0, 14);
+      this.advanced.set(`${packet[2]}:${packet[3]}`, stored);
+      this.performance.set(`${packet[2]}:${packet[3]}`, [
+        4, 2, packet[2], packet[3], 0,
+        0xd0, 0x07, 0, 0, 0xd0, 0x07, 0x96, 0, 0x96, 0,
+        0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a,
+      ]);
+      reply.set(stored);
+    }
     queueMicrotask(() => this.reply(reply));
   }
 }
@@ -115,10 +145,10 @@ async function main() {
   if (!gitignore.split(/\r?\n/).includes("*.har"))
     throw new Error("HAR captures must be ignored so deployment never depends on research files.");
   const tutorialVideos = [
-    "dks-DCE7s5Id.webm", "end-BnYhFisg.webm", "mpt-B978ec99.webm",
-    "mt-CgpY_PQr.webm", "rs-Ck_H-6K8.webm", "socd_a-Dd9SIFLd.webm",
-    "socd_b-DcBid0XC.webm", "socd_neutral-dyit9BC-.webm",
-    "socd_thick-cFkI1N7-.webm", "tgl-mmsTAuVF.webm",
+    "dynamic_keystroke.webm", "end_key.webm", "modtap.webm",
+    "multipoint_trigger.webm", "rs-Ck_H-6K8.webm", "socd_a-priority.webm",
+    "socd_b-priority.webm", "socd_last-override.webm", "socd_neutral.webm",
+    "toggle.webm",
   ];
   const downloadedVideos = fs.readdirSync(path.join(root, "assets", "tutorial-videos"))
     .filter((name) => name.endsWith(".webm")).sort();
@@ -149,9 +179,9 @@ async function main() {
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/images/he_switch_images", "scripts/build-switch-image-manifest.cjs", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/images/he_switch_images", "scripts/build-switch-image-manifest.cjs", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json", "assets/tutorial-videos/*.webm"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
@@ -169,7 +199,7 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="calibrationRecommendationDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
@@ -182,7 +212,7 @@ async function main() {
   if (!html.includes('data-page="about"') || html.indexOf('data-page="about"') < html.indexOf('data-page="diagnostics"')) throw new Error("About Us must appear below Diagnostics.");
   if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");
   for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);
-  for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Hidden advanced feature ${feature} is not visible.`);
+  for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS", "MACRO", "COMBO"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Advanced feature ${feature} is not visible.`);
   for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
 
   const elements = new Map();
@@ -191,7 +221,7 @@ async function main() {
     if (elements.has(selector)) return elements.get(selector);
     const node = { innerHTML: "", textContent: "", value: "", disabled: false, dataset: {}, files: [],
       classList: { add() {}, remove() {}, toggle() {}, contains() { return true; } },
-      style: { setProperty() {} }, addEventListener() {}, click() {}, focus() {} };
+      style: { setProperty() {} }, addEventListener() {}, setAttribute() {}, removeAttribute() {}, querySelectorAll() { return []; }, click() {}, focus() {} };
     elements.set(selector, node);
     return node;
   };
@@ -257,6 +287,66 @@ async function main() {
   const autoToggleState = vm.runInContext(`(state.dirty.lightingBase = true, setAutoApply(true), [state.autoApply, document.querySelector("#autoApplyToggle").checked, document.querySelector("#applyButton").disabled])`, browser);
   equal(autoToggleState, [true, true, true], "Enabling experimental auto apply must update its state and disable manual Apply.");
   vm.runInContext("clearDirty(); setAutoApply(false)", browser);
+  const advancedMarkup = vm.runInContext("advancedPage()", browser);
+  if ((advancedMarkup.match(/data-feature-info=/g) || []).length !== 9)
+    throw new Error("Every advanced feature and placeholder must expose an information button.");
+  for (const required of ["Macros", "Key Combination", 'data-advanced-config="SOCD"'])
+    if (!advancedMarkup.includes(required)) throw new Error(`Advanced/SOCD UI omitted ${required}.`);
+  if (advancedMarkup.includes('class="panel full-span warning-card"')) throw new Error("The removed Advanced warning panel returned.");
+  if ((advancedMarkup.match(/class="advanced-card compact/g) || []).length !== 9)
+    throw new Error("All nine Advanced features must use the compact card layout.");
+  const advancedFeatureColors = vm.runInContext("ADVANCED_FEATURES.map(({ code, color }) => [code, color])", browser);
+  if (new Set(advancedFeatureColors.map(([, color]) => color)).size !== 9 || advancedFeatureColors.some(([, color]) => !advancedMarkup.includes(`style="--advanced-color:${color}"`)))
+    throw new Error("Each compact Advanced feature must expose its own distinct keyboard-indicator color.");
+  if (advancedMarkup.includes('id="socdKeyA"')) throw new Error("SOCD configuration must not remain expanded in the Advanced page.");
+  for (const removed of ["Selected-key record", 'id="readMacroSpace"', 'class="raw-output"'])
+    if (advancedMarkup.includes(removed)) throw new Error(`Advanced page retained unnecessary selected-record diagnostics: ${removed}.`);
+  if (!advancedMarkup.includes('class="panel layout-board full-span')) throw new Error("Advanced keyboard must use the full page width after removing selected-record diagnostics.");
+  vm.runInContext("openSocdConfiguration()", browser);
+  const socdConfigMarkup = elements.get("#socdConfigBody").innerHTML;
+  for (const required of ['data-socd-picker-slot="0"', 'data-socd-picker-slot="1"', 'id="stageSocd"', "Last Override", "A Priority", "B Priority", "Neutral"])
+    if (!socdConfigMarkup.includes(required)) throw new Error(`SOCD configuration dialog omitted ${required}.`);
+  if ((socdConfigMarkup.match(/data-socd-picker-key=/g) || []).length !== 64)
+    throw new Error("SOCD configuration must display all 64 physical keys instead of dropdown lists.");
+  if (socdConfigMarkup.includes('id="socdKeyA"') || socdConfigMarkup.includes('id="socdKeyB"'))
+    throw new Error("SOCD key dropdowns remain in the configuration dialog.");
+  const socdPickerBehavior = vm.runInContext(`(() => {
+    state.advancedDraft = defaultSocdDraft();
+    state.socdPickerSlot = 0;
+    const originalB = state.advancedDraft.keyBId;
+    const replacement = keys.find((key) => key.id !== state.advancedDraft.keyAId && key.id !== originalB).id;
+    selectSocdPickerKey(replacement);
+    const afterFirst = [state.advancedDraft.keyAId, state.advancedDraft.keyBId, state.socdPickerSlot];
+    selectSocdPickerKey(replacement);
+    const afterSwap = [state.advancedDraft.keyAId, state.advancedDraft.keyBId, state.socdPickerSlot];
+    state.advancedDraft = defaultSocdDraft();
+    state.socdPickerSlot = 0;
+    return { originalB, replacement, afterFirst, afterSwap };
+  })()`, browser);
+  equal(socdPickerBehavior.afterFirst, [socdPickerBehavior.replacement, socdPickerBehavior.originalB, 1], "Choosing Key A must advance the keyboard picker to Key B.");
+  equal(socdPickerBehavior.afterSwap, [socdPickerBehavior.originalB, socdPickerBehavior.replacement, 1], "Choosing the other slot's key must swap the SOCD pair instead of duplicating it.");
+  const advancedIndicatorCoverage = vm.runInContext(`(() => {
+    const saved = state.hardware.advancedByKey;
+    state.hardware.advancedByKey = new Map(ADVANCED_FEATURES.filter((feature) => feature.mode).map((feature, index) => [keys[index].id, { mode: feature.mode }]));
+    state.page = "advanced";
+    const markup = keyboardHtml();
+    const indicators = ADVANCED_FEATURES.filter((feature) => feature.mode).map((feature) => [feature.code, markup.includes('data-advanced-indicator="' + feature.code + '"'), markup.includes('--advanced-color:' + feature.color)]);
+    state.hardware.advancedByKey = saved;
+    return indicators;
+  })()`, browser);
+  if (advancedIndicatorCoverage.some(([, badge, color]) => !badge || !color))
+    throw new Error(`Firmware-backed Advanced key indicators are incomplete: ${JSON.stringify(advancedIndicatorCoverage)}.`);
+  for (const video of ["socd_last-override.webm", "socd_a-priority.webm", "socd_b-priority.webm", "socd_neutral.webm"])
+    if (!app.includes(video)) throw new Error(`SOCD information dialog omitted ${video}.`);
+  const calibrationNeed = vm.runInContext(`(() => {
+    state.hardware.performance.clear();
+    keys.forEach((key) => state.hardware.performance.set(key.id, { calibrate: 1 }));
+    state.hardware.performance.set(keys[3].id, { calibrate: 0 });
+    const result = calibrationRecommendation();
+    state.hardware.performance.clear();
+    return [result.needed, result.checked, result.uncalibrated.map((key) => key.n)];
+  })()`, browser);
+  equal(calibrationNeed, [true, 64, ["3"]], "Calibration recommendation must follow the per-key performance calibrate byte.");
   if (!app.includes("selectMappingLayer") || app.includes("#layerSelect")) throw new Error("Layer selection must use the Key Mapping page's layer row.");
   const settingsEnums = vm.runInContext(`({
     systems: SYSTEM_MODE_OPTIONS.map(({ value, label }) => [value, label]),
@@ -368,6 +458,10 @@ async function main() {
   const themeState = vm.runInContext(`(setTheme("light"), [state.theme, document.documentElement.dataset.theme, document.documentElement.style.colorScheme])`, browser);
   equal(themeState, ["light", "light", "light"], "Appearance switching must update state and the document immediately.");
   vm.runInContext('applyTheme("mint")', browser);
+  const overviewMarkup = vm.runInContext("overviewPage()", browser);
+  for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
+    if (!overviewMarkup.includes(required)) throw new Error(`Overview layer row omitted ${required}.`);
+  if ((overviewMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Overview must render exactly four in-page layer choices.");
   const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
     if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
@@ -743,6 +837,8 @@ async function main() {
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
   equal(API.LIGHTING_OPEN_MODE, { OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 }, "Upper/lower lighting bit mapping changed.");
+  equal(API.SOCD_MODE, { LAST_OVERRIDE: 0, A_PRIORITY: 1, B_PRIORITY: 2, NEUTRAL: 3 }, "SOCD mode mapping changed.");
+  equal(API.SOCD_PAIR_MODES, [[0, 0], [1, 2], [2, 1], [3, 3]], "SOCD reciprocal mode bytes changed.");
   if (API.DECORATIVE_ROWS !== 1 || API.DECORATIVE_COLS !== 38) throw new Error("Decorative1 geometry changed.");
   equal(API.le16(0x1234), [0x34, 0x12], "Little-endian codec failed.");
   const encodedColors = API.encodeColors([{ r: 0x11, g: 0x22, b: 0x33, custom: true }]);
@@ -753,6 +849,13 @@ async function main() {
   await transport.open();
   const info = await transport.getDeviceInfo();
   if (info.boardIdHex !== "0030000a" || info.firmware !== "0.0.7.0") throw new Error("Device information decoder failed.");
+  const socdReplies = await transport.setSocdPair({
+    first: { row: 1, col: 2 }, second: { row: 1, col: 4 },
+    keycodes: [4, 7], delay: 12, mode: API.SOCD_MODE.A_PRIORITY,
+  });
+  equal(device.sent.at(-2).packet.slice(0, 14), [6, 2, 1, 2, 6, 1, 4, 4, 0, 7, 0, 12, 0, 1], "SOCD Key A packet changed.");
+  equal(device.sent.at(-1).packet.slice(0, 14), [6, 2, 1, 4, 6, 1, 2, 7, 0, 4, 0, 12, 0, 2], "SOCD Key B reciprocal packet changed.");
+  equal(socdReplies.map(({ pairedCol, socdMode }) => [pairedCol, socdMode]), [[4, 1], [2, 2]], "SOCD write replies did not decode as a reciprocal pair.");
   browser.injectedTransport = transport;
   vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
   const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
@@ -853,6 +956,48 @@ async function main() {
   equal(device.sent.at(-1).packet.slice(0, 8), [5, 4, 1, 2, 3, 2, 1, 0xff], "Decorative1 custom packet changed.");
   const liveStrip = await transport.readLiveLighting(1, 38, 1);
   if (liveStrip.length !== 38 || liveStrip[0].r !== 40 || liveStrip[15].r !== 40) throw new Error("Live Decorative1 framebuffer decoding failed.");
+  vm.runInContext(`(() => {
+    state.transport = injectedTransport;
+    state.page = "advanced";
+    state.autoApply = false;
+    state.profile.performance[0] = { ...state.profile.performance[0], mode: 0, normalPress: 1.11 };
+    state.profile.performance[1] = { ...state.profile.performance[1], mode: 0, normalPress: 1.37 };
+    state.hardware.performance.set(0, state.profile.performance[0]);
+    state.hardware.performance.set(1, state.profile.performance[1]);
+    state.hardware.advancedByKey.clear();
+    state.advancedDraft = { keyAId: 0, keyBId: 1, delay: 5, socdMode: SOCD_MODE.NEUTRAL, keycodes: [41, 30] };
+    state.dirty.advanced = true;
+  })()`, browser);
+  const socdPositions = vm.runInContext("[position(keys[0]), position(keys[1])]", browser);
+  await transport.setPerformance(socdPositions[0], vm.runInContext("state.profile.performance[0]", browser));
+  await transport.setPerformance(socdPositions[1], vm.runInContext("state.profile.performance[1]", browser));
+  const socdApplied = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advanced.type, state.hardware.advanced.delay])", browser);
+  equal(socdApplied, [true, 0, "SOCD", 5], "Apply must write, commit, and verify a complete SOCD pair.");
+  const preservedSocdPerformance = await Promise.all(socdPositions.map((position) => transport.getPerformance(position)));
+  equal(preservedSocdPerformance.map(({ mode, normalPress }) => [mode, normalPress]), [[0, 1.11], [0, 1.37]], "SOCD must restore both keys' existing Hall actuation tuning after the firmware resets the pair.");
+  const socdIndicators = vm.runInContext(`(() => {
+    state.page = "advanced";
+    const markup = keyboardHtml();
+    return [(markup.match(/class="advanced-indicator"/g) || []).length, state.hardware.advancedByKey.size, markup.includes('data-advanced-indicator="SOCD"'), markup.includes("SOCD Resolution enabled with")];
+  })()`, browser);
+  equal(socdIndicators, [2, 2, true, true], "Both keys in a verified SOCD pair must show its color-coded keyboard indicator.");
+  const assignmentMarkup = vm.runInContext("advancedAssignmentsPanel()", browser);
+  if ((assignmentMarkup.match(/data-advanced-assignment="SOCD"/g) || []).length !== 1 || !assignmentMarkup.includes('data-remove-advanced="0,1"'))
+    throw new Error("A reciprocal SOCD pair must appear once in the assigned-feature list with a removal option.");
+  if (!device.sent.some(({ packet }) => packet[0] === 2 && packet[1] === 2 && packet[2] === API.SAVE_GROUP.ADVANCED))
+    throw new Error("SOCD Apply did not commit advanced save group 5.");
+  const removalStaged = vm.runInContext(`(() => {
+    toggleAdvancedRemoval("0,1");
+    const markup = advancedAssignmentsPanel();
+    return [dirtyCount(), state.dirty.advancedRemovals.size, markup.includes("REMOVAL STAGED"), markup.includes("Undo removal"), summarizeChanges().some((item) => item.includes("Remove advanced assignments"))];
+  })()`, browser);
+  equal(removalStaged, [2, 2, true, true, true], "Advanced assignment removal must remain staged and visible until Apply.");
+  const removedSocd = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advancedByKey.size])", browser);
+  equal(removedSocd, [true, 0, 0], "Applying a SOCD removal must clear both reciprocal records and the assignment list cache.");
+  const clearedSocdRecords = await Promise.all(socdPositions.map((position) => transport.getAdvancedKey(position)));
+  equal(clearedSocdRecords.map(({ mode }) => mode), [API.ADVANCED_MODE.NONE, API.ADVANCED_MODE.NONE], "SOCD removal did not clear both hardware records.");
+  const preservedAfterRemoval = await Promise.all(socdPositions.map((position) => transport.getPerformance(position)));
+  equal(preservedAfterRemoval.map(({ normalPress }) => normalPress), [1.11, 1.37], "Removing SOCD must preserve both keys' Hall tuning.");
   browser.navigator.hid.getDevices = async () => [device];
   vm.runInContext("state.transport = injectedTransport; state.profile.settings.reportRate = 3; state.dirty.settings.add('reportRate')", browser);
   await vm.runInContext("applyChanges()", browser);

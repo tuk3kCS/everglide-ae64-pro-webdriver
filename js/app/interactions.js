@@ -23,6 +23,89 @@ function stageSetting(field, value) {
   state.dirty.settings.add(field);
   renderStatus();
 }
+function stageSocdPair() {
+  const draft = state.advancedDraft,
+    keyA = keys[Number(draft.keyAId)],
+    keyB = keys[Number(draft.keyBId)];
+  if (!keyA || !keyB) return showToast("Choose two valid physical keys for SOCD.", true);
+  if (keyA.id === keyB.id) return showToast("SOCD Key A and Key B must be different.", true);
+  draft.delay = clamp(draft.delay, 0, 50);
+  draft.socdMode = clamp(draft.socdMode, SOCD_MODE.LAST_OVERRIDE, SOCD_MODE.NEUTRAL);
+  draft.keycodes = [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)];
+  const recordA = state.hardware.advancedByKey.get(keyA.id),
+    partnerA = recordA
+      ? keyAtFirmwarePosition(recordA.pairedRow, recordA.pairedCol)
+      : null;
+  if (Number(recordA?.mode) === ADVANCED_MODE.SOCD && partnerA?.id === keyB.id) {
+    state.dirty.advancedRemovals.delete(keyA.id);
+    state.dirty.advancedRemovals.delete(keyB.id);
+  }
+  state.dirty.advanced = true;
+  render();
+  renderSocdConfiguration();
+  showToast(`${SOCD_MODES[draft.socdMode].name} staged for ${keyA.n} + ${keyB.n}.`);
+}
+function openAdvancedFeatureInfo(code) {
+  const content = advancedFeatureInfoMarkup(code),
+    dialog = document.querySelector("#advancedInfoDialog"),
+    title = document.querySelector("#advancedInfoTitle"),
+    body = document.querySelector("#advancedInfoBody");
+  title.textContent = content.title;
+  body.innerHTML = content.body;
+  openDialog(dialog);
+}
+function renderSocdConfiguration() {
+  const body = document.querySelector("#socdConfigBody");
+  if (!body) return;
+  body.innerHTML = socdEditor();
+  bindSocdConfiguration();
+}
+function openSocdConfiguration() {
+  state.socdPickerSlot = 0;
+  renderSocdConfiguration();
+  openDialog(document.querySelector("#socdConfigDialog"));
+}
+function selectSocdPickerKey(id) {
+  const keyId = Number(id),
+    key = keys.find((candidate) => candidate.id === keyId),
+    slot = Number(state.socdPickerSlot) === 1 ? 1 : 0,
+    otherSlot = slot === 0 ? 1 : 0,
+    fields = ["keyAId", "keyBId"];
+  if (!key) return;
+  if (Number(state.advancedDraft[fields[otherSlot]]) === keyId)
+    state.advancedDraft[fields[otherSlot]] = Number(
+      state.advancedDraft[fields[slot]],
+    );
+  state.advancedDraft[fields[slot]] = keyId;
+  state.advancedDraft.keycodes = null;
+  if (slot === 0) state.socdPickerSlot = 1;
+  renderSocdConfiguration();
+}
+function bindSocdConfiguration() {
+  document.querySelectorAll("[data-socd-picker-slot]").forEach((button) =>
+    button.addEventListener("click", () => {
+      state.socdPickerSlot = Number(button.dataset.socdPickerSlot) === 1 ? 1 : 0;
+      renderSocdConfiguration();
+    }),
+  );
+  document.querySelectorAll("[data-socd-picker-key]").forEach((button) =>
+    button.addEventListener("click", () =>
+      selectSocdPickerKey(button.dataset.socdPickerKey),
+    ),
+  );
+  document.querySelectorAll("[data-socd-mode]").forEach((button) =>
+    button.addEventListener("click", () => {
+      state.advancedDraft.socdMode = Number(button.dataset.socdMode);
+      renderSocdConfiguration();
+    }),
+  );
+  document.querySelector("#socdDelay")?.addEventListener("change", (event) => {
+    state.advancedDraft.delay = clamp(event.target.value, 0, 50);
+    event.target.value = state.advancedDraft.delay;
+  });
+  document.querySelector("#stageSocd")?.addEventListener("click", stageSocdPair);
+  document.querySelector("#readAdvanced")?.addEventListener("click", readAdvanced);
+}
 function bindNumberPair(id, fields) {
   const number = document.querySelector(`#${id}`),
     range = document.querySelector(`[data-range-for="${id}"]`);
@@ -399,6 +482,7 @@ function bindLightingSelection() {
 function bindPage() {
   if (state.page === "performance") bindKeySelection();
   if (state.page === "keymap") bindMappingKeySelection();
+  if (state.page === "advanced") bindMappingKeySelection();
   document.querySelectorAll("[data-goto]").forEach((button) =>
     button.addEventListener("click", () => {
       state.page = button.dataset.goto;
@@ -548,10 +632,12 @@ function bindPage() {
         readAllPerformanceRecords().catch((error) => showToast(error.message, true)),
       );
   }
-  if (state.page === "keymap") {
+  if (state.page === "overview" || state.page === "keymap") {
     document.querySelectorAll("[data-layer]").forEach((button) =>
       button.addEventListener("click", () => selectMappingLayer(button.dataset.layer)),
     );
+  }
+  if (state.page === "keymap") {
     document
       .querySelector("#mappingSearch")
       ?.addEventListener("input", (event) => {
@@ -883,12 +969,22 @@ function bindPage() {
       );
   }
   if (state.page === "advanced") {
-    document
-      .querySelector("#readAdvanced")
-      ?.addEventListener("click", readAdvanced);
-    document
-      .querySelector("#readMacroSpace")
-      ?.addEventListener("click", readMacroSpace);
+    document.querySelectorAll("[data-feature-info]").forEach((button) =>
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openAdvancedFeatureInfo(button.dataset.featureInfo);
+      }),
+    );
+    document.querySelectorAll("[data-advanced-config]").forEach((card) =>
+      card.addEventListener("click", () => {
+        if (card.dataset.advancedConfig === "SOCD") openSocdConfiguration();
+      }),
+    );
+    document.querySelectorAll("[data-remove-advanced]").forEach((button) =>
+      button.addEventListener("click", () =>
+        toggleAdvancedRemoval(button.dataset.removeAdvanced),
+      ),
+    );
   }
   if (state.page === "diagnostics") {
     document

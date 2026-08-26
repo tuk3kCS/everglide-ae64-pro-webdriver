@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _site/js/app _site/assets/images _site/assets/hall-effect-switches
+          mkdir -p _site/js/app _site/assets/images _site/assets/hall-effect-switches _site/assets/tutorial-videos
           cp index.html styles.css protocol.js app.js languages.xml about.html _site/
           cp js/app/*.js _site/js/app/
           cp assets/images/axis.png _site/assets/images/
@@ -42,6 +42,7 @@ jobs:
           node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json
           cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/
           if [ -d assets/hall-effect-switches/images ]; then cp -R assets/hall-effect-switches/images _site/assets/hall-effect-switches/; fi
+          cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/
           touch _site/.nojekyll
 
       - name: Upload GitHub Pages artifact
