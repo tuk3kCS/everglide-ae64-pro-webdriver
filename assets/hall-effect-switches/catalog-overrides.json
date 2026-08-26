@@ -280,28 +280,28 @@
     "_captured_brand": "TTC"
   },
   "8208": {
-    "name": "",
+    "name": "King/KOM",
     "aliases": [],
     "image": "",
     "_captured_name": "万磁王",
     "_captured_brand": "TTC"
   },
   "8336": {
-    "name": "",
+    "name": "Helios",
     "aliases": [],
     "image": "",
     "_captured_name": "太阳神轴",
     "_captured_brand": "TTC"
   },
   "8320": {
-    "name": "",
+    "name": "RGB Sacred Heart",
     "aliases": [],
     "image": "",
     "_captured_name": "圣心万磁王",
     "_captured_brand": "TTC"
   },
   "8304": {
-    "name": "",
+    "name": "RGB Purple Heart",
     "aliases": [],
     "image": "",
     "_captured_name": "紫心万磁王",
@@ -329,21 +329,21 @@
     "_captured_brand": "TTC"
   },
   "8240": {
-    "name": "",
+    "name": "King/KOM POM",
     "aliases": [],
     "image": "",
     "_captured_name": "Pom万磁王",
     "_captured_brand": "TTC"
   },
   "8224": {
-    "name": "",
+    "name": "King/KOM RGB",
     "aliases": [],
     "image": "",
     "_captured_name": "万磁王RGB",
     "_captured_brand": "TTC"
   },
   "13104": {
-    "name": "",
+    "name": "Polar Pro",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁轴Pro",
@@ -365,8 +365,8 @@
     "_captured_brand": "WuqueStudio"
   },
   "14608": {
-    "name": "",
-    "aliases": [],
+    "name": "Alioth/ Yaoguang",
+    "aliases": ["Alioth", "Yaoguang"],
     "image": "",
     "_captured_name": "瑶光轴",
     "_captured_brand": "other",
@@ -380,7 +380,7 @@
     "_captured_brand": "other"
   },
   "13681": {
-    "name": "",
+    "name": "Polar Snow Shine",
     "aliases": [],
     "image": "",
     "_captured_name": "雪曜轴",
@@ -388,7 +388,7 @@
     "brand": "Unionwell / Greetech"
   },
   "13665": {
-    "name": "",
+    "name": "Polar Ice Shine",
     "aliases": [],
     "image": "",
     "_captured_name": "冰曜轴",
@@ -403,14 +403,14 @@
     "_captured_brand": "other"
   },
   "13264": {
-    "name": "",
+    "name": "Everglide Siren",
     "aliases": [],
     "image": "",
     "_captured_name": "海妖轴",
     "_captured_brand": "other"
   },
   "13184": {
-    "name": "",
+    "name": "Sakura Clarity",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁-樱澈轴",
@@ -418,7 +418,7 @@
     "brand": "Unionwell / Greetech"
   },
   "13168": {
-    "name": "",
+    "name": "Ink Jade",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁-墨玉轴",
@@ -426,7 +426,7 @@
     "brand": "Unionwell / Greetech"
   },
   "13152": {
-    "name": "",
+    "name": "Primordial Unity",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁-混元轴",
@@ -434,7 +434,7 @@
     "brand": "Unionwell / Greetech"
   },
   "13136": {
-    "name": "",
+    "name": "Polar Blazing Bloom",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁-灼华轴",
@@ -442,7 +442,7 @@
     "brand": "Unionwell / Greetech"
   },
   "13120": {
-    "name": "",
+    "name": "Polar RGB",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁轴RGB",
@@ -457,7 +457,7 @@
     "_captured_brand": "other"
   },
   "13088": {
-    "name": "",
+    "name": "Polar Pro+",
     "aliases": [],
     "image": "",
     "_captured_name": "极磁轴Pro+",
@@ -486,7 +486,7 @@
     "_captured_brand": "other"
   },
   "12656": {
-    "name": "",
+    "name": "Kailh Magnetic God",
     "aliases": [],
     "image": "",
     "_captured_name": "磁神轴",
@@ -535,14 +535,14 @@
     "_captured_brand": "other"
   },
   "12416": {
-    "name": "",
+    "name": "Latenpow Deng God Pro",
     "aliases": [],
     "image": "",
     "_captured_name": "登神Pro",
     "_captured_brand": "other"
   },
   "12400": {
-    "name": "",
+    "name": "Owlab Ti",
     "aliases": [],
     "image": "",
     "_captured_name": "ti轴",
