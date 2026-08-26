@@ -12,6 +12,8 @@ const APP_FILES = [
   "js/app/switches.js",
   "js/app/theme.js",
   "js/app/mapping.js",
+  "js/app/rappy.js",
+  "js/app/mpt.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -122,7 +124,7 @@ class FakeDevice {
       else reply.set([6, 1, packet[2], packet[3], 0]);
     }
     if (packet[0] === 6 && packet[1] === 2) {
-      const stored = packet.slice(0, 14);
+      const stored = packet.slice(0, 17);
       this.advanced.set(`${packet[2]}:${packet[3]}`, stored);
       this.performance.set(`${packet[2]}:${packet[3]}`, [
         4, 2, packet[2], packet[3], 0,
@@ -199,7 +201,7 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="calibrationRecommendationDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="rsConfigDialog"', 'id="rsConfigBody"', 'id="mptConfigDialog"', 'id="mptConfigBody"', 'id="mptKeyPickerDialog"', 'id="mptKeyPickerBody"', 'id="combinationConfigDialog"', 'id="combinationConfigBody"', 'id="calibrationRecommendationDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
@@ -290,7 +292,7 @@ async function main() {
   const advancedMarkup = vm.runInContext("advancedPage()", browser);
   if ((advancedMarkup.match(/data-feature-info=/g) || []).length !== 9)
     throw new Error("Every advanced feature and placeholder must expose an information button.");
-  for (const required of ["Macros", "Key Combination", 'data-advanced-config="SOCD"'])
+  for (const required of ["Macros", "Key Combination", 'data-advanced-config="MPT"', 'data-advanced-config="SOCD"', 'data-advanced-config="RS"', 'data-advanced-config="COMBO"'])
     if (!advancedMarkup.includes(required)) throw new Error(`Advanced/SOCD UI omitted ${required}.`);
   if (advancedMarkup.includes('class="panel full-span warning-card"')) throw new Error("The removed Advanced warning panel returned.");
   if ((advancedMarkup.match(/class="advanced-card compact/g) || []).length !== 9)
@@ -302,12 +304,88 @@ async function main() {
   for (const removed of ["Selected-key record", 'id="readMacroSpace"', 'class="raw-output"'])
     if (advancedMarkup.includes(removed)) throw new Error(`Advanced page retained unnecessary selected-record diagnostics: ${removed}.`);
   if (!advancedMarkup.includes('class="panel layout-board full-span')) throw new Error("Advanced keyboard must use the full page width after removing selected-record diagnostics.");
+  const mptEditorCheck = vm.runInContext(`(() => {
+    state.profile.performance[0].axisRangeMax = 3331;
+    state.profile.performance[0].axisV2Id = 0;
+    state.advancedDraft = defaultMultipointDraft(0);
+    state.advancedDraft.keycodes = [41, 58, 0];
+    state.advancedDraft.depths = [.5, 1, 1.5];
+    const markup = multipointEditor();
+    const initialBounds = [0, 1, 2].map((index) => multipointDepthBounds(index));
+    setMultipointDepth(0, 1);
+    setMultipointDepth(2, 3.3);
+    setMultipointDepth(1, 3.3);
+    setMultipointDepth(0, 3.2);
+    return {
+      hostKeys: (markup.match(/data-mpt-host=/g) || []).length,
+      widths: (markup.match(/style="--u:/g) || []).length,
+      sliders: (markup.match(/data-mpt-depth=/g) || []).length,
+      maxTravel: multipointTravelLimit(keys[0]),
+      initialBounds,
+      clampedDepths: state.advancedDraft.depths,
+      allowed: [MPT_CAPTURED_BASIC_CODES.length, MPT_CAPTURED_EXTENDED_CODES.length, MPT_ALLOWED_CODES.size],
+      excludes: [0, 1, 40, 42, 79, 0x20cd, 0x4100, 0xf101].every((code) => !MPT_ALLOWED_CODES.has(code)),
+    };
+  })()`, browser);
+  equal(mptEditorCheck, { hostKeys: 64, widths: 64, sliders: 3, maxTravel: 3.3, initialBounds: [{ min: .1, max: .9 }, { min: .6, max: 1.4 }, { min: 1.1, max: 3.3 }], clampedDepths: [3.1, 3.2, 3.3], allowed: [49, 57, 106], excludes: true }, "MPT must use the selected switch travel, three ordered 0.1 mm sliders, and the captured compatible key subset.");
+  const mptPickerCheck = vm.runInContext(`(() => {
+    state.advancedDraft = { feature: "MPT", hostId: 0, keycodes: [41, 58, 0], depths: [.5, 1, 1.5] };
+    state.mptKeyPickerStage = 2; state.mptKeyPickerGroup = "basic"; renderMultipointKeyPicker();
+    const basic = document.querySelector("#mptKeyPickerBody").innerHTML;
+    state.mptKeyPickerGroup = "extended"; renderMultipointKeyPicker();
+    const extended = document.querySelector("#mptKeyPickerBody").innerHTML;
+    return [(basic.match(/data-mpt-keycode=/g) || []).length, (extended.match(/data-mpt-keycode=/g) || []).length, basic.includes("Excluded from the captured MPT palette"), extended.includes("Used on another stage")];
+  })()`, browser);
+  equal(mptPickerCheck, [49, 57, true, true], "MPT key-value popup must list the captured remap subset and prevent duplicate stage outputs.");
+  const mptTutorial = vm.runInContext("multipointFeatureInfo()", browser);
+  for (const excerpt of ["three independent trigger depths", "stage-switching latency below 1 ms", "project cars", "multipoint_trigger.webm"])
+    if (!mptTutorial.body.toLowerCase().includes(excerpt)) throw new Error(`MPT manufacturer tutorial omitted ${excerpt}.`);
+  const combinationCodec = vm.runInContext(`(() => {
+    const captured = combinationKeycode([1, 2, 4, 8], 4);
+    const extended = combinationKeycode(COMBINATION_MODIFIERS.map(({ value }) => value), 4);
+    return {
+      captured,
+      capturedCount: decodeCombinationKeycode(captured).modifiers.length,
+      extended,
+      guardedExtended: decodeCombinationKeycode(extended),
+      explicitExtendedCount: decodeCombinationKeycode(extended, true).modifiers.length,
+    };
+  })()`, browser);
+  equal(combinationCodec, { captured: 0x0f04, capturedCount: 4, extended: 0xff04, guardedExtended: null, explicitExtendedCount: 8 }, "AE64 combinations must encode one modifier byte plus one trigger while guarding ambiguous extended masks.");
+  const combinationMarkup = vm.runInContext(`(syncCombinationDraft(0, 0), combinationEditor())`, browser);
+  if ((combinationMarkup.match(/data-combination-host=/g) || []).length !== 64 || (combinationMarkup.match(/style="--u:/g) || []).length !== 64)
+    throw new Error("Key Combination must render all 64 physical host keys with correct widths.");
+  if ((combinationMarkup.match(/data-combination-modifier=/g) || []).length !== 8 || (combinationMarkup.match(/data-combination-layer=/g) || []).length !== 4)
+    throw new Error("Key Combination must expose eight HID modifiers and all four layers.");
+  for (const required of ['id="combinationTrigger"', 'id="stageCombination"', "Simultaneous, not sequenced"])
+    if (!combinationMarkup.includes(required)) throw new Error(`Key Combination editor omitted ${required}.`);
+  const combinationRoundTrip = vm.runInContext(`(() => {
+    const savedProfile = clone(state.profile), savedOriginal = clone(state.original), savedSelected = new Set(state.selectedKeys), savedLayer = state.profile.layer;
+    state.profile = defaultProfile(); state.original = clone(state.profile); state.selectedKeys = new Set([0]); clearDirty();
+    const original = displayedKeycode(keys[0], 0);
+    state.combinationDraft = { hostId: 0, layer: 0, modifiers: COMBINATION_MODIFIERS.map(({ value }) => value), trigger: 4 };
+    stageCombination();
+    const staged = state.profile.keycodes[0][0], base = state.profile.combinationBases["0:0:0"], entries = combinationAssignmentEntries();
+    state.profile.profileIndex = 1;
+    const otherProfileEntries = combinationAssignmentEntries().length;
+    state.profile.profileIndex = 0;
+    removeCombinationAssignment("0:0");
+    const restored = state.profile.keycodes[0][0], remaining = combinationAssignmentEntries().length;
+    state.profile = savedProfile; state.original = savedOriginal; state.selectedKeys = savedSelected; state.profile.layer = savedLayer; clearDirty();
+    return { original, staged, base, entries: entries.length, otherProfileEntries, details: entries[0]?.details, restored, remaining };
+  })()`, browser);
+  equal(combinationRoundTrip, { original: 41, staged: 0xff04, base: 41, entries: 1, otherProfileEntries: 0, details: "Main · L Ctrl + L Shift + L Alt + L GUI + R Ctrl + R Shift + R Alt + R GUI + A", restored: 41, remaining: 0 }, "Extended Key Combination staging/removal must preserve the replaced mapping locally and isolate its metadata by profile.");
+  const combinationGuide = vm.runInContext("combinationFeatureInfo().body", browser);
+  for (const required of ["Pick the host", "Build the report", "Understand timing", "Test safely", "same report"])
+    if (!combinationGuide.includes(required)) throw new Error(`Generated Key Combination tutorial omitted ${required}.`);
   vm.runInContext("openSocdConfiguration()", browser);
   const socdConfigMarkup = elements.get("#socdConfigBody").innerHTML;
   for (const required of ['data-socd-picker-slot="0"', 'data-socd-picker-slot="1"', 'id="stageSocd"', "Last Override", "A Priority", "B Priority", "Neutral"])
     if (!socdConfigMarkup.includes(required)) throw new Error(`SOCD configuration dialog omitted ${required}.`);
   if ((socdConfigMarkup.match(/data-socd-picker-key=/g) || []).length !== 64)
     throw new Error("SOCD configuration must display all 64 physical keys instead of dropdown lists.");
+  if ((socdConfigMarkup.match(/style="--u:/g) || []).length !== 64)
+    throw new Error("SOCD configuration must preserve every key's physical width unit.");
   if (socdConfigMarkup.includes('id="socdKeyA"') || socdConfigMarkup.includes('id="socdKeyB"'))
     throw new Error("SOCD key dropdowns remain in the configuration dialog.");
   const socdPickerBehavior = vm.runInContext(`(() => {
@@ -325,6 +403,28 @@ async function main() {
   })()`, browser);
   equal(socdPickerBehavior.afterFirst, [socdPickerBehavior.replacement, socdPickerBehavior.originalB, 1], "Choosing Key A must advance the keyboard picker to Key B.");
   equal(socdPickerBehavior.afterSwap, [socdPickerBehavior.originalB, socdPickerBehavior.replacement, 1], "Choosing the other slot's key must swap the SOCD pair instead of duplicating it.");
+  vm.runInContext("openRappySnappyConfiguration()", browser);
+  const rsConfigMarkup = elements.get("#rsConfigBody").innerHTML;
+  for (const required of ['data-rs-picker-slot="0"', 'data-rs-picker-slot="1"', 'id="rsDelay"', 'id="stageRs"', "deeper key active", "full bottom-out"])
+    if (!rsConfigMarkup.includes(required)) throw new Error(`Rappy Snappy configuration dialog omitted ${required}.`);
+  if ((rsConfigMarkup.match(/data-rs-picker-key=/g) || []).length !== 64 || (rsConfigMarkup.match(/style="--u:/g) || []).length !== 64)
+    throw new Error("Rappy Snappy must display all 64 physical keys with their real widths.");
+  const rsPickerBehavior = vm.runInContext(`(() => {
+    state.advancedDraft = defaultRappySnappyDraft(); state.socdPickerSlot = 0;
+    const originalB = state.advancedDraft.keyBId;
+    const replacement = keys.find((key) => key.id !== state.advancedDraft.keyAId && key.id !== originalB).id;
+    selectRappySnappyPickerKey(replacement);
+    const afterFirst = [state.advancedDraft.keyAId, state.advancedDraft.keyBId, state.socdPickerSlot];
+    selectRappySnappyPickerKey(replacement);
+    const afterSwap = [state.advancedDraft.keyAId, state.advancedDraft.keyBId, state.socdPickerSlot];
+    state.advancedDraft = defaultSocdDraft(); state.socdPickerSlot = 0;
+    return { originalB, replacement, afterFirst, afterSwap };
+  })()`, browser);
+  equal(rsPickerBehavior.afterFirst, [rsPickerBehavior.replacement, rsPickerBehavior.originalB, 1], "Choosing RS Key A must advance the keyboard picker to Key B.");
+  equal(rsPickerBehavior.afterSwap, [rsPickerBehavior.originalB, rsPickerBehavior.replacement, 1], "Choosing the other RS slot's key must swap the pair instead of duplicating it.");
+  const rsGuide = vm.runInContext("rappySnappyFeatureInfo().body", browser);
+  for (const required of ["迅洁 (RS)", "pressed farther", "pressed completely", "Valorant", "rs-Ck_H-6K8.webm"])
+    if (!rsGuide.includes(required)) throw new Error(`Manufacturer-derived RS tutorial omitted ${required}.`);
   const advancedIndicatorCoverage = vm.runInContext(`(() => {
     const saved = state.hardware.advancedByKey;
     state.hardware.advancedByKey = new Map(ADVANCED_FEATURES.filter((feature) => feature.mode).map((feature, index) => [keys[index].id, { mode: feature.mode }]));
@@ -832,7 +932,7 @@ async function main() {
   if (!css.includes("calc((var(--unit) + var(--key-gap)) * var(--u) - var(--key-gap))")) throw new Error("Wide keys do not compensate for the grid gaps they span.");
   for (const layoutRule of ['grid-template-areas: ". top ." "left keyboard right" ". bottom ."', ".lighting-context-perKey .unified-lighting-preview [data-strip-led]", ".lighting-context-strip .unified-lighting-preview [data-key]", ".lighting-selection-marquee"])
     if (!css.includes(layoutRule)) throw new Error(`Unified preview selection/layout scoping omitted ${layoutRule}.`);
-  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker", ".performance-workspace-tabs", ".switch-catalog-grid", ".profile-slot-row button", "grid-template-columns: repeat(6, minmax(0, 1fr))"])
+  for (const themeRule of [':root[data-theme="dark"]', ':root[data-theme="light"]', "select:focus-visible", ".theme-choice.active", "--key-start", "--keyboard-deck", ".sidebar-preferences", ".layer-tabs", ".axis-actuation-marker", ".performance-workspace-tabs", ".switch-catalog-grid", ".profile-slot-row button", ".combination-modifier-grid", ".combination-report-diagram", ".mpt-stage-stack", ".mpt-key-grid", "grid-template-columns: repeat(6, minmax(0, 1fr))"])
     if (!css.includes(themeRule)) throw new Error(`Appearance/select styling omitted ${themeRule}.`);
 
   equal(API.DEVICE_FILTERS, [{ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 1 }], "WebHID filter changed.");
@@ -856,6 +956,20 @@ async function main() {
   equal(device.sent.at(-2).packet.slice(0, 14), [6, 2, 1, 2, 6, 1, 4, 4, 0, 7, 0, 12, 0, 1], "SOCD Key A packet changed.");
   equal(device.sent.at(-1).packet.slice(0, 14), [6, 2, 1, 4, 6, 1, 2, 7, 0, 4, 0, 12, 0, 2], "SOCD Key B reciprocal packet changed.");
   equal(socdReplies.map(({ pairedCol, socdMode }) => [pairedCol, socdMode]), [[4, 1], [2, 2]], "SOCD write replies did not decode as a reciprocal pair.");
+  const rsReplies = await transport.setRappySnappyPair({
+    first: { row: 2, col: 3 }, second: { row: 2, col: 5 },
+    keycodes: [4, 7], delay: 9,
+  });
+  equal(device.sent.at(-2).packet.slice(0, 13), [6, 2, 2, 3, 7, 2, 5, 4, 0, 7, 0, 9, 0], "RS Key A packet changed.");
+  equal(device.sent.at(-1).packet.slice(0, 13), [6, 2, 2, 5, 7, 2, 3, 7, 0, 4, 0, 9, 0], "RS Key B reciprocal packet changed.");
+  equal(rsReplies.map(({ type, pairedCol, delay }) => [type, pairedCol, delay]), [["RS", 5, 9], ["RS", 3, 9]], "RS write replies did not decode as a reciprocal pair.");
+  const mptReply = await transport.setMultipointTrigger({
+    position: { row: 3, col: 4 }, keycodes: [4, 58, 0], depths: [.5, 1.2, 3.3],
+  });
+  equal(device.sent.at(-1).packet.slice(0, 17), [6, 2, 3, 4, 2, 4, 0, 58, 0, 0, 0, 0xf4, 0x01, 0xb0, 0x04, 0xe4, 0x0c], "MPT mode-2 packet changed.");
+  equal([mptReply.type, mptReply.keycodes, mptReply.depths], ["MPT", [4, 58, 0], [.5, 1.2, 3.3]], "MPT write reply did not decode three outputs and depths.");
+  device.advanced.clear();
+  device.performance.clear();
   browser.injectedTransport = transport;
   vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
   const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
@@ -934,6 +1048,8 @@ async function main() {
   vm.runInContext("state.page = 'overview'", browser);
   await transport.setKeyCode({ row: 1, col: 2 }, 0x1234, 3);
   equal(device.sent.at(-1).packet.slice(0, 7), [3, 4, 3, 1, 2, 0x34, 0x12], "Four-layer keycode write encoding failed.");
+  await transport.setKeyCode({ row: 1, col: 2 }, 0xff04, 2);
+  equal(device.sent.at(-1).packet.slice(0, 7), [3, 4, 2, 1, 2, 0x04, 0xff], "Extended combination keycode packet encoding failed.");
   await transport.saveParameters(API.SAVE_GROUP.LAYOUT);
   equal(device.sent.at(-1).packet.slice(0, 3), [2, 2, 4], "Layout save group changed.");
   await transport.setCustomLightingPacket(2, [{ r: 0x11, g: 0x22, b: 0x33, custom: true }]);
@@ -998,6 +1114,60 @@ async function main() {
   equal(clearedSocdRecords.map(({ mode }) => mode), [API.ADVANCED_MODE.NONE, API.ADVANCED_MODE.NONE], "SOCD removal did not clear both hardware records.");
   const preservedAfterRemoval = await Promise.all(socdPositions.map((position) => transport.getPerformance(position)));
   equal(preservedAfterRemoval.map(({ normalPress }) => normalPress), [1.11, 1.37], "Removing SOCD must preserve both keys' Hall tuning.");
+  vm.runInContext(`(() => {
+    state.profile.performance[2] = { ...state.profile.performance[2], mode: 0, normalPress: .83 };
+    state.profile.performance[3] = { ...state.profile.performance[3], mode: 0, normalPress: 1.72 };
+    state.hardware.performance.set(2, state.profile.performance[2]);
+    state.hardware.performance.set(3, state.profile.performance[3]);
+    state.advancedDraft = { feature: "RS", keyAId: 2, keyBId: 3, delay: 9, socdMode: SOCD_MODE.LAST_OVERRIDE, keycodes: [30, 31] };
+    state.dirty.advanced = true;
+  })()`, browser);
+  const rsPositions = vm.runInContext("[position(keys[2]), position(keys[3])]", browser);
+  await transport.setPerformance(rsPositions[0], vm.runInContext("state.profile.performance[2]", browser));
+  await transport.setPerformance(rsPositions[1], vm.runInContext("state.profile.performance[3]", browser));
+  const rsSummary = vm.runInContext("summarizeChanges()", browser);
+  if (!rsSummary.some((item) => item.includes("RS:") && item.includes("deeper key wins"))) throw new Error("Apply review must describe the staged RS pair.");
+  const rsApplied = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advanced.type, state.hardware.advanced.delay])", browser);
+  equal(rsApplied, [true, 0, "RS", 9], "Apply must write, commit, and verify a complete Rappy Snappy pair.");
+  const preservedRsPerformance = await Promise.all(rsPositions.map((position) => transport.getPerformance(position)));
+  equal(preservedRsPerformance.map(({ mode, normalPress }) => [mode, normalPress]), [[0, .83], [0, 1.72]], "RS must restore both keys' existing Hall actuation tuning after the firmware resets the pair.");
+  const rsIndicators = vm.runInContext(`(() => {
+    state.page = "advanced";
+    const keyboard = keyboardHtml(), assignments = advancedAssignmentsPanel();
+    return [(keyboard.match(/data-advanced-indicator="RS"/g) || []).length, keyboard.includes("Rappy Snappy enabled with"), (assignments.match(/data-advanced-assignment="RS"/g) || []).length, assignments.includes('data-remove-advanced="2,3"'), assignments.includes("Deeper key wins")];
+  })()`, browser);
+  equal(rsIndicators, [2, true, 1, true, true], "A verified RS pair must show two colored indicators and one removable assignment entry.");
+  vm.runInContext('toggleAdvancedRemoval("2,3")', browser);
+  const removedRs = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advancedByKey.size])", browser);
+  equal(removedRs, [true, 0, 0], "Applying an RS removal must clear both reciprocal records.");
+  const preservedAfterRsRemoval = await Promise.all(rsPositions.map((position) => transport.getPerformance(position)));
+  equal(preservedAfterRsRemoval.map(({ normalPress }) => normalPress), [.83, 1.72], "Removing RS must preserve both keys' Hall tuning.");
+  vm.runInContext(`(() => {
+    state.profile.keycodes[0][4] = 4; state.hardware.keycodes.set("0:4", 4);
+    state.profile.performance[4] = { ...state.profile.performance[4], mode: 0, normalPress: 1.23, axisRangeMax: 3331 };
+    state.hardware.performance.set(4, state.profile.performance[4]);
+    state.advancedDraft = { feature: "MPT", hostId: 4, keycodes: [4, 58, 0], depths: [.5, 1.2, 3.3] };
+    state.dirty.advanced = true;
+  })()`, browser);
+  const mptPosition = vm.runInContext("position(keys[4])", browser);
+  await transport.setPerformance(mptPosition, vm.runInContext("state.profile.performance[4]", browser));
+  const mptSummary = vm.runInContext("summarizeChanges()", browser);
+  if (!mptSummary.some((item) => item.includes("MPT:") && item.includes("@ 0.5 mm") && item.includes("@ 1.2 mm"))) throw new Error("Apply review must describe the staged MPT outputs and depths.");
+  const mptApplied = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advanced?.type || null, state.hardware.advanced?.depths || null])", browser);
+  equal(mptApplied, [true, 0, "MPT", [.5, 1.2, 3.3]], "Apply must write, commit, and verify Multi-Point Trigger.");
+  const preservedMptPerformance = await transport.getPerformance(mptPosition);
+  equal([preservedMptPerformance.mode, preservedMptPerformance.normalPress, preservedMptPerformance.axisRangeMax], [0, 1.23, 3331], "MPT must restore the host key's Hall and switch-selector tuning after firmware reset.");
+  const mptIndicators = vm.runInContext(`(() => {
+    state.page = "advanced";
+    const keyboard = keyboardHtml(), assignments = advancedAssignmentsPanel();
+    return [(keyboard.match(/data-advanced-indicator="MPT"/g) || []).length, (assignments.match(/data-advanced-assignment="MPT"/g) || []).length, assignments.includes('data-remove-advanced="4"'), assignments.includes("@ 0.5 mm"), !assignments.includes("@ 3.3 mm")];
+  })()`, browser);
+  equal(mptIndicators, [1, 1, true, true, true], "MPT must show one colored keyboard indicator and one removable two-stage assignment.");
+  vm.runInContext('toggleAdvancedRemoval("4")', browser);
+  const removedMpt = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advancedByKey.size])", browser);
+  equal(removedMpt, [true, 0, 0], "Applying an MPT removal must clear its single hardware record.");
+  const preservedAfterMptRemoval = await transport.getPerformance(mptPosition);
+  equal(preservedAfterMptRemoval.normalPress, 1.23, "Removing MPT must preserve the host key's Hall tuning.");
   browser.navigator.hid.getDevices = async () => [device];
   vm.runInContext("state.transport = injectedTransport; state.profile.settings.reportRate = 3; state.dirty.settings.add('reportRate')", browser);
   await vm.runInContext("applyChanges()", browser);

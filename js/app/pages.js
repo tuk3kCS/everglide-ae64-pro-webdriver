@@ -75,23 +75,33 @@ function advancedKeyMeta(key) {
   const draft = state.advancedDraft;
   if (
     state.dirty.advanced &&
-    (Number(draft.keyAId) === key.id || Number(draft.keyBId) === key.id)
+    advancedDraftKeyIds(draft).includes(key.id)
   ) {
-    const partnerId = Number(draft.keyAId) === key.id
-      ? Number(draft.keyBId)
-      : Number(draft.keyAId);
+    const stagedIds = advancedDraftKeyIds(draft), partnerId = stagedIds.find((id) => id !== key.id);
     return {
-      feature: ADVANCED_FEATURES.find((item) => item.code === "SOCD"),
+      feature: ADVANCED_FEATURES.find((item) => item.code === advancedDraftFeatureCode(draft)),
       staged: true,
       removing: false,
-      partner: keys[partnerId]?.n || "paired key",
+      partner: partnerId === undefined ? "" : keys[partnerId]?.n || "paired key",
     };
   }
   const record = state.hardware.advancedByKey.get(key.id);
   const feature = ADVANCED_FEATURES.find(
     (item) => Number(item.mode) === Number(record?.mode),
   );
-  if (!feature) return null;
+  if (!feature) {
+    const combination = decodeCombinationKeycode(
+      displayedKeycode(key, state.profile.layer),
+      combinationTokenKnown(combinationBaseToken(state.profile.layer, key.id)),
+    );
+    if (!combination) return null;
+    return {
+      feature: ADVANCED_FEATURES.find((item) => item.code === "COMBO"),
+      staged: state.dirty.mapping.has(`${state.profile.layer}:${key.id}`),
+      removing: false,
+      partner: "",
+    };
+  }
   const paired = [ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(
       Number(record.mode),
     ),
@@ -685,14 +695,14 @@ function settingsPage() {
 }
 const ADVANCED_FEATURES = [
   { code: "DKS", title: "Dynamic Keystroke", body: "Up to four keycodes at multiple press/release points.", mode: 1, color: "#ff6f91" },
-  { code: "MPT", title: "Multi-point Trigger", body: "Three key actions at distinct travel depths.", mode: 2, color: "#ffb454" },
+  { code: "MPT", title: "Multi-Point Trigger", body: "Two or three key actions at distinct travel depths.", mode: 2, color: "#ffb454", ready: true },
   { code: "MT", title: "Mod-Tap", body: "Tap one function and hold another after a time threshold.", mode: 3, color: "#0035f5" },
   { code: "TGL", title: "Toggle Key", body: "Latch a key action with firmware timing.", mode: 4, color: "#52c7ff" },
   { code: "END", title: "End Key", body: "Trigger paired actions with an end delay.", mode: 5, color: "#44d6a3" },
   { code: "SOCD", title: "SOCD Resolution", body: "Resolve two opposing keys using one of four captured firmware modes.", mode: 6, color: "#8d86ff", ready: true },
-  { code: "RS", title: "Rappy Snappy", body: "Compare two keys by travel and prefer the deeper input.", mode: 7, color: "#f27bd2" },
+  { code: "RS", title: "Rappy Snappy", body: "Compare two keys by travel and prefer the deeper input.", mode: 7, color: "#f27bd2", ready: true },
   { code: "MACRO", title: "Macros", body: "Placeholder for recording and assigning multi-action sequences.", color: "#d49a62", placeholder: true },
-  { code: "COMBO", title: "Key Combination", body: "Placeholder for assigning a modifier and key combination.", color: "#58d1d6", placeholder: true },
+  { code: "COMBO", title: "Key Combination", body: "Send an eight-bit modifier mask and one trigger key together.", color: "#58d1d6", ready: true },
 ];
 const SOCD_MODES = [
   { value: SOCD_MODE.LAST_OVERRIDE, id: "last-override", name: "Last Override", body: "The most recently pressed direction replaces the earlier one." },
@@ -718,6 +728,9 @@ ADVANCED_FEATURE_INFO.SOCD = {
     ["Neutral", "Opposite commands output a neutral value while both keys are held.", "assets/tutorial-videos/socd_neutral.webm"],
   ].map(([name, text, video]) => `<article><video controls preload="metadata" playsinline src="${video}" aria-label="${name} SOCD tutorial"></video><div><strong>${name}</strong><p>${text}</p></div></article>`).join("")}</div>`,
 };
+ADVANCED_FEATURE_INFO.COMBO = combinationFeatureInfo();
+ADVANCED_FEATURE_INFO.RS = rappySnappyFeatureInfo();
+ADVANCED_FEATURE_INFO.MPT = multipointFeatureInfo();
 function advancedFeatureInfoMarkup(code) {
   return ADVANCED_FEATURE_INFO[code] || {
     title: "Advanced feature",
@@ -734,7 +747,7 @@ function socdPickerKeyboardHtml() {
       ),
       pairPosition = pair.indexOf(key.id),
       mapped = keycodeLabel(displayedKeycode(key, 0));
-    return `<button class="key socd-picker-key ${pairPosition === 0 ? "pair-a" : pairPosition === 1 ? "pair-b" : ""}" type="button" data-socd-picker-key="${key.id}" aria-pressed="${pairPosition >= 0}" aria-label="Set SOCD Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}" title="Set Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}"><span class="mapped">${esc(key.n)}</span><b>${esc(mapped)}</b>${pairPosition >= 0 ? `<i class="socd-pair-marker" aria-hidden="true">${pairPosition ? "B" : "A"}</i>` : ""}</button>`;
+    return `<button class="key socd-picker-key ${pairPosition === 0 ? "pair-a" : pairPosition === 1 ? "pair-b" : ""}" style="--u:${key.u}" type="button" data-socd-picker-key="${key.id}" aria-pressed="${pairPosition >= 0}" aria-label="Set SOCD Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}" title="Set Key ${activeSlot ? "B" : "A"} to physical ${esc(key.n)}"><span class="mapped">${esc(key.n)}</span><b>${esc(mapped)}</b>${pairPosition >= 0 ? `<i class="socd-pair-marker" aria-hidden="true">${pairPosition ? "B" : "A"}</i>` : ""}</button>`;
   }).join("")}</div>`).join("")}</div></div>`;
 }
 function socdEditor() {
@@ -743,7 +756,7 @@ function socdEditor() {
     keyB = keys[draft.keyBId] || keys[1],
     keycodes = Array.isArray(draft.keycodes) ? draft.keycodes : [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)],
     activeSlot = Number(state.socdPickerSlot) === 1 ? 1 : 0;
-  return `<div class="socd-editor"><div class="panel-head"><div><span class="eyebrow">CAPTURE-VERIFIED EDITOR</span><h2>SOCD pair</h2><p>Select Key A or Key B, then choose its physical position on the keyboard. Add a resolution mode and an optional 0–50 ms delay.</p></div><span class="badge ready">4 MODES</span></div><div class="socd-picker-heading"><div><h3>Physical key pair</h3><p>After choosing Key A, the picker advances to Key B automatically.</p></div><div class="socd-pair-slots" role="tablist" aria-label="SOCD pair position"><button type="button" role="tab" data-socd-picker-slot="0" class="${activeSlot === 0 ? "active" : ""}" aria-selected="${activeSlot === 0}"><i>A</i><span><b>Key A</b><strong>${esc(keyA.n)}</strong><small>${esc(keycodeLabel(keycodes[0]))}</small></span></button><button type="button" role="tab" data-socd-picker-slot="1" class="${activeSlot === 1 ? "active" : ""}" aria-selected="${activeSlot === 1}"><i>B</i><span><b>Key B</b><strong>${esc(keyB.n)}</strong><small>${esc(keycodeLabel(keycodes[1]))}</small></span></button></div></div>${socdPickerKeyboardHtml()}<div class="socd-picker-legend"><span><i class="pair-a"></i>Key A</span><span><i class="pair-b"></i>Key B</span><strong>Choosing the other slot’s key swaps A and B.</strong></div><div class="socd-mode-grid" role="group" aria-label="SOCD resolution mode">${SOCD_MODES.map((mode) => `<button class="socd-mode ${Number(draft.socdMode) === mode.value ? "active" : ""}" type="button" data-socd-mode="${mode.value}" aria-pressed="${Number(draft.socdMode) === mode.value}"><b>${mode.name}</b><small>${mode.body}</small></button>`).join("")}</div><div class="socd-footer"><label class="field socd-delay"><span>SOCD delay</span><div class="input-with-unit"><input id="socdDelay" type="number" min="0" max="50" step="1" value="${clamp(draft.delay, 0, 50)}"><span>ms</span></div></label><div class="apply-row"><button class="button ghost" id="readAdvanced" type="button" ${connected() ? "" : "disabled"}>Read selected record</button><button class="button primary" id="stageSocd" type="button">Stage SOCD pair</button></div></div>${state.dirty.advanced ? '<p class="socd-stage-note">This complete SOCD pair is staged. Use Apply changes, or let experimental Auto apply write and verify it.</p>' : ""}</div>`;
+  return `<div class="socd-editor"><div class="panel-head"><div><span class="eyebrow">CAPTURE-VERIFIED EDITOR</span><h2>SOCD pair</h2><p>Select Key A or Key B, then choose its physical position on the keyboard. Add a resolution mode and an optional 0–50 ms delay.</p></div><span class="badge ready">4 MODES</span></div><div class="socd-picker-heading"><div><h3>Physical key pair</h3><p>After choosing Key A, the picker advances to Key B automatically.</p></div><div class="socd-pair-slots" role="tablist" aria-label="SOCD pair position"><button type="button" role="tab" data-socd-picker-slot="0" class="${activeSlot === 0 ? "active" : ""}" aria-selected="${activeSlot === 0}"><i>A</i><span><b>Key A</b><strong>${esc(keyA.n)}</strong><small>${esc(keycodeLabel(keycodes[0]))}</small></span></button><button type="button" role="tab" data-socd-picker-slot="1" class="${activeSlot === 1 ? "active" : ""}" aria-selected="${activeSlot === 1}"><i>B</i><span><b>Key B</b><strong>${esc(keyB.n)}</strong><small>${esc(keycodeLabel(keycodes[1]))}</small></span></button></div></div>${socdPickerKeyboardHtml()}<div class="socd-picker-legend"><span><i class="pair-a"></i>Key A</span><span><i class="pair-b"></i>Key B</span><strong>Choosing the other slot’s key swaps A and B.</strong></div><div class="socd-mode-grid" role="group" aria-label="SOCD resolution mode">${SOCD_MODES.map((mode) => `<button class="socd-mode ${Number(draft.socdMode) === mode.value ? "active" : ""}" type="button" data-socd-mode="${mode.value}" aria-pressed="${Number(draft.socdMode) === mode.value}"><b>${mode.name}</b><small>${mode.body}</small></button>`).join("")}</div><div class="socd-footer"><label class="field socd-delay"><span>SOCD delay</span><div class="input-with-unit"><input id="socdDelay" type="number" min="0" max="50" step="1" value="${clamp(draft.delay, 0, 50)}"><span>ms</span></div></label><div class="apply-row"><button class="button ghost" id="readAdvanced" type="button" ${connected() ? "" : "disabled"}>Read selected record</button><button class="button primary" id="stageSocd" type="button">Stage SOCD pair</button></div></div>${state.dirty.advanced && draft.feature !== "RS" ? '<p class="socd-stage-note">This complete SOCD pair is staged. Use Apply changes, or let experimental Auto apply write and verify it.</p>' : ""}</div>`;
 }
 function keyAtFirmwarePosition(row, col) {
   return keys.find((key) => {
@@ -769,9 +782,13 @@ function advancedAssignmentEntries() {
       token = `${feature.code}:${ids.join(":")}`;
     if (seen.has(token)) return;
     seen.add(token);
-    const details = Number(record.mode) === ADVANCED_MODE.SOCD
+    const details = Number(record.mode) === ADVANCED_MODE.MPT
+      ? multipointRecordDetails(record)
+      : Number(record.mode) === ADVANCED_MODE.SOCD
       ? `${SOCD_MODES[Number(record.socdMode)]?.name || "SOCD mode"} · ${Number(record.delay) || 0} ms delay`
-      : `Firmware mode ${record.mode}${partner ? " · paired action" : ""}`;
+      : Number(record.mode) === ADVANCED_MODE.RS
+        ? `Deeper key wins · ${Number(record.delay) || 0} ms delay`
+        : `Firmware mode ${record.mode}${partner ? " · paired action" : ""}`;
     entries.push({
       feature,
       ids,
@@ -783,30 +800,37 @@ function advancedAssignmentEntries() {
   });
   if (state.dirty.advanced) {
     const draft = state.advancedDraft,
-      ids = [Number(draft.keyAId), Number(draft.keyBId)].sort((a, b) => a - b),
-      feature = ADVANCED_FEATURES.find((item) => item.code === "SOCD"),
+      ids = advancedDraftKeyIds(draft).sort((a, b) => a - b),
+      featureCode = advancedDraftFeatureCode(draft),
+      feature = ADVANCED_FEATURES.find((item) => item.code === featureCode),
       existing = entries.findIndex(
-        (entry) => entry.feature.code === "SOCD" && entry.ids.join(":") === ids.join(":"),
+        (entry) => entry.feature.code === featureCode && entry.ids.join(":") === ids.join(":"),
       ),
       staged = {
         feature,
         ids,
         keys: ids.map((id) => keys[id]).filter(Boolean),
-        details: `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
+        details: featureCode === "MPT" ? multipointDraftDetails(draft) : featureCode === "RS" ? `Deeper key wins · ${Number(draft.delay) || 0} ms delay` : `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
         staged: true,
         removing: false,
       };
     if (existing >= 0) entries.splice(existing, 1, staged);
     else entries.push(staged);
   }
+  entries.push(...combinationAssignmentEntries());
   return entries;
 }
 function advancedAssignmentsPanel() {
   const entries = advancedAssignmentEntries();
-  return `<section class="panel full-span advanced-assignments"><div class="panel-head"><div><h2>Assigned advanced features</h2><p>Detected onboard assignments are grouped by action. Removals stay staged until Apply changes.</p></div><span class="badge ${entries.length ? "ready" : ""}">${entries.length} ASSIGNED</span></div><div class="advanced-assignment-list">${entries.length ? entries.map((entry) => `<article class="advanced-assignment ${entry.removing ? "removing" : ""}" data-advanced-assignment="${entry.feature.code}" style="--advanced-color:${entry.feature.color}"><i class="advanced-assignment-color"></i><div><span>${entry.staged ? "STAGED" : entry.removing ? "REMOVAL STAGED" : "ONBOARD"}</span><strong>${entry.feature.title}</strong><p>${entry.keys.map((key) => esc(key.n)).join(" + ")} · ${esc(entry.details)}</p></div><button class="button ${entry.removing ? "ghost" : "danger"} small" type="button" data-remove-advanced="${entry.ids.join(",")}">${entry.removing ? "Undo removal" : entry.staged ? "Discard" : "Remove"}</button></article>`).join("") : `<div class="advanced-assignment-empty"><b>No advanced assignments detected</b><p>${connected() ? "Configure SOCD from the feature selector or reconnect to refresh onboard records." : "Connect the keyboard to read its onboard advanced records."}</p></div>`}</div></section>`;
+  return `<section class="panel full-span advanced-assignments"><div class="panel-head"><div><h2>Assigned advanced features</h2><p>Detected onboard assignments are grouped by action. Removals stay staged until Apply changes.</p></div><span class="badge ${entries.length ? "ready" : ""}">${entries.length} ASSIGNED</span></div><div class="advanced-assignment-list">${entries.length ? entries.map((entry) => {
+    const removeAttribute = entry.combination
+      ? `data-remove-combination="${entry.layer}:${entry.ids[0]}"`
+      : `data-remove-advanced="${entry.ids.join(",")}"`;
+    return `<article class="advanced-assignment ${entry.removing ? "removing" : ""}" data-advanced-assignment="${entry.feature.code}" style="--advanced-color:${entry.feature.color}"><i class="advanced-assignment-color"></i><div><span>${entry.staged ? "STAGED" : entry.removing ? "REMOVAL STAGED" : "ONBOARD"}</span><strong>${entry.feature.title}</strong><p>${entry.keys.map((key) => esc(key.n)).join(" + ")} · ${esc(entry.details)}</p></div><button class="button ${entry.removing ? "ghost" : "danger"} small" type="button" ${removeAttribute}>${entry.removing ? "Undo removal" : entry.staged ? "Discard" : "Remove"}</button></article>`;
+  }).join("") : `<div class="advanced-assignment-empty"><b>No advanced assignments detected</b><p>${connected() ? "Configure MPT, SOCD, Rappy Snappy, or Key Combination from the feature selector, or reconnect to refresh onboard records." : "Connect the keyboard to read its onboard advanced records."}</p></div>`}</div></section>`;
 }
 function advancedPage() {
-  return `<div class="page-grid">${boardPanel({ full: true, title: "Advanced key map", description: "Colored key indicators match the compact feature selector below." })}<section class="panel full-span advanced-feature-panel"><div class="panel-head"><div><h2>Advanced features</h2><p>Click an available feature to configure it. The information button opens its guide.</p></div><span class="badge">9 FEATURES</span></div><div class="advanced-grid compact">${ADVANCED_FEATURES.map((feature) => `<article class="advanced-card compact ${feature.ready ? "ready" : ""}" style="--advanced-color:${feature.color}" ${feature.ready ? `data-advanced-config="${feature.code}"` : ""}><i class="advanced-feature-color"></i><div class="advanced-card-copy"><header><h3>${feature.code}</h3><span>${feature.ready ? "AVAILABLE" : feature.placeholder ? "PLACEHOLDER" : "READ ONLY"}</span></header><strong>${feature.title}</strong></div><button class="advanced-info-button" type="button" data-feature-info="${feature.code}" aria-label="About ${esc(feature.title)}" title="How ${esc(feature.title)} works">i</button></article>`).join("")}</div></section>${advancedAssignmentsPanel()}</div>`;
+  return `<div class="page-grid">${layerBar("Choose which layer to inspect or use for a key combination.")}${boardPanel({ full: true, title: "Advanced key map", description: "Colored key indicators match the compact feature selector below." })}<section class="panel full-span advanced-feature-panel"><div class="panel-head"><div><h2>Advanced features</h2><p>Click an available feature to configure it. The information button opens its guide.</p></div><span class="badge">9 FEATURES</span></div><div class="advanced-grid compact">${ADVANCED_FEATURES.map((feature) => `<article class="advanced-card compact ${feature.ready ? "ready" : ""}" style="--advanced-color:${feature.color}" ${feature.ready ? `data-advanced-config="${feature.code}"` : ""}><i class="advanced-feature-color"></i><div class="advanced-card-copy"><header><h3>${feature.code}</h3><span>${feature.ready ? "AVAILABLE" : feature.placeholder ? "PLACEHOLDER" : "READ ONLY"}</span></header><strong>${feature.title}</strong></div><button class="advanced-info-button" type="button" data-feature-info="${feature.code}" aria-label="About ${esc(feature.title)}" title="How ${esc(feature.title)} works">i</button></article>`).join("")}</div></section>${advancedAssignmentsPanel()}</div>`;
 }
 function capabilityCards() {
   const feature = state.hardware.feature;

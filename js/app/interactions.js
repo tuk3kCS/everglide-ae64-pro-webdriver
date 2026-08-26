@@ -1,5 +1,4 @@
 "use strict";
-
 /**
  * AE64 Pro Control — page interactions.
  *
@@ -7,7 +6,6 @@
  * with the other application files; keep the order in index.html intact.
  * Stages form edits and binds controls created by the active page renderer.
  */
-
 function stagePerformance(field, value) {
   stagePerformanceFields({ [field]: value });
 }
@@ -29,7 +27,8 @@ function stageSocdPair() {
     keyB = keys[Number(draft.keyBId)];
   if (!keyA || !keyB) return showToast("Choose two valid physical keys for SOCD.", true);
   if (keyA.id === keyB.id) return showToast("SOCD Key A and Key B must be different.", true);
-  draft.delay = clamp(draft.delay, 0, 50);
+  draft.feature = "SOCD";
+  draft.delay = Math.round(clamp(draft.delay, 0, 50));
   draft.socdMode = clamp(draft.socdMode, SOCD_MODE.LAST_OVERRIDE, SOCD_MODE.NEUTRAL);
   draft.keycodes = [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)];
   const recordA = state.hardware.advancedByKey.get(keyA.id),
@@ -100,7 +99,7 @@ function bindSocdConfiguration() {
     }),
   );
   document.querySelector("#socdDelay")?.addEventListener("change", (event) => {
-    state.advancedDraft.delay = clamp(event.target.value, 0, 50);
+    state.advancedDraft.delay = Math.round(clamp(event.target.value, 0, 50));
     event.target.value = state.advancedDraft.delay;
   });
   document.querySelector("#stageSocd")?.addEventListener("click", stageSocdPair);
@@ -632,7 +631,7 @@ function bindPage() {
         readAllPerformanceRecords().catch((error) => showToast(error.message, true)),
       );
   }
-  if (state.page === "overview" || state.page === "keymap") {
+  if (["overview", "keymap", "advanced"].includes(state.page)) {
     document.querySelectorAll("[data-layer]").forEach((button) =>
       button.addEventListener("click", () => selectMappingLayer(button.dataset.layer)),
     );
@@ -977,13 +976,16 @@ function bindPage() {
     );
     document.querySelectorAll("[data-advanced-config]").forEach((card) =>
       card.addEventListener("click", () => {
-        if (card.dataset.advancedConfig === "SOCD") openSocdConfiguration();
+        ({ MPT: openMultipointConfiguration, SOCD: openSocdConfiguration, RS: openRappySnappyConfiguration, COMBO: openCombinationConfiguration })[card.dataset.advancedConfig]?.();
       }),
     );
     document.querySelectorAll("[data-remove-advanced]").forEach((button) =>
       button.addEventListener("click", () =>
         toggleAdvancedRemoval(button.dataset.removeAdvanced),
       ),
+    );
+    document.querySelectorAll("[data-remove-combination]").forEach((button) =>
+      button.addEventListener("click", () => removeCombinationAssignment(button.dataset.removeCombination)),
     );
   }
   if (state.page === "diagnostics") {

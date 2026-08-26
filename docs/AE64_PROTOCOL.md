@@ -129,7 +129,19 @@ The custom matrix and current LED framebuffer are read as `05 03 area packet` an
 
 ## Advanced keys and macros
 
-`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. DKS/MPT/MT/TGL/END/RS editors and writers remain deferred.
+Key combinations are not family `06` records. They are ordinary 16-bit layer mappings with a modifier mask in the high byte and one normal keyboard usage in the low byte. See `KEY_COMBINATIONS_AND_MEMORY.md` for timing, ambiguity, and capacity details.
+
+`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. MPT, SOCD, and RS have capture-verified editors and writers; DKS/MT/TGL/END remain deferred.
+
+Multi-Point Trigger is one mode-2 record on one physical host key:
+
+```text
+06 02 row col 02 key1-lo key1-hi key2-lo key2-hi key3-lo key3-hi depth1-lo depth1-hi depth2-lo depth2-hi depth3-lo depth3-hi
+```
+
+Depths are stored in thousandths of a millimetre. The firmware record always has three slots; this UI requires stages 1 and 2, permits stage 3 to remain keycode `0000`, and keeps all three depth fields strictly increasing. The captured original editor exposes only 49 basic and 57 extended keyboard usages for MPT—not Empty, Transparent, media, mouse, lighting, firmware-control, macro, gamepad, or combination values. It also requires the physical host to have a basic keyboard mapping.
+
+Unlike the captured fixed `0.1–3.3 mm` editor, this driver derives the maximum from the selected host key's switch-selector `axis_range_max`, rounds it down to the nearest `0.1 mm`, and dynamically constrains each slider between its neighbours. The manufacturer tutorial describes three independent depths, a different key value at each stage, and a claimed stage-switching delay below 1 ms. Its example uses light, medium, and heavy presses for progressively stronger steering in Project CARS.
 
 SOCD write behavior is captured and implemented. It always requires two `06 02` records followed by commit group `5`:
 
@@ -147,7 +159,16 @@ The four UI modes and reciprocal mode-byte pairs are:
 | B Priority | `2` | `(2, 1)` | Key B wins |
 | Neutral | `3` | `(3, 3)` | neither output is sent |
 
-The alternative driver refuses to overwrite either key when it already belongs to a different advanced assignment or SOCD pair. After writing both records it commits group `5`, reads both keys back, and verifies reciprocal positions, outputs, delay, and local mode bytes.
+Rappy Snappy uses the corresponding mode-7 pair without a local priority byte:
+
+```text
+06 02 rowA colA 07 rowB colB keyA-lo keyA-hi keyB-lo keyB-hi delay-lo delay-hi
+06 02 rowB colB 07 rowA colA keyB-lo keyB-hi keyA-lo keyA-hi delay-lo delay-hi
+```
+
+The captured manufacturer tutorial says that RS continuously compares the two selected switches, outputs the farther-pressed key, and permits both outputs when both switches are fully bottomed. The original example is Valorant counter-strafing.
+
+The alternative driver refuses to overwrite a key when it already belongs to a different advanced assignment. After writing MPT it commits group `5`, reads the host record back, verifies all three outputs and depths, and restores Hall tuning that the firmware resets during assignment. SOCD and RS similarly verify both reciprocal records, their outputs and delay, then restore both keys' Hall tuning.
 
 Macro metadata/data is read with family `07` operations `01` and `03`. Macro mode/data writers (`02` and `04`) are likewise deferred.
 

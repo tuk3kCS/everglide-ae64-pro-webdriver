@@ -67,10 +67,9 @@ async function readAdvanced() {
     if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.NONE)
       state.hardware.advancedByKey.delete(key.id);
     else state.hardware.advancedByKey.set(key.id, state.hardware.advanced);
-    if (
-      state.hardware.advanced.mode === ADVANCED_MODE.SOCD &&
-      !state.dirty.advanced
-    ) {
+    if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.MPT && !state.dirty.advanced)
+      state.advancedDraft = multipointDraftFromRecord(key, state.hardware.advanced);
+    if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced.mode)) && !state.dirty.advanced) {
       const first = keys.find((key) => {
           const address = position(key);
           return address.row === state.hardware.advanced.row && address.col === state.hardware.advanced.col;
@@ -81,10 +80,11 @@ async function readAdvanced() {
         });
       if (first && second) {
         state.advancedDraft = {
+          feature: state.hardware.advanced.mode === ADVANCED_MODE.RS ? "RS" : "SOCD",
           keyAId: first.id,
           keyBId: second.id,
           delay: clamp(state.hardware.advanced.delay, 0, 50),
-          socdMode: clamp(state.hardware.advanced.socdMode, SOCD_MODE.LAST_OVERRIDE, SOCD_MODE.NEUTRAL),
+          socdMode: state.hardware.advanced.mode === ADVANCED_MODE.SOCD ? clamp(state.hardware.advanced.socdMode, SOCD_MODE.LAST_OVERRIDE, SOCD_MODE.NEUTRAL) : SOCD_MODE.LAST_OVERRIDE,
           keycodes: [...state.hardware.advanced.keycodes],
         };
       }

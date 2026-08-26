@@ -26,7 +26,7 @@ Implemented now:
 - Per-key actuation distance, Rapid Trigger first-touch actuation, intuitive synchronized/independent RT press/release sensitivity, and an experimental fixed `normalRelease` editor
 - Toggleable per-key top and bottom dead zones; disabling them writes `0.00 mm` to both fields
 - Magnetic switch selector backed by all 82 AE64 profiles captured from the manufacturer API, with editable display grouping and automatic axis-ID image discovery
-- Hall calibration and toggleable live press distance: a 0.0–4.0 mm switch gauge, millimeter readout, and simultaneous per-key travel fill
+- Hall calibration and toggleable live press distance: a switch-specific travel gauge, millimeter readout, and simultaneous per-key travel fill
 - Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one 24 fps live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling
 - Captured rainbow palette behavior plus firmware-rendered Fn overlays with transparent-layer inheritance and remapped Fn-trigger detection
@@ -37,12 +37,12 @@ Implemented now:
 - Optional experimental auto apply with a short edit debounce and verified device writes
 - XML-driven English/Vietnamese language selection through `languages.xml`
 - A standalone, author-editable About Us page in `about.html`
-- Capture-verified four-mode SOCD editor with reciprocal writes/read-back verification, plus visible/read-only inspection for DKS, MPT, MT, TGL, END, RS, and macro capacity
-- Built-in advanced-feature information dialogs, including the captured SOCD tutorial text and four local videos
+- Capture-verified MPT, four-mode SOCD, and Rappy Snappy editors with read-back verification, Hall-tuning preservation, removable assignments, and an experimental eight-modifier key-combination editor
+- Built-in advanced-feature information dialogs, including the captured MPT, SOCD, and RS tutorial text and local videos
 
 Deliberately deferred to the advanced release:
 
-- Editors/writers for DKS, MPT, MT, TGL, END, RS, macros, and key combinations
+- Editors/writers for DKS, MT, TGL, END, and macros
 - Destructive factory restore (visible but disabled pending physical-device verification)
 - Decorative/secondary-light editors beyond the discovered read surface
 

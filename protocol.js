@@ -488,6 +488,42 @@
       return [decodeAdvanced(firstReply), decodeAdvanced(secondReply)];
     }
 
+    // Rappy Snappy uses the same reciprocal pair layout as SOCD, but mode 7
+    // has no priority byte. Firmware compares the two physical travel values;
+    // the output keycodes are reversed in the partner record.
+    async setRappySnappyPair({ first, second, keycodes, delay = 0 }) {
+      if (!first || !second) throw new TypeError("Rappy Snappy requires two physical key positions.");
+      if (first.row === second.row && first.col === second.col) throw new RangeError("Rappy Snappy keys must be different.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 2) throw new RangeError("Rappy Snappy requires exactly two output keycodes.");
+      const packets = [
+        [FAMILY.ADVANCED, 2, clampByte(first.row, "key A row"), clampByte(first.col, "key A column"), ADVANCED_MODE.RS, clampByte(second.row, "key B row"), clampByte(second.col, "key B column"), ...le16(keycodes[0], "key A output"), ...le16(keycodes[1], "key B output"), ...le16(delay, "RS delay")],
+        [FAMILY.ADVANCED, 2, clampByte(second.row, "key B row"), clampByte(second.col, "key B column"), ADVANCED_MODE.RS, clampByte(first.row, "key A row"), clampByte(first.col, "key A column"), ...le16(keycodes[1], "key B output"), ...le16(keycodes[0], "key A output"), ...le16(delay, "RS delay")],
+      ];
+      const firstReply = await this.transact(packets[0]),
+        secondReply = await this.transact(packets[1]);
+      return [decodeAdvanced(firstReply), decodeAdvanced(secondReply)];
+    }
+
+    // Multi-Point Trigger is one mode-2 record. The firmware always stores
+    // three output/depth slots; a two-stage setup uses keycode 0 in slot 3
+    // while retaining three strictly ordered depth values.
+    async setMultipointTrigger({ position, keycodes, depths }) {
+      if (!position) throw new TypeError("MPT requires one physical host key.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 3) throw new RangeError("MPT requires exactly three keycode slots.");
+      if (!Array.isArray(depths) || depths.length !== 3) throw new RangeError("MPT requires exactly three depth slots.");
+      const active = keycodes.map(Number).filter((keycode) => keycode > 0);
+      if (keycodes[0] <= 0 || keycodes[1] <= 0 || active.length < 2) throw new RangeError("MPT requires key values in its first two stages.");
+      if (new Set(active).size !== active.length) throw new RangeError("MPT stage key values must be different.");
+      const millimeters = depths.map(Number), encodedDepths = millimeters.map((depth) => Math.round(depth * 1000));
+      if (millimeters.some((depth) => !Number.isFinite(depth) || depth <= 0) || !(millimeters[0] < millimeters[1] && millimeters[1] < millimeters[2])) throw new RangeError("MPT depths must be positive and strictly increasing.");
+      const reply = await this.transact([
+        FAMILY.ADVANCED, 2, clampByte(position.row, "host row"), clampByte(position.col, "host column"), ADVANCED_MODE.MPT,
+        ...keycodes.flatMap((keycode, index) => le16(keycode, `stage ${index + 1} keycode`)),
+        ...encodedDepths.flatMap((depth, index) => le16(depth, `stage ${index + 1} depth`)),
+      ]);
+      return decodeAdvanced(reply);
+    }
+
     async getMacroMode(macroId) {
       const data = await this.transact([FAMILY.MACRO, 1, clampByte(macroId, "macro ID")]);
       return { macroId: data[2], valid: data[3] === 1, actionCount: read16(data, 4), repeatCount: read16(data, 6), mode: data[8] };

@@ -162,6 +162,60 @@
       </div>
     </form>
   </dialog>
+  <dialog class="app-dialog socd-config-dialog" id="rsConfigDialog" aria-labelledby="rsConfigTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">TRAVEL-PRIORITY CONFIGURATION</p>
+          <h2 id="rsConfigTitle">Configure Rappy Snappy</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close Rappy Snappy configuration">×</button>
+      </div>
+      <div id="rsConfigBody"></div>
+      <div class="dialog-actions"><button class="button ghost" type="submit" value="close">Close</button></div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog mpt-config-dialog" id="mptConfigDialog" aria-labelledby="mptConfigTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">MULTI-STAGE HALL CONFIGURATION</p>
+          <h2 id="mptConfigTitle">Configure Multi-Point Trigger</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close Multi-Point Trigger configuration">×</button>
+      </div>
+      <div id="mptConfigBody"></div>
+      <div class="dialog-actions"><button class="button ghost" type="submit" value="close">Close</button></div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog mpt-key-picker-dialog" id="mptKeyPickerDialog" aria-labelledby="mptKeyPickerTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">MANUFACTURER-COMPATIBLE KEY VALUES</p>
+          <h2 id="mptKeyPickerTitle">Choose an MPT key value</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close MPT key-value picker">×</button>
+      </div>
+      <div id="mptKeyPickerBody"></div>
+      <div class="dialog-actions"><button class="button ghost" type="submit" value="close">Cancel</button></div>
+    </form>
+  </dialog>
+  <dialog class="app-dialog combination-config-dialog" id="combinationConfigDialog" aria-labelledby="combinationConfigTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">LAYER MAPPING CONFIGURATION</p>
+          <h2 id="combinationConfigTitle">Configure key combination</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close key combination configuration">×</button>
+      </div>
+      <div id="combinationConfigBody"></div>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
   <dialog class="app-dialog calibration-recommendation-dialog" id="calibrationRecommendationDialog" aria-labelledby="calibrationRecommendationTitle">
     <form method="dialog">
       <div class="dialog-icon warning" aria-hidden="true">!</div>
@@ -187,6 +241,8 @@
   <script src="js/app/switches.js"></script>
   <script src="js/app/theme.js"></script>
   <script src="js/app/mapping.js"></script>
+  <script src="js/app/rappy.js"></script>
+  <script src="js/app/mpt.js"></script>
   <script src="js/app/pages.js"></script>
   <script src="js/app/interactions.js"></script>
   <script src="js/app/device.js"></script>

@@ -30,8 +30,8 @@ function toggleAdvancedRemoval(value) {
     undo = resolved.every((id) => state.dirty.advancedRemovals.has(id));
   if (undo) resolved.forEach((id) => state.dirty.advancedRemovals.delete(id));
   else {
-    const stagedPair = [Number(state.advancedDraft.keyAId), Number(state.advancedDraft.keyBId)];
-    if (state.dirty.advanced && resolved.every((id) => stagedPair.includes(id)) && stagedPair.every((id) => resolved.includes(id))) {
+    const stagedKeys = advancedDraftKeyIds(state.advancedDraft);
+    if (state.dirty.advanced && resolved.every((id) => stagedKeys.includes(id)) && stagedKeys.every((id) => resolved.includes(id))) {
       state.dirty.advanced = false;
       render();
       showToast("Staged advanced assignment discarded.");
@@ -146,13 +146,15 @@ function summarizeChanges() {
       `Decorative1: ${state.dirty.decorativeLighting.size} perimeter LED override${state.dirty.decorativeLighting.size === 1 ? "" : "s"}`,
     );
   if (state.dirty.advanced) {
-    const draft = state.advancedDraft,
-      keyA = keys[draft.keyAId],
+    const draft = state.advancedDraft;
+    if (draft.feature === "MPT") changes.push(`MPT: ${keys[Number(draft.hostId)]?.n || "host key"}, ${multipointDraftDetails(draft)}`);
+    else {
+      const keyA = keys[draft.keyAId],
       keyB = keys[draft.keyBId],
-      mode = SOCD_MODES[Number(draft.socdMode)]?.name || `mode ${draft.socdMode}`;
-    changes.push(
-      `SOCD: ${keyA?.n || "Key A"} + ${keyB?.n || "Key B"}, ${mode}, ${Number(draft.delay) || 0} ms delay`,
-    );
+      feature = draft.feature === "RS" ? "RS" : "SOCD",
+      behavior = feature === "RS" ? "deeper key wins" : SOCD_MODES[Number(draft.socdMode)]?.name || `mode ${draft.socdMode}`;
+      changes.push(`${feature}: ${keyA?.n || "Key A"} + ${keyB?.n || "Key B"}, ${behavior}, ${Number(draft.delay) || 0} ms delay`);
+    }
   }
   if (state.dirty.advancedRemovals.size)
     changes.push(
@@ -332,13 +334,17 @@ async function applyChanges({ automatic = false } = {}) {
         state.hardware.advanced = null;
     }
     if (state.dirty.advanced) {
-      const draft = state.advancedDraft,
-        keyA = keys[draft.keyAId],
-        keyB = keys[draft.keyBId];
+      const draft = state.advancedDraft;
+      if (draft.feature === "MPT") await applyMultipointDraft(draft, performanceNormalizations);
+      else {
+        const keyA = keys[draft.keyAId],
+        keyB = keys[draft.keyBId],
+        feature = draft.feature === "RS" ? "RS" : "SOCD",
+        advancedMode = feature === "RS" ? ADVANCED_MODE.RS : ADVANCED_MODE.SOCD;
       if (!keyA || !keyB || keyA.id === keyB.id)
-        throw new Error("SOCD requires two different physical keys.");
+        throw new Error(`${feature} requires two different physical keys.`);
       document.querySelector("#progressDetail").textContent =
-        `SOCD: checking ${keyA.n} and ${keyB.n}`;
+        `${feature}: checking ${keyA.n} and ${keyB.n}`;
       const firstPosition = position(keyA),
         secondPosition = position(keyB),
         [currentA, currentB, tuningA, tuningB] = await Promise.all([
@@ -352,49 +358,45 @@ async function applyChanges({ automatic = false } = {}) {
           Number(record.pairedCol) === Number(target.col),
         compatible = (record, target) =>
           Number(record.mode) === ADVANCED_MODE.NONE ||
-          (Number(record.mode) === ADVANCED_MODE.SOCD && pairedWith(record, target));
+          (Number(record.mode) === advancedMode && pairedWith(record, target));
       if (!compatible(currentA, secondPosition))
-        throw new Error(`${keyA.n} already has another advanced assignment. Clear it before creating this SOCD pair.`);
+        throw new Error(`${keyA.n} already has another advanced assignment. Clear it before creating this ${feature} pair.`);
       if (!compatible(currentB, firstPosition))
-        throw new Error(`${keyB.n} already has another advanced assignment. Clear it before creating this SOCD pair.`);
+        throw new Error(`${keyB.n} already has another advanced assignment. Clear it before creating this ${feature} pair.`);
       const keycodes = Array.isArray(draft.keycodes)
           ? draft.keycodes
           : [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)],
-        mode = Number(draft.socdMode),
-        delay = clamp(draft.delay, 0, 50);
-      await state.transport.setSocdPair({
-        first: firstPosition,
-        second: secondPosition,
-        keycodes,
-        delay,
-        mode,
-      });
+        socdMode = Number(draft.socdMode),
+        delay = Math.round(clamp(draft.delay, 0, 50));
+      if (feature === "RS")
+        await state.transport.setRappySnappyPair({ first: firstPosition, second: secondPosition, keycodes, delay });
+      else
+        await state.transport.setSocdPair({ first: firstPosition, second: secondPosition, keycodes, delay, mode: socdMode });
       await state.transport.saveParameters(SAVE_GROUP.ADVANCED);
       const [verifiedA, verifiedB] = await Promise.all([
           state.transport.getAdvancedKey(firstPosition),
           state.transport.getAdvancedKey(secondPosition),
         ]),
-        pairModes = SOCD_PAIR_MODES[mode],
+        pairModes = SOCD_PAIR_MODES[socdMode],
         verified =
-          verifiedA.mode === ADVANCED_MODE.SOCD &&
-          verifiedB.mode === ADVANCED_MODE.SOCD &&
+          verifiedA.mode === advancedMode &&
+          verifiedB.mode === advancedMode &&
           pairedWith(verifiedA, secondPosition) &&
           pairedWith(verifiedB, firstPosition) &&
-          verifiedA.socdMode === pairModes[0] &&
-          verifiedB.socdMode === pairModes[1] &&
+          (feature === "RS" || (verifiedA.socdMode === pairModes[0] && verifiedB.socdMode === pairModes[1])) &&
           verifiedA.delay === delay &&
           verifiedB.delay === delay &&
           verifiedA.keycodes[0] === keycodes[0] &&
           verifiedA.keycodes[1] === keycodes[1] &&
           verifiedB.keycodes[0] === keycodes[1] &&
           verifiedB.keycodes[1] === keycodes[0];
-      if (!verified) throw new Error("SOCD read-back verification failed.");
+      if (!verified) throw new Error(`${feature} read-back verification failed.`);
       state.hardware.advanced = verifiedA;
       state.hardware.advancedByKey.set(keyA.id, verifiedA);
       state.hardware.advancedByKey.set(keyB.id, verifiedB);
-      state.advancedDraft = { ...draft, delay, socdMode: mode, keycodes: [...keycodes] };
+      state.advancedDraft = { ...draft, feature, delay, socdMode, keycodes: [...keycodes] };
       document.querySelector("#progressDetail").textContent =
-        `SOCD: restoring Hall tuning for ${keyA.n} and ${keyB.n}`;
+        `${feature}: restoring Hall tuning for ${keyA.n} and ${keyB.n}`;
       for (const key of [keyA, keyB]) {
         const expected = key.id === keyA.id ? tuningA : tuningB,
           current = await state.transport.getPerformance(position(key)),
@@ -409,17 +411,18 @@ async function applyChanges({ automatic = false } = {}) {
           comparison = performanceReadbackComparison(desired, restored, true);
         if (!comparison.valid)
           throw new Error(
-            `SOCD preserved the pair but could not restore ${key.n} tuning: ${comparison.hard.join(", ")}.`,
+            `${feature} preserved the pair but could not restore ${key.n} tuning: ${comparison.hard.join(", ")}.`,
           );
         if (comparison.normalized.length) {
           const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
           performanceNormalizations.push(warning);
-          log("Firmware normalized SOCD Hall read-back", warning);
+          log(`Firmware normalized ${feature} Hall read-back`, warning);
         }
         state.profile.performance[key.id] = restored;
         state.hardware.performance.set(key.id, restored);
       }
       await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+      }
     }
     if (state.dirty.lightingBase || state.dirty.lightingPalette) {
       if (state.dirty.lightingBase) {
@@ -600,7 +603,11 @@ function revertChanges() {
   state.timers.autoApply = null;
   state.profile = clone(state.original);
   state.advancedDraft = defaultSocdDraft();
-  if (state.hardware.advanced?.mode === ADVANCED_MODE.SOCD) {
+  if (Number(state.hardware.advanced?.mode) === ADVANCED_MODE.MPT) {
+    const record = state.hardware.advanced,
+      host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
+    if (host) state.advancedDraft = multipointDraftFromRecord(host, record);
+  } else if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced?.mode))) {
     const record = state.hardware.advanced,
       first = keys.find((key) => {
         const address = position(key);
@@ -612,10 +619,11 @@ function revertChanges() {
       });
     if (first && second)
       state.advancedDraft = {
+        feature: record.mode === ADVANCED_MODE.RS ? "RS" : "SOCD",
         keyAId: first.id,
         keyBId: second.id,
         delay: record.delay,
-        socdMode: record.socdMode,
+        socdMode: record.mode === ADVANCED_MODE.SOCD ? record.socdMode : SOCD_MODE.LAST_OVERRIDE,
         keycodes: [...record.keycodes],
       };
   }
@@ -782,6 +790,10 @@ async function importProfile(file) {
           { ...base.keycodes[i], ...imported.keycodes?.[i] },
         ]),
       ),
+      combinationBases: {
+        ...base.combinationBases,
+        ...imported.combinationBases,
+      },
       lighting: {
         ...base.lighting,
         ...imported.lighting,

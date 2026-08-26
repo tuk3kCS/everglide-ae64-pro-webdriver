@@ -614,6 +614,7 @@ const defaultProfile = () => ({
       Object.fromEntries(keys.map((key) => [key.id, defaultKeycode(key)])),
     ]),
   ),
+  combinationBases: {},
   lighting: {
     base: {
       open: true,
@@ -644,9 +645,8 @@ const defaultProfile = () => ({
   },
   settings: { systemMode: 0, reportRate: 0, sleepTime: 10, shake: false },
 });
-
 function defaultSocdDraft() {
-  return { keyAId: keys.find((key) => key.n === "A")?.id ?? keys[0].id,
+  return { feature: "SOCD", keyAId: keys.find((key) => key.n === "A")?.id ?? keys[0].id,
     keyBId: keys.find((key) => key.n === "D")?.id ?? keys[1].id,
     delay: 0, socdMode: SOCD_MODE.LAST_OVERRIDE, keycodes: null };
 }
@@ -794,6 +794,7 @@ function loadSavedProfile() {
           { ...base.keycodes[i], ...saved.keycodes?.[i] },
         ]),
       ),
+      combinationBases: { ...base.combinationBases, ...saved.combinationBases },
       lighting: {
         ...base.lighting,
         ...saved.lighting,
