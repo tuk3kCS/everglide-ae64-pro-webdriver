@@ -10,7 +10,7 @@ The repository includes an automated GitHub Pages workflow. Before its first run
 
 [Open the GitHub Pages driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/)
 
-You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, `about.html`, the switch-axis image, the captured switch catalog plus its local overrides/images, and the modules under `js/app/`; protocol notes, task files, source captures, tutorial videos, and hosting metadata are not made public by Pages.
+You can also run it manually from **Actions → Deploy GitHub Pages → Run workflow**. The published artifact contains only the runtime entry files, `languages.xml`, `about.html`, switch images, the captured switch catalog plus its local overrides, and the modules under `js/app/`; protocol notes, task files, HAR captures, tutorial videos, and hosting metadata are not made public by Pages.
 
 ## Run locally
 
@@ -41,7 +41,7 @@ Implemented now:
 - Four keymap layers with keyboard, media, mouse, and internal function groups
 - Per-key actuation distance, Rapid Trigger first-touch actuation, intuitive synchronized/independent RT press/release sensitivity, and an experimental fixed `normalRelease` editor
 - Toggleable per-key top and bottom dead zones; disabling them writes `0.00 mm` to both fields
-- Magnetic switch selector backed by all 82 AE64 profiles captured from the manufacturer API, with upgrade-safe English-name and local-image overrides
+- Magnetic switch selector backed by all 82 AE64 profiles captured from the manufacturer API, with editable display grouping and automatic axis-ID image discovery
 - Hall calibration and toggleable live press distance: a 0.0–4.0 mm switch gauge, millimeter readout, and simultaneous per-key travel fill
 - Device-reported `L1–L20` keyboard effects plus explicitly experimental catalog values `L21–L23`, independent north/south LED switches, and one 24 fps live preview combining the keyboard with 38 addressable perimeter LEDs
 - Independent keyboard/strip palettes, 0–100 brightness and speed, forward/backward direction, and complete custom-color matrix handling

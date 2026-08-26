@@ -310,9 +310,13 @@ function switchSelectorControls() {
   const cards = visible
     .map((entry) => {
       const active = Number(performance.axisV2Id) === Number(entry.axisV2Id),
-        image = entry.image
-          ? `<img src="${esc(entry.image)}" alt="${esc(entry.name)}">`
-          : `<i class="switch-placeholder" style="--switch-color:${esc(entry.color || "#73f0c0")}"><span></span></i>`,
+        imageCandidates = entry.imageCandidates?.length
+          ? entry.imageCandidates
+          : switchImageCandidates(entry.axisV2Id, entry.image),
+        encodedCandidates = encodeURIComponent(JSON.stringify(imageCandidates)),
+        image = imageCandidates.length
+          ? `<img src="${esc(imageCandidates[0])}" alt="${esc(entry.name)}" loading="lazy" decoding="async" data-switch-image-candidates="${esc(encodedCandidates)}" data-switch-image-index="0"><i class="switch-placeholder" data-switch-image-placeholder hidden style="--switch-color:${esc(entry.color || "#73f0c0")}"><span></span></i>`
+          : `<i class="switch-placeholder" data-switch-image-placeholder style="--switch-color:${esc(entry.color || "#73f0c0")}"><span></span></i>`,
         original = entry.name !== entry.originalName
           ? `<small title="Captured name">${esc(entry.originalName)}</small>`
           : "";

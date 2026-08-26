@@ -300,6 +300,7 @@ button { color: inherit; }
 .switch-catalog-card.active { border-color: var(--mint); background: color-mix(in srgb, var(--mint) 9%, var(--control-bg)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mint) 11%, transparent); }
 .switch-card-media { display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--panel) 82%, var(--control-bg)); }
 .switch-card-media img { width: 100%; height: 100%; object-fit: contain; }
+.switch-card-media img[hidden], .switch-placeholder[hidden] { display: none; }
 .switch-placeholder { position: relative; display: block; width: 30px; height: 34px; border: 2px solid color-mix(in srgb, var(--switch-color) 60%, var(--text)); border-radius: 7px 7px 5px 5px; background: color-mix(in srgb, var(--switch-color) 22%, var(--panel)); box-shadow: inset 0 -7px color-mix(in srgb, var(--switch-color) 35%, transparent), 0 0 14px color-mix(in srgb, var(--switch-color) 18%, transparent); }
 .switch-placeholder::before { content: ""; position: absolute; left: 50%; top: -7px; width: 14px; height: 12px; border: 2px solid color-mix(in srgb, var(--switch-color) 64%, var(--text)); border-radius: 4px 4px 2px 2px; background: var(--switch-color); transform: translateX(-50%); }
 .switch-placeholder span { position: absolute; inset: 10px 7px 7px; border: 1px solid color-mix(in srgb, var(--switch-color) 72%, white); border-radius: 3px; }

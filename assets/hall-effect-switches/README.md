@@ -7,7 +7,7 @@ This folder contains the 82 Hall-effect switch profiles returned for the Evergli
 - `supported-switches.md` — readable inventory of all 82 switches.
 - `supported-switches.csv` — spreadsheet-friendly normalized data.
 - `supported-switches.json` — machine-readable normalized data.
-- `catalog-overrides.json` — 82 hand-editable records for English names, aliases, colors, and local images, keyed by firmware detail-axis ID.
+- `catalog-overrides.json` — 82 hand-editable records for names, aliases, grouping, colors, and exceptional image overrides, keyed by firmware detail-axis ID.
 - `raw-api-response.json` — the unmodified parsed API response payload.
 - `source-metadata.json` — capture URL, board identifiers, timestamp, counts, and groups.
 - `extract-switches.ps1` — reproducible extraction and validation script.
@@ -18,9 +18,9 @@ The data comes from the populated `getAxisListV3` response in the root `xsyd.top
 
 To regenerate the derived files, run `./extract-switches.ps1` from this folder. The script stops with an error unless it extracts exactly 82 entries. It also refreshes the two `_captured_*` reference fields in every override while preserving the author-edited `name`, `aliases`, `image`, `brand`, and `color` fields.
 
-## Renaming switches and adding images
+## Renaming and grouping switches
 
-Keep captured firmware values in `supported-switches.json` unchanged. Put editorial changes in `catalog-overrides.json`, keyed by `detail_axis_id`. This keeps English names and image paths safe when the captured data is regenerated.
+Keep captured firmware values in `supported-switches.json` unchanged. Put editorial name, alias, group, and color changes in `catalog-overrides.json`, keyed by `detail_axis_id`.
 
 Example:
 
@@ -34,6 +34,8 @@ Example:
 }
 ```
 
-The selector falls back to the captured name and a generated switch thumbnail when an override is blank or absent. `name`, `aliases`, `brand`, `color`, and `image` are optional. `_captured_name` and `_captured_brand` are reference-only fields and are ignored by the app. Do not change the axis ID, range, or coefficient unless a new device capture proves different firmware values.
+For ordinary switch pictures, drop a file named after the firmware detail-axis ID into `assets/images/he_switch_images`, for example `4352.png`. PNG, JPG, JPEG, and WebP are recognized automatically, so no JSON edit is needed. GitHub Pages builds an image index from the folder; local development falls back to probing the same extensions. The optional `image` field remains available for an exceptional filename or remote URL. If no candidate loads, the selector displays its generated switch thumbnail.
+
+`name`, `aliases`, `brand`, `color`, and `image` are optional. `_captured_name` and `_captured_brand` are reference-only fields and are ignored by the app. Do not change the axis ID, range, or coefficient unless a new device capture proves different firmware values.
 
 See [`../../docs/SWITCH_CATALOG_OVERRIDES.md`](../../docs/SWITCH_CATALOG_OVERRIDES.md) for the complete editing and image workflow.

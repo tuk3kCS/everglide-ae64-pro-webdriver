@@ -5,7 +5,7 @@
 The file is deliberately separate from `supported-switches.json`:
 
 - `supported-switches.json` is captured firmware data. Its IDs, range, and coefficient are used when assigning a switch and must not be translated or guessed.
-- `catalog-overrides.json` contains display-only names, search aliases, colors, and image paths. Editing it cannot change which firmware switch profile is written.
+- `catalog-overrides.json` contains display-only names, search aliases, groups, colors, and exceptional image paths. Editing it cannot change which firmware switch profile is written.
 
 ## Record format
 
@@ -29,13 +29,13 @@ Fields:
 |---|---|---|
 | `name` | English or alphabetic name displayed in the catalog and on virtual keys. Blank uses the captured name. | Yes |
 | `aliases` | Extra search terms. These are not displayed as the primary name. | Yes |
-| `image` | Repo-relative image path or an HTTPS URL. Blank uses the generated switch placeholder. | Yes |
+| `image` | Optional exceptional repo-relative path or HTTPS URL. Blank uses automatic axis-ID image discovery. | Yes |
 | `brand` | Optional display brand override. Omit it to use the captured group. | Yes |
 | `color` | Optional CSS color such as `#73f0c0` for the generated placeholder. | Yes |
 | `_captured_name` | Original name from the HAR, included so editors can identify the switch. The app ignores it. | No need |
 | `_captured_brand` | Original brand from the HAR. The app ignores it. | No need |
 
-Blank `name` and `image` values are intentional. They let all 82 records exist before every translation and photograph is ready without showing broken labels or images.
+Blank `name` and `image` values are intentional. They let all 82 records exist before every translation and photograph is ready. Missing pictures fall back to a generated thumbnail.
 
 ## Add an English name
 
@@ -58,16 +58,18 @@ For example:
 
 ## Add a local image
 
-1. Create `assets/hall-effect-switches/images` if it does not exist.
-2. Add a square or near-square WebP or PNG image with a transparent background when possible.
-3. Use a lowercase, stable filename, for example `gateron-qilin-he.webp`.
-4. Set `image` to the full repo-relative path:
+1. Put a square or near-square image in `assets/images/he_switch_images`.
+2. Name the file with the switch's decimal `detail_axis_id`, for example `4352.png`.
+3. Use PNG, JPG, JPEG, or WebP. GitHub Pages indexes those extensions automatically.
+4. Do not edit `catalog-overrides.json` for a conventionally named picture.
+
+For an exceptional filename or remote image, the explicit override still works:
 
 ```json
 "image": "assets/hall-effect-switches/images/gateron-qilin-he.webp"
 ```
 
-The GitHub Pages build copies the whole optional `images` folder when it exists. Do not use a Windows filesystem path such as `G:\\...`; browsers need the repo-relative path shown above.
+The GitHub Pages build copies and indexes `assets/images/he_switch_images` automatically. It also preserves support for the older optional `assets/hall-effect-switches/images` folder. Do not use a Windows filesystem path such as `G:\\...`; browsers need a repo-relative path.
 
 ## Refresh the captured catalog
 

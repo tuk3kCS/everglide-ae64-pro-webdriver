@@ -110,7 +110,10 @@ async function main() {
   const html = read("index.html");
   const app = APP_FILES.map(read).join("\n");
   const xml = read("languages.xml");
+  const gitignore = read(".gitignore");
   const pagesWorkflow = read(path.join(".github", "workflows", "pages.yml"));
+  if (!gitignore.split(/\r?\n/).includes("*.har"))
+    throw new Error("HAR captures must be ignored so deployment never depends on research files.");
   const tutorialVideos = [
     "dks-DCE7s5Id.webm", "end-BnYhFisg.webm", "mpt-B978ec99.webm",
     "mt-CgpY_PQr.webm", "rs-Ck_H-6K8.webm", "socd_a-Dd9SIFLd.webm",
@@ -125,27 +128,15 @@ async function main() {
     if (bytes.length < 10000 || bytes.subarray(0, 4).toString("hex") !== "1a45dfa3")
       throw new Error(`Tutorial video ${name} is truncated or is not WebM.`);
   });
-  const capturedHar = JSON.parse(read("xsyd.top.har"));
-  const capturedAxisEntry = capturedHar.log.entries.find(
-    (entry) => entry.request.url.includes("getAxisListV3") && entry.response.status === 200,
-  );
-  if (!capturedAxisEntry) throw new Error("The AE64 HAR has no populated getAxisListV3 response.");
-  const capturedAxisProfiles = JSON.parse(capturedAxisEntry.response.content.text).data
-    .flatMap((group) => group.list.map((entry) => ({
-      axis_id: entry.axis_id,
-      detail_axis_id: entry.aixsDetail[0].axis_id,
-      axis_range_max: entry.aixsDetail[0].axis_range_max,
-      axis_coefficient: entry.aixsDetail[0].axis_coefficient,
-    })))
-    .sort((a, b) => a.detail_axis_id - b.detail_axis_id);
   const derivedAxisProfiles = JSON.parse(read("assets/hall-effect-switches/supported-switches.json"))
     .map(({ axis_id, detail_axis_id, axis_range_max, axis_coefficient }) => ({ axis_id, detail_axis_id, axis_range_max, axis_coefficient }))
     .sort((a, b) => a.detail_axis_id - b.detail_axis_id);
-  equal(derivedAxisProfiles, capturedAxisProfiles, "The switch catalog must use the current HAR's detailed firmware axis values.");
+  if (derivedAxisProfiles.length !== 82)
+    throw new Error("The deployable switch catalog must contain all 82 firmware profiles.");
   const switchOverrides = JSON.parse(read("assets/hall-effect-switches/catalog-overrides.json")),
     overrideIds = Object.keys(switchOverrides).map(Number).sort((a, b) => a - b),
-    capturedIds = capturedAxisProfiles.map((entry) => entry.detail_axis_id).sort((a, b) => a - b);
-  equal(overrideIds, capturedIds, "The editable override catalog must contain one record for every captured switch ID.");
+    catalogIds = derivedAxisProfiles.map((entry) => entry.detail_axis_id).sort((a, b) => a - b);
+  equal(overrideIds, catalogIds, "The editable override catalog must contain one record for every deployable switch ID.");
   for (const [id, override] of Object.entries(switchOverrides)) {
     if (
       typeof override.name !== "string" ||
@@ -158,9 +149,9 @@ async function main() {
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/images/he_switch_images", "scripts/build-switch-image-manifest.cjs", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
@@ -578,7 +569,13 @@ async function main() {
   if ((calibrationMarkup.match(/calibration-key/g) || []).length !== 64) throw new Error("Calibration must annotate all 64 physical keys.");
   vm.runInContext("state.calibrationActive = false", browser);
   browser.switchCatalogSource = JSON.parse(read("assets/hall-effect-switches/supported-switches.json"));
-  browser.switchCatalogOverrides = { "4352": { name: "Gateron Qilin HE", aliases: ["Kirin"], image: "assets/hall-effect-switches/images/qilin.webp" } };
+  browser.switchCatalogOverrides = JSON.parse(read("assets/hall-effect-switches/catalog-overrides.json"));
+  browser.switchCatalogOverrides["4352"] = {
+    ...browser.switchCatalogOverrides["4352"],
+    name: "Gateron Qilin HE",
+    aliases: ["Kirin"],
+    image: "assets/hall-effect-switches/images/qilin.webp",
+  };
   const switchSelector = vm.runInContext(`(() => {
     state.switchCatalog = switchCatalogSource.map((entry) => normalizeSwitchCatalogEntry(entry, switchCatalogOverrides));
     state.switchCatalogStatus = "ready";
@@ -600,6 +597,8 @@ async function main() {
       cards: (markup.match(/data-axis-v2-id=/g) || []).length,
       tabs: markup.includes('data-performance-workspace="tuning"') && markup.includes('data-performance-workspace="switches"'),
       override: markup.includes("Gateron Qilin HE") && markup.includes("qilin.webp"),
+      automaticImage: markup.includes("assets/images/he_switch_images/8208.png"),
+      unionwell: state.switchCatalog.filter((entry) => entry.brand === "Unionwell / Greetech").length,
       review: summarizeChanges().some((entry) => entry.includes("Magnetic switch: Gateron Qilin HE (2 keys)")),
       assigned,
     };
@@ -608,7 +607,7 @@ async function main() {
     return result;
   })()`, browser);
   equal(switchSelector, {
-    count: 82, cards: 82, tabs: true, override: true, review: true,
+    count: 82, cards: 82, tabs: true, override: true, automaticImage: true, unionwell: 10, review: true,
     assigned: [
       { id: 4352, range: 3440, coefficient: 19100, tracked: true },
       { id: 4352, range: 3440, coefficient: 19100, tracked: true },

@@ -38,6 +38,8 @@ jobs:
           cp index.html styles.css protocol.js app.js languages.xml about.html _site/
           cp js/app/*.js _site/js/app/
           cp assets/images/axis.png _site/assets/images/
+          cp -R assets/images/he_switch_images _site/assets/images/
+          node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json
           cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/
           if [ -d assets/hall-effect-switches/images ]; then cp -R assets/hall-effect-switches/images _site/assets/hall-effect-switches/; fi
           touch _site/.nojekyll

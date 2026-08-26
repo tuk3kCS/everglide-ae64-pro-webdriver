@@ -507,6 +507,27 @@ function bindPage() {
         assignSwitchProfile(Number(button.dataset.axisV2Id)),
       ),
     );
+    document.querySelectorAll("[data-switch-image-candidates]").forEach((image) =>
+      image.addEventListener("error", () => {
+        let candidates = [];
+        try {
+          candidates = JSON.parse(
+            decodeURIComponent(image.dataset.switchImageCandidates || ""),
+          );
+        } catch {}
+        const nextIndex = Number(image.dataset.switchImageIndex || 0) + 1;
+        if (nextIndex < candidates.length) {
+          image.dataset.switchImageIndex = String(nextIndex);
+          image.src = candidates[nextIndex];
+          return;
+        }
+        image.hidden = true;
+        const placeholder = image.parentElement?.querySelector(
+          "[data-switch-image-placeholder]",
+        );
+        if (placeholder) placeholder.hidden = false;
+      }),
+    );
     document.querySelector("#calibrationToggle")?.addEventListener("click", () =>
       state.calibrationActive ? stopCalibration(true) : startCalibration(),
     );
