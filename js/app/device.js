@@ -208,6 +208,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     );
     state.knownDevice = state.transport.device;
     state.hardware.keycodes.clear();
+    state.hardware.advancedByKey.clear();
     Object.assign(state.hardware, {
       protocol,
       info,
@@ -223,10 +224,12 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       decorativeMatrix: null,
       liveMatrix: null,
       liveStrip: null,
+      advanced: null,
       layoutStyle,
       keyPositions: firmwareKeyPositions(layoutStyle),
     });
     state.profile.profileIndex = currentConfig;
+    state.advancedDraft = defaultSocdDraft();
     state.hardware.performance.clear();
     state.switchAssignmentsStatus = "idle";
     state.switchAssignmentsError = "";
@@ -255,6 +258,16 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     await readKeymapLayer(state.profile.layer);
     await optional("Fn layer target", readFnLayerTarget);
     await readSelectedKey();
+    await optional(
+      "calibration status",
+      () => readAllPerformanceRecords({ renderDuringLoad: false }),
+      0,
+    );
+    await optional(
+      "advanced key assignments",
+      () => readAllAdvancedRecords({ renderDuringLoad: false }),
+      0,
+    );
     state.original = clone(state.profile);
     clearDirty();
     log("Connected", {
@@ -268,6 +281,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     });
     openWorkspace();
     startProfilePolling();
+    maybeShowCalibrationRecommendation();
     showToast(`AE64 Pro connected · firmware ${info.firmware}`);
     return true;
   } catch (error) {
@@ -351,7 +365,7 @@ async function readSelectedKey() {
     layer: state.profile.layer,
   });
 }
-async function readAllPerformanceRecords() {
+async function readAllPerformanceRecords({ renderDuringLoad = true } = {}) {
   if (!connected() || state.switchAssignmentsStatus === "loading") return 0;
   const targets = keys.filter(
     (key) =>
@@ -365,7 +379,7 @@ async function readAllPerformanceRecords() {
   }
   state.switchAssignmentsStatus = "loading";
   state.switchAssignmentsError = "";
-  render();
+  if (renderDuringLoad) render();
   try {
     const results = await Promise.allSettled(
       targets.map(async (key) => [
@@ -398,7 +412,7 @@ async function readAllPerformanceRecords() {
     state.switchAssignmentsError = error.message;
     throw error;
   } finally {
-    render();
+    if (renderDuringLoad) render();
   }
 }
 async function readKeymapLayer(layer = state.profile.layer) {
@@ -438,6 +452,8 @@ function clearDirty() {
   state.dirty.lightingPalette = false;
   state.dirty.decorativeBase = false;
   state.dirty.decorativePalette = false;
+  state.dirty.advanced = false;
+  state.dirty.advancedRemovals.clear();
 }
 function performanceReadbackComparison(expected, actual, verifyAxis = false) {
   const hard = [],

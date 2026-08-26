@@ -19,6 +19,13 @@
   const SAVE_GROUP = Object.freeze({ ALL: 0, CALIBRATION: 1, PERFORMANCE: 2, LIGHTING: 3, LAYOUT: 4, ADVANCED: 5, MACRO: 6, AXIS: 7 });
   const AXIS_DATA = Object.freeze({ adc: 0, route: 1, calibration: 2, keyStatus: 3 });
   const ADVANCED_MODE = Object.freeze({ NONE: 0, DKS: 1, MPT: 2, MT: 3, TGL: 4, END: 5, SOCD: 6, RS: 7 });
+  const SOCD_MODE = Object.freeze({ LAST_OVERRIDE: 0, A_PRIORITY: 1, B_PRIORITY: 2, NEUTRAL: 3 });
+  const SOCD_PAIR_MODES = Object.freeze([
+    Object.freeze([0, 0]),
+    Object.freeze([1, 2]),
+    Object.freeze([2, 1]),
+    Object.freeze([3, 3]),
+  ]);
   const LIGHTING_OPEN_MODE = Object.freeze({ OFF: 0, LOWER: 1, UPPER: 2, BOTH: 3 });
   const DEVICE_FILTERS = Object.freeze([Object.freeze({ vendorId: 0x1ca6, productId: 0x300a, usagePage: 0xffb0, usage: 0x01 })]);
 
@@ -450,6 +457,37 @@
 
     async clearAdvancedKey(position) { await this.transact([FAMILY.ADVANCED, 2, clampByte(position.row, "row"), clampByte(position.col, "column"), ADVANCED_MODE.NONE]); }
 
+    // SOCD is a reciprocal relationship. The original driver writes one
+    // record to each physical key, reverses the output keycodes in the second
+    // record, and encodes A/B priority as complementary per-key mode bytes.
+    async setSocdPair({ first, second, keycodes, delay = 0, mode = SOCD_MODE.LAST_OVERRIDE }) {
+      if (!first || !second) throw new TypeError("SOCD requires two physical key positions.");
+      if (first.row === second.row && first.col === second.col) throw new RangeError("SOCD keys must be different.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 2) throw new RangeError("SOCD requires exactly two output keycodes.");
+      const resolvedMode = clampByte(mode, "SOCD mode"),
+        pairModes = SOCD_PAIR_MODES[resolvedMode];
+      if (!pairModes) throw new RangeError("SOCD mode must be 0, 1, 2, or 3.");
+      const shared = {
+        first: [
+          FAMILY.ADVANCED, 2,
+          clampByte(first.row, "key A row"), clampByte(first.col, "key A column"), ADVANCED_MODE.SOCD,
+          clampByte(second.row, "key B row"), clampByte(second.col, "key B column"),
+          ...le16(keycodes[0], "key A output"), ...le16(keycodes[1], "key B output"),
+          ...le16(delay, "SOCD delay"), pairModes[0],
+        ],
+        second: [
+          FAMILY.ADVANCED, 2,
+          clampByte(second.row, "key B row"), clampByte(second.col, "key B column"), ADVANCED_MODE.SOCD,
+          clampByte(first.row, "key A row"), clampByte(first.col, "key A column"),
+          ...le16(keycodes[1], "key B output"), ...le16(keycodes[0], "key A output"),
+          ...le16(delay, "SOCD delay"), pairModes[1],
+        ],
+      };
+      const firstReply = await this.transact(shared.first),
+        secondReply = await this.transact(shared.second);
+      return [decodeAdvanced(firstReply), decodeAdvanced(secondReply)];
+    }
+
     async getMacroMode(macroId) {
       const data = await this.transact([FAMILY.MACRO, 1, clampByte(macroId, "macro ID")]);
       return { macroId: data[2], valid: data[3] === 1, actionCount: read16(data, 4), repeatCount: read16(data, 6), mode: data[8] };
@@ -466,7 +504,7 @@
     }
   }
 
-  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
+  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
   global.AE64Protocol = api;
   global.AE64HidTransport = AE64HidTransport;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

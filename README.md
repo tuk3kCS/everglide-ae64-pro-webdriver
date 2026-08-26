@@ -37,11 +37,12 @@ Implemented now:
 - Optional experimental auto apply with a short edit debounce and verified device writes
 - XML-driven English/Vietnamese language selection through `languages.xml`
 - A standalone, author-editable About Us page in `about.html`
-- Visible/read-only inspection for DKS, MPT, MT, TGL, END, SOCD, RS, and macro capacity
+- Capture-verified four-mode SOCD editor with reciprocal writes/read-back verification, plus visible/read-only inspection for DKS, MPT, MT, TGL, END, RS, and macro capacity
+- Built-in advanced-feature information dialogs, including the captured SOCD tutorial text and four local videos
 
 Deliberately deferred to the advanced release:
 
-- Editors/writers for DKS, MPT, MT, TGL, END, SOCD, RS, and macros
+- Editors/writers for DKS, MPT, MT, TGL, END, RS, macros, and key combinations
 - Destructive factory restore (visible but disabled pending physical-device verification)
 - Decorative/secondary-light editors beyond the discovered read surface
 

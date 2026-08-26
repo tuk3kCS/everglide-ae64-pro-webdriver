@@ -2,14 +2,9 @@
 
 /* AE64 Pro Control — local-first UI for the reverse-engineered WebHID protocol. */
 const {
-  AE64HidTransport,
-  DEVICE_FILTERS,
-  SAVE_GROUP,
-  MATRIX_ROWS,
-  MATRIX_COLS,
-  DECORATIVE_ROWS,
-  DECORATIVE_COLS,
-  LIGHTING_OPEN_MODE,
+  AE64HidTransport, DEVICE_FILTERS, SAVE_GROUP,
+  MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS,
+  ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE,
 } = window.AE64Protocol;
 const STORAGE_KEY = "ae64-control-workspace-v3";
 const LANGUAGE_KEY = "ae64-control-language";
@@ -650,6 +645,12 @@ const defaultProfile = () => ({
   settings: { systemMode: 0, reportRate: 0, sleepTime: 10, shake: false },
 });
 
+function defaultSocdDraft() {
+  return { keyAId: keys.find((key) => key.n === "A")?.id ?? keys[0].id,
+    keyBId: keys.find((key) => key.n === "D")?.id ?? keys[1].id,
+    delay: 0, socdMode: SOCD_MODE.LAST_OVERRIDE, keycodes: null };
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -830,8 +831,8 @@ const state = {
   liveLighting: true, livePressDistance: false, calibrationActive: false, calibrationBusy: false, theme: "mint",
   mappingGroup: "keyboard",
   mappingSearch: "",
-  rtIndependentKeys: new Set(),
-  profile: loadSavedProfile(),
+  rtIndependentKeys: new Set(), advancedDraft: defaultSocdDraft(), socdPickerSlot: 0,
+  calibrationPromptedProfiles: new Set(), profile: loadSavedProfile(),
   original: null,
   transport: null,
   knownDevice: null,
@@ -854,8 +855,7 @@ const state = {
     liveMatrix: null,
     liveStrip: null,
     liveUpdatedAt: 0,
-    advanced: null,
-    macroSpace: null,
+    advanced: null, advancedByKey: new Map(), macroSpace: null,
     layoutStyle: null,
     keyPositions: new Map(),
     travelValues: new Map(), calibrationAdc: new Map(), calibrationRoute: new Map(), calibrationStatus: new Map(), fnPressed: false, fnStatus: 0, fnLayer: 0, fnTriggerId: null,
@@ -872,7 +872,7 @@ const state = {
     decorativeBase: false,
     decorativePalette: false,
     decorativeLighting: new Set(),
-    settings: new Set(),
+    settings: new Set(), advanced: false, advancedRemovals: new Set(),
   },
   timers: {
     travel: null, travelGeneration: 0,
@@ -917,7 +917,8 @@ const dirtyCount = () =>
   Number(state.dirty.lightingPalette) +
   Number(state.dirty.decorativeBase) +
   Number(state.dirty.decorativePalette) +
-  state.dirty.settings.size;
+  state.dirty.settings.size +
+  Number(state.dirty.advanced) + state.dirty.advancedRemovals.size;
 const lightingKeyIds = () =>
   [...state.lightingSelectedKeys]
     .filter((id) => keys[id])

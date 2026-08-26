@@ -26,7 +26,7 @@ The driver serializes requests: only one request awaits a reply at a time. Norma
 | `03` | Layout and key | four layers, per-key mapping, layout metadata, defaults |
 | `04` | Performance | per-key Hall settings and raw axis data |
 | `05` | Lighting | base effect, palette, custom matrix |
-| `06` | Higher key | advanced-key reads; writes deferred |
+| `06` | Higher key | advanced-key reads and capture-verified SOCD pair writes; other writers deferred |
 | `07` | Macro | mode/data reads; writes deferred |
 | `08` | Firmware upgrade | **excluded** |
 | `0A` | Custom command | manufacturer web-driver handshake |
@@ -103,6 +103,8 @@ Calibration is a device-wide live session rather than a normal staged performanc
 3. The raw ADC value is shown at the lower-left of each key. Calibration status `0` is uncalibrated/red, `1` is calibrated/blue, and `2` is newly calibrated/green. The key fill is `route / axisRangeMax`; status `2` forces a full-height fill. A missing per-key range falls back to 4,000 raw units.
 4. Send `02 06 01`, then commit save group `1`. The original driver normalizes in-memory status `2` to `1` after the session ends.
 
+The original driver's startup warning is not timer- or firmware-version-based. After it reads the keyboard layout and each active key's `04 01` performance record, it opens the recommendation dialog if any non-empty key has performance byte 20 (`calibrate`) equal to `0`. Its matrix model has a special exception for alternate spacebar slots at firmware row 5, columns 3–8: empty/unused candidate slots do not force the warning when another occupied slot in that group is already calibrated. This project models only the 64 physical keys rather than the unused candidate cells, so the equivalent rule is simply “any readable physical key reports `calibrate = 0`.” The warning is shown once per onboard profile per page session; Confirm navigates to the Performance calibration control and does not start calibration without a second deliberate click.
+
 The key-status matrix uses the same row/column addressing. The original driver's live travel test considers values `1…7` pressed and `0` idle.
 
 ## Lighting
@@ -127,7 +129,25 @@ The custom matrix and current LED framebuffer are read as `05 03 area packet` an
 
 ## Advanced keys and macros
 
-`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. The manufacturer write family is known, but editors/writers are deferred until captured examples can be verified on physical hardware.
+`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. DKS/MPT/MT/TGL/END/RS editors and writers remain deferred.
+
+SOCD write behavior is captured and implemented. It always requires two `06 02` records followed by commit group `5`:
+
+```text
+06 02 rowA colA 06 rowB colB keyA-lo keyA-hi keyB-lo keyB-hi delay-lo delay-hi localModeA
+06 02 rowB colB 06 rowA colA keyB-lo keyB-hi keyA-lo keyA-hi delay-lo delay-hi localModeB
+```
+
+The four UI modes and reciprocal mode-byte pairs are:
+
+| UI mode | Overall value | `(localModeA, localModeB)` | Result while both are held |
+| --- | ---: | --- | --- |
+| Last Override | `0` | `(0, 0)` | most recent input wins |
+| A Priority | `1` | `(1, 2)` | Key A wins |
+| B Priority | `2` | `(2, 1)` | Key B wins |
+| Neutral | `3` | `(3, 3)` | neither output is sent |
+
+The alternative driver refuses to overwrite either key when it already belongs to a different advanced assignment or SOCD pair. After writing both records it commits group `5`, reads both keys back, and verifies reciprocal positions, outputs, delay, and local mode bytes.
 
 Macro metadata/data is read with family `07` operations `01` and `03`. Macro mode/data writers (`02` and `04`) are likewise deferred.
 
