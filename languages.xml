@@ -59,7 +59,7 @@
     <string key="lightingUpper">North-facing LEDs</string>
     <string key="lightingLower">South-facing LEDs</string>
     <string key="lightingLive">Live hardware RGB</string>
-<string key="lightingLiveHint">Reads the current LED framebuffer about {{fps}} times per second.</string>
+    <string key="lightingLiveHint">Reads the current LED framebuffer about {{fps}} times per second.</string>
     <string key="lightingLed">Strip LED</string>
     <string key="lightingCopyStrip">Copy color to all strip LEDs</string>
     <string key="lightingClearStrip">Clear all strip overrides</string>
@@ -93,6 +93,7 @@
     <string key="offline">Offline</string>
     <string key="noPendingChanges">No pending changes</string>
   </language>
+  
   <language code="vi" name="Tiếng Việt">
     <string key="brandTagline">Trình điều khiển WebHID độc lập</string>
     <string key="navFeatures">Tính năng</string>
@@ -180,5 +181,95 @@
     <string key="autoApplyActive">Tự động áp dụng đang bật · bàn phím đã đồng bộ</string>
     <string key="offline">Ngoại tuyến</string>
     <string key="noPendingChanges">Không có thay đổi chờ</string>
+  </language>
+
+  <language code="ru" name="Russian">
+    <string key="brandTagline">Независимый драйвер WebHID</string>
+    <string key="navFeatures">Особенности</string>
+    <string key="navProtocol">Протокол</string>
+    <string key="language">Язык</string>
+    <string key="openDemo">Открыть демо</string>
+    <string key="connectKeyboard">Подключить клавиатуру</string>
+    <string key="heroEyebrow">ЛОКАЛЬНО · БЕЗ КИТАЙСКИХ СЕРВЕРОВ</string>
+    <string key="heroLine1">Ваш AE64.</string>
+    <string key="heroLine2">Полностью прозрачна.</string>
+    <string key="heroLead">Настройка срабатывания, Rapid Trigger, ремаппинг, RGB, профилей и скрытых диагностических функций через WebHID.</string>
+    <string key="exploreOffline">Исследовать офлайн</string>
+    <string key="compatibility">Браузер Chrome или Edge · HTTPS или localhost · Аккаунт не нужен</string>
+    <string key="ready">ГОТОВ</string>
+    <string key="deviceId">ID устройства</string>
+    <string key="reportSize">Размер отчёта</string>
+    <string key="collection">Коллекция</string>
+    <string key="featurePerformanceTitle">Hall параметры</string>
+    <string key="featurePerformanceBody">Настройка срабатывания, Rapid Trigger, раздельные значения нажатия и отпускания, а также обе мёртвые зоны для каждой клавиши.</string>
+    <string key="featureKeymapTitle">Четыре слоя клавиш</string>
+    <string key="featureKeymapBody">Клавиатура, медиа, мышь, подсветка и внутренние функции прошивки.</string>
+    <string key="featureHiddenTitle">Продвинутые</string>
+    <string key="featureHiddenBody">Калибровка, сырой ход, метаданные магнитной оси и просмотр продвинутых режимов клавиш остаются доступными.</string>
+    <string key="protocolEyebrow">НА ОСНОВЕ ЗАХВАТА, ЛОКАЛЬНО</string>
+    <string key="protocolTitle">Клавиатура — источник истины.</string>
+    <string key="protocolBody">Драйвер читает состояние клавиатуры перед редактированием, не трогает системные поля, записывает только подготовленные изменения и проверяет результат. Прошивка не обновляется.</string>
+    <string key="offlineWorkspace">Офлайн-режим</string>
+    <string key="overview">Обзор</string>
+    <string key="performance">Производительность</string>
+    <string key="keymap">Назначение клавиш</string>
+    <string key="lighting">Подсветка</string>
+    <string key="lightingDescription">Эффекты клавиатуры, единый предпросмотр в реальном времени, индивидуальные цвета для клавиш и светодиодная лента.</string>
+    <string key="lightingMainKeyboard">Клавиатура</string>
+    <string key="lightingPerKey">По клавишам</string>
+    <string key="lightingDecorative">Светодиодная лента</string>
+    <string key="lightingPower">Вкл/Выкл подсветки</string>
+    <string key="lightingMode">Режим подсветки</string>
+    <string key="lightingModeHint">Прошивка возвращает индексы вместо названий эффектов.</string>
+    <string key="lightingBrightness">Яркость</string>
+    <string key="lightingSpeed">Скорость</string>
+    <string key="lightingDirection">Направление</string>
+    <string key="lightingForward">Вперёд</string>
+    <string key="lightingBackward">Назад</string>
+    <string key="lightingPalette">Восьмицветная палитра</string>
+    <string key="lightingPaletteHint">Выберите активный слот, затем отредактируйте сохранённый цвет.</string>
+    <string key="lightingActiveColor">Активный цвет</string>
+    <string key="lightingCustomOverride">Индивидуальный цвет</string>
+    <string key="lightingReadMatrix">Прочитать матрицу цветов</string>
+    <string key="lightingCopyAll">Применить цвет ко всем клавишам</string>
+    <string key="lightingClearKey">Очистить выбранные</string>
+    <string key="lightingClearAll">Очистить все</string>
+    <string key="lightingUpper">Верхние светодиоды</string>
+    <string key="lightingLower">Нижние светодиоды</string>
+    <string key="lightingLive">Живое RGB</string>
+    <string key="lightingLiveHint">Считывает текущий кадр LED примерно {{fps}} раз в секунду.</string>
+    <string key="lightingLed">LED ленты</string>
+    <string key="lightingCopyStrip">Применить ко всем светодиодам ленты</string>
+    <string key="lightingClearStrip">Очистить все переопределения ленты</string>
+    <string key="quickProfile">Быстрый выбор профиля</string>
+    <string key="rename">Переименовать</string>
+    <string key="renameProfile">Переименовать профиль</string>
+    <string key="renameProfileHint">Новое имя записывается непосредственно в активный профиль на клавиатуре.</string>
+    <string key="profileName">Имя профиля</string>
+    <string key="saveName">Сохранить имя</string>
+    <string key="writeToKeyboard">ЗАПИСАТЬ В КЛАВИАТУРУ</string>
+    <string key="applyReviewTitle">Проверьте изменения</string>
+    <string key="applyReviewWarning">Изменения сразу запишутся в активный профиль на клавиатуре.</string>
+    <string key="cancel">Отмена</string>
+    <string key="writeNow">Записать сейчас</string>
+    <string key="settings">Настройки устройства</string>
+    <string key="featureLab">Продвинутые</string>
+    <string key="diagnostics">Диагностика</string>
+    <string key="about">О нас</string>
+    <string key="stagedEdits">Ожидающие изменения</string>
+    <string key="stagedEditsBody">Кнопка «Применить» покажет список изменений, после чего запишет их в клавиатуру.</string>
+    <string key="profile">Профиль</string>
+    <string key="layer">Слой</string>
+    <string key="home">Главная</string>
+    <string key="connect">Подключить</string>
+    <string key="revert">Отменить</string>
+    <string key="applyChanges">Применить изменения</string>
+    <string key="autoApply">Автоприменение</string>
+    <string key="experimental">ЭКСПЕРИМЕНТАЛЬНО</string>
+    <string key="autoApplyHint">Автоматически применяет каждое завершённое изменение в клавиатуру.</string>
+    <string key="autoApplyActive">Автоприменение включено · клавиатура синхронизирована</string>
+    <string key="offline">Офлайн</string>
+    <string key="noPendingChanges">Нет ожидающих изменений</string>
+</language>
   </language>
 </translations>
