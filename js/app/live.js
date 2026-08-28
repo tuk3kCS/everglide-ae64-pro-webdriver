@@ -19,10 +19,14 @@ async function loadCustomLighting() {
       0,
     );
     keys.forEach((key) => {
-      const record =
-        state.hardware.customMatrix[key.row * MATRIX_COLS + key.col];
+      const records = lightingMatrixIndexes(key)
+          .map((matrixIndex) => state.hardware.customMatrix[matrixIndex])
+          .filter(Boolean),
+        record = records[Math.floor(records.length / 2)] || records[0];
+      if (!record) return;
       state.profile.lighting.perKey[key.id] = rgbToHex(record);
-      state.profile.lighting.customEnabled[key.id] = Boolean(record.custom);
+      state.profile.lighting.customEnabled[key.id] =
+        key.n === "Space" ? records.some((item) => Boolean(item.custom)) : Boolean(record.custom);
     });
     state.dirty.customLighting.clear();
     render();
@@ -69,6 +73,8 @@ async function readAdvanced() {
     else state.hardware.advancedByKey.set(key.id, state.hardware.advanced);
     if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.MPT && !state.dirty.advanced)
       state.advancedDraft = multipointDraftFromRecord(key, state.hardware.advanced);
+    if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.DKS && !state.dirty.advanced)
+      state.advancedDraft = dksDraftFromRecord(key, state.hardware.advanced);
     if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced.mode)) && !state.dirty.advanced) {
       const first = keys.find((key) => {
           const address = position(key);
@@ -441,8 +447,13 @@ function updateLiveKeyboard(matrix) {
   state.hardware.liveUpdatedAt = Date.now();
   document.querySelectorAll(".lighting-preview [data-key]").forEach((node) => {
     const key = keys[Number(node.dataset.key)],
-      record = key && matrix[key.row * MATRIX_COLS + key.col];
+      matrixIndex = key ? lightingMatrixIndex(key) : null,
+      record = matrixIndex === null ? null : matrix[matrixIndex];
     if (record) node.style.setProperty("--key-color", rgbToHex(record));
+    node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => {
+      const ledRecord = matrix[Number(dot.dataset.spacebarLedIndex)];
+      if (ledRecord) dot.style.setProperty("--space-led-color", rgbToHex(ledRecord));
+    });
   });
 }
 function updateLiveStrip(matrix) {

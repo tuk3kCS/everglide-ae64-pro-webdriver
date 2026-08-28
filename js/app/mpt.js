@@ -23,10 +23,10 @@ const MPT_ALLOWED_CODES = new Set(MPT_KEY_GROUPS.flatMap(({ codes }) => codes));
 Object.assign(state, { mptKeyPickerStage: 0, mptKeyPickerGroup: "basic" });
 
 function advancedDraftFeatureCode(draft = state.advancedDraft) {
-  return ["MPT", "RS"].includes(draft?.feature) ? draft.feature : "SOCD";
+  return ["DKS", "MPT", "RS", "MACRO"].includes(draft?.feature) ? draft.feature : "SOCD";
 }
 function advancedDraftKeyIds(draft = state.advancedDraft) {
-  return advancedDraftFeatureCode(draft) === "MPT"
+  return ["DKS", "MPT", "MACRO"].includes(advancedDraftFeatureCode(draft))
     ? [Number(draft.hostId)]
     : [Number(draft.keyAId), Number(draft.keyBId)];
 }
@@ -152,6 +152,7 @@ function openMultipointKeyPicker(stage) {
   state.mptKeyPickerStage = clamp(stage, 0, 2);
   const current = Number(state.advancedDraft.keycodes[stage]);
   state.mptKeyPickerGroup = !current || MPT_CAPTURED_BASIC_CODES.includes(current) ? "basic" : "extended";
+  const title = document.querySelector("#mptKeyPickerTitle"); if (title) title.textContent = `Choose MPT stage ${Number(stage) + 1}`;
   renderMultipointKeyPicker();
   openDialog(document.querySelector("#mptKeyPickerDialog"));
   document.querySelector("#mptKeySearch")?.focus();

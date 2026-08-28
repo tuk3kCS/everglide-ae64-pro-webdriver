@@ -524,9 +524,32 @@
       return decodeAdvanced(reply);
     }
 
+    async setDynamicKeystroke({ position, keycodes, travels, dbs = [0, 4] }) {
+      if (!position) throw new TypeError("DKS requires one physical host key.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 4) throw new RangeError("DKS requires exactly four keycode slots.");
+      if (!Array.isArray(travels) || travels.length !== 4) throw new RangeError("DKS requires exactly four trigger-point slots.");
+      if (!Array.isArray(dbs) || dbs.length !== 2) throw new RangeError("DKS requires min/max travel values.");
+      const reply = await this.transact([
+        FAMILY.ADVANCED, 2, clampByte(position.row, "host row"), clampByte(position.col, "host column"), ADVANCED_MODE.DKS,
+        ...keycodes.flatMap((keycode, index) => le16(keycode, `DKS keycode ${index + 1}`)),
+        ...travels.map((travel, index) => clampByte(travel, `DKS trigger ${index + 1}`)),
+        ...dbs.flatMap((db, index) => le16(Math.round(Number(db) * 1000), `DKS travel ${index + 1}`)),
+      ]);
+      return decodeAdvanced(reply);
+    }
+
     async getMacroMode(macroId) {
       const data = await this.transact([FAMILY.MACRO, 1, clampByte(macroId, "macro ID")]);
       return { macroId: data[2], valid: data[3] === 1, actionCount: read16(data, 4), repeatCount: read16(data, 6), mode: data[8] };
+    }
+
+    async setMacroMode({ macroId, valid = true, actionCount = 0, repeatCount = 1, mode = 0 }) {
+      const reply = await this.transact([
+        FAMILY.MACRO, 2, clampByte(macroId, "macro ID"), valid ? 1 : 0,
+        ...le16(actionCount, "macro action count"), ...le16(repeatCount, "macro repeat count"),
+        clampByte(mode, "macro playback mode"),
+      ]);
+      return { macroId: reply[2], valid: reply[3] === 1, actionCount: read16(reply, 4), repeatCount: read16(reply, 6), mode: reply[8] };
     }
 
     async getMacroData(macroId, offset = 0) {
@@ -537,6 +560,17 @@
         actions.push({ pressed: Boolean(packed >>> 31), delay: (packed >>> 16) & 0x7fff, keycode: packed & 0xffff });
       }
       return actions;
+    }
+
+    async setMacroData({ macroId, offset = 0, actions = [] }) {
+      if (!Array.isArray(actions)) throw new TypeError("Macro actions must be an array.");
+      const bytes = actions.flatMap((action, index) => {
+        const delay = Math.max(0, Math.min(0x7fff, Number(action.delay) || 0)),
+          packed = ((action.pressed ? 0x80000000 : 0) | (Math.round(delay) << 16) | (Number(action.keycode) & 0xffff)) >>> 0;
+        if (!Number.isInteger(Number(action.keycode)) || Number(action.keycode) <= 0) throw new RangeError(`Macro action ${index + 1} needs a keycode.`);
+        return [packed & 0xff, (packed >>> 8) & 0xff, (packed >>> 16) & 0xff, (packed >>> 24) & 0xff];
+      });
+      return this.transact([FAMILY.MACRO, 4, clampByte(macroId, "macro ID"), clampByte(offset, "macro offset"), ...bytes]);
     }
   }
 

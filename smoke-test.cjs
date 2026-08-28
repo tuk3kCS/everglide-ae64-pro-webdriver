@@ -14,6 +14,8 @@ const APP_FILES = [
   "js/app/mapping.js",
   "js/app/rappy.js",
   "js/app/mpt.js",
+  "js/app/dks.js",
+  "js/app/macro.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -36,6 +38,8 @@ class FakeDevice {
     this.pressedKey = { row: 5, col: 5, status: 3 };
     this.currentConfig = 0;
     this.advanced = new Map();
+    this.macroModes = new Map();
+    this.macroData = new Map();
     this.performance = new Map();
   }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
@@ -124,7 +128,7 @@ class FakeDevice {
       else reply.set([6, 1, packet[2], packet[3], 0]);
     }
     if (packet[0] === 6 && packet[1] === 2) {
-      const stored = packet.slice(0, 17);
+      const stored = packet.slice(0, 21);
       this.advanced.set(`${packet[2]}:${packet[3]}`, stored);
       this.performance.set(`${packet[2]}:${packet[3]}`, [
         4, 2, packet[2], packet[3], 0,
@@ -132,6 +136,23 @@ class FakeDevice {
         0x64, 0, 0x64, 0, 2, 1, 0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a,
       ]);
       reply.set(stored);
+    }
+    if (packet[0] === 7 && packet[1] === 1) {
+      const stored = this.macroModes.get(packet[2]) || [7, 1, packet[2], 0, 0, 0, 1, 0, 0];
+      reply.set(stored);
+    }
+    if (packet[0] === 7 && packet[1] === 2) {
+      const stored = packet.slice(0, 9);
+      this.macroModes.set(packet[2], stored);
+      reply.set(stored);
+    }
+    if (packet[0] === 7 && packet[1] === 3) {
+      reply[2] = packet[2]; reply[3] = packet[3];
+      reply.set(this.macroData.get(packet[2]) || [], 4);
+    }
+    if (packet[0] === 7 && packet[1] === 4) {
+      this.macroData.set(packet[2], packet.slice(4, 64));
+      reply.set(packet);
     }
     queueMicrotask(() => this.reply(reply));
   }
@@ -292,7 +313,7 @@ async function main() {
   const advancedMarkup = vm.runInContext("advancedPage()", browser);
   if ((advancedMarkup.match(/data-feature-info=/g) || []).length !== 9)
     throw new Error("Every advanced feature and placeholder must expose an information button.");
-  for (const required of ["Macros", "Key Combination", 'data-advanced-config="MPT"', 'data-advanced-config="SOCD"', 'data-advanced-config="RS"', 'data-advanced-config="COMBO"'])
+  for (const required of ["Macros", "Key Combination", 'data-advanced-config="DKS"', 'data-advanced-config="MPT"', 'data-advanced-config="SOCD"', 'data-advanced-config="RS"', 'data-advanced-config="MACRO"', 'data-advanced-config="COMBO"'])
     if (!advancedMarkup.includes(required)) throw new Error(`Advanced/SOCD UI omitted ${required}.`);
   if (advancedMarkup.includes('class="panel full-span warning-card"')) throw new Error("The removed Advanced warning panel returned.");
   if ((advancedMarkup.match(/class="advanced-card compact/g) || []).length !== 9)
@@ -337,6 +358,23 @@ async function main() {
     return [(basic.match(/data-mpt-keycode=/g) || []).length, (extended.match(/data-mpt-keycode=/g) || []).length, basic.includes("Excluded from the captured MPT palette"), extended.includes("Used on another stage")];
   })()`, browser);
   equal(mptPickerCheck, [49, 57, true, true], "MPT key-value popup must list the captured remap subset and prevent duplicate stage outputs.");
+  const dksCaptureRules = vm.runInContext(`(() => {
+    const savedInfo = state.hardware.info, savedProfileCode = state.profile.keycodes[0][0], savedHardwareCode = state.hardware.keycodes.get("0:0");
+    state.profile.keycodes[0][0] = 224; state.hardware.keycodes.set("0:0", 224);
+    const hostChecks = [dksHostEligible(keys[0]), DKS_CAPTURED_HOST_CODES.length, [4, 40, 115, 224, 231].every((code) => DKS_HOST_CODE_SET.has(code)), [0, 1, 116, 223, 232].every((code) => !DKS_HOST_CODE_SET.has(code))];
+    state.hardware.info = { ...(savedInfo || {}), firmware: "1.1.2.9" };
+    const legacyGroups = dksKeyGroups().map(({ id, codes }) => [id, codes.length]);
+    state.hardware.info = { ...(savedInfo || {}), firmware: "1.1.3.0" };
+    const expandedGroups = dksKeyGroups().map(({ id, codes }) => [id, codes.length]);
+    state.advancedDraft = { feature: "DKS", hostId: 0, keycodes: [0x4100, 0, 0, 0], travels: [0, 0, 0, 0], dbs: [1.5, 3] };
+    state.dksKeyPickerSlot = 0; state.dksKeyPickerGroup = "mouse"; renderDksKeyPicker();
+    const picker = document.querySelector("#mptKeyPickerBody").innerHTML;
+    state.hardware.info = savedInfo; state.profile.keycodes[0][0] = savedProfileCode;
+    if (savedHardwareCode === undefined) state.hardware.keycodes.delete("0:0"); else state.hardware.keycodes.set("0:0", savedHardwareCode);
+    return { hostChecks, legacyGroups, expandedGroups, mouseOptions: (picker.match(/data-dks-keycode=/g) || []).length, masks: [normalizeDksMask(0x08), normalizeDksMask(0x10), normalizeDksMask(0x18), normalizeDksMask(0xff)], limit: dksTravelLimit(keys[0]) };
+  })()`, browser);
+  equal(dksCaptureRules, { hostChecks: [true, 120, true, true], legacyGroups: [["basic", 49], ["extended", 50]], expandedGroups: [["basic", 49], ["extended", 57], ["mouse", 12]], mouseOptions: 12, masks: [0, 0, 0x18, 0xff], limit: 3.3 }, "DKS must mirror the original host/output palettes, firmware gate, fixed threshold range, and paired turnaround bits.");
+  if (read("js/app/dks.js").includes("if (!state.advancedDraft.travels[slot])")) throw new Error("Choosing a DKS output must not silently enable P1; original lifecycle cells start independently off.");
   const mptTutorial = vm.runInContext("multipointFeatureInfo()", browser);
   for (const excerpt of ["three independent trigger depths", "stage-switching latency below 1 ms", "project cars", "multipoint_trigger.webm"])
     if (!mptTutorial.body.toLowerCase().includes(excerpt)) throw new Error(`MPT manufacturer tutorial omitted ${excerpt}.`);
@@ -498,6 +536,24 @@ async function main() {
         positions.get(keys.find((key) => key.uiRow === 4 && key.col === 8).id),
       ];
     })(),
+    shiftedLightingIndexes: (() => {
+      const saved = state.hardware.keyPositions;
+      const style = layout.map((row, firmwareRow) =>
+        row.map((_, visualCol) => ({ row: firmwareRow, col: visualCol, ratio: 4 })),
+      );
+      style[3] = [{ ratio: 0 }, ...layout[3].map((_, visualCol) => ({ row: 3, col: visualCol, ratio: 4 }))];
+      style[4] = [{ ratio: 0 }, ...layout[4].map((_, visualCol) => ({ row: 4, col: visualCol, ratio: 4 }))];
+      state.hardware.keyPositions = firmwareKeyPositions(style);
+      const result = [
+        keys.find((key) => key.uiRow === 3 && key.col === 13),
+        keys.find((key) => key.uiRow === 4 && key.col === 4),
+        keys.find((key) => key.uiRow === 4 && key.col === 5),
+        keys.find((key) => key.uiRow === 4 && key.col === 8),
+      ].map((key) => lightingMatrixIndex(key));
+      state.hardware.keyPositions = saved;
+      return result;
+    })(),
+    spacebarLightingIndexes: lightingMatrixIndexes(keys.find((key) => key.n === "Space")),
   })`, browser);
   equal(settingsEnums.systems, [[0, "Windows"], [1, "macOS"]], "System-mode labels no longer match the manufacturer enum.");
   equal(settingsEnums.polling, [[5, 250], [4, 500], [3, 1000], [2, 2000], [1, 4000], [0, 8000]], "Polling-rate labels no longer match the manufacturer enum.");
@@ -550,6 +606,8 @@ async function main() {
     { row: 4, col: 1 },
     { row: 4, col: 9 },
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
+  equal(settingsEnums.shiftedLightingIndexes, [77, 89, 90, 93], "Custom RGB matrix writes must use firmware layout positions, not visual key columns.");
+  equal(settingsEnums.spacebarLightingIndexes, [106, 107, 108, 109, 110], "Space must fan one lighting target out to five adjacent RGB cells.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
   for (const required of ['class="settings-page"', 'id="systemMode"', 'id="reportRate"', 'id="profileName"', 'data-theme-choice="mint"', 'data-theme-choice="dark"', 'data-theme-choice="light"'])
@@ -864,6 +922,10 @@ async function main() {
   const lightingMarkup = vm.runInContext(`(state.page = "lighting", state.lightingTab = "main", lightingPage())`, browser);
   for (const required of ['data-lighting-tab="main"', 'data-lighting-tab="perKey"', 'data-lighting-tab="strip"', '>Keyboard</button>', '>Per-key</button>', '>Light strip</button>', 'Unified live lighting', 'Keyboard + light strip', 'data-lighting-mode="19"', 'data-lighting-mode="20"', 'data-lighting-mode="21"', 'data-lighting-mode="22"', 'id="lightingBrightness"', 'id="lightingSpeed"', 'data-lighting-direction="0"', 'data-lighting-direction="1"', 'id="paletteColor"', 'id="upperLighting"', 'id="lowerLighting"', 'id="lightingLive"', 'class="rainbow'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
+  if ((lightingMarkup.match(/data-spacebar-led-index=/g) || []).length !== 5 || !lightingMarkup.includes('class="spacebar-lighting-leds"'))
+    throw new Error("Lighting preview must expose Space as five RGB cells without adding mapping keys.");
+  for (const required of ['palette-editor enhanced-palette-editor', 'color-preview ', 'class="color-channel-grid"', 'class="preset-color-row"', 'data-palette-preset="#ff3b30"'])
+    if (!lightingMarkup.includes(required)) throw new Error(`Lighting palette beautification omitted ${required}.`);
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
   if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
   for (const removedLightingPanel of ['dual-lighting-card', 'fn-lighting-card', 'fnLightingStatus', 'class="panel full-span capture-note experimental-note"'])
@@ -968,6 +1030,15 @@ async function main() {
   });
   equal(device.sent.at(-1).packet.slice(0, 17), [6, 2, 3, 4, 2, 4, 0, 58, 0, 0, 0, 0xf4, 0x01, 0xb0, 0x04, 0xe4, 0x0c], "MPT mode-2 packet changed.");
   equal([mptReply.type, mptReply.keycodes, mptReply.depths], ["MPT", [4, 58, 0], [.5, 1.2, 3.3]], "MPT write reply did not decode three outputs and depths.");
+  const dksReply = await transport.setDynamicKeystroke({
+    position: { row: 4, col: 5 }, keycodes: [4, 5, 6, 7], travels: [10, 120, 120, 10], dbs: [.2, 3.4],
+  });
+  equal(device.sent.at(-1).packet.slice(0, 21), [6, 2, 4, 5, 1, 4, 0, 5, 0, 6, 0, 7, 0, 10, 120, 120, 10, 0xc8, 0, 0x48, 0x0d], "DKS mode-1 packet changed.");
+  equal([dksReply.type, dksReply.keycodes, dksReply.travels, dksReply.deadzones], ["DKS", [4, 5, 6, 7], [10, 120, 120, 10], [.2, 3.4]], "DKS write reply did not decode four stages.");
+  await transport.setMacroData({ macroId: 2, actions: [{ pressed: true, keycode: 4, delay: 1 }, { pressed: false, keycode: 4, delay: 25 }] });
+  equal(device.sent.at(-1).packet.slice(0, 12), [7, 4, 2, 0, 4, 0, 1, 0x80, 4, 0, 25, 0], "Macro action-packet packing changed.");
+  const macroMode = await transport.setMacroMode({ macroId: 2, valid: true, actionCount: 2, repeatCount: 3, mode: 1 });
+  equal([macroMode.macroId, macroMode.valid, macroMode.actionCount, macroMode.repeatCount, macroMode.mode], [2, true, 2, 3, 1], "Macro mode packet decode failed.");
   device.advanced.clear();
   device.performance.clear();
   browser.injectedTransport = transport;
@@ -1168,6 +1239,33 @@ async function main() {
   equal(removedMpt, [true, 0, 0], "Applying an MPT removal must clear its single hardware record.");
   const preservedAfterMptRemoval = await transport.getPerformance(mptPosition);
   equal(preservedAfterMptRemoval.normalPress, 1.23, "Removing MPT must preserve the host key's Hall tuning.");
+  const dksUi = vm.runInContext(`(() => {
+    state.profile.keycodes[0][5] = 5; state.hardware.keycodes.set("0:5", 5);
+    state.profile.performance[5] = { ...state.profile.performance[5], mode: 0, normalPress: .91, axisRangeMax: 3331 };
+    state.hardware.performance.set(5, state.profile.performance[5]);
+    state.advancedDraft = { feature: "DKS", hostId: 5, keycodes: [4, 5, 0, 0], travels: [0x83, 0x3c, 0, 0], dbs: [.8, 3.2] };
+    const markup = dksEditor();
+    return [(markup.match(/data-dks-point=/g) || []).length, markup.includes("Action lifecycle"), markup.includes("Shallow point · db1"), markup.includes("Deep point · db2"), DKS_TIMELINE_POINTS[3].mask, dksPointActive(0x18, 3)];
+  })()`, browser);
+  equal(dksUi, [28, true, true, true, 0x18, true], "DKS editor must expose four actions across the captured seven-cell lifecycle and merged bottom mask.");
+  const dksPosition = vm.runInContext("position(keys[5])", browser);
+  await transport.setPerformance(dksPosition, vm.runInContext("state.profile.performance[5]", browser));
+  vm.runInContext("state.dirty.advanced = true", browser);
+  const dksSummary = vm.runInContext("summarizeChanges()", browser);
+  if (!dksSummary.some((item) => item.includes("DKS:") && item.includes("A1") && item.includes("P1 shallow press"))) throw new Error("Apply review must describe DKS actions using the original lifecycle labels rather than raw trigger bytes.");
+  const dksApplied = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advanced?.type || null, state.hardware.advanced?.travels || null, state.hardware.advanced?.deadzones || null])", browser);
+  equal(dksApplied, [true, 0, "DKS", [0x83, 0x3c, 0, 0], [.8, 3.2]], "Apply must write and read back the complete DKS lifecycle record.");
+  const preservedDksPerformance = await transport.getPerformance(dksPosition);
+  equal([preservedDksPerformance.normalPress, preservedDksPerformance.axisRangeMax], [.91, 3331], "DKS must restore the host key's Hall and switch-selector tuning after firmware reset.");
+  const dksIndicators = vm.runInContext(`(() => {
+    state.page = "advanced";
+    const keyboard = keyboardHtml(), assignments = advancedAssignmentsPanel();
+    return [(keyboard.match(/data-advanced-indicator="DKS"/g) || []).length, (assignments.match(/data-advanced-assignment="DKS"/g) || []).length, assignments.includes('data-remove-advanced="5"'), assignments.includes("P1 shallow press")];
+  })()`, browser);
+  equal(dksIndicators, [1, 1, true, true], "Verified DKS must show one colored keyboard indicator and one removable lifecycle assignment.");
+  vm.runInContext('toggleAdvancedRemoval("5")', browser);
+  const removedDks = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advancedByKey.size])", browser);
+  equal(removedDks, [true, 0, 0], "Applying a DKS removal must clear its hardware record.");
   browser.navigator.hid.getDevices = async () => [device];
   vm.runInContext("state.transport = injectedTransport; state.profile.settings.reportRate = 3; state.dirty.settings.add('reportRate')", browser);
   await vm.runInContext("applyChanges()", browser);

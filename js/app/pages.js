@@ -94,6 +94,8 @@ function advancedKeyMeta(key) {
       displayedKeycode(key, state.profile.layer),
       combinationTokenKnown(combinationBaseToken(state.profile.layer, key.id)),
     );
+    const macro = macroAdvancedMeta(key);
+    if (macro) return macro;
     if (!combination) return null;
     return {
       feature: ADVANCED_FEATURES.find((item) => item.code === "COMBO"),
@@ -120,6 +122,14 @@ function advancedKeyMeta(key) {
     removing: state.dirty.advancedRemovals.has(key.id),
     partner: partner?.n || "",
   };
+}
+function spacebarLightingDots(key, live, light, paletteIndex, baseColor) {
+  if (key?.n !== "Space") return "";
+  const custom = Boolean(light.customEnabled?.[key.id]);
+  return `<span class="spacebar-lighting-leds" aria-hidden="true">${lightingMatrixIndexes(key).map((matrixIndex, led) => {
+    const record = live ? state.hardware.liveMatrix[matrixIndex] : null, color = record ? rgbToHex(record) : custom ? light.perKey[key.id] : paletteIndex === 0 ? RAINBOW_PREVIEW[led % RAINBOW_PREVIEW.length] : baseColor;
+    return `<i data-spacebar-led-index="${matrixIndex}" style="--space-led-color:${esc(color)}"></i>`;
+  }).join("")}</span>`;
 }
 function keyboardHtml({ hero = false, lighting = false } = {}) {
   const layer = Number(lighting ? state.hardware.fnPressed ? fnTargetLayer() : 0 : state.profile.layer),
@@ -164,8 +174,9 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               code = fnMeta ? fnMeta.resolved : displayedKeycode(key, layer);
             const mapped = keycodeLabel(code);
             const custom = Boolean(light.customEnabled?.[key.id]),
+              liveIndex = lightingMatrixIndex(key),
               liveColor = live
-                ? state.hardware.liveMatrix[key.row * MATRIX_COLS + key.col]
+                ? state.hardware.liveMatrix[liveIndex]
                 : null,
               previewColor = liveColor
                 ? rgbToHex(liveColor)
@@ -223,7 +234,8 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 !showCalibration &&
                 !showSwitchProfiles
                   ? advancedKeyMeta(key)
-                  : null;
+                  : null,
+              spacebarDots = lighting ? spacebarLightingDots(key, live, light, paletteIndex, baseColor) : "";
             const dirty =
               state.dirty.performance.has(key.id) ||
               [...state.dirty.mapping].some((token) =>
@@ -234,7 +246,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               ? `${advanced.feature.title} ${advanced.removing ? "removal staged" : advanced.staged ? "staged" : "enabled"}${advanced.partner ? ` with ${advanced.partner}` : ""}`
               : "";
             return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>` : ""}</button>`;
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -558,8 +570,23 @@ function lightingPalettePanel(base, palette, target) {
     activeColor = palette[paletteIndex] || "#000000",
     rainbow = paletteIndex === 0,
     colorId = target === "main" ? "paletteColor" : "stripPaletteColor",
-    hexId = target === "main" ? "paletteHex" : "stripPaletteHex";
-  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor ${rainbow ? "rainbow-selected" : ""}">${rainbow ? `<div class="rainbow-chip" aria-hidden="true"><input id="${colorId}" type="color" value="${esc(activeColor)}" disabled></div>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}<label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `RGB ${parseInt(activeColor.slice(1, 3), 16)}, ${parseInt(activeColor.slice(3, 5), 16)}, ${parseInt(activeColor.slice(5, 7), 16)} · firmware index ${paletteIndex}`}</small></label><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
+    hexId = target === "main" ? "paletteHex" : "stripPaletteHex",
+    channels = [
+      ["R", parseInt(activeColor.slice(1, 3), 16)],
+      ["G", parseInt(activeColor.slice(3, 5), 16)],
+      ["B", parseInt(activeColor.slice(5, 7), 16)],
+    ],
+    presets = [
+      "#ff3b30",
+      "#ff9500",
+      "#ffcc00",
+      "#34c759",
+      "#00c7be",
+      "#007aff",
+      "#af52de",
+      "#ff2d55",
+    ];
+  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor enhanced-palette-editor ${rainbow ? "rainbow-selected" : ""}" style="--active-color:${esc(activeColor)}"><div class="color-preview-stack"><div class="${rainbow ? "rainbow-chip " : ""}color-preview ${rainbow ? "rainbow" : ""}" aria-hidden="true">${rainbow ? `<input id="${colorId}" type="color" value="${esc(activeColor)}" disabled>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}</div><span>${rainbow ? "Firmware spectrum" : esc(activeColor.toUpperCase())}</span></div><div class="palette-edit-fields"><label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `Firmware index ${paletteIndex}. Type HEX, use the color tile, or tap a preset.`}</small></label><div class="color-channel-grid">${channels.map(([label, value]) => `<span><b>${label}</b><strong>${Number.isFinite(value) ? value : 0}</strong></span>`).join("")}</div><div class="preset-color-row" aria-label="Quick color presets">${presets.map((preset) => `<button type="button" data-palette-preset="${preset}" data-lighting-target="${target}" style="--preset:${preset}" title="Set ${preset}" ${rainbow ? "disabled" : ""}></button>`).join("")}</div></div><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
 }
 function mainLightingPage() {
   const lighting = state.profile.lighting,
@@ -583,8 +610,8 @@ function perKeyLightingPage() {
     customCount = Object.values(lighting.customEnabled || {}).filter(
       Boolean,
     ).length,
-    label = ids.length === 1 ? keys[ids[0]].n : `${ids.length} keys`;
-  return `<div class="lighting-layout"><section class="panel per-key-editor"><div class="panel-head"><div><h2>${hasSelection ? `${esc(label)} · ${t("lightingCustomOverride")}` : "Select keys in the preview"}</h2><p>Drag a rectangular marquee over keys. Hold Ctrl while dragging or clicking to toggle the enclosed keys.</p></div><span class="badge ${enabled ? "ready" : mixed ? "experimental" : ""}">${ids.length} SELECTED</span></div><div class="switch-row"><div><h3>${t("lightingCustomOverride")}</h3><p>The setting is applied to every selected key.</p></div><input id="keyCustomEnabled" class="toggle" type="checkbox" ${enabled ? "checked" : ""} ${hasSelection ? "" : "disabled"}></div><div class="key-color-editor"><input id="keyColor" type="color" value="${esc(color)}" aria-label="Selected key color" ${hasSelection ? "" : "disabled"}><div><span>Selected key color</span><strong>${esc(color.toUpperCase())}</strong><small>${customCount} of 64 keys currently use overrides.</small></div></div><div class="apply-row"><button class="button ghost" id="clearKeyColor" type="button" ${hasSelection ? "" : "disabled"}>Clear selected overrides</button><button class="button primary" id="copyKeyColor" type="button" ${hasSelection ? "" : "disabled"}>${t("lightingCopyAll")}</button></div></section><section class="panel matrix-card"><div class="panel-head"><div><h2>Keyboard LED framebuffer</h2><p>Nine packets cover the firmware's 6 × 21 address space.</p></div><span class="badge">9 × 15 RECORDS</span></div><ul class="fact-list"><li><span>Visible keys</span><strong>64</strong></li><li><span>Selected keys</span><strong>${ids.length}</strong></li><li><span>Live refresh</span><strong>≈ 10 FPS</strong></li></ul><div class="apply-row"><button class="button ghost" id="loadCustomLighting" type="button">${t("lightingReadMatrix")}</button><button class="button ghost" id="clearAllKeyColors" type="button">${t("lightingClearAll")}</button></div></section></div>`;
+    label = ids.length === 1 ? `${keys[ids[0]].n}${keys[ids[0]].n === "Space" ? " · 5 LEDs" : ""}` : `${ids.length} keys`;
+  return `<div class="lighting-layout"><section class="panel per-key-editor"><div class="panel-head"><div><h2>${hasSelection ? `${esc(label)} · ${t("lightingCustomOverride")}` : "Select keys in the preview"}</h2><p>Drag a rectangular marquee over keys. Hold Ctrl while dragging or clicking to toggle the enclosed keys.</p></div><span class="badge ${enabled ? "ready" : mixed ? "experimental" : ""}">${ids.length} SELECTED</span></div><div class="switch-row"><div><h3>${t("lightingCustomOverride")}</h3><p>The setting is applied to every selected key target. Space is one target but writes its five physical RGB LEDs.</p></div><input id="keyCustomEnabled" class="toggle" type="checkbox" ${enabled ? "checked" : ""} ${hasSelection ? "" : "disabled"}></div><div class="key-color-editor"><input id="keyColor" type="color" value="${esc(color)}" aria-label="Selected key color" ${hasSelection ? "" : "disabled"}><div><span>Selected key color</span><strong>${esc(color.toUpperCase())}</strong><small>${customCount} of 64 key targets currently use overrides.</small></div></div><div class="apply-row"><button class="button ghost" id="clearKeyColor" type="button" ${hasSelection ? "" : "disabled"}>Clear selected overrides</button><button class="button primary" id="copyKeyColor" type="button" ${hasSelection ? "" : "disabled"}>${t("lightingCopyAll")}</button></div></section><section class="panel matrix-card"><div class="panel-head"><div><h2>Keyboard LED framebuffer</h2><p>Nine packets cover the firmware's 6 × 21 address space.</p></div><span class="badge">9 × 15 RECORDS</span></div><ul class="fact-list"><li><span>Visible keys</span><strong>64</strong></li><li><span>Spacebar RGB cells</span><strong>5</strong></li><li><span>Selected keys</span><strong>${ids.length}</strong></li><li><span>Live refresh</span><strong>≈ 10 FPS</strong></li></ul><div class="apply-row"><button class="button ghost" id="loadCustomLighting" type="button">${t("lightingReadMatrix")}</button><button class="button ghost" id="clearAllKeyColors" type="button">${t("lightingClearAll")}</button></div></section></div>`;
 }
 function stripLedButton(index, side) {
   const lighting = state.profile.lighting.decorative,
@@ -694,14 +721,14 @@ function settingsPage() {
   return `<div class="settings-page"><section class="panel settings-hero"><div class="settings-hero-copy"><span class="eyebrow">DEVICE CONTROL CENTER</span><h2>AE64 Pro settings</h2><p>Hardware behavior, onboard profiles, local backups, and the driver's appearance in one quieter workspace.</p></div><div class="settings-connection ${connected() ? "online" : ""}"><i></i><div><small>${connected() ? "KEYBOARD CONNECTED" : "KEYBOARD OFFLINE"}</small><b>${connectedLabel}</b></div>${reconnect}</div><div class="settings-hero-facts"><span><small>Active profile</small><b>0${activeProfile}</b></span><span><small>System</small><b>${Number(settings.systemMode) === 1 ? "macOS" : "Windows"}</b></span><span><small>Polling</small><b>${POLLING_RATE_OPTIONS.find((option) => option.value === Number(settings.reportRate))?.hz.toLocaleString() || "?"} Hz</b></span></div></section><div class="settings-grid"><section class="panel settings-card settings-usb"><div class="settings-card-icon">↯</div><div class="panel-head"><div><h2>System & USB</h2><p>Firmware-owned operating mode and scan behavior.</p></div><span class="badge ready">ONBOARD</span></div><div class="form-grid"><label class="field"><span>System mode</span><select id="systemMode">${systemOptions}</select><small>Windows = 0 · macOS = 1 in the original protocol.</small></label><label class="field"><span>Polling rate</span><select id="reportRate">${pollingOptions}</select><small>Changing this restarts the USB interface and reconnects automatically.</small></label><label class="field"><span>RGB sleep timer</span><div class="input-with-unit"><input id="sleepTime" type="number" min="0" max="65535" value="${settings.sleepTime}"><span>minutes</span></div><small>Use 0 only if you want the firmware to keep lighting awake.</small></label></div><label class="switch-row setting-switch"><span><b>Shake optimization</b><small>Firmware key-stability filtering for small magnetic fluctuations.</small></span><input id="shake" class="toggle" type="checkbox" ${settings.shake ? "checked" : ""}></label></section><section class="panel settings-card settings-profile"><div class="settings-card-icon">P${activeProfile}</div><div class="panel-head"><div><h2>Onboard profile</h2><p>Rename or switch the loaded configuration.</p></div><span class="badge">${state.hardware.configIndexes.length} SLOTS</span></div><label class="field"><span>Profile ${activeProfile} name</span><input id="profileName" type="text" maxlength="32" value="${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${activeProfile}`)}"><small>The quick switch remains at the top of the navigation bar.</small></label><div class="profile-slot-row" role="group" aria-label="Onboard profile">${state.hardware.configIndexes.map((index) => `<button type="button" data-profile-slot="${index}" class="${index === state.profile.profileIndex ? "active" : ""}" aria-pressed="${index === state.profile.profileIndex}" title="Switch to profile ${index + 1}">${index + 1}</button>`).join("")}</div><div class="apply-row"><button class="button ghost" id="saveProfileName" type="button">Save profile name</button></div></section><section class="panel settings-card settings-appearance"><div class="settings-card-icon">◐</div><div class="panel-head"><div><h2>Appearance</h2><p>Inspired by the token-based light and dark surfaces found in the ATK Hub capture. Stored only in this browser.</p></div><span class="badge ready">INSTANT</span></div><div class="theme-grid" role="group" aria-label="Driver appearance">${themes}</div></section><section class="panel settings-card settings-files"><div class="settings-card-icon">⇅</div><div class="panel-head"><div><h2>Backup & portability</h2><p>Keep a local JSON copy independent of the manufacturer cloud.</p></div></div><div class="file-actions"><button class="button ghost" id="importProfile" type="button"><span>Import</span><small>Open a saved JSON profile</small></button><button class="button primary" id="exportProfile" type="button"><span>Export</span><small>Download the current workspace</small></button></div></section><section class="panel settings-card settings-recovery"><div class="settings-card-icon danger">!</div><div class="panel-head"><div><h2>Recovery</h2><p>Potentially destructive device operations remain deliberately guarded.</p></div><span class="badge experimental">LOCKED</span></div><div class="recovery-row"><div><b>Factory restore</b><small>Visible for completeness, disabled until a physical-device restore packet is captured and verified.</small></div><button class="button danger" type="button" disabled>Restore factory settings</button></div></section></div></div>`;
 }
 const ADVANCED_FEATURES = [
-  { code: "DKS", title: "Dynamic Keystroke", body: "Up to four keycodes at multiple press/release points.", mode: 1, color: "#ff6f91" },
+  { code: "DKS", title: "Dynamic Keystroke", body: "Up to four keycodes at multiple press/release points.", mode: 1, color: "#ff6f91", ready: true },
   { code: "MPT", title: "Multi-Point Trigger", body: "Two or three key actions at distinct travel depths.", mode: 2, color: "#ffb454", ready: true },
   { code: "MT", title: "Mod-Tap", body: "Tap one function and hold another after a time threshold.", mode: 3, color: "#0035f5" },
   { code: "TGL", title: "Toggle Key", body: "Latch a key action with firmware timing.", mode: 4, color: "#52c7ff" },
   { code: "END", title: "End Key", body: "Trigger paired actions with an end delay.", mode: 5, color: "#44d6a3" },
   { code: "SOCD", title: "SOCD Resolution", body: "Resolve two opposing keys using one of four captured firmware modes.", mode: 6, color: "#8d86ff", ready: true },
   { code: "RS", title: "Rappy Snappy", body: "Compare two keys by travel and prefer the deeper input.", mode: 7, color: "#f27bd2", ready: true },
-  { code: "MACRO", title: "Macros", body: "Placeholder for recording and assigning multi-action sequences.", color: "#d49a62", placeholder: true },
+  { code: "MACRO", title: "Macros", body: "Record and assign ordered key-down/key-up sequences.", color: "#d49a62", ready: true },
   { code: "COMBO", title: "Key Combination", body: "Send an eight-bit modifier mask and one trigger key together.", color: "#58d1d6", ready: true },
 ];
 const SOCD_MODES = [
@@ -731,6 +758,8 @@ ADVANCED_FEATURE_INFO.SOCD = {
 ADVANCED_FEATURE_INFO.COMBO = combinationFeatureInfo();
 ADVANCED_FEATURE_INFO.RS = rappySnappyFeatureInfo();
 ADVANCED_FEATURE_INFO.MPT = multipointFeatureInfo();
+ADVANCED_FEATURE_INFO.DKS = dksFeatureInfo();
+ADVANCED_FEATURE_INFO.MACRO = macroFeatureInfo();
 function advancedFeatureInfoMarkup(code) {
   return ADVANCED_FEATURE_INFO[code] || {
     title: "Advanced feature",
@@ -784,6 +813,8 @@ function advancedAssignmentEntries() {
     seen.add(token);
     const details = Number(record.mode) === ADVANCED_MODE.MPT
       ? multipointRecordDetails(record)
+      : Number(record.mode) === ADVANCED_MODE.DKS
+      ? dksDraftDetails(dksDraftFromRecord(key, record))
       : Number(record.mode) === ADVANCED_MODE.SOCD
       ? `${SOCD_MODES[Number(record.socdMode)]?.name || "SOCD mode"} · ${Number(record.delay) || 0} ms delay`
       : Number(record.mode) === ADVANCED_MODE.RS
@@ -810,14 +841,14 @@ function advancedAssignmentEntries() {
         feature,
         ids,
         keys: ids.map((id) => keys[id]).filter(Boolean),
-        details: featureCode === "MPT" ? multipointDraftDetails(draft) : featureCode === "RS" ? `Deeper key wins · ${Number(draft.delay) || 0} ms delay` : `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
+        details: featureCode === "MPT" ? multipointDraftDetails(draft) : featureCode === "DKS" ? dksDraftDetails(draft) : featureCode === "RS" ? `Deeper key wins · ${Number(draft.delay) || 0} ms delay` : `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
         staged: true,
         removing: false,
       };
     if (existing >= 0) entries.splice(existing, 1, staged);
     else entries.push(staged);
   }
-  entries.push(...combinationAssignmentEntries());
+  entries.push(...combinationAssignmentEntries(), ...macroAssignmentEntries());
   return entries;
 }
 function advancedAssignmentsPanel() {

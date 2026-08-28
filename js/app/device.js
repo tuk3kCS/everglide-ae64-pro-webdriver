@@ -453,6 +453,7 @@ function clearDirty() {
   state.dirty.decorativeBase = false;
   state.dirty.decorativePalette = false;
   state.dirty.advanced = false;
+  state.dirty.macro = false;
   state.dirty.advancedRemovals.clear();
 }
 function performanceReadbackComparison(expected, actual, verifyAxis = false) {

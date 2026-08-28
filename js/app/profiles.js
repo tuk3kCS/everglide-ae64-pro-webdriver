@@ -148,6 +148,7 @@ function summarizeChanges() {
   if (state.dirty.advanced) {
     const draft = state.advancedDraft;
     if (draft.feature === "MPT") changes.push(`MPT: ${keys[Number(draft.hostId)]?.n || "host key"}, ${multipointDraftDetails(draft)}`);
+    else if (draft.feature === "DKS") changes.push(`DKS: ${keys[Number(draft.hostId)]?.n || "host key"}, ${dksDraftDetails(draft)}`);
     else {
       const keyA = keys[draft.keyAId],
       keyB = keys[draft.keyBId],
@@ -156,6 +157,8 @@ function summarizeChanges() {
       changes.push(`${feature}: ${keyA?.n || "Key A"} + ${keyB?.n || "Key B"}, ${behavior}, ${Number(draft.delay) || 0} ms delay`);
     }
   }
+  if (state.dirty.macro && state.macroDraft)
+    changes.push(`Macro: ${keys[Number(state.macroDraft.hostId)]?.n || "host key"}, ${macroDraftDetails(state.macroDraft)}`);
   if (state.dirty.advancedRemovals.size)
     changes.push(
       `Remove advanced assignments from ${state.dirty.advancedRemovals.size} key${state.dirty.advancedRemovals.size === 1 ? "" : "s"} (${names(state.dirty.advancedRemovals)})`,
@@ -336,6 +339,7 @@ async function applyChanges({ automatic = false } = {}) {
     if (state.dirty.advanced) {
       const draft = state.advancedDraft;
       if (draft.feature === "MPT") await applyMultipointDraft(draft, performanceNormalizations);
+      else if (draft.feature === "DKS") await applyDynamicKeystrokeDraft(draft, performanceNormalizations);
       else {
         const keyA = keys[draft.keyAId],
         keyB = keys[draft.keyBId],
@@ -424,6 +428,7 @@ async function applyChanges({ automatic = false } = {}) {
       await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
       }
     }
+    if (state.dirty.macro) await applyMacroDraft(state.macroDraft);
     if (state.dirty.lightingBase || state.dirty.lightingPalette) {
       if (state.dirty.lightingBase) {
         await state.transport.setLightingBase(state.profile.lighting.base, 0);
@@ -461,9 +466,14 @@ async function applyChanges({ automatic = false } = {}) {
         );
       for (const id of state.dirty.customLighting) {
         const key = keys[id],
+          matrixIndexes = lightingMatrixIndexes(key),
           color = hexToRgb(state.profile.lighting.perKey[id]);
+        if (!matrixIndexes.length)
+          throw new Error(`Custom lighting matrix position is unavailable for ${key.n}.`);
         color.custom = Boolean(state.profile.lighting.customEnabled[id]);
-        state.hardware.customMatrix[key.row * MATRIX_COLS + key.col] = color;
+        matrixIndexes.forEach((matrixIndex) => {
+          state.hardware.customMatrix[matrixIndex] = { ...color };
+        });
       }
       await state.transport.writeCustomLighting(
         state.hardware.customMatrix,
@@ -474,19 +484,23 @@ async function applyChanges({ automatic = false } = {}) {
       await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
       const id = [...state.dirty.customLighting][0],
         key = keys[id],
-        matrixIndex = key.row * MATRIX_COLS + key.col,
-        packet = await state.transport.getCustomLightingPacket(
+        matrixIndexes = lightingMatrixIndexes(key);
+      if (!matrixIndexes.length)
+        throw new Error(`Custom lighting matrix position is unavailable for ${key.n}.`);
+      for (const matrixIndex of matrixIndexes) {
+        const packet = await state.transport.getCustomLightingPacket(
           Math.floor(matrixIndex / 15),
           0,
         ),
         verified = packet[matrixIndex % 15];
-      if (
-        rgbToHex(verified) !==
-          state.profile.lighting.perKey[id].toLowerCase() ||
-        Boolean(verified.custom) !==
-          Boolean(state.profile.lighting.customEnabled[id])
-      )
-        throw new Error(`Custom lighting verification failed for ${key.n}.`);
+        if (
+          rgbToHex(verified) !==
+            state.profile.lighting.perKey[id].toLowerCase() ||
+          Boolean(verified.custom) !==
+            Boolean(state.profile.lighting.customEnabled[id])
+        )
+          throw new Error(`Custom lighting verification failed for ${key.n}.`);
+      }
     }
     if (state.dirty.decorativeBase || state.dirty.decorativePalette) {
       const decorative = state.profile.lighting.decorative;

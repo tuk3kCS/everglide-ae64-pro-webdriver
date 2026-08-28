@@ -1,5 +1,4 @@
-"use strict";
-/**
+"use strict"; /**
  * AE64 Pro Control — page interactions.
  *
  * Loaded as an ordered classic script. Top-level declarations are shared
@@ -56,6 +55,7 @@ function openAdvancedFeatureInfo(code) {
 function renderSocdConfiguration() {
   const body = document.querySelector("#socdConfigBody");
   if (!body) return;
+  document.querySelector("#socdConfigTitle").textContent = "Configure SOCD";
   body.innerHTML = socdEditor();
   bindSocdConfiguration();
 }
@@ -791,18 +791,18 @@ function bindPage() {
       else state.dirty.lightingPalette = true;
       render();
     };
-    document
-      .querySelector("#paletteColor")
+    document.querySelectorAll("[data-palette-preset]").forEach((button) =>
+      button.addEventListener("click", () => stagePaletteColor(button.dataset.palettePreset, button.dataset.lightingTarget || "main")),
+    );
+    document.querySelector("#paletteColor")
       ?.addEventListener("change", (event) =>
         stagePaletteColor(event.target.value),
       );
-    document
-      .querySelector("#paletteHex")
+    document.querySelector("#paletteHex")
       ?.addEventListener("change", (event) =>
         stagePaletteColor(event.target.value),
       );
-    document
-      .querySelector("#stripPaletteColor")
+    document.querySelector("#stripPaletteColor")
       ?.addEventListener("change", (event) =>
         stagePaletteColor(event.target.value, "strip"),
       );
@@ -829,8 +829,10 @@ function bindPage() {
       document
         .querySelectorAll(".unified-lighting-preview [data-key]")
         .forEach((node) => {
-          if (state.lightingSelectedKeys.has(Number(node.dataset.key)))
+          if (state.lightingSelectedKeys.has(Number(node.dataset.key))) {
             node.style.setProperty("--key-color", event.target.value);
+            node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => dot.style.setProperty("--space-led-color", event.target.value));
+          }
         });
       renderStatus();
     });
@@ -976,7 +978,7 @@ function bindPage() {
     );
     document.querySelectorAll("[data-advanced-config]").forEach((card) =>
       card.addEventListener("click", () => {
-        ({ MPT: openMultipointConfiguration, SOCD: openSocdConfiguration, RS: openRappySnappyConfiguration, COMBO: openCombinationConfiguration })[card.dataset.advancedConfig]?.();
+        ({ DKS: openDksConfiguration, MPT: openMultipointConfiguration, SOCD: openSocdConfiguration, RS: openRappySnappyConfiguration, MACRO: openMacroConfiguration, COMBO: openCombinationConfiguration })[card.dataset.advancedConfig]?.();
       }),
     );
     document.querySelectorAll("[data-remove-advanced]").forEach((button) =>

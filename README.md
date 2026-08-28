@@ -37,12 +37,12 @@ Implemented now:
 - Optional experimental auto apply with a short edit debounce and verified device writes
 - XML-driven English/Vietnamese language selection through `languages.xml`
 - A standalone, author-editable About Us page in `about.html`
-- Capture-verified MPT, four-mode SOCD, and Rappy Snappy editors with read-back verification, Hall-tuning preservation, removable assignments, and an experimental eight-modifier key-combination editor
+- Capture-verified DKS lifecycle, MPT, four-mode SOCD, and Rappy Snappy editors with read-back verification, Hall-tuning preservation, removable assignments, plus proof-of-concept macro and eight-modifier key-combination editors
 - Built-in advanced-feature information dialogs, including the captured MPT, SOCD, and RS tutorial text and local videos
 
 Deliberately deferred to the advanced release:
 
-- Editors/writers for DKS, MT, TGL, END, and macros
+- Editors/writers for MT, TGL, and END, plus a polished macro recorder
 - Destructive factory restore (visible but disabled pending physical-device verification)
 - Decorative/secondary-light editors beyond the discovered read surface
 

@@ -694,9 +694,7 @@ function normalizeHex(value) {
   return /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toLowerCase()}` : null;
 }
 function selectedKey() {
-  return (
-    keys.find((key) => key.id === Number(state.profile.selected)) || keys[0]
-  );
+  return keys.find((key) => key.id === Number(state.profile.selected)) || keys[0];
 }
 function firmwareKeyPositions(layoutStyle) {
   const positions = new Map();
@@ -753,26 +751,27 @@ function firmwareKeyPositions(layoutStyle) {
   return positions;
 }
 function position(key = selectedKey()) {
-  return (
-    state.hardware.keyPositions.get(key.id) || {
-      row: key.row,
-      col: key.col,
-    }
-  );
+  return state.hardware.keyPositions.get(key.id) || { row: key.row, col: key.col };
+}
+function lightingMatrixIndex(key = selectedKey()) {
+  const address = position(key);
+  return lightingCellIndex(Number(address.row), Number(address.col));
+}
+function lightingMatrixIndexes(key = selectedKey()) {
+  const address = position(key), row = Number(address.row), col = Number(address.col), offsets = key?.n === "Space" ? [-2, -1, 0, 1, 2] : [0];
+  return [...new Set(offsets.map((offset) => lightingCellIndex(row, col + offset)).filter((index) => index !== null))];
+}
+function lightingCellIndex(row, col) {
+  const index = row * MATRIX_COLS + col;
+  return Number.isInteger(row) && Number.isInteger(col) && index >= 0 && index < MATRIX_ROWS * MATRIX_COLS ? index : null;
 }
 function mergeDecorative(base, saved = {}) {
   return {
     ...base,
     ...saved,
     base: { ...base.base, ...saved.base },
-    palette: Array.from(
-      { length: 8 },
-      (_, index) => saved.palette?.[index] || base.palette[index],
-    ),
-    perLed: Array.from(
-      { length: DECORATIVE_COLS },
-      (_, index) => saved.perLed?.[index] || base.perLed[index],
-    ),
+    palette: Array.from({ length: 8 }, (_, index) => saved.palette?.[index] || base.palette[index]),
+    perLed: Array.from({ length: DECORATIVE_COLS }, (_, index) => saved.perLed?.[index] || base.perLed[index]),
     customEnabled: Array.from({ length: DECORATIVE_COLS }, (_, index) =>
       Boolean(saved.customEnabled?.[index]),
     ),
@@ -919,6 +918,7 @@ const dirtyCount = () =>
   Number(state.dirty.decorativeBase) +
   Number(state.dirty.decorativePalette) +
   state.dirty.settings.size +
+  Number(state.dirty.macro) +
   Number(state.dirty.advanced) + state.dirty.advancedRemovals.size;
 const lightingKeyIds = () =>
   [...state.lightingSelectedKeys]

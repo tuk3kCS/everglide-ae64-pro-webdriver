@@ -124,6 +124,7 @@ While an Fn layer is held, the firmware lights only meaningful mappings that dif
 The custom matrix and current LED framebuffer are read as `05 03 area packet` and custom overrides are written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. `flag = FF` enables a custom override; `00` leaves that LED following the base effect. During dynamic effects the RGB bytes still contain the instantaneous rendered LED color when the flag is `00`.
 
 - Keyboard area 0 uses a `6 × 21` address space and nine packets. Visible AE64 keys occupy firmware rows 1–5; unused cells are preserved.
+- Spacebar is one key-mapping/performance target but five RGB cells. The lighting UI treats the key's firmware row/column as the center LED and fans custom RGB to the two neighbouring cells on each side. This matches the original driver's special row-5 spacebar mirroring behavior without adding extra Space targets to key mapping, performance, or advanced-key editors.
 - Decorative1 area 1 reports a `1 × 38` address space and uses three packets.
 - The original driver repeatedly reads all packets. The Wireshark capture contains 214 complete keyboard framebuffer cycles with a median cycle-start interval of about **103 ms**, so live display is implemented at an approximately 10 Hz target without overlapping reads.
 
@@ -131,7 +132,19 @@ The custom matrix and current LED framebuffer are read as `05 03 area packet` an
 
 Key combinations are not family `06` records. They are ordinary 16-bit layer mappings with a modifier mask in the high byte and one normal keyboard usage in the low byte. See `KEY_COMBINATIONS_AND_MEMORY.md` for timing, ambiguity, and capacity details.
 
-`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. MPT, SOCD, and RS have capture-verified editors and writers; DKS/MT/TGL/END remain deferred.
+`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. DKS, MPT, SOCD, and RS have capture-verified editors and writers; MT/TGL/END remain deferred.
+
+Dynamic Key Stroke is a single mode-1 record on one physical host key:
+
+```text
+06 02 row col 01 key1-lo key1-hi key2-lo key2-hi key3-lo key3-hi key4-lo key4-hi trp1 trp2 trp3 trp4 db1-lo db1-hi db2-lo db2-hi
+```
+
+The original driver names the two physical thresholds `Min Travel` (`db1`) and `Max Travel` (`db2`). Its advanced-key help describes four-stage pressure sensing: key press, key bottom, key release, and key lift, with an example of one-key stop / one-key jump-throw in CS2. The captured decoder exposes four 16-bit keycodes, four one-byte lifecycle masks, and two 16-bit values divided by 1000 for millimetres. Unlike MPT, this is not “three ordered actuation depths”; it is a complete downstroke/return path.
+
+Each `trp` byte is edited as seven visible cells, matching the original `P1–S–P2–S–R2–S–R1` UI: shallow press (`0x01`), downstroke span (`0x02`), deep press (`0x04`), bottom turnaround (`0x18`, representing both internal bits), deep release (`0x20`), upstroke span (`0x40`), and shallow release (`0x80`). Each cell is independently optional; adjacent selected cells show a connected held region. The original editor uses a fixed `0.1–3.3 mm` range for both thresholds. The physical host accepts the standard keyboard usages `4–115` and `224–231`. Outputs use the captured 49-key Basic palette and 50-key Extended palette; firmware `1.1.3.0` adds seven modifiers to Extended and a 12-action Mouse group. Empty, Transparent, media, lighting, firmware-control, macro, gamepad, and combination actions remain excluded. This driver also supports click-drag painting, normalizes the paired center bits exactly as the original UI does, and verifies all four keycodes, masks, and both thresholds after writing.
+
+The existing HE30 DKS editor is a useful visual reference but not a safe protocol template for AE64. HE30 stores DKS in a fixed 1,024-byte per-profile DKS bank, maps a host key to bank-slot type `144`, and packs each output into mapping bytes plus a compact status bitfield. Its current alternative-driver codec translates Wooting-style DKS into HE30 stages with normalization/folding rules, so it cannot be assumed to round-trip every possible AE64 four-transition state. AE64 instead stores DKS directly in the family-`06` per-key record above.
 
 Multi-Point Trigger is one mode-2 record on one physical host key:
 
@@ -171,6 +184,22 @@ The captured manufacturer tutorial says that RS continuously compares the two se
 The alternative driver refuses to overwrite a key when it already belongs to a different advanced assignment. After writing MPT it commits group `5`, reads the host record back, verifies all three outputs and depths, and restores Hall tuning that the firmware resets during assignment. SOCD and RS similarly verify both reciprocal records, their outputs and delay, then restore both keys' Hall tuning.
 
 Macro metadata/data is read with family `07` operations `01` and `03`. Macro mode/data writers (`02` and `04`) are likewise deferred.
+
+The original AE64 webpage gets capacity from `02 0E 00`; this board reports 16 macro slots and 960 bytes. Macro mode read/write uses:
+
+```text
+07 01 macroId
+07 02 macroId valid actionCount-lo actionCount-hi repeatCount-lo repeatCount-hi mode
+```
+
+The original UI exposes six playback modes: four click-repeat variants where re-click is ignored, restarts, stops immediately, or stops after the current playback; plus two hold-repeat modes where release stops immediately or after the current playback. Click-repeat modes include a repeat count. Macro action data uses:
+
+```text
+07 03 macroId offset
+07 04 macroId offset packedAction...
+```
+
+Each packed action is four bytes little-endian: bit 31 is direction (`1` pressed/down, `0` released/up), bits 16–30 are delay in milliseconds, and bits 0–15 are the 16-bit keycode. The original editor records keyboard operations, permits inserting/editing individual key records, lets the user choose direction up/down and time in milliseconds, supports drag-to-reorder, and validates each delay as `1…32768 ms`. Empty recordings are explicitly allowed in the UI as a draft state, but a saved macro needs complete key/time/direction data. A macro is bound to a physical key through ordinary key mapping using the macro keycode group; the sequence itself remains in family `07`.
 
 ## Safety boundary
 
