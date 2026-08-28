@@ -12,11 +12,13 @@ const APP_FILES = [
   "js/app/switches.js",
   "js/app/theme.js",
   "js/app/mapping.js",
+  "js/app/key-picker.js",
   "js/app/rappy.js",
   "js/app/mpt.js",
   "js/app/dks.js",
   "js/app/mt-end-toggle.js",
   "js/app/macro.js",
+  "js/app/lighting-color.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -223,7 +225,7 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="rsConfigDialog"', 'id="rsConfigBody"', 'id="mptConfigDialog"', 'id="mptConfigBody"', 'id="mptKeyPickerDialog"', 'id="mptKeyPickerBody"', 'id="combinationConfigDialog"', 'id="combinationConfigBody"', 'id="mappingPickerDialog"', 'id="mappingPickerBody"', 'id="calibrationRecommendationDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="rsConfigDialog"', 'id="rsConfigBody"', 'id="mptConfigDialog"', 'id="mptConfigBody"', 'id="mptKeyPickerDialog"', 'id="mptKeyPickerBody"', 'id="advancedKeyPickerDialog"', 'id="advancedKeyPickerBody"', 'id="combinationConfigDialog"', 'id="combinationConfigBody"', 'id="mappingPickerDialog"', 'id="mappingPickerBody"', 'id="calibrationRecommendationDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
@@ -268,7 +270,7 @@ async function main() {
       },
     },
     fetch: async () => ({ ok: false, status: 404 }),
-    setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, clearInterval() {},
+    setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, clearInterval() {}, queueMicrotask(callback) { callback(); },
     scrollTo() {},
   };
   browser.window = browser;
@@ -317,8 +319,8 @@ async function main() {
   for (const required of ["Macros", "Key Combination", 'data-advanced-config="DKS"', 'data-advanced-config="MPT"', 'data-advanced-config="SOCD"', 'data-advanced-config="RS"', 'data-advanced-config="MACRO"', 'data-advanced-config="COMBO"'])
     if (!advancedMarkup.includes(required)) throw new Error(`Advanced/SOCD UI omitted ${required}.`);
   if (advancedMarkup.includes('class="panel full-span warning-card"')) throw new Error("The removed Advanced warning panel returned.");
-  if ((advancedMarkup.match(/class="advanced-card compact/g) || []).length !== 9)
-    throw new Error("All nine Advanced features must use the compact card layout.");
+  if ((advancedMarkup.match(/class="advanced-card feature-card/g) || []).length !== 9)
+    throw new Error("All nine Advanced features must use the unified feature-card layout.");
   const advancedFeatureColors = vm.runInContext("ADVANCED_FEATURES.map(({ code, color }) => [code, color])", browser);
   if (new Set(advancedFeatureColors.map(([, color]) => color)).size !== 9 || advancedFeatureColors.some(([, color]) => !advancedMarkup.includes(`style="--advanced-color:${color}"`)))
     throw new Error("Each compact Advanced feature must expose its own distinct keyboard-indicator color.");
@@ -352,11 +354,12 @@ async function main() {
   equal(mptEditorCheck, { hostKeys: 64, widths: 64, sliders: 3, maxTravel: 3.3, initialBounds: [{ min: .1, max: .9 }, { min: .6, max: 1.4 }, { min: 1.1, max: 3.3 }], clampedDepths: [3.1, 3.2, 3.3], allowed: [49, 57, 106], excludes: true }, "MPT must use the selected switch travel, three ordered 0.1 mm sliders, and the captured compatible key subset.");
   const mptPickerCheck = vm.runInContext(`(() => {
     state.advancedDraft = { feature: "MPT", hostId: 0, keycodes: [41, 58, 0], depths: [.5, 1, 1.5] };
-    state.mptKeyPickerStage = 2; state.mptKeyPickerGroup = "basic"; renderMultipointKeyPicker();
-    const basic = document.querySelector("#mptKeyPickerBody").innerHTML;
-    state.mptKeyPickerGroup = "extended"; renderMultipointKeyPicker();
-    const extended = document.querySelector("#mptKeyPickerBody").innerHTML;
-    return [(basic.match(/data-mpt-keycode=/g) || []).length, (extended.match(/data-mpt-keycode=/g) || []).length, basic.includes("Excluded from the captured MPT palette"), extended.includes("Used on another stage")];
+    openMultipointKeyPicker(2);
+    state.advancedKeyPickerGroup = "basic"; renderAdvancedKeyPicker();
+    const basic = document.querySelector("#advancedKeyPickerBody").innerHTML;
+    state.advancedKeyPickerGroup = "extended"; renderAdvancedKeyPicker();
+    const extended = document.querySelector("#advancedKeyPickerBody").innerHTML;
+    return [(basic.match(/data-advanced-picker-code=/g) || []).length, (extended.match(/data-advanced-picker-code=/g) || []).length, basic.includes("media, mouse, lighting"), extended.includes("IN USE")];
   })()`, browser);
   equal(mptPickerCheck, [49, 57, true, true], "MPT key-value popup must list the captured remap subset and prevent duplicate stage outputs.");
   const dksCaptureRules = vm.runInContext(`(() => {
@@ -396,8 +399,19 @@ async function main() {
     throw new Error("Key Combination must render all 64 physical host keys with correct widths.");
   if ((combinationMarkup.match(/data-combination-modifier=/g) || []).length !== 8 || (combinationMarkup.match(/data-combination-layer=/g) || []).length !== 4)
     throw new Error("Key Combination must expose eight HID modifiers and all four layers.");
-  for (const required of ['id="combinationTrigger"', 'id="stageCombination"', "Simultaneous, not sequenced"])
+  for (const required of ['id="openCombinationTriggerPicker"', 'class="advanced-key-value assigned"', 'id="stageCombination"', "Simultaneous, not sequenced"])
     if (!combinationMarkup.includes(required)) throw new Error(`Key Combination editor omitted ${required}.`);
+  if (combinationMarkup.includes('<select')) throw new Error("Key Combination must use the shared key picker rather than a native select.");
+  const simplePickerMarkup = vm.runInContext(`(() => {
+    const result = {};
+    for (const feature of ["MT", "TGL", "END"]) {
+      state.advancedDraft = simpleAdvancedDefaultDraft(feature, 0);
+      const editor = simpleAdvancedEditor();
+      result[feature] = [(editor.match(/data-simple-output-picker=/g) || []).length, editor.includes("<select"), editor.includes("advanced-key-value")];
+    }
+    return result;
+  })()`, browser);
+  equal(simplePickerMarkup, { MT: [2, false, true], TGL: [1, false, true], END: [2, false, true] }, "Mod-Tap, Toggle and End Trigger must share the popup key-value workflow.");
   const combinationRoundTrip = vm.runInContext(`(() => {
     const savedProfile = clone(state.profile), savedOriginal = clone(state.original), savedSelected = new Set(state.selectedKeys), savedLayer = state.profile.layer;
     state.profile = defaultProfile(); state.original = clone(state.profile); state.selectedKeys = new Set([0]); clearDirty();
@@ -622,6 +636,7 @@ async function main() {
     if (!overviewMarkup.includes(required)) throw new Error(`Overview layer row omitted ${required}.`);
   if ((overviewMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Overview must render exactly four in-page layer choices.");
   const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
+  if (!keymapMarkup.includes('class="keymap-assignment-workspace"')) throw new Error("Key Mapping assignment controls must use the panel-free workspace layout.");
   for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
     if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
   const keymapPickerCatalog = vm.runInContext(`(() => { state.mappingPickerGroup = "keyboard"; state.mappingKeyboardGroup = "basic"; state.mappingSearch = ""; renderMappingPicker(); return document.querySelector("#mappingPickerBody").innerHTML; })()`, browser);
@@ -969,11 +984,20 @@ async function main() {
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
-  for (const required of ['id="keyCustomEnabled"', 'id="keyColor"', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
+  for (const required of ['id="keyCustomEnabled"', 'id="keyColorSurface"', 'id="keyColorHue"', 'id="keyColorHex"', 'data-key-color-preset=', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
+  if (perKeyMarkup.includes('id="keyColor" type="color"')) throw new Error("Per-key lighting must not invoke the operating system's native color popup.");
   if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("rectangular marquee") || !perKeyMarkup.includes('class="lighting-selection-marquee"')) throw new Error("Per-key must reuse the unified preview and explain rectangular marquee selection.");
   const perKeyMultiMarkup = vm.runInContext(`(state.lightingSelectedKeys = new Set([0, 1, 2]), lightingPage())`, browser);
   if (!perKeyMultiMarkup.includes("3 keys") || !perKeyMultiMarkup.includes("3 SELECTED")) throw new Error("Per-key multi-selection is not reflected in its editor.");
+  const perKeyImmediatePreview = vm.runInContext(`(() => {
+    state.lightingSelectedKeys = new Set([0, 1]);
+    const staged = stagePerKeyPreviewColor("#ff3300");
+    const result = [staged, state.profile.lighting.perKey[0], state.profile.lighting.perKey[1], state.profile.lighting.customEnabled[0], state.dirty.customLighting.has(0), state.dirty.customLighting.has(1)];
+    clearDirty();
+    return result;
+  })()`, browser);
+  equal(perKeyImmediatePreview, [true, "#ff3300", "#ff3300", true, true, true], "Per-key color changes must stage and preview all selected keys immediately.");
   const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
   for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);

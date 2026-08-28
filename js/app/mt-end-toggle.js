@@ -46,7 +46,7 @@ Object.assign(state, { simpleAdvancedKeyPicker: 0 });
 function simpleAdvancedSpec(feature) { return SIMPLE_ADVANCED_FEATURES[String(feature).toUpperCase()] || SIMPLE_ADVANCED_FEATURES.MT; }
 function simpleAdvancedOutputCodes(feature) {
   const spec = simpleAdvancedSpec(feature);
-  if (spec.mode === ADVANCED_MODE.END && typeof dksSupportsExpandedOutputs === "function" && !dksSupportsExpandedOutputs()) return DKS_CAPTURED_LEGACY_EXTENDED_CODES;
+  if (spec.mode === ADVANCED_MODE.END && typeof dksSupportsExpandedOutputs === "function" && !dksSupportsExpandedOutputs()) return [...MPT_CAPTURED_BASIC_CODES, ...DKS_CAPTURED_LEGACY_EXTENDED_CODES];
   return [...MPT_CAPTURED_BASIC_CODES, ...MPT_CAPTURED_EXTENDED_CODES];
 }
 function simpleAdvancedOutputAllowed(feature, code) { return Number(code) === 0 || simpleAdvancedOutputCodes(feature).includes(Number(code)); }
@@ -74,13 +74,45 @@ function simpleAdvancedRecordDetails(record) {
 function simpleAdvancedHostKeyboardHtml(feature, hostId) {
   return `<div class="mpt-host-board simple-advanced-host-board"><div class="keyboard mpt-host-keyboard simple-advanced-host-keyboard" aria-label="Choose the physical host key for ${esc(simpleAdvancedSpec(feature).title)}">${layout.map((row, uiRow) => `<div class="keyboard-row">${row.map((_, col) => { const key = keys.find((candidate) => candidate.uiRow === uiRow && candidate.col === col), selected = Number(hostId) === key.id, eligible = simpleAdvancedHost(key); return `<button class="key mpt-host-key simple-advanced-host-key ${selected ? "selected" : ""}" style="--u:${key.u}" type="button" data-simple-host="${key.id}" aria-pressed="${selected}" ${eligible ? "" : "disabled"} title="${eligible ? `Use ${key.n} as the physical host` : "Only standard keyboard host keys are supported"}><span class="mapped">${esc(key.n)}</span><b>${esc(keycodeLabel(displayedKeycode(key, 0)))}</b></button>`; }).join("")}</div>`).join("")}</div></div>`;
 }
-function simpleAdvancedOutputSelect(feature, index, value) {
-  const options = simpleAdvancedOutputCodes(feature).map((code) => `<option value="${code}" ${Number(value) === code ? "selected" : ""}>${esc(keycodeLabel(code))}</option>`).join("");
-  return `<label class="field"><span>${esc(simpleAdvancedSpec(feature).labels[index])}</span><select data-simple-output="${index}"><option value="0" ${!Number(value) ? "selected" : ""}>Not assigned</option>${options}</select></label>`;
+function simpleAdvancedPickerGroups(feature) {
+  const allowed = new Set(simpleAdvancedOutputCodes(feature));
+  return MPT_KEY_GROUPS.map((group) => ({
+    ...group,
+    codes: group.codes.filter((code) => allowed.has(code)),
+  })).filter((group) => group.codes.length);
+}
+function simpleAdvancedOutputControl(feature, index, value) {
+  const label = simpleAdvancedSpec(feature).labels[index], assigned = Number(value) > 0;
+  return `<div class="field simple-output-field"><span>${esc(label)}</span><button type="button" class="advanced-key-value ${assigned ? "assigned" : ""}" data-simple-output-picker="${index}"><small>${assigned ? "KEY VALUE" : "SELECT KEY VALUE"}</small><b>${esc(assigned ? keycodeLabel(value) : "Not assigned")}</b><i aria-hidden="true">›</i></button></div>`;
 }
 function simpleAdvancedEditor() {
   const draft = state.advancedDraft = normalizeSimpleAdvancedDraft(state.advancedDraft), spec = simpleAdvancedSpec(draft.feature), host = keys[draft.hostId] || keys[0], active = draft.keycodes.filter(Number).length;
-  return `<div class="simple-advanced-editor socd-editor ${draft.feature.toLowerCase()}-editor"><div class="panel-head"><div><span class="eyebrow">CAPTURE-VERIFIED MODE ${spec.mode}</span><h2>${spec.title}</h2><p>${draft.feature === "MT" ? "Tap one output and hold another after the threshold." : draft.feature === "TGL" ? "Press once to latch the output, then press again to release it." : "Emit one output on press and another when the key reaches its end state."}</p></div><span class="badge ${active === spec.outputs ? "ready" : "experimental"}">${active}/${spec.outputs} OUTPUTS</span></div><div class="mpt-host-heading simple-advanced-host-heading"><div><h3>Physical host key</h3><p>Choose the key whose press activates this higher-key behavior.</p></div><strong>${esc(host.n)}</strong></div>${simpleAdvancedHostKeyboardHtml(draft.feature, draft.hostId)}<div class="simple-advanced-fields">${Array.from({ length: spec.outputs }, (_, index) => simpleAdvancedOutputSelect(draft.feature, index, draft.keycodes[index])).join("")}<label class="field"><span>${esc(spec.delayLabel)}</span><div class="input-with-unit"><input id="simpleAdvancedDelay" type="number" min="0" max="1000" step="1" value="${draft.delay}"><span>ms</span></div><small>${draft.feature === "MT" ? "Hold this long to choose the hold output instead of the tap output." : "Stored in the family-06 higher-key record."}</small></label></div><div class="mpt-footer simple-advanced-footer"><p>Output values use the captured AE64 keyboard palette. Existing Hall actuation and switch metadata are preserved while this record is written.</p><div class="apply-row"><button class="button ghost" id="readSimpleAdvanced" type="button" ${connected() ? "" : "disabled"}>Read selected record</button><button class="button primary" id="stageSimpleAdvanced" type="button" ${active === spec.outputs ? "" : "disabled"}>Stage ${spec.title}</button></div></div>${state.dirty.advanced && state.advancedDraft.feature === draft.feature ? '<p class="socd-stage-note">This higher-key record is staged. Apply changes to write and verify it.</p>' : ""}</div>`;
+  return `<div class="simple-advanced-editor socd-editor ${draft.feature.toLowerCase()}-editor"><div class="panel-head"><div><span class="eyebrow">CAPTURE-VERIFIED MODE ${spec.mode}</span><h2>${spec.title}</h2><p>${draft.feature === "MT" ? "Tap one output and hold another after the threshold." : draft.feature === "TGL" ? "Press once to latch the output, then press again to release it." : "Emit one output on press and another when the key reaches its end state."}</p></div><span class="badge ${active === spec.outputs ? "ready" : "experimental"}">${active}/${spec.outputs} OUTPUTS</span></div><div class="mpt-host-heading simple-advanced-host-heading"><div><h3>Physical host key</h3><p>Choose the key whose press activates this higher-key behavior.</p></div><strong>${esc(host.n)}</strong></div>${simpleAdvancedHostKeyboardHtml(draft.feature, draft.hostId)}<div class="simple-advanced-fields">${Array.from({ length: spec.outputs }, (_, index) => simpleAdvancedOutputControl(draft.feature, index, draft.keycodes[index])).join("")}<label class="field simple-delay-field"><span>${esc(spec.delayLabel)}</span><div class="input-with-unit"><input id="simpleAdvancedDelay" type="number" min="0" max="1000" step="1" value="${draft.delay}"><span>ms</span></div><small>${draft.feature === "MT" ? "Hold this long to choose the hold output instead of the tap output." : "Stored in the family-06 higher-key record."}</small></label></div><div class="mpt-footer simple-advanced-footer"><p>Output values use the captured AE64 keyboard palette. Existing Hall actuation and switch metadata are preserved while this record is written.</p><div class="apply-row"><button class="button ghost" id="readSimpleAdvanced" type="button" ${connected() ? "" : "disabled"}>Read selected record</button><button class="button primary" id="stageSimpleAdvanced" type="button" ${active === spec.outputs ? "" : "disabled"}>Stage ${spec.title}</button></div></div>${state.dirty.advanced && state.advancedDraft.feature === draft.feature ? '<p class="socd-stage-note">This higher-key record is staged. Apply changes to write and verify it.</p>' : ""}</div>`;
+}
+function openSimpleAdvancedOutputPicker(index) {
+  const draft = state.advancedDraft,
+    spec = simpleAdvancedSpec(draft.feature),
+    slot = clamp(index, 0, spec.outputs - 1);
+  openAdvancedKeyPicker({
+    title: `Choose ${spec.labels[slot]}`,
+    eyebrow: `${spec.title.toUpperCase()} OUTPUT`,
+    context: `${draft.feature} · OUTPUT 0${slot + 1}`,
+    description: `Choose the ${spec.labels[slot].toLowerCase()} emitted by ${spec.title}.`,
+    groups: simpleAdvancedPickerGroups(draft.feature),
+    current: Number(draft.keycodes[slot]) || 0,
+    allowClear: true,
+    clearLabel: `Clear ${spec.labels[slot].toLowerCase()}`,
+    accent: draft.feature === "MT" ? "#0035f5" : draft.feature === "TGL" ? "#52c7ff" : "#44d6a3",
+    exclusion: "Only standard key values accepted by this captured family-06 mode are shown.",
+    onSelect: (code) => {
+      state.advancedDraft.keycodes[slot] = code;
+      renderSimpleAdvancedConfiguration();
+    },
+    onClear: () => {
+      state.advancedDraft.keycodes[slot] = 0;
+      renderSimpleAdvancedConfiguration();
+    },
+  });
 }
 function renderSimpleAdvancedConfiguration() {
   const body = document.querySelector("#socdConfigBody"), title = document.querySelector("#socdConfigTitle");
@@ -111,7 +143,7 @@ function stageSimpleAdvanced() {
 }
 function bindSimpleAdvancedConfiguration() {
   document.querySelectorAll("[data-simple-host]").forEach((button) => button.addEventListener("click", () => selectSimpleAdvancedHost(button.dataset.simpleHost)));
-  document.querySelectorAll("[data-simple-output]").forEach((select) => select.addEventListener("change", () => { state.advancedDraft.keycodes[Number(select.dataset.simpleOutput)] = Number(select.value); renderSimpleAdvancedConfiguration(); }));
+  document.querySelectorAll("[data-simple-output-picker]").forEach((button) => button.addEventListener("click", () => openSimpleAdvancedOutputPicker(Number(button.dataset.simpleOutputPicker))));
   document.querySelector("#simpleAdvancedDelay")?.addEventListener("change", (event) => { state.advancedDraft.delay = Math.round(clamp(event.target.value, 0, 1000)); renderSimpleAdvancedConfiguration(); });
   document.querySelector("#stageSimpleAdvanced")?.addEventListener("click", stageSimpleAdvanced);
   document.querySelector("#readSimpleAdvanced")?.addEventListener("click", async () => { state.profile.selected = Number(state.advancedDraft.hostId); await readAdvanced(); if (SIMPLE_ADVANCED_FEATURES[state.advancedDraft.feature]) renderSimpleAdvancedConfiguration(); });

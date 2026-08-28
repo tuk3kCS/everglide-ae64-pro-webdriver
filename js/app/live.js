@@ -451,6 +451,7 @@ function updateLiveKeyboard(matrix) {
     const key = keys[Number(node.dataset.key)],
       matrixIndex = key ? lightingMatrixIndex(key) : null,
       record = matrixIndex === null ? null : matrix[matrixIndex];
+    if (key && state.dirty.customLighting.has(key.id)) return;
     if (record) node.style.setProperty("--key-color", rgbToHex(record));
     node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => {
       const ledRecord = matrix[Number(dot.dataset.spacebarLedIndex)];

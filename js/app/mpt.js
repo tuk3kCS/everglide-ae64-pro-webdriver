@@ -137,38 +137,31 @@ function setMultipointDepth(index, value) {
   state.advancedDraft.depths[index] = rounded;
   syncMultipointDepthControls();
 }
-function renderMultipointKeyPicker() {
-  const body = document.querySelector("#mptKeyPickerBody"), stage = Number(state.mptKeyPickerStage),
-    current = Number(state.advancedDraft.keycodes?.[stage]) || 0, used = new Set(state.advancedDraft.keycodes.map(Number).filter((code, index) => code > 0 && index !== stage)),
-    group = MPT_KEY_GROUPS.find((entry) => entry.id === state.mptKeyPickerGroup) || MPT_KEY_GROUPS[0];
-  if (!body) return;
-  body.innerHTML = `<div class="mpt-picker-summary"><span>STAGE 0${stage + 1}</span><b>${esc(multipointKeyLabel(current))}</b><small>Only key values exposed by the original MPT editor are listed.</small></div><input class="search-input" id="mptKeySearch" type="search" placeholder="Search compatible key values" autocomplete="off"><div class="mpt-picker-tabs" role="tablist" aria-label="MPT key-value group">${MPT_KEY_GROUPS.map((entry) => `<button type="button" role="tab" data-mpt-key-group="${entry.id}" class="${entry.id === group.id ? "active" : ""}" aria-selected="${entry.id === group.id}">${entry.label}<span>${entry.codes.length}</span></button>`).join("")}</div><div class="mpt-key-grid">${group.codes.map((code) => {
-    const assignedElsewhere = used.has(code), label = keycodeLabel(code);
-    return `<button type="button" data-mpt-keycode="${code}" data-mpt-key-label="${esc(label.toLowerCase())}" class="${code === current ? "active" : ""}" ${assignedElsewhere ? "disabled" : ""}><b>${esc(label)}</b><small>${assignedElsewhere ? "Used on another stage" : `0x${code.toString(16).padStart(4, "0").toUpperCase()}`}</small></button>`;
-  }).join("")}</div><p class="mpt-picker-exclusion">Excluded from the captured MPT palette: Empty, Transparent, media, mouse, lighting, firmware-control, macro, gamepad, and combination actions.</p>`;
-  bindMultipointKeyPicker();
-}
 function openMultipointKeyPicker(stage) {
   state.mptKeyPickerStage = clamp(stage, 0, 2);
-  const current = Number(state.advancedDraft.keycodes[stage]);
-  state.mptKeyPickerGroup = !current || MPT_CAPTURED_BASIC_CODES.includes(current) ? "basic" : "extended";
-  const title = document.querySelector("#mptKeyPickerTitle"); if (title) title.textContent = `Choose MPT stage ${Number(stage) + 1}`;
-  renderMultipointKeyPicker();
-  openDialog(document.querySelector("#mptKeyPickerDialog"));
-  document.querySelector("#mptKeySearch")?.focus();
-}
-function bindMultipointKeyPicker() {
-  document.querySelectorAll("[data-mpt-key-group]").forEach((button) => button.addEventListener("click", () => {
-    state.mptKeyPickerGroup = button.dataset.mptKeyGroup; renderMultipointKeyPicker();
-  }));
-  document.querySelector("#mptKeySearch")?.addEventListener("input", (event) => {
-    const query = event.target.value.trim().toLowerCase();
-    document.querySelectorAll("[data-mpt-keycode]").forEach((button) => { button.hidden = !button.dataset.mptKeyLabel.includes(query); });
+  const current = Number(state.advancedDraft.keycodes[state.mptKeyPickerStage]) || 0,
+    used = state.advancedDraft.keycodes.map(Number).filter((code, index) => code > 0 && index !== state.mptKeyPickerStage);
+  openAdvancedKeyPicker({
+    title: `Choose MPT stage ${state.mptKeyPickerStage + 1}`,
+    eyebrow: "MULTI-POINT TRIGGER OUTPUT",
+    context: `MPT · STAGE 0${state.mptKeyPickerStage + 1}`,
+    description: "Choose one output from the exact palette exposed by the original MPT editor.",
+    groups: MPT_KEY_GROUPS,
+    current,
+    disabledCodes: used,
+    allowClear: state.mptKeyPickerStage === 2,
+    clearLabel: "Clear optional stage",
+    accent: "#ffb454",
+    exclusion: "Empty, Transparent, media, mouse, lighting, firmware-control, macro, gamepad and combination values are excluded.",
+    onSelect: (code) => {
+      state.advancedDraft.keycodes[state.mptKeyPickerStage] = code;
+      renderMultipointConfiguration();
+    },
+    onClear: () => {
+      state.advancedDraft.keycodes[2] = 0;
+      renderMultipointConfiguration();
+    },
   });
-  document.querySelectorAll("[data-mpt-keycode]").forEach((button) => button.addEventListener("click", () => {
-    state.advancedDraft.keycodes[state.mptKeyPickerStage] = Number(button.dataset.mptKeycode);
-    closeDialog(document.querySelector("#mptKeyPickerDialog")); renderMultipointConfiguration();
-  }));
 }
 function stageMultipointTrigger() {
   const draft = state.advancedDraft, host = keys[Number(draft.hostId)], keycodes = draft.keycodes.map(Number),

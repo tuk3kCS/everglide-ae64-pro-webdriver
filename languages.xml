@@ -59,7 +59,7 @@
     <string key="lightingUpper">North-facing LEDs</string>
     <string key="lightingLower">South-facing LEDs</string>
     <string key="lightingLive">Live hardware RGB</string>
-<string key="lightingLiveHint">Reads the current LED framebuffer about {{fps}} times per second.</string>
+<string key="lightingLiveHint">Reads the current LED framebuffer about 24 times per second.</string>
     <string key="lightingLed">Strip LED</string>
     <string key="lightingCopyStrip">Copy color to all strip LEDs</string>
     <string key="lightingClearStrip">Clear all strip overrides</string>
@@ -147,7 +147,7 @@
     <string key="lightingUpper">LED hướng Bắc</string>
     <string key="lightingLower">LED hướng Nam</string>
     <string key="lightingLive">RGB phần cứng trực tiếp</string>
-    <string key="lightingLiveHint">Đọc khung màu LED hiện tại khoảng mười lần mỗi giây.</string>
+    <string key="lightingLiveHint">Đọc khung màu LED hiện tại khoảng 24 lần mỗi giây.</string>
     <string key="lightingLed">LED dải</string>
     <string key="lightingCopyStrip">Chép màu cho toàn bộ LED dải</string>
     <string key="lightingClearStrip">Xóa mọi màu riêng của dải</string>

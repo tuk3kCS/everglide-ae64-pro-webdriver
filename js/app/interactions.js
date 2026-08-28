@@ -803,22 +803,7 @@ function bindPage() {
         }
         render();
       });
-    document.querySelector("#keyColor")?.addEventListener("input", (event) => {
-      for (const id of lightingKeyIds()) {
-        lighting.perKey[id] = event.target.value;
-        lighting.customEnabled[id] = true;
-        state.dirty.customLighting.add(id);
-      }
-      document
-        .querySelectorAll(".unified-lighting-preview [data-key]")
-        .forEach((node) => {
-          if (state.lightingSelectedKeys.has(Number(node.dataset.key))) {
-            node.style.setProperty("--key-color", event.target.value);
-            node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => dot.style.setProperty("--space-led-color", event.target.value));
-          }
-        });
-      renderStatus();
-    });
+    bindPerKeyColorPicker();
     document
       .querySelector("#loadCustomLighting")
       ?.addEventListener("click", loadCustomLighting);

@@ -478,7 +478,7 @@ Object.assign(FALLBACK_TRANSLATIONS.en, {
   lightingLower: "South-facing LEDs",
   lightingLive: "Live hardware RGB",
   lightingLiveHint:
-    "Reads the current LED framebuffer about ten times per second.",
+    "Reads the current LED framebuffer about 24 times per second.",
   lightingLed: "Strip LED",
   lightingCopyStrip: "Copy color to all strip LEDs",
   lightingClearStrip: "Clear all strip overrides",
@@ -508,7 +508,7 @@ Object.assign(FALLBACK_TRANSLATIONS.vi, {
   lightingUpper: "LED hướng Bắc",
   lightingLower: "LED hướng Nam",
   lightingLive: "RGB phần cứng trực tiếp",
-  lightingLiveHint: "Đọc khung màu LED hiện tại khoảng mười lần mỗi giây.",
+  lightingLiveHint: "Đọc khung màu LED hiện tại khoảng 24 lần mỗi giây.",
   lightingLed: "LED dải",
   lightingCopyStrip: "Chép màu cho toàn bộ LED dải",
   lightingClearStrip: "Xóa mọi màu riêng của dải",
