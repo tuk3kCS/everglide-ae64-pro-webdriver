@@ -65,7 +65,7 @@ Confirmed or strongly implied per active profile:
 | Higher-key records | 64 physical coordinates | Strongly implied by family `0x06` being addressed only by physical row/column, with one current mode per key. |
 | Two-key SOCD / Rappy Snappy | Up to 32 pairs | Each pair occupies two reciprocal physical records. |
 | Macro IDs | 16 | Reported by the captured AE64 macro-capacity response used by this project. |
-| Macro capacity field | 960 | Firmware reports this value, but the capture does not prove whether it means action records, allocator units, or bytes. Do not convert it to a byte/event count yet. |
+| Macro capacity field | 960 | Firmware reports this value as `macroNumber`. Its exact storage unit is not named. The captured UI checks `16 slot records + edited slot action count <= 960`, so this driver enforces the same 944-action guard without calling the field bytes or total events. |
 
 The AE64's most complex captured higher-key record is DKS, which stores four 16-bit outputs, four travel fields, and press/release dead-zone values. MPT stores three outputs at three depths. SOCD is the most complex paired behavior because two reciprocal records carry two outputs, a delay, and one of four resolution modes.
 

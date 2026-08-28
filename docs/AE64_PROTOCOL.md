@@ -183,9 +183,9 @@ The captured manufacturer tutorial says that RS continuously compares the two se
 
 The alternative driver refuses to overwrite a key when it already belongs to a different advanced assignment. After writing MPT it commits group `5`, reads the host record back, verifies all three outputs and depths, and restores Hall tuning that the firmware resets during assignment. SOCD and RS similarly verify both reciprocal records, their outputs and delay, then restore both keys' Hall tuning.
 
-Macro metadata/data is read with family `07` operations `01` and `03`. Macro mode/data writers (`02` and `04`) are likewise deferred.
+Macro metadata and data are read and written with family `07` operations `01`–`04`. The driver writes mode metadata, transfers every required event page, commits save group `6`, then reads the complete sequence back before accepting the change.
 
-The original AE64 webpage gets capacity from `02 0E 00`; this board reports 16 macro slots and 960 bytes. Macro mode read/write uses:
+The original AE64 webpage gets capacity from `02 0E 00`; this board reports 16 macro slots and a capacity value of 960 firmware-defined units. Macro mode read/write uses:
 
 ```text
 07 01 macroId
@@ -200,6 +200,14 @@ The original UI exposes six playback modes: four click-repeat variants where re-
 ```
 
 Each packed action is four bytes little-endian: bit 31 is direction (`1` pressed/down, `0` released/up), bits 16–30 are delay in milliseconds, and bits 0–15 are the 16-bit keycode. The original editor records keyboard operations, permits inserting/editing individual key records, lets the user choose direction up/down and time in milliseconds, supports drag-to-reorder, and validates each delay as `1…32768 ms`. Empty recordings are explicitly allowed in the UI as a draft state, but a saved macro needs complete key/time/direction data. A macro is bound to a physical key through ordinary key mapping using the macro keycode group; the sequence itself remains in family `07`.
+
+The offset is a **page number**, not an event index. Each report carries 15 four-byte actions, so a macro with `actNum = 31` is transferred at offsets `0`, `1`, and `2`; only the first 31 decoded records are used. The captured original store reads `ceil(actNum / 15)` pages and writes the same 15-action slices. This driver follows that paging exactly and performs full multi-page read-back verification.
+
+Playback modes `0…3` are finite click-repeat behaviors; the original UI clamps their repeat count to `1…9999`. Modes `4…5` repeat while the host key is held and store `repNum = 65535`. Although the original form accepts `32768 ms`, its packet encoder rejects any delay above `32767`; this driver uses the protocol-safe `1…32767 ms` range.
+
+The original driver's **Clear Data** action keeps the macro slot valid, writes `actNum = 0`, and sends no data pages. It does not remove physical-layer mappings that reference the slot. The alternative driver preserves that distinction: clearing sequence data and removing an activation-key assignment are separate actions.
+
+The reported `{ macroCount: 16, macroNumber: 960 }` fields remain firmware-defined units. The captured UI guards an edited slot with `macroCount + actNum <= macroNumber`, producing a 944-action per-edited-slot limit on this AE64. It does not sum every slot's action count, so the alternative driver mirrors that check without relabeling the 960 field as bytes or total events.
 
 ## Safety boundary
 

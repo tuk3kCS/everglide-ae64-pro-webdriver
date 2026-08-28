@@ -957,6 +957,9 @@ function bindPage() {
     document.querySelectorAll("[data-remove-combination]").forEach((button) =>
       button.addEventListener("click", () => removeCombinationAssignment(button.dataset.removeCombination)),
     );
+    document.querySelectorAll("[data-remove-macro]").forEach((button) =>
+      button.addEventListener("click", () => removeMacroAssignment(button.dataset.removeMacro)),
+    );
   }
   if (state.page === "diagnostics") {
     document

@@ -14,6 +14,8 @@
   const MATRIX_COLS = 21;
   const DECORATIVE_ROWS = 1;
   const DECORATIVE_COLS = 38;
+  const MACRO_ACTIONS_PER_PAGE = 15;
+  const MACRO_MAX_PAGES = 256;
 
   const FAMILY = Object.freeze({ DEVICE: 1, GLOBAL: 2, LAYOUT: 3, PERFORMANCE: 4, LIGHTING: 5, ADVANCED: 6, MACRO: 7, CUSTOM: 10 });
   const SAVE_GROUP = Object.freeze({ ALL: 0, CALIBRATION: 1, PERFORMANCE: 2, LIGHTING: 3, LAYOUT: 4, ADVANCED: 5, MACRO: 6, AXIS: 7 });
@@ -597,16 +599,40 @@
     async setMacroData({ macroId, offset = 0, actions = [] }) {
       if (!Array.isArray(actions)) throw new TypeError("Macro actions must be an array.");
       const bytes = actions.flatMap((action, index) => {
-        const delay = Math.max(0, Math.min(0x7fff, Number(action.delay) || 0)),
-          packed = ((action.pressed ? 0x80000000 : 0) | (Math.round(delay) << 16) | (Number(action.keycode) & 0xffff)) >>> 0;
-        if (!Number.isInteger(Number(action.keycode)) || Number(action.keycode) <= 0) throw new RangeError(`Macro action ${index + 1} needs a keycode.`);
+        const delay = Math.round(Number(action.delay)), keycode = Number(action.keycode);
+        if (!Number.isInteger(delay) || delay < 0 || delay > 0x7fff) throw new RangeError(`Macro action ${index + 1} delay must be an integer from 0 to 32767 ms.`);
+        if (!Number.isInteger(keycode) || keycode <= 0 || keycode > 0xffff) throw new RangeError(`Macro action ${index + 1} needs a 16-bit keycode.`);
+        const packed = ((action.pressed ? 0x80000000 : 0) | (delay << 16) | keycode) >>> 0;
         return [packed & 0xff, (packed >>> 8) & 0xff, (packed >>> 16) & 0xff, (packed >>> 24) & 0xff];
       });
       return this.transact([FAMILY.MACRO, 4, clampByte(macroId, "macro ID"), clampByte(offset, "macro offset"), ...bytes]);
     }
+
+    async getMacroActions(macroId, actionCount = 0) {
+      const count = uint16(actionCount, "macro action count");
+      const pageCount = Math.ceil(count / MACRO_ACTIONS_PER_PAGE);
+      if (pageCount > MACRO_MAX_PAGES) throw new RangeError(`Macro action count exceeds ${MACRO_ACTIONS_PER_PAGE * MACRO_MAX_PAGES} paged records.`);
+      const actions = [];
+      for (let page = 0; page < pageCount; page += 1)
+        actions.push(...await this.getMacroData(macroId, page));
+      return actions.slice(0, count);
+    }
+
+    async setMacroActions({ macroId, actions = [] }) {
+      if (!Array.isArray(actions)) throw new TypeError("Macro actions must be an array.");
+      const pageCount = Math.ceil(actions.length / MACRO_ACTIONS_PER_PAGE);
+      if (pageCount > MACRO_MAX_PAGES) throw new RangeError(`Macros can contain at most ${MACRO_ACTIONS_PER_PAGE * MACRO_MAX_PAGES} paged records.`);
+      for (let page = 0; page < pageCount; page += 1)
+        await this.setMacroData({
+          macroId,
+          offset: page,
+          actions: actions.slice(page * MACRO_ACTIONS_PER_PAGE, (page + 1) * MACRO_ACTIONS_PER_PAGE),
+        });
+      return pageCount;
+    }
   }
 
-  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
+  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, MACRO_ACTIONS_PER_PAGE, MACRO_MAX_PAGES, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
   global.AE64Protocol = api;
   global.AE64HidTransport = AE64HidTransport;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

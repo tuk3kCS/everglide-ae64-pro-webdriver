@@ -71,6 +71,7 @@ class FakeDevice {
         reply[3] = this.currentConfig;
       }
     }
+    if (packet[0] === 2 && packet[1] === 14) reply.set([16, 0xc0, 0x03], 3);
     if (packet[0] === 4 && packet[1] === 1) {
       const stored = this.performance.get(`${packet[2]}:${packet[3]}`);
       if (stored) {
@@ -143,6 +144,7 @@ class FakeDevice {
     if (packet[0] === 7 && packet[1] === 1) {
       const stored = this.macroModes.get(packet[2]) || [7, 1, packet[2], 0, 0, 0, 1, 0, 0];
       reply.set(stored);
+      reply[0] = 7; reply[1] = 1;
     }
     if (packet[0] === 7 && packet[1] === 2) {
       const stored = packet.slice(0, 9);
@@ -151,10 +153,10 @@ class FakeDevice {
     }
     if (packet[0] === 7 && packet[1] === 3) {
       reply[2] = packet[2]; reply[3] = packet[3];
-      reply.set(this.macroData.get(packet[2]) || [], 4);
+      reply.set(this.macroData.get(`${packet[2]}:${packet[3]}`) || [], 4);
     }
     if (packet[0] === 7 && packet[1] === 4) {
-      this.macroData.set(packet[2], packet.slice(4, 64));
+      this.macroData.set(`${packet[2]}:${packet[3]}`, packet.slice(4, 64));
       reply.set(packet);
     }
     queueMicrotask(() => this.reply(reply));
@@ -243,6 +245,7 @@ async function main() {
 
   const elements = new Map();
   const documentListeners = new Map();
+  const windowListeners = new Map();
   const makeElement = (selector) => {
     if (elements.has(selector)) return elements.get(selector);
     const node = { innerHTML: "", textContent: "", value: "", disabled: false, dataset: {}, files: [],
@@ -270,6 +273,14 @@ async function main() {
       },
     },
     fetch: async () => ({ ok: false, status: 404 }),
+    performance: { now: (() => { let value = 1000; return () => (value += 12); })() },
+    addEventListener(type, listener) {
+      if (!windowListeners.has(type)) windowListeners.set(type, []);
+      windowListeners.get(type).push(listener);
+    },
+    removeEventListener(type, listener) {
+      windowListeners.set(type, (windowListeners.get(type) || []).filter((item) => item !== listener));
+    },
     setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, clearInterval() {}, queueMicrotask(callback) { callback(); },
     scrollTo() {},
   };
@@ -328,6 +339,46 @@ async function main() {
   for (const removed of ["Selected-key record", 'id="readMacroSpace"', 'class="raw-output"'])
     if (advancedMarkup.includes(removed)) throw new Error(`Advanced page retained unnecessary selected-record diagnostics: ${removed}.`);
   if (!advancedMarkup.includes('class="panel layout-board full-span')) throw new Error("Advanced keyboard must use the full page width after removing selected-record diagnostics.");
+  if (advancedMarkup.includes("POC · RESEARCH")) throw new Error("The implemented Macro feature is still labeled as research-only.");
+  const macroUi = vm.runInContext(`(() => {
+    state.macroDraft = macroDraftForSlot(2, { hostId: 0, layer: 0 });
+    state.macroDraft.actions = [{ pressed: true, keycode: 4, delay: 10 }, { pressed: false, keycode: 4, delay: 25 }];
+    const markup = macroEditor(), guide = macroFeatureInfo().body;
+    return {
+      slots: (markup.match(/data-macro-slot=/g) || []).length,
+      hosts: (markup.match(/data-macro-host=/g) || []).length,
+      layers: (markup.match(/data-macro-layer=/g) || []).length,
+      modes: (markup.match(/data-macro-mode=/g) || []).length,
+      rows: (markup.match(/data-macro-row=/g) || []).length,
+      nativeSelect: markup.includes("<select"),
+      controls: ["toggleMacroRecording", "readMacroSlot", "clearMacroSlot", "stageMacro", "applyMacroBatchDelay"].every((id) => markup.includes('id="' + id + '"')),
+      guide: ["15 records", "65535", "32767", "no separate Macro WebM"].every((text) => guide.includes(text)),
+      storedRepeats: [macroStoredRepeat({ mode: 0, repeatCount: 99999 }), macroStoredRepeat({ mode: 5, repeatCount: 2 })],
+      limit: macroActionLimit(),
+    };
+  })()`, browser);
+  equal(macroUi, { slots: 16, hosts: 64, layers: 4, modes: 6, rows: 2, nativeSelect: false, controls: true, guide: true, storedRepeats: [9999, 65535], limit: 944 }, "Macro UI must expose all slots, six captured playback modes, recording/edit controls, and the original capacity/timing rules.");
+  browser.macroDown = { type: "keydown", code: "KeyQ", repeat: false, preventDefault() {}, stopImmediatePropagation() {} };
+  browser.macroUp = { type: "keyup", code: "KeyQ", repeat: false, preventDefault() {}, stopImmediatePropagation() {} };
+  const macroRecorder = vm.runInContext(`(() => {
+    state.macroDraft.actions = []; startMacroRecording();
+    recordMacroKeyboardEvent(macroDown); recordMacroKeyboardEvent(macroUp); stopMacroRecording();
+    return [state.macroRecording, state.macroDraft.actions.map((action) => [action.keycode, action.pressed, action.delay]), macroKeyboardEventKeycode({ code: "ControlRight" }), macroKeyboardEventKeycode({ code: "F24" })];
+  })()`, browser);
+  equal(macroRecorder, [false, [[20, true, 1], [20, false, 12]], 228, 115], "Macro recorder must capture timed down/up events and distinguish right-side modifiers and F24.");
+  const macroBindingRoundTrip = vm.runInContext(`(() => {
+    const savedProfile = clone(state.profile), savedOriginal = clone(state.original), savedSelected = new Set(state.selectedKeys), savedLayer = state.profile.layer;
+    state.profile = defaultProfile(); state.original = clone(state.profile); state.selectedKeys = new Set([0]); clearDirty();
+    const original = displayedKeycode(keys[0], 0);
+    state.macroDraft = { feature: "MACRO", hostId: 0, layer: 0, slot: 3, mode: 1, repeatCount: 2, valid: false, loaded: false, removeSlot: false, actions: [{ pressed: true, keycode: 4, delay: 1 }, { pressed: false, keycode: 4, delay: 25 }] };
+    stageMacro();
+    const staged = state.profile.keycodes[0][0], base = state.profile.macroBases["0:0:0"], entries = macroAssignmentEntries();
+    removeMacroAssignment("0:0");
+    const restored = state.profile.keycodes[0][0], remaining = macroAssignmentEntries().length;
+    state.profile = savedProfile; state.original = savedOriginal; state.selectedKeys = savedSelected; state.profile.layer = savedLayer; state.macroDraft = null; clearDirty();
+    return { original, staged, base, entries: entries.length, details: entries[0]?.details, restored, remaining };
+  })()`, browser);
+  equal(macroBindingRoundTrip, { original: 41, staged: 0xf503, base: 41, entries: 1, details: "Main · Macro 3 · sequence staged", restored: 41, remaining: 0 }, "Macro binding staging/removal must preserve the replaced layer mapping.");
   const mptEditorCheck = vm.runInContext(`(() => {
     state.profile.performance[0].axisRangeMax = 3331;
     state.profile.performance[0].axisV2Id = 0;
@@ -1077,11 +1128,44 @@ async function main() {
   equal([endReply.type, endReply.keycodes, endReply.delay], ["END", [6, 7], 25], "End write reply did not decode press/release outputs and delay.");
   await transport.setMacroData({ macroId: 2, actions: [{ pressed: true, keycode: 4, delay: 1 }, { pressed: false, keycode: 4, delay: 25 }] });
   equal(device.sent.at(-1).packet.slice(0, 12), [7, 4, 2, 0, 4, 0, 1, 0x80, 4, 0, 25, 0], "Macro action-packet packing changed.");
+  let macroDelayRejected = false;
+  try { await transport.setMacroData({ macroId: 2, actions: [{ pressed: true, keycode: 4, delay: 32768 }] }); }
+  catch (error) { macroDelayRejected = /32767/.test(error.message); }
+  if (!macroDelayRejected) throw new Error("Macro protocol must reject the original UI's off-by-one 32768 ms value instead of wrapping it.");
   const macroMode = await transport.setMacroMode({ macroId: 2, valid: true, actionCount: 2, repeatCount: 3, mode: 1 });
   equal([macroMode.macroId, macroMode.valid, macroMode.actionCount, macroMode.repeatCount, macroMode.mode], [2, true, 2, 3, 1], "Macro mode packet decode failed.");
+  const pagedMacroActions = Array.from({ length: 31 }, (_, index) => ({ pressed: index % 2 === 0, keycode: 4 + (index % 20), delay: index + 1 }));
+  const beforePagedWrite = device.sent.length;
+  const writtenPages = await transport.setMacroActions({ macroId: 4, actions: pagedMacroActions });
+  const pagedWritePackets = device.sent.slice(beforePagedWrite).filter(({ packet }) => packet[0] === 7 && packet[1] === 4);
+  equal([API.MACRO_ACTIONS_PER_PAGE, writtenPages, pagedWritePackets.map(({ packet }) => packet[3]), pagedWritePackets.map(({ packet }) => packet.slice(4).filter(Boolean).length > 0)], [15, 3, [0, 1, 2], [true, true, true]], "Macro sequences must be written as page-numbered groups of 15 events.");
+  const pagedMacroRead = await transport.getMacroActions(4, pagedMacroActions.length);
+  equal(pagedMacroRead, pagedMacroActions.map(({ pressed, delay, keycode }) => ({ pressed, delay, keycode })), "Multi-page macro read-back must trim padding and preserve every action.");
   device.advanced.clear();
   device.performance.clear();
   browser.injectedTransport = transport;
+  browser.pagedMacroActions = pagedMacroActions;
+  const appliedMacro = await vm.runInContext(`(() => {
+    state.transport = injectedTransport;
+    state.macroDraft = { feature: "MACRO", hostId: 0, layer: 0, slot: 5, mode: 5, repeatCount: 2, valid: true, loaded: false, removeSlot: false, actions: pagedMacroActions };
+    state.dirty.macro = true;
+    return applyMacroDraft(state.macroDraft).then(() => {
+      const cached = state.hardware.macros.get(5);
+      const result = [cached.valid, cached.actionCount, cached.repeatCount, cached.mode, cached.actions.length];
+      clearDirty(); return result;
+    });
+  })()`, browser);
+  equal(appliedMacro, [true, 31, 65535, 5, 31], "Applying a hold macro must write every page, store the infinite-repeat sentinel, and verify the complete slot.");
+  const clearedMacro = await vm.runInContext(`(() => {
+    state.macroDraft = { feature: "MACRO", hostId: 0, layer: 0, slot: 6, mode: 1, repeatCount: 2, valid: true, loaded: true, removeSlot: true, actions: [] };
+    state.dirty.macro = true;
+    return applyMacroDraft(state.macroDraft).then(() => {
+      const cached = state.hardware.macros.get(6);
+      const result = [cached.valid, cached.actionCount, cached.repeatCount, cached.mode, cached.actions.length];
+      clearDirty(); return result;
+    });
+  })()`, browser);
+  equal(clearedMacro, [true, 0, 2, 1, 0], "Clearing macro data must preserve a valid slot and its playback settings while removing all events.");
   vm.runInContext("state.transport = injectedTransport; state.page = 'overview'; state.liveLighting = false; state.autoApply = true; state.profile.settings.sleepTime = 12; state.dirty.settings.add('sleepTime')", browser);
   const autoApplied = await vm.runInContext("flushAutoApply().then((ok) => [ok, dirtyCount(), state.autoApply, state.original.settings.sleepTime])", browser);
   equal(autoApplied, [true, 0, true, 12], "Experimental auto apply must write, verify, and clear a completed edit.");

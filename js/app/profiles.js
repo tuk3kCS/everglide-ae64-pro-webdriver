@@ -159,7 +159,9 @@ function summarizeChanges() {
     }
   }
   if (state.dirty.macro && state.macroDraft)
-    changes.push(`Macro: ${keys[Number(state.macroDraft.hostId)]?.n || "host key"}, ${macroDraftDetails(state.macroDraft)}`);
+    changes.push(state.macroDraft.removeSlot
+      ? `Macro ${Number(state.macroDraft.slot)}: clear onboard sequence (bindings remain)`
+      : `Macro: ${keys[Number(state.macroDraft.hostId)]?.n || "host key"}, ${macroDraftDetails(state.macroDraft)}`);
   if (state.dirty.advancedRemovals.size)
     changes.push(
       `Remove advanced assignments from ${state.dirty.advancedRemovals.size} key${state.dirty.advancedRemovals.size === 1 ? "" : "s"} (${names(state.dirty.advancedRemovals)})`,
@@ -267,6 +269,10 @@ async function applyChanges({ automatic = false } = {}) {
     }
     if (performanceIds.length)
       await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+    // Write and verify the shared macro slot before publishing a layer mapping
+    // that can invoke it. A failed sequence therefore cannot leave a host key
+    // pointing at a partially written slot.
+    if (state.dirty.macro) await applyMacroDraft(state.macroDraft);
     const mappingTokens = [...state.dirty.mapping];
     for (let index = 0; index < mappingTokens.length; index += 1) {
       const [layer, id] = mappingTokens[index].split(":").map(Number),
@@ -430,7 +436,6 @@ async function applyChanges({ automatic = false } = {}) {
       await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
       }
     }
-    if (state.dirty.macro) await applyMacroDraft(state.macroDraft);
     if (state.dirty.lightingBase || state.dirty.lightingPalette) {
       if (state.dirty.lightingBase) {
         await state.transport.setLightingBase(state.profile.lighting.base, 0);
@@ -619,6 +624,7 @@ function revertChanges() {
   state.timers.autoApply = null;
   state.profile = clone(state.original);
   state.advancedDraft = defaultSocdDraft();
+  state.macroDraft = null;
   if (Number(state.hardware.advanced?.mode) === ADVANCED_MODE.MPT) {
     const record = state.hardware.advanced,
       host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
@@ -656,6 +662,9 @@ async function reloadProfileFromDevice(index) {
   state.hardware.advanced = null;
   state.hardware.advancedByKey.clear();
   state.advancedDraft = defaultSocdDraft();
+  state.hardware.macros?.clear();
+  state.hardware.macroSpace = null;
+  state.macroDraft = null;
   state.hardware.keycodes.clear();
   state.hardware.performance.clear();
   state.switchAssignmentsStatus = "idle";

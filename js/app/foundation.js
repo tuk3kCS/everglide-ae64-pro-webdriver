@@ -614,7 +614,7 @@ const defaultProfile = () => ({
       Object.fromEntries(keys.map((key) => [key.id, defaultKeycode(key)])),
     ]),
   ),
-  combinationBases: {},
+  combinationBases: {}, macroBases: {},
   lighting: {
     base: {
       open: true,
@@ -793,7 +793,7 @@ function loadSavedProfile() {
           { ...base.keycodes[i], ...saved.keycodes?.[i] },
         ]),
       ),
-      combinationBases: { ...base.combinationBases, ...saved.combinationBases },
+      combinationBases: { ...base.combinationBases, ...saved.combinationBases }, macroBases: { ...base.macroBases, ...saved.macroBases },
       lighting: {
         ...base.lighting,
         ...saved.lighting,

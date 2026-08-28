@@ -209,6 +209,9 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     state.knownDevice = state.transport.device;
     state.hardware.keycodes.clear();
     state.hardware.advancedByKey.clear();
+    state.hardware.macros?.clear();
+    state.hardware.macroSpace = null;
+    state.macroDraft = null;
     Object.assign(state.hardware, {
       protocol,
       info,
