@@ -246,7 +246,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               ? `${advanced.feature.title} ${advanced.removing ? "removal staged" : advanced.staged ? "staged" : "enabled"}${advanced.partner ? ` with ${advanced.partner}` : ""}`
               : "";
             return `<button class="key ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(2)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(3)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(mapped)}</span>`}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
           })
           .join("")}</div>`,
     )
@@ -292,7 +292,7 @@ function selectedCard() {
     performance = state.profile.performance[key.id],
     code = displayedKeycode(key),
     address = position(key);
-  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(keycodeLabel(code))} · ${activeActuationDistance(performance).toFixed(2)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
+  return `<div class="selected-key-card"><b>${esc(key.n)}</b><div><span>SELECTED KEY · ${address.row}:${address.col}</span><strong>${esc(keycodeLabel(code))} · ${activeActuationDistance(performance).toFixed(3)} mm${performance.mode ? " · RT on" : ""}</strong></div></div>`;
 }
 function pageCopy() {
   return {
@@ -331,7 +331,7 @@ function overviewPage() {
     rtCount = Object.values(state.profile.performance).filter(
       (item) => item.mode === 1,
     ).length;
-  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${layerBar("Choose a layer to inspect its assignments on the keyboard.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(2)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
+  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${layerBar("Choose a layer to inspect its assignments on the keyboard.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(3)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
 }
 function numberField(id, label, value, min, max, step, hint = "", disabled = false) {
   const inactive = disabled ? " disabled" : "";
@@ -353,7 +353,7 @@ function performanceControls() {
   const rapidSettings = rapidTrigger
     ? `<div class="rt-settings"><label class="switch-row independent-rt-toggle"><span><b>Sync RT Press & Release</b><small>Keeps both RT sensitivity values identical. Turn off to tune them separately.</small></span><input id="syncRt" class="toggle" type="checkbox" ${syncRt ? "checked" : ""}></label><div class="tuning-fields">${numberField("rtPress", "RT Press", value.rtPress, 0.01, 2, 0.01, "Downstroke movement required to reactuate.")}${numberField("rtRelease", "RT Release", syncRt ? value.rtPress : value.rtRelease, 0.01, 2, 0.01, syncRt ? "Synced to RT Press." : "Upstroke movement required to reset.", syncRt)}</div></div>`
     : "";
-  return `${selectedCard()}<div class="actuation-tuning-columns"><section class="tuning-column"><div class="tuning-column-head"><span>01</span><div><h3>Actuation & Rapid Trigger</h3><p>Choose the initial actuation point, then optionally add dynamic press and release sensitivity.</p></div></div><label class="switch-row"><span><b>Rapid Trigger</b><small>Reset and reactuate from movement instead of fixed return points.</small></span><input id="performanceMode" class="toggle" type="checkbox" ${rapidTrigger ? "checked" : ""}></label><div class="tuning-fields actuation-distance-field">${numberField("actuationDistance", "Actuation distance", activeActuationDistance(value), 0.1, 4, 0.01, actuationHint)}</div>${standardRelease}${rapidSettings}</section><section class="tuning-column"><div class="tuning-column-head"><span>02</span><div><h3>Dead zones</h3><p>Ignore unstable movement at the top and bottom of switch travel.</p></div></div><label class="switch-row dead-zone-toggle-row"><span><b>Dead zones</b><small>Off writes 0.00 mm to both top and bottom dead-zone fields.</small></span><input id="deadZoneToggle" class="toggle" type="checkbox" ${deadZoneOn ? "checked" : ""}></label><div class="tuning-fields">${numberField("pressDeadStroke", "Top dead zone", deadZoneOn ? value.pressDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near the top." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}${numberField("releaseDeadStroke", "Bottom dead zone", deadZoneOn ? value.releaseDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near full travel." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}</div></section></div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy tuning to every key</button></div>`;
+  return `${selectedCard()}<div class="actuation-tuning-columns"><section class="tuning-column"><div class="tuning-column-head"><span>01</span><div><h3>Actuation & Rapid Trigger</h3><p>Choose the initial actuation point, then optionally add dynamic press and release sensitivity.</p></div></div><label class="switch-row"><span><b>Rapid Trigger</b><small>Reset and reactuate from movement instead of fixed return points.</small></span><input id="performanceMode" class="toggle" type="checkbox" ${rapidTrigger ? "checked" : ""}></label><div class="tuning-fields actuation-distance-field">${numberField("actuationDistance", "Actuation distance", activeActuationDistance(value), 0.001, 4, 0.001, actuationHint)}</div>${standardRelease}${rapidSettings}</section><section class="tuning-column"><div class="tuning-column-head"><span>02</span><div><h3>Dead zones</h3><p>Ignore unstable movement at the top and bottom of switch travel.</p></div></div><label class="switch-row dead-zone-toggle-row"><span><b>Dead zones</b><small>Off writes 0.00 mm to both top and bottom dead-zone fields.</small></span><input id="deadZoneToggle" class="toggle" type="checkbox" ${deadZoneOn ? "checked" : ""}></label><div class="tuning-fields">${numberField("pressDeadStroke", "Top dead zone", deadZoneOn ? value.pressDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near the top." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}${numberField("releaseDeadStroke", "Bottom dead zone", deadZoneOn ? value.releaseDeadStroke : 0, 0, 1, 0.01, deadZoneOn ? "Ignored movement near full travel." : "Disabled; stored as 0.00 mm.", !deadZoneOn)}</div></section></div><div class="apply-row"><button class="button ghost" data-copy-performance type="button">Copy tuning to every key</button></div>`;
 }
 function switchSelectorControls() {
   const selected = selectedKey(),
@@ -464,12 +464,12 @@ function livePressDistancePanel() {
       <div class="axis-visual" aria-label="Focused switch travel and actuation point from zero to ${travelRangeLabel(travelMax)} millimeters">
         <img src="assets/images/axis.png" alt="Magnetic switch axis outline">
         <div class="axis-gauge-pole"><i class="axis-gauge-fill"></i></div>
-        <div class="axis-gauge-scale" data-travel-max="${travelMax.toFixed(3)}">${travelGaugeTicks(travelMax)}<span class="axis-actuation-marker"><b id="liveActuationMarkerLabel">AP ${actuation.toFixed(2)}</b></span></div>
+        <div class="axis-gauge-scale" data-travel-max="${travelMax.toFixed(3)}">${travelGaugeTicks(travelMax)}<span class="axis-actuation-marker"><b id="liveActuationMarkerLabel">AP ${actuation.toFixed(3)}</b></span></div>
       </div>
       <div class="live-press-readout">
         <span>TRACKING · <b id="livePressKey">${esc(key.n)}</b></span>
         <strong id="livePressValue">${mm.toFixed(3)} <small>mm</small></strong>
-        <div class="live-press-summary"><span><small>Raw route</small><b id="livePressRaw">${raw}</b></span><span><small>Actuation</small><b id="livePressActuation">${actuation.toFixed(2)} mm</b></span><span><small>Scope</small><b id="livePressScope">${selectedCount ? `${selectedCount} selected` : "All keys"}</b></span></div>
+        <div class="live-press-summary"><span><small>Raw route</small><b id="livePressRaw">${raw}</b></span><span><small>Actuation</small><b id="livePressActuation">${actuation.toFixed(3)} mm</b></span><span><small>Scope</small><b id="livePressScope">${selectedCount ? `${selectedCount} selected` : "All keys"}</b></span></div>
         <div><h3>Pressed keys</h3><p>Multiple switches remain visible at the same time.</p><div class="pressed-key-list" id="pressedKeyList">${active.length ? active.map(({ key, mm: distance }) => `<span><b>${esc(key.n)}</b>${distance.toFixed(3)} mm</span>`).join("") : "<em>Press any key to begin.</em>"}</div></div>
       </div>
     </div>
@@ -492,13 +492,9 @@ function keymapPage() {
     mappingGroup = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingGroup)
       ? state.mappingGroup
       : KEYMAP_SELECTABLE_GROUPS[0],
-    groups = KEYMAP_SELECTABLE_GROUPS,
-    entries = KEYCODE_GROUPS[mappingGroup].filter((entry) =>
-      entry.label.toLowerCase().includes(state.mappingSearch.toLowerCase()),
-    ),
-    editor = `<input class="search-input" id="mappingSearch" type="search" placeholder="Search functions" value="${esc(state.mappingSearch)}"><div class="mapping-list">${entries.map((entry) => `<button type="button" data-keycode="${entry.code}" class="${entry.code === active ? "active" : ""}">${esc(entry.label)}</button>`).join("")}</div>`;
+    groups = KEYMAP_SELECTABLE_GROUPS;
   const layers = ["Main", "Fn1", "Fn2", "Fn3"];
-  return `<div class="page-grid">${layerBar("Choose a layer, then select one physical key.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Writes a 16-bit keycode on ${layers[Number(state.profile.layer)]}.</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-browser"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === mappingGroup ? "active" : ""}">${group}</button>`).join("")}</div>${editor}</div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
+  return `<div class="page-grid">${layerBar("Choose a layer, then select a physical key to open its keymap.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Assign ${selected.length === 1 ? esc(selectedKey().n) : `${selected.length} keys`}</h2><p>Current mapping: <strong>${esc(keycodeLabel(active))}</strong> · ${layers[Number(state.profile.layer)]}</p></div><span class="badge ready">4 LAYERS</span></div>${selectedCard()}<div class="mapping-launcher"><div class="mapping-groups">${groups.map((group) => `<button type="button" data-mapping-group="${group}" class="${group === mappingGroup ? "active" : ""}">${group === "keyboard" ? "Keyboard" : group[0].toUpperCase() + group.slice(1)}</button>`).join("")}</div><p>Click any key on the virtual keyboard to open the grouped keymap picker.</p><button class="button primary" id="openMappingPicker" type="button">Choose keymap</button></div><div class="apply-row"><button class="button ghost" id="resetKeycode" type="button">Default for selected key${selected.length === 1 ? "" : "s"}</button></div></section></div>`;
 }
 
 function lightingArea(index) {
@@ -723,9 +719,9 @@ function settingsPage() {
 const ADVANCED_FEATURES = [
   { code: "DKS", title: "Dynamic Keystroke", body: "Up to four keycodes at multiple press/release points.", mode: 1, color: "#ff6f91", ready: true },
   { code: "MPT", title: "Multi-Point Trigger", body: "Two or three key actions at distinct travel depths.", mode: 2, color: "#ffb454", ready: true },
-  { code: "MT", title: "Mod-Tap", body: "Tap one function and hold another after a time threshold.", mode: 3, color: "#0035f5" },
-  { code: "TGL", title: "Toggle Key", body: "Latch a key action with firmware timing.", mode: 4, color: "#52c7ff" },
-  { code: "END", title: "End Key", body: "Trigger paired actions with an end delay.", mode: 5, color: "#44d6a3" },
+  { code: "MT", title: "Mod-Tap", body: "Tap one function and hold another after a time threshold.", mode: 3, color: "#0035f5", ready: true },
+  { code: "TGL", title: "Toggle Key", body: "Latch a key action with firmware timing.", mode: 4, color: "#52c7ff", ready: true },
+  { code: "END", title: "End Key", body: "Trigger paired actions with an end delay.", mode: 5, color: "#44d6a3", ready: true },
   { code: "SOCD", title: "SOCD Resolution", body: "Resolve two opposing keys using one of four captured firmware modes.", mode: 6, color: "#8d86ff", ready: true },
   { code: "RS", title: "Rappy Snappy", body: "Compare two keys by travel and prefer the deeper input.", mode: 7, color: "#f27bd2", ready: true },
   { code: "MACRO", title: "Macros", body: "Record and assign ordered key-down/key-up sequences.", color: "#d49a62", ready: true },
@@ -760,6 +756,9 @@ ADVANCED_FEATURE_INFO.RS = rappySnappyFeatureInfo();
 ADVANCED_FEATURE_INFO.MPT = multipointFeatureInfo();
 ADVANCED_FEATURE_INFO.DKS = dksFeatureInfo();
 ADVANCED_FEATURE_INFO.MACRO = macroFeatureInfo();
+ADVANCED_FEATURE_INFO.MT = simpleAdvancedFeatureInfo("MT");
+ADVANCED_FEATURE_INFO.TGL = simpleAdvancedFeatureInfo("TGL");
+ADVANCED_FEATURE_INFO.END = simpleAdvancedFeatureInfo("END");
 function advancedFeatureInfoMarkup(code) {
   return ADVANCED_FEATURE_INFO[code] || {
     title: "Advanced feature",
@@ -819,6 +818,8 @@ function advancedAssignmentEntries() {
       ? `${SOCD_MODES[Number(record.socdMode)]?.name || "SOCD mode"} · ${Number(record.delay) || 0} ms delay`
       : Number(record.mode) === ADVANCED_MODE.RS
         ? `Deeper key wins · ${Number(record.delay) || 0} ms delay`
+        : [ADVANCED_MODE.MT, ADVANCED_MODE.TGL, ADVANCED_MODE.END].includes(Number(record.mode))
+          ? simpleAdvancedRecordDetails(record)
         : `Firmware mode ${record.mode}${partner ? " · paired action" : ""}`;
     entries.push({
       feature,
@@ -841,7 +842,7 @@ function advancedAssignmentEntries() {
         feature,
         ids,
         keys: ids.map((id) => keys[id]).filter(Boolean),
-        details: featureCode === "MPT" ? multipointDraftDetails(draft) : featureCode === "DKS" ? dksDraftDetails(draft) : featureCode === "RS" ? `Deeper key wins · ${Number(draft.delay) || 0} ms delay` : `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
+        details: featureCode === "MPT" ? multipointDraftDetails(draft) : featureCode === "DKS" ? dksDraftDetails(draft) : ["MT", "TGL", "END"].includes(featureCode) ? simpleAdvancedDraftDetails(draft) : featureCode === "RS" ? `Deeper key wins · ${Number(draft.delay) || 0} ms delay` : `${SOCD_MODES[Number(draft.socdMode)]?.name || "SOCD mode"} · ${Number(draft.delay) || 0} ms delay`,
         staged: true,
         removing: false,
       };

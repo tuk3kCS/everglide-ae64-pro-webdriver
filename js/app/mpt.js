@@ -23,10 +23,10 @@ const MPT_ALLOWED_CODES = new Set(MPT_KEY_GROUPS.flatMap(({ codes }) => codes));
 Object.assign(state, { mptKeyPickerStage: 0, mptKeyPickerGroup: "basic" });
 
 function advancedDraftFeatureCode(draft = state.advancedDraft) {
-  return ["DKS", "MPT", "RS", "MACRO"].includes(draft?.feature) ? draft.feature : "SOCD";
+  return ["DKS", "MPT", "RS", "MACRO", "MT", "TGL", "END"].includes(draft?.feature) ? draft.feature : "SOCD";
 }
 function advancedDraftKeyIds(draft = state.advancedDraft) {
-  return ["DKS", "MPT", "MACRO"].includes(advancedDraftFeatureCode(draft))
+  return ["DKS", "MPT", "MACRO", "MT", "TGL", "END"].includes(advancedDraftFeatureCode(draft))
     ? [Number(draft.hostId)]
     : [Number(draft.keyAId), Number(draft.keyBId)];
 }

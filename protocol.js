@@ -538,6 +538,38 @@
       return decodeAdvanced(reply);
     }
 
+    // The three remaining captured higher-key modes share the AE64 family-06
+    // record format.  MT uses two tap/hold outputs, TGL one latched output,
+    // and END two outputs fired at the press/release edges.
+    async setModTap({ position, keycodes, delay = 200 }) {
+      if (!position) throw new TypeError("Mod-Tap requires one physical host key.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 2) throw new RangeError("Mod-Tap requires tap and hold keycodes.");
+      const reply = await this.transact([
+        FAMILY.ADVANCED, 2, clampByte(position.row, "host row"), clampByte(position.col, "host column"), ADVANCED_MODE.MT,
+        ...le16(keycodes[0], "Mod-Tap tap keycode"), ...le16(keycodes[1], "Mod-Tap hold keycode"), ...le16(delay, "Mod-Tap delay"),
+      ]);
+      return decodeAdvanced(reply);
+    }
+
+    async setToggleKey({ position, keycode, delay = 200 }) {
+      if (!position) throw new TypeError("Toggle Key requires one physical host key.");
+      const reply = await this.transact([
+        FAMILY.ADVANCED, 2, clampByte(position.row, "host row"), clampByte(position.col, "host column"), ADVANCED_MODE.TGL,
+        ...le16(keycode, "Toggle Key output"), ...le16(delay, "Toggle Key delay"),
+      ]);
+      return decodeAdvanced(reply);
+    }
+
+    async setEndKey({ position, keycodes, delay = 0 }) {
+      if (!position) throw new TypeError("End Key requires one physical host key.");
+      if (!Array.isArray(keycodes) || keycodes.length !== 2) throw new RangeError("End Key requires press and release keycodes.");
+      const reply = await this.transact([
+        FAMILY.ADVANCED, 2, clampByte(position.row, "host row"), clampByte(position.col, "host column"), ADVANCED_MODE.END,
+        ...le16(keycodes[0], "End Key press keycode"), ...le16(keycodes[1], "End Key release keycode"), ...le16(delay, "End Key delay"),
+      ]);
+      return decodeAdvanced(reply);
+    }
+
     async getMacroMode(macroId) {
       const data = await this.transact([FAMILY.MACRO, 1, clampByte(macroId, "macro ID")]);
       return { macroId: data[2], valid: data[3] === 1, actionCount: read16(data, 4), repeatCount: read16(data, 6), mode: data[8] };

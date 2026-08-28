@@ -37,10 +37,84 @@ state.combinationDraft = {
 };
 state.selectedKeys = new Set([Number(state.profile.selected)]);
 state.keySelectionDrag = null;
+state.mappingPickerGroup = "keyboard";
+state.mappingKeyboardGroup = "basic";
 const selectedKeyIds = () => {
   const ids = [...state.selectedKeys].filter((id) => keys[id]);
   return ids.sort((a, b) => a - b);
 };
+
+// The keyboard catalog is intentionally split into useful hardware-facing
+// groups in the picker. This keeps the full keymap available without making
+// the user scroll through one long list.
+const KEYBOARD_MAPPING_GROUPS = Object.freeze([
+  { id: "basic", label: "Basic keys", test: (code) => (code >= 4 && code <= 57) || code === 0 || code === 1 },
+  { id: "function", label: "F1–F24", test: (code) => (code >= 58 && code <= 69) || (code >= 104 && code <= 115) },
+  { id: "navigation", label: "Navigation", test: (code) => code >= 70 && code <= 82 },
+  { id: "numpad", label: "Numpad", test: (code) => code >= 83 && code <= 103 },
+  { id: "modifiers", label: "Modifiers", test: (code) => code >= 224 && code <= 231 },
+]);
+
+function mappingPickerEntries(group = state.mappingPickerGroup, search = state.mappingSearch) {
+  const source = KEYCODE_GROUPS[group] || KEYCODE_GROUPS.keyboard;
+  const keyboardGroup = KEYBOARD_MAPPING_GROUPS.find((item) => item.id === state.mappingKeyboardGroup) || KEYBOARD_MAPPING_GROUPS[0];
+  return source.filter((entry) => (group !== "keyboard" || keyboardGroup.test(Number(entry.code))) &&
+    entry.label.toLowerCase().includes(String(search || "").toLowerCase()));
+}
+
+function mappingKeyboardGroupForCode(code) {
+  return KEYBOARD_MAPPING_GROUPS.find((group) => group.test(Number(code)))?.id || "basic";
+}
+
+function renderMappingPicker() {
+  const body = document.querySelector("#mappingPickerBody");
+  if (!body) return;
+  const group = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingPickerGroup) ? state.mappingPickerGroup : "keyboard";
+  const active = displayedKeycode(selectedKey());
+  const entries = mappingPickerEntries(group);
+  body.innerHTML = `<div class="mapping-picker-summary"><span class="eyebrow">${esc(selectedKey().n)} · ${esc(["Main", "Fn1", "Fn2", "Fn3"][Number(state.profile.layer)])}</span><p>Choose the keycode to assign to this physical key.</p></div><div class="mapping-picker-groups" role="tablist" aria-label="Keymap groups">${KEYMAP_SELECTABLE_GROUPS.map((item) => `<button type="button" role="tab" data-mapping-picker-group="${item}" class="${item === group ? "active" : ""}" aria-selected="${item === group}">${item === "keyboard" ? "Keyboard" : item[0].toUpperCase() + item.slice(1)}</button>`).join("")}</div>${group === "keyboard" ? `<div class="mapping-keyboard-groups" role="tablist" aria-label="Keyboard key groups">${KEYBOARD_MAPPING_GROUPS.map((item) => `<button type="button" role="tab" data-mapping-keyboard-group="${item.id}" class="${item.id === state.mappingKeyboardGroup ? "active" : ""}" aria-selected="${item.id === state.mappingKeyboardGroup}">${esc(item.label)}</button>`).join("")}</div>` : ""}<input class="search-input" id="mappingPickerSearch" type="search" placeholder="Search ${group === "keyboard" ? "keyboard keys" : `${group} functions`}" value="${esc(state.mappingSearch)}"><div class="mapping-list mapping-picker-list">${entries.length ? entries.map((entry) => `<button type="button" data-mapping-picker-keycode="${entry.code}" class="${Number(entry.code) === Number(active) ? "active" : ""}">${esc(entry.label)}</button>`).join("") : `<p class="mapping-picker-empty">No matching keycodes.</p>`}</div>`;
+  bindMappingPicker();
+}
+
+function openMappingPicker() {
+  state.mappingPickerGroup = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingGroup) ? state.mappingGroup : "keyboard";
+  if (state.mappingPickerGroup === "keyboard") state.mappingKeyboardGroup = mappingKeyboardGroupForCode(displayedKeycode(selectedKey()));
+  renderMappingPicker();
+  const dialog = document.querySelector("#mappingPickerDialog");
+  if (!dialog?.open) openDialog(dialog);
+  queueMicrotask(() => document.querySelector("#mappingPickerSearch")?.focus());
+}
+
+function applyMappingPickerKeycode(code) {
+  selectedKeyIds().forEach((id) => {
+    state.profile.keycodes[state.profile.layer][id] = Number(code);
+    state.dirty.mapping.add(`${state.profile.layer}:${id}`);
+  });
+  state.mappingGroup = state.mappingPickerGroup;
+  closeDialog(document.querySelector("#mappingPickerDialog"));
+  render();
+}
+
+function bindMappingPicker() {
+  document.querySelectorAll("[data-mapping-picker-group]").forEach((button) => button.addEventListener("click", () => {
+    state.mappingPickerGroup = button.dataset.mappingPickerGroup;
+    state.mappingSearch = "";
+    renderMappingPicker();
+  }));
+  document.querySelectorAll("[data-mapping-keyboard-group]").forEach((button) => button.addEventListener("click", () => {
+    state.mappingKeyboardGroup = button.dataset.mappingKeyboardGroup;
+    state.mappingSearch = "";
+    renderMappingPicker();
+  }));
+  document.querySelector("#mappingPickerSearch")?.addEventListener("input", (event) => {
+    state.mappingSearch = event.target.value;
+    renderMappingPicker();
+    const search = document.querySelector("#mappingPickerSearch");
+    search?.focus();
+    search?.setSelectionRange(search.value.length, search.value.length);
+  });
+  document.querySelectorAll("[data-mapping-picker-keycode]").forEach((button) => button.addEventListener("click", () => applyMappingPickerKeycode(button.dataset.mappingPickerKeycode)));
+}
 function decodeCombinationKeycode(keycode, allowExtended = false) {
   const value = Number(keycode), modifiers = (value >>> 8) & 0xff, trigger = value & 0xff;
   if (!Number.isInteger(value) || value <= 0xff || !modifiers || (!allowExtended && modifiers & ~0x0f) || !COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === trigger)) return null;

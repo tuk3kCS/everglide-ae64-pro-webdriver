@@ -15,6 +15,7 @@ const APP_FILES = [
   "js/app/rappy.js",
   "js/app/mpt.js",
   "js/app/dks.js",
+  "js/app/mt-end-toggle.js",
   "js/app/macro.js",
   "js/app/pages.js",
   "js/app/interactions.js",
@@ -222,7 +223,7 @@ async function main() {
     const lines = read(file).split(/\r?\n/).length;
     if (lines > 1000) throw new Error(`${file} has ${lines} lines; split application modules must stay below 1,000.`);
   }
-  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="rsConfigDialog"', 'id="rsConfigBody"', 'id="mptConfigDialog"', 'id="mptConfigBody"', 'id="mptKeyPickerDialog"', 'id="mptKeyPickerBody"', 'id="combinationConfigDialog"', 'id="combinationConfigBody"', 'id="calibrationRecommendationDialog"'])
+  for (const control of ['id="quickProfileSelect"', 'id="quickProfileRename"', 'id="autoApplyToggle"', 'id="applyReviewDialog"', 'id="profileRenameDialog"', 'id="advancedInfoDialog"', 'id="socdConfigDialog"', 'id="socdConfigBody"', 'id="rsConfigDialog"', 'id="rsConfigBody"', 'id="mptConfigDialog"', 'id="mptConfigBody"', 'id="mptKeyPickerDialog"', 'id="mptKeyPickerBody"', 'id="combinationConfigDialog"', 'id="combinationConfigBody"', 'id="mappingPickerDialog"', 'id="mappingPickerBody"', 'id="calibrationRecommendationDialog"'])
     if (!html.includes(control)) throw new Error(`Profile/apply workflow omitted ${control}.`);
   for (const removedId of ['id="profileSelect"', 'id="workspaceConnectButton"']) if (html.includes(removedId)) throw new Error(`Header control remains: ${removedId}.`);
   for (const sidebarControl of ['id="backHomeButton"', 'class="sidebar-controls sidebar-preferences"', 'id="sidebarThemeSelect"', 'class="language-select"']) if (!html.includes(sidebarControl)) throw new Error(`Sidebar control is missing: ${sidebarControl}.`);
@@ -623,13 +624,18 @@ async function main() {
   const keymapMarkup = vm.runInContext(`(state.mappingGroup = "combination", keymapPage())`, browser);
   for (const removedGroup of ["macro", "connection", "gamepad", "combination"])
     if (keymapMarkup.includes(`data-mapping-group="${removedGroup}"`)) throw new Error(`Unsupported keymap group remains selectable: ${removedGroup}.`);
+  const keymapPickerCatalog = vm.runInContext(`(() => { state.mappingPickerGroup = "keyboard"; state.mappingKeyboardGroup = "basic"; state.mappingSearch = ""; renderMappingPicker(); return document.querySelector("#mappingPickerBody").innerHTML; })()`, browser);
   for (const requiredKeycode of [0, 1])
-    if (!keymapMarkup.includes(`data-keycode="${requiredKeycode}"`)) throw new Error(`Required special mapping is unavailable: ${requiredKeycode}.`);
+    if (!keymapPickerCatalog.includes(`data-mapping-picker-keycode="${requiredKeycode}"`)) throw new Error(`Required special mapping is unavailable: ${requiredKeycode}.`);
   for (const removedControl of ["Associated keys", "Trigger key", "Apply combination"])
     if (keymapMarkup.includes(removedControl)) throw new Error(`Unsupported combination editor remains visible: ${removedControl}.`);
   for (const required of ['class="layer-bar full-span"', 'data-layer="0"', 'data-layer="1"', 'data-layer="2"', 'data-layer="3"', '>Main</button>', '>Fn3</button>'])
     if (!keymapMarkup.includes(required)) throw new Error(`Key Mapping layer row omitted ${required}.`);
   if ((keymapMarkup.match(/data-layer=/g) || []).length !== 4) throw new Error("Key Mapping must render exactly four in-page layer choices.");
+  for (const group of ["Basic keys", "F1–F24", "Navigation", "Numpad", "Modifiers"])
+    if (!app.includes(group)) throw new Error(`Grouped keyboard keymap picker omitted ${group}.`);
+  const mappingPickerMarkup = vm.runInContext(`(() => { state.mappingPickerGroup = "keyboard"; state.mappingKeyboardGroup = "function"; state.mappingSearch = ""; renderMappingPicker(); return document.querySelector("#mappingPickerBody").innerHTML; })()`, browser);
+  if (!mappingPickerMarkup.includes('data-mapping-keyboard-group="function"') || !mappingPickerMarkup.includes("F1")) throw new Error("Keyboard mapping popup did not render its grouped function-key list.");
   const multipleSelection = vm.runInContext(`(() => {
     state.profile.selected = 2;
     state.selectedKeys = new Set([1, 2]);
@@ -664,7 +670,8 @@ async function main() {
     const result = {
       standard: standard.includes('id="actuationDistance"') && standard.includes('value="1.25"') && standard.includes('id="normalReleaseExperiment"') && !standard.includes('id="rtPress"') && !standard.includes('id="normalRelease"'),
       experimentalRelease: experimentalRelease.includes('id="normalRelease"') && experimentalRelease.includes('value="0.75"') && experimentalRelease.includes("Experimental fixed-mode release value"),
-      rapid: rapid.includes('id="actuationDistance"') && rapid.includes('value="1.8"') && rapid.includes('id="rtPress"') && rapid.includes('id="rtRelease"') && rapid.includes('id="syncRt"') && rapid.includes('type="checkbox" checked'),
+      rapid: rapid.includes('id="actuationDistance"') && rapid.includes('value="1.8"') && rapid.includes('min="0.001"') && rapid.includes('step="0.001"') && rapid.includes('id="rtPress"') && rapid.includes('id="rtRelease"') && rapid.includes('id="syncRt"') && rapid.includes('type="checkbox" checked'),
+      precision: standard.includes('min="0.001"') && standard.includes('step="0.001"') && (stagePerformance("normalPress", 0.001), state.profile.performance[0].normalPress === 0.001),
       noContinuousClaim: !rapid.includes("Continuous Rapid Trigger"),
       independent: independent.includes('id="syncRt"') && !independent.includes('id="syncRt" class="toggle" type="checkbox" checked') && independent.includes('id="rtRelease"') && independent.includes('value="0.28"'),
       linked: linked.includes('id="rtRelease"') && linked.includes('disabled') && state.profile.performance[0].rtPress === state.profile.performance[0].rtRelease,
@@ -675,7 +682,7 @@ async function main() {
     return result;
   })()`, browser);
   equal(performanceWorkflow, {
-    standard: true, experimentalRelease: true, rapid: true, noContinuousClaim: true, independent: true,
+    standard: true, experimentalRelease: true, rapid: true, precision: true, noContinuousClaim: true, independent: true,
     linked: true, normalReleasePreserved: 0.75,
   }, "Performance workflow must expose normalRelease experimentally and use intuitive synced or independent RT sensitivity.");
   const performanceReadback = vm.runInContext(`(() => {
@@ -749,7 +756,7 @@ async function main() {
     const flagged = keyboardHtml();
     state.profile.performance = saved;
     return {
-      actuationOnly: actuationOnly.includes('<strong>1.23</strong><small>mm</small>') && !actuationOnly.includes('performance-flag'),
+      actuationOnly: actuationOnly.includes('<strong>1.230</strong><small>mm</small>') && !actuationOnly.includes('performance-flag'),
       rt: flagged.includes('class="performance-flag rt"'),
       dz: flagged.includes('class="performance-flag dz"'),
       values: (flagged.match(/class="performance-actuation"/g) || []).length,
@@ -1035,6 +1042,15 @@ async function main() {
   });
   equal(device.sent.at(-1).packet.slice(0, 21), [6, 2, 4, 5, 1, 4, 0, 5, 0, 6, 0, 7, 0, 10, 120, 120, 10, 0xc8, 0, 0x48, 0x0d], "DKS mode-1 packet changed.");
   equal([dksReply.type, dksReply.keycodes, dksReply.travels, dksReply.deadzones], ["DKS", [4, 5, 6, 7], [10, 120, 120, 10], [.2, 3.4]], "DKS write reply did not decode four stages.");
+  const mtReply = await transport.setModTap({ position: { row: 6, col: 7 }, keycodes: [4, 224], delay: 180 });
+  equal(device.sent.at(-1).packet.slice(0, 11), [6, 2, 6, 7, 3, 4, 0, 224, 0, 180, 0], "Mod-Tap mode-3 packet changed.");
+  equal([mtReply.type, mtReply.keycodes, mtReply.time], ["MT", [4, 224], 180], "Mod-Tap write reply did not decode tap/hold outputs and threshold.");
+  const toggleReply = await transport.setToggleKey({ position: { row: 6, col: 8 }, keycode: 5, delay: 240 });
+  equal(device.sent.at(-1).packet.slice(0, 9), [6, 2, 6, 8, 4, 5, 0, 240, 0], "Toggle mode-4 packet changed.");
+  equal([toggleReply.type, toggleReply.keycode, toggleReply.time], ["TGL", 5, 240], "Toggle write reply did not decode output and delay.");
+  const endReply = await transport.setEndKey({ position: { row: 6, col: 9 }, keycodes: [6, 7], delay: 25 });
+  equal(device.sent.at(-1).packet.slice(0, 11), [6, 2, 6, 9, 5, 6, 0, 7, 0, 25, 0], "End mode-5 packet changed.");
+  equal([endReply.type, endReply.keycodes, endReply.delay], ["END", [6, 7], 25], "End write reply did not decode press/release outputs and delay.");
   await transport.setMacroData({ macroId: 2, actions: [{ pressed: true, keycode: 4, delay: 1 }, { pressed: false, keycode: 4, delay: 25 }] });
   equal(device.sent.at(-1).packet.slice(0, 12), [7, 4, 2, 0, 4, 0, 1, 0x80, 4, 0, 25, 0], "Macro action-packet packing changed.");
   const macroMode = await transport.setMacroMode({ macroId: 2, valid: true, actionCount: 2, repeatCount: 3, mode: 1 });
@@ -1095,6 +1111,8 @@ async function main() {
   await transport.setPerformance({ row: 2, col: 3 }, performance);
   const write = device.sent.at(-1).packet;
   equal(write.slice(0, 7), [4, 2, 2, 3, 1, 0xd0, 0x07], "Performance write header/actuation encoding failed.");
+  await transport.setPerformance({ row: 2, col: 3 }, { ...performance, normalPress: 0.001 });
+  equal(device.sent.at(-1).packet.slice(5, 7), [1, 0], "Performance protocol must preserve a 0.001 mm actuation value.");
   if (write.length !== 64) throw new Error("Every HID report must be zero-padded to 64 bytes.");
   vm.runInContext("state.transport = injectedTransport; state.page = 'performance'; state.livePressDistance = true; state.hardware.keyPositions.clear()", browser);
   await vm.runInContext("startTravel()", browser);

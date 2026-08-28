@@ -217,6 +217,19 @@
       </div>
     </form>
   </dialog>
+  <dialog class="app-dialog mapping-picker-dialog" id="mappingPickerDialog" aria-labelledby="mappingPickerTitle">
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <p class="eyebrow">LAYER MAPPING</p>
+          <h2 id="mappingPickerTitle">Choose keymap</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close keymap picker">×</button>
+      </div>
+      <div id="mappingPickerBody"></div>
+      <div class="dialog-actions"><button class="button ghost" type="submit" value="close">Close</button></div>
+    </form>
+  </dialog>
   <dialog class="app-dialog calibration-recommendation-dialog" id="calibrationRecommendationDialog" aria-labelledby="calibrationRecommendationTitle">
     <form method="dialog">
       <div class="dialog-icon warning" aria-hidden="true">!</div>
@@ -245,6 +258,7 @@
   <script src="js/app/rappy.js"></script>
   <script src="js/app/mpt.js"></script>
   <script src="js/app/dks.js"></script>
+  <script src="js/app/mt-end-toggle.js"></script>
   <script src="js/app/macro.js"></script>
   <script src="js/app/pages.js"></script>
   <script src="js/app/interactions.js"></script>

@@ -149,6 +149,7 @@ function summarizeChanges() {
     const draft = state.advancedDraft;
     if (draft.feature === "MPT") changes.push(`MPT: ${keys[Number(draft.hostId)]?.n || "host key"}, ${multipointDraftDetails(draft)}`);
     else if (draft.feature === "DKS") changes.push(`DKS: ${keys[Number(draft.hostId)]?.n || "host key"}, ${dksDraftDetails(draft)}`);
+    else if (["MT", "TGL", "END"].includes(draft.feature)) changes.push(`${simpleAdvancedSpec(draft.feature).title}: ${keys[Number(draft.hostId)]?.n || "host key"}, ${simpleAdvancedDraftDetails(draft)}`);
     else {
       const keyA = keys[draft.keyAId],
       keyB = keys[draft.keyBId],
@@ -340,6 +341,7 @@ async function applyChanges({ automatic = false } = {}) {
       const draft = state.advancedDraft;
       if (draft.feature === "MPT") await applyMultipointDraft(draft, performanceNormalizations);
       else if (draft.feature === "DKS") await applyDynamicKeystrokeDraft(draft, performanceNormalizations);
+      else if (["MT", "TGL", "END"].includes(draft.feature)) await applySimpleAdvancedDraft(draft, performanceNormalizations);
       else {
         const keyA = keys[draft.keyAId],
         keyB = keys[draft.keyBId],
@@ -621,6 +623,10 @@ function revertChanges() {
     const record = state.hardware.advanced,
       host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
     if (host) state.advancedDraft = multipointDraftFromRecord(host, record);
+  } else if ([ADVANCED_MODE.MT, ADVANCED_MODE.TGL, ADVANCED_MODE.END].includes(Number(state.hardware.advanced?.mode))) {
+    const record = state.hardware.advanced,
+      host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
+    if (host) state.advancedDraft = simpleAdvancedDraftFromRecord(host, record);
   } else if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced?.mode))) {
     const record = state.hardware.advanced,
       first = keys.find((key) => {

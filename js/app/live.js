@@ -75,6 +75,8 @@ async function readAdvanced() {
       state.advancedDraft = multipointDraftFromRecord(key, state.hardware.advanced);
     if (Number(state.hardware.advanced.mode) === ADVANCED_MODE.DKS && !state.dirty.advanced)
       state.advancedDraft = dksDraftFromRecord(key, state.hardware.advanced);
+    if ([ADVANCED_MODE.MT, ADVANCED_MODE.TGL, ADVANCED_MODE.END].includes(Number(state.hardware.advanced.mode)) && !state.dirty.advanced)
+      state.advancedDraft = simpleAdvancedDraftFromRecord(key, state.hardware.advanced);
     if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced.mode)) && !state.dirty.advanced) {
       const first = keys.find((key) => {
           const address = position(key);
@@ -416,8 +418,8 @@ function updateTravelVisuals() {
   if (keyNode) keyNode.textContent = key.n;
   if (value) value.innerHTML = `${mm.toFixed(3)} <small>mm</small>`;
   if (rawNode) rawNode.textContent = String(raw);
-  if (actuationNode) actuationNode.textContent = `${actuation.toFixed(2)} mm`;
-  if (actuationMarker) actuationMarker.textContent = `AP ${actuation.toFixed(2)}`;
+  if (actuationNode) actuationNode.textContent = `${actuation.toFixed(3)} mm`;
+  if (actuationMarker) actuationMarker.textContent = `AP ${actuation.toFixed(3)}`;
   if (scopeNode)
     scopeNode.textContent = selectedCount ? `${selectedCount} selected` : "All keys";
   if (status) {

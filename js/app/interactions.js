@@ -350,9 +350,13 @@ function selectMappingKey(event) {
   state.selectedKeys = new Set([id]);
   state.profile.selected = id;
   render();
+  if (state.page === "keymap") openMappingPicker();
   if (connected())
     readSelectedKey()
-      .then(() => render())
+      .then(() => {
+        render();
+        if (state.page === "keymap") openMappingPicker();
+      })
       .catch((error) => showToast(error.message, true));
 }
 function bindMappingKeySelection() {
@@ -637,34 +641,13 @@ function bindPage() {
     );
   }
   if (state.page === "keymap") {
-    document
-      .querySelector("#mappingSearch")
-      ?.addEventListener("input", (event) => {
-        state.mappingSearch = event.target.value;
-        render();
-        const search = document.querySelector("#mappingSearch");
-        search?.focus();
-        search?.setSelectionRange(search.value.length, search.value.length);
-      });
+    document.querySelector("#openMappingPicker")?.addEventListener("click", openMappingPicker);
     document.querySelectorAll("[data-mapping-group]").forEach((button) =>
       button.addEventListener("click", () => {
         state.mappingGroup = button.dataset.mappingGroup;
         state.mappingSearch = "";
-        render();
-      }),
-    );
-    document.querySelectorAll("[data-keycode]").forEach((button) =>
-      button.addEventListener("click", () => {
-        const mappingListScrollTop = document.querySelector(".mapping-list")?.scrollTop || 0;
-        selectedKeyIds().forEach((id) => {
-          state.profile.keycodes[state.profile.layer][id] = Number(
-            button.dataset.keycode,
-          );
-          state.dirty.mapping.add(`${state.profile.layer}:${id}`);
-        });
-        render();
-        const mappingList = document.querySelector(".mapping-list");
-        if (mappingList) mappingList.scrollTop = mappingListScrollTop;
+        state.mappingPickerGroup = state.mappingGroup;
+        openMappingPicker();
       }),
     );
     document.querySelector("#resetKeycode")?.addEventListener("click", () => {
@@ -978,7 +961,7 @@ function bindPage() {
     );
     document.querySelectorAll("[data-advanced-config]").forEach((card) =>
       card.addEventListener("click", () => {
-        ({ DKS: openDksConfiguration, MPT: openMultipointConfiguration, SOCD: openSocdConfiguration, RS: openRappySnappyConfiguration, MACRO: openMacroConfiguration, COMBO: openCombinationConfiguration })[card.dataset.advancedConfig]?.();
+        ({ DKS: openDksConfiguration, MPT: openMultipointConfiguration, MT: () => openSimpleAdvancedConfiguration("MT"), TGL: () => openSimpleAdvancedConfiguration("TGL"), END: () => openSimpleAdvancedConfiguration("END"), SOCD: openSocdConfiguration, RS: openRappySnappyConfiguration, MACRO: openMacroConfiguration, COMBO: openCombinationConfiguration })[card.dataset.advancedConfig]?.();
       }),
     );
     document.querySelectorAll("[data-remove-advanced]").forEach((button) =>
