@@ -997,8 +997,9 @@ async function main() {
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
   if ((lightingMarkup.match(/data-spacebar-led-index=/g) || []).length !== 5 || !lightingMarkup.includes('class="spacebar-lighting-leds"'))
     throw new Error("Lighting preview must expose Space as five RGB cells without adding mapping keys.");
-  for (const required of ['palette-editor enhanced-palette-editor', 'color-preview ', 'class="color-channel-grid"', 'class="preset-color-row"', 'data-palette-preset="#ff3b30"'])
+  for (const required of ['palette-editor enhanced-palette-editor', 'color-preview ', 'color-channel-grid editable-color-channels', 'id="paletteHex"', 'id="paletteRgbR" type="number"', 'id="paletteRgbG" type="number"', 'id="paletteRgbB" type="number"', 'class="preset-color-row"', 'data-palette-preset="#ff3b30"'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting palette beautification omitted ${required}.`);
+  if ((lightingMarkup.match(/data-keyboard-input="allow"/g) || []).length < 4) throw new Error("Palette HEX/RGB fields must remain typable while keyboard-test suppression is active.");
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
   if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
   for (const removedLightingPanel of ['dual-lighting-card', 'fn-lighting-card', 'fnLightingStatus', 'class="panel full-span capture-note experimental-note"'])
@@ -1035,8 +1036,9 @@ async function main() {
   for (const invalid of ["Effect 0", ">Left<", ">Right<"])
     if (lightingMarkup.includes(invalid)) throw new Error(`Lighting UI still exposes an invalid mapping: ${invalid}.`);
   const perKeyMarkup = vm.runInContext(`(state.lightingTab = "perKey", lightingPage())`, browser);
-  for (const required of ['id="keyCustomEnabled"', 'id="keyColorSurface"', 'id="keyColorHue"', 'id="keyColorHex"', 'data-key-color-preset=', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
+  for (const required of ['id="keyCustomEnabled"', 'id="keyColorSurface"', 'id="keyColorHue"', 'id="keyColorHex"', 'id="keyColorR" type="number"', 'id="keyColorG" type="number"', 'id="keyColorB" type="number"', 'data-key-color-preset=', 'id="loadCustomLighting"', 'id="clearKeyColor"', 'id="clearAllKeyColors"'])
     if (!perKeyMarkup.includes(required)) throw new Error(`Per-key lighting editor omitted ${required}.`);
+  if ((perKeyMarkup.match(/data-keyboard-input="allow"/g) || []).length < 4) throw new Error("Per-key HEX/RGB fields must remain typable while keyboard-test suppression is active.");
   if (perKeyMarkup.includes('id="keyColor" type="color"')) throw new Error("Per-key lighting must not invoke the operating system's native color popup.");
   if ((perKeyMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !perKeyMarkup.includes("rectangular marquee") || !perKeyMarkup.includes('class="lighting-selection-marquee"')) throw new Error("Per-key must reuse the unified preview and explain rectangular marquee selection.");
   const perKeyMultiMarkup = vm.runInContext(`(state.lightingSelectedKeys = new Set([0, 1, 2]), lightingPage())`, browser);
@@ -1050,14 +1052,20 @@ async function main() {
   })()`, browser);
   equal(perKeyImmediatePreview, [true, "#ff3300", "#ff3300", true, true, true], "Per-key color changes must stage and preview all selected keys immediately.");
   const stripMarkup = vm.runInContext(`(state.lightingTab = "strip", lightingPage())`, browser);
-  for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripCustomEnabled"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
+  for (const required of ['id="stripBrightness"', 'id="stripSpeed"', 'id="stripPaletteColor"', 'id="stripPaletteRgbR" type="number"', 'id="stripPaletteRgbG" type="number"', 'id="stripPaletteRgbB" type="number"', 'id="stripCustomEnabled"', 'id="stripColorHex"', 'id="stripColorChannelR" type="number"', 'id="stripColorChannelG" type="number"', 'id="stripColorChannelB" type="number"', 'id="loadStripLighting"', 'data-lighting-mode="4"'])
     if (!stripMarkup.includes(required)) throw new Error(`Decorative1 editor omitted ${required}.`);
+  if ((stripMarkup.match(/data-keyboard-input="allow"/g) || []).length < 8) throw new Error("Light-strip palette and selected-LED HEX/RGB fields must remain typable while keyboard-test suppression is active.");
   if ((stripMarkup.match(/data-strip-led=/g) || []).length !== 38) throw new Error("Decorative1 must render all 38 addressable LEDs.");
   if ((stripMarkup.match(/class="decorative-frame"/g) || []).length !== 1 || !stripMarkup.includes("rectangular marquee over any of the four sides")) throw new Error("Light strip must reuse the unified preview and scope marquee selection to its four sides.");
   for (const side of ["top", "right", "bottom", "left"]) if (!stripMarkup.includes(`data-strip-side="${side}"`)) throw new Error(`Decorative1 omitted its ${side} physical side.`);
   if ((stripMarkup.match(/class="key /g) || []).length !== 64) throw new Error("Decorative1 perimeter must surround the live 64-key preview.");
   const stripMultiMarkup = vm.runInContext(`(state.stripSelection = new Set([2, 3, 4, 5]), lightingPage())`, browser);
   if (!stripMultiMarkup.includes("4 light strip LEDs selected") || !stripMultiMarkup.includes("4 SELECTED")) throw new Error("Light-strip multi-selection is not reflected in its editor.");
+  const stripTypedColor = vm.runInContext(`(() => {
+    const staged = stageStripPreviewColor("#123abc"), result = [staged, state.profile.lighting.decorative.perLed[2], state.profile.lighting.decorative.perLed[5], state.profile.lighting.decorative.customEnabled[2], state.dirty.decorativeLighting.has(5)];
+    clearDirty(); return result;
+  })()`, browser);
+  equal(stripTypedColor, [true, "#123abc", "#123abc", true, true], "Typed strip HEX/RGB colors must stage every selected perimeter LED immediately.");
   for (const selectionFeature of ["beginLightingSelection", "updateLightingMarquee", "marqueeSelection", "event.ctrlKey", "bindLightingSelection"])
     if (!app.includes(selectionFeature)) throw new Error(`Lighting selection omitted ${selectionFeature}.`);
   const marqueeSets = vm.runInContext(`([

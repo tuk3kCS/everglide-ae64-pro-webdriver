@@ -549,9 +549,12 @@ button { color: inherit; }
 .color-preview input[type="color"] { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); padding: 0; border: 0; opacity: .001; cursor: pointer; }
 .palette-edit-fields { display: grid; gap: 11px; }
 .color-channel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-.color-channel-grid span { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: color-mix(in srgb, var(--control-bg) 78%, transparent); }
+.color-channel-grid span, .color-channel-grid label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 36px; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: color-mix(in srgb, var(--control-bg) 78%, transparent); }
 .color-channel-grid b { color: var(--muted); font: 900 10px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .color-channel-grid strong { color: var(--text); font: 900 12px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.editable-color-channels input { width: min(100%, 72px); min-width: 0; padding: 6px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--control-bg); color: var(--text); font: 850 11px/1 ui-monospace, SFMono-Regular, Consolas, monospace; text-align: right; }
+.editable-color-channels input:focus { border-color: var(--mint); outline: 2px solid color-mix(in srgb, var(--mint) 15%, transparent); outline-offset: 1px; }
+.editable-color-channels input:invalid { border-color: var(--danger); }
 .preset-color-row { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
 .preset-color-row button { min-height: 28px; border: 1px solid color-mix(in srgb, var(--preset) 55%, white); border-radius: 999px; background: var(--preset); box-shadow: inset 0 1px rgb(255 255 255 / 32%); cursor: pointer; transition: .16s ease; }
 .preset-color-row button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: inset 0 1px rgb(255 255 255 / 42%), 0 7px 16px color-mix(in srgb, var(--preset) 22%, transparent); }
@@ -569,6 +572,9 @@ button { color: inherit; }
 .key-color-editor span { color: var(--muted); font-size: 10px; }
 .key-color-editor strong { margin-top: 6px; color: var(--mint); font: 850 16px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .key-color-editor small { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.strip-color-editor { grid-template-columns: 82px minmax(150px, .65fr) minmax(300px, 1.35fr); }
+.strip-color-fields { display: grid; grid-template-columns: minmax(130px, .72fr) minmax(240px, 1fr); align-items: end; gap: 10px; }
+.strip-color-fields .field { min-width: 0; }
 .custom-color-picker { display: grid; grid-template-columns: minmax(17rem, 1.18fr) minmax(15rem, .82fr); gap: 16px; margin: 17px 0; padding: 14px; border: 1px solid color-mix(in srgb, var(--picker-color) 45%, var(--line)); border-radius: 14px; background: radial-gradient(circle at 18% 0, color-mix(in srgb, var(--picker-color) 18%, transparent), transparent 18rem), var(--control-bg); box-shadow: inset 0 1px rgb(255 255 255 / 4%), 0 15px 34px color-mix(in srgb, var(--picker-color) 7%, transparent); }
 .custom-color-picker.disabled { opacity: .5; filter: saturate(.5); }
 .custom-color-stage, .custom-color-details { min-width: 0; display: grid; align-content: start; gap: 12px; }
@@ -1217,6 +1223,8 @@ body { background: radial-gradient(circle at 88% 2%, var(--body-glow) 0, transpa
   .combination-key-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .keyboard { --unit: clamp(1.75rem, 5vw, 2.125rem); }
   .dual-lighting-switches, .strip-editor-grid { grid-template-columns: 1fr; }
+  .strip-color-editor { grid-template-columns: 82px minmax(0, 1fr); }
+  .strip-color-fields { grid-column: 1 / -1; }
   .settings-hero { grid-template-columns: 1fr; }
   .settings-connection { width: 100%; }
   .settings-grid { grid-template-columns: 1fr; }
@@ -1290,6 +1298,7 @@ body { background: radial-gradient(circle at 88% 2%, var(--body-glow) 0, transpa
   .lighting-mode-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .palette { grid-template-columns: repeat(4, 1fr); }
   .palette-editor { grid-template-columns: 64px 1fr; }
+  .strip-color-fields { grid-template-columns: 1fr; }
   .capture-note { align-items: flex-start; flex-direction: column; }
   .app-dialog form { padding: 20px; }
   .area-power-summary, .area-power-banks-head { align-items: stretch; flex-direction: column; }

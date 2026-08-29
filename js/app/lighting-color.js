@@ -27,9 +27,39 @@ function hsvToHex(hue, saturation, value) {
   return rgbToHex({ r: Math.round((channels[0] + offset) * 255), g: Math.round((channels[1] + offset) * 255), b: Math.round((channels[2] + offset) * 255) });
 }
 
+function colorChannelInputs(prefix, color, disabled = false) {
+  const rgb = hexToRgb(color);
+  return `<div class="color-channel-grid editable-color-channels" aria-label="RGB channels">${[["R", rgb.r], ["G", rgb.g], ["B", rgb.b]].map(([channel, value]) => `<label><b>${channel}</b><input id="${prefix}${channel}" type="number" inputmode="numeric" min="0" max="255" step="1" value="${value}" aria-label="${channel} channel, 0 to 255" data-keyboard-input="allow" ${disabled ? "disabled" : ""}></label>`).join("")}</div>`;
+}
+
+function updateColorChannelInputs(prefix, color) {
+  const normalized = normalizeHex(color);
+  if (!normalized) return;
+  const rgb = hexToRgb(normalized);
+  [["R", rgb.r], ["G", rgb.g], ["B", rgb.b]].forEach(([channel, value]) => {
+    const input = document.querySelector(`#${prefix}${channel}`);
+    if (input) input.value = String(value);
+  });
+}
+
+function bindRgbColorInputs(prefix, onColor, currentColor) {
+  const inputs = ["R", "G", "B"].map((channel) => document.querySelector(`#${prefix}${channel}`));
+  if (inputs.some((input) => !input)) return;
+  const apply = () => {
+    const values = inputs.map((input) => Number(input.value)), valid = inputs.every((input, index) => input.value !== "" && Number.isInteger(values[index]) && values[index] >= 0 && values[index] <= 255);
+    if (valid) return onColor(rgbToHex({ r: values[0], g: values[1], b: values[2] }));
+    updateColorChannelInputs(prefix, currentColor());
+    showToast("RGB channels must be whole numbers from 0 to 255.", true);
+  };
+  inputs.forEach((input) => {
+    input.addEventListener("change", apply);
+    input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); apply(); } });
+  });
+}
+
 function perKeyColorPicker(color, disabled = false) {
   const rgb = hexToRgb(color), hsv = rgbToHsv(rgb), presets = ["#ff3b30", "#ff9500", "#ffd60a", "#34c759", "#00c7be", "#32ade6", "#5856d6", "#af52de", "#ff2d55", "#ffffff"];
-  return `<div class="custom-color-picker ${disabled ? "disabled" : ""}" id="perKeyColorPicker" style="--picker-color:${esc(color)};--picker-hue:${hsv.h.toFixed(1)}"><div class="custom-color-stage"><div class="custom-color-sv" id="keyColorSurface" role="slider" tabindex="${disabled ? "-1" : "0"}" aria-label="Color saturation and brightness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(hsv.v * 100)}" style="--picker-s:${(hsv.s * 100).toFixed(2)}%;--picker-v:${(hsv.v * 100).toFixed(2)}%"><i aria-hidden="true"></i></div><label class="custom-hue-row"><span>Hue</span><input id="keyColorHue" type="range" min="0" max="360" step="1" value="${Math.round(hsv.h)}" ${disabled ? "disabled" : ""}></label></div><div class="custom-color-details"><div class="custom-color-swatch" aria-hidden="true"></div><label class="field"><span>HEX</span><input id="keyColorHex" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${esc(color.toUpperCase())}" ${disabled ? "disabled" : ""}></label><div class="color-channel-grid" aria-label="RGB channels"><span><b>R</b><strong id="keyColorR">${rgb.r}</strong></span><span><b>G</b><strong id="keyColorG">${rgb.g}</strong></span><span><b>B</b><strong id="keyColorB">${rgb.b}</strong></span></div><div class="preset-color-row key-color-presets" aria-label="Per-key color presets">${presets.map((preset) => `<button type="button" data-key-color-preset="${preset}" style="--preset:${preset}" title="Set ${preset}" ${disabled ? "disabled" : ""}></button>`).join("")}</div><small>Drag anywhere in the color field. The selected keys update in the keyboard preview immediately.</small></div></div>`;
+  return `<div class="custom-color-picker ${disabled ? "disabled" : ""}" id="perKeyColorPicker" style="--picker-color:${esc(color)};--picker-hue:${hsv.h.toFixed(1)}"><div class="custom-color-stage"><div class="custom-color-sv" id="keyColorSurface" role="slider" tabindex="${disabled ? "-1" : "0"}" aria-label="Color saturation and brightness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(hsv.v * 100)}" style="--picker-s:${(hsv.s * 100).toFixed(2)}%;--picker-v:${(hsv.v * 100).toFixed(2)}%"><i aria-hidden="true"></i></div><label class="custom-hue-row"><span>Hue</span><input id="keyColorHue" type="range" min="0" max="360" step="1" value="${Math.round(hsv.h)}" ${disabled ? "disabled" : ""}></label></div><div class="custom-color-details"><div class="custom-color-swatch" aria-hidden="true"></div><label class="field"><span>HEX</span><input id="keyColorHex" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${esc(color.toUpperCase())}" data-keyboard-input="allow" ${disabled ? "disabled" : ""}></label>${colorChannelInputs("keyColor", color, disabled)}<div class="preset-color-row key-color-presets" aria-label="Per-key color presets">${presets.map((preset) => `<button type="button" data-key-color-preset="${preset}" style="--preset:${preset}" title="Set ${preset}" ${disabled ? "disabled" : ""}></button>`).join("")}</div><small>Drag in the color field or type a HEX/RGB value. Selected keys update in the keyboard preview immediately.</small></div></div>`;
 }
 
 function updatePerKeyColorPicker(color) {
@@ -44,10 +74,7 @@ function updatePerKeyColorPicker(color) {
   surface?.setAttribute("aria-valuenow", String(Math.round(hsv.v * 100)));
   if (hue) hue.value = String(Math.round(hsv.h));
   if (hex) hex.value = normalized.toUpperCase();
-  [["#keyColorR", rgb.r], ["#keyColorG", rgb.g], ["#keyColorB", rgb.b]].forEach(([selector, value]) => {
-    const output = document.querySelector(selector);
-    if (output) output.textContent = String(value);
-  });
+  updateColorChannelInputs("keyColor", normalized);
   const meta = document.querySelector(".per-key-color-meta b");
   if (meta) meta.textContent = normalized.toUpperCase();
 }
@@ -111,5 +138,38 @@ function bindPerKeyColorPicker() {
       showToast("Use a six-digit HEX color, for example #73F0C0.", true);
     }
   });
+  bindRgbColorInputs("keyColor", stagePerKeyPreviewColor, () => state.profile.lighting.perKey[lightingAnchorKey().id] || "#73f0c0");
   document.querySelectorAll("[data-key-color-preset]").forEach((button) => button.addEventListener("click", () => stagePerKeyPreviewColor(button.dataset.keyColorPreset)));
+}
+
+function stageStripPreviewColor(value) {
+  const color = normalizeHex(value), ids = stripLedIds();
+  if (!color || !ids.length) return false;
+  const lighting = state.profile.lighting.decorative;
+  for (const index of ids) {
+    lighting.perLed[index] = color;
+    lighting.customEnabled[index] = true;
+    state.dirty.decorativeLighting.add(index);
+  }
+  document.querySelectorAll(".unified-lighting-preview [data-strip-led]").forEach((node) => {
+    if (state.stripSelection.has(Number(node.dataset.stripLed))) node.style.setProperty("--led-color", color);
+  });
+  const native = document.querySelector("#stripColor"), hex = document.querySelector("#stripColorHex"), summary = document.querySelector(".strip-color-summary strong");
+  if (native) native.value = color;
+  if (hex) hex.value = color.toUpperCase();
+  if (summary) summary.textContent = color.toUpperCase();
+  updateColorChannelInputs("stripColorChannel", color);
+  renderStatus();
+  return true;
+}
+
+function bindStripColorInputs() {
+  const current = () => state.profile.lighting.decorative.perLed[state.stripSelected] || "#73f0c0", reject = () => {
+    const color = current(), hex = document.querySelector("#stripColorHex");
+    if (hex) hex.value = color.toUpperCase();
+    showToast("Use a six-digit HEX color, for example #73F0C0.", true);
+  };
+  document.querySelector("#stripColor")?.addEventListener("input", (event) => stageStripPreviewColor(event.target.value));
+  document.querySelector("#stripColorHex")?.addEventListener("change", (event) => { if (!stageStripPreviewColor(event.target.value)) reject(); });
+  bindRgbColorInputs("stripColorChannel", stageStripPreviewColor, current);
 }

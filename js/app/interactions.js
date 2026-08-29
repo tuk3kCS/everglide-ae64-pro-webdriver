@@ -794,6 +794,8 @@ function bindPage() {
       ?.addEventListener("change", (event) =>
         stagePaletteColor(event.target.value, "strip"),
       );
+    bindRgbColorInputs("paletteRgb", (color) => stagePaletteColor(color, "main"), () => lighting.palette[Number(lighting.base.paletteIndex)] || "#000000");
+    bindRgbColorInputs("stripPaletteRgb", (color) => stagePaletteColor(color, "strip"), () => stripLighting.palette[Number(stripLighting.base.paletteIndex)] || "#000000");
     document
       .querySelector("#keyCustomEnabled")
       ?.addEventListener("change", (event) => {
@@ -843,22 +845,7 @@ function bindPage() {
         }
         render();
       });
-    document
-      .querySelector("#stripColor")
-      ?.addEventListener("input", (event) => {
-        for (const index of stripLedIds()) {
-          stripLighting.perLed[index] = event.target.value;
-          stripLighting.customEnabled[index] = true;
-          state.dirty.decorativeLighting.add(index);
-        }
-        document
-          .querySelectorAll(".unified-lighting-preview [data-strip-led]")
-          .forEach((node) => {
-            if (state.stripSelection.has(Number(node.dataset.stripLed)))
-              node.style.setProperty("--led-color", event.target.value);
-          });
-        renderStatus();
-      });
+    bindStripColorInputs();
     document
       .querySelector("#loadStripLighting")
       ?.addEventListener("click", loadDecorativeLighting);
