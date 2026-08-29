@@ -644,6 +644,24 @@ async function main() {
     lightingToggle: "Lighting on / off",
     fnDefault: 0xf102,
   }, "Vendor keycodes must match the values captured from the original driver.");
+  const compactKeyLabels = vm.runInContext(`(() => {
+    const savedProfile = state.profile, savedPage = state.page;
+    state.profile = defaultProfile(); state.page = "keymap";
+    const defaults = keyboardHtml();
+    state.profile.keycodes[0][0] = 0xf205;
+    state.profile.keycodes[0][1] = 225;
+    const remapped = keyboardHtml();
+    const result = {
+      labels: [virtualKeycodeLabel(34), virtualKeycodeLabel(225), virtualKeycodeLabel(0xf205)],
+      shiftedNumber: defaults.includes('<span class="mapped">5/%</span>'),
+      compactProfile: remapped.includes('<span class="mapped">P1</span>'),
+      compactShift: remapped.includes('<span class="mapped">LShift</span>'),
+      fullTitle: remapped.includes('Esc · Switch to configuration 1'),
+    };
+    state.profile = savedProfile; state.page = savedPage;
+    return result;
+  })()`, browser);
+  equal(compactKeyLabels, { labels: ["5/%", "LShift", "P1"], shiftedNumber: true, compactProfile: true, compactShift: true, fullTitle: true }, "Virtual key mapping labels must show shifted symbols, compact long names, and retain the full assignment in the title.");
   equal(settingsEnums.selectorCoverage, {
     empty: "Empty Key",
     transparent: "Transparent Key",
@@ -738,6 +756,7 @@ async function main() {
       experimentalRelease: experimentalRelease.includes('id="normalRelease"') && experimentalRelease.includes('value="0.75"') && experimentalRelease.includes("Experimental fixed-mode release value"),
       rapid: rapid.includes('id="actuationDistance"') && rapid.includes('value="1.8"') && rapid.includes('min="0.001"') && rapid.includes('step="0.001"') && rapid.includes('id="rtPress"') && rapid.includes('id="rtRelease"') && rapid.includes('id="syncRt"') && rapid.includes('type="checkbox" checked'),
       precision: standard.includes('min="0.001"') && standard.includes('step="0.001"') && (stagePerformance("normalPress", 0.001), state.profile.performance[0].normalPress === 0.001),
+      typable: standard.includes('id="actuationDistance" type="number" inputmode="decimal"') && standard.includes('data-keyboard-input="allow"'),
       noContinuousClaim: !rapid.includes("Continuous Rapid Trigger"),
       independent: independent.includes('id="syncRt"') && !independent.includes('id="syncRt" class="toggle" type="checkbox" checked') && independent.includes('id="rtRelease"') && independent.includes('value="0.28"'),
       linked: linked.includes('id="rtRelease"') && linked.includes('disabled') && state.profile.performance[0].rtPress === state.profile.performance[0].rtRelease,
@@ -748,7 +767,7 @@ async function main() {
     return result;
   })()`, browser);
   equal(performanceWorkflow, {
-    standard: true, experimentalRelease: true, rapid: true, precision: true, noContinuousClaim: true, independent: true,
+    standard: true, experimentalRelease: true, rapid: true, precision: true, typable: true, noContinuousClaim: true, independent: true,
     linked: true, normalReleasePreserved: 0.75,
   }, "Performance workflow must expose normalRelease experimentally and use intuitive synced or independent RT sensitivity.");
   const performanceReadback = vm.runInContext(`(() => {

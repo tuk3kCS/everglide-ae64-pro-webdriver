@@ -133,6 +133,39 @@ function keycodeLabel(keycode) {
   if (combination) return `${combination.modifiers.map(({ label }) => label).join(" + ")} + ${KEYCODE_LABELS.get(combination.trigger)}`;
   return KEYCODE_LABELS.get(Number(keycode)) || `Keycode 0x${Number(keycode).toString(16).padStart(4, "0")}`;
 }
+const VIRTUAL_KEYCODE_LABELS = new Map([
+  [30, "1/!"], [31, "2/@"], [32, "3/#"], [33, "4/$"], [34, "5/%"], [35, "6/^"], [36, "7/&"], [37, "8/*"], [38, "9/("], [39, "0/)"],
+  [41, "Esc"], [42, "Bksp"], [45, "-/_"], [46, "=/+"], [47, "[/{"], [48, "]/}"], [49, "\\/|"], [50, "#/~"], [51, ";/:"], [52, "'/\""], [53, "`/~"], [54, ",/<"], [55, "./>"], [56, "//?"], [57, "Caps"],
+  [70, "PrtSc"], [71, "ScrLk"], [75, "PgUp"], [78, "PgDn"], [79, "→"], [80, "←"], [81, "↓"], [82, "↑"], [83, "NumLk"],
+  [224, "LCtrl"], [225, "LShift"], [226, "LAlt"], [227, "LWin"], [228, "RCtrl"], [229, "RShift"], [230, "RAlt"], [231, "RWin"],
+  [0, "Empty"], [1, "Trans"], [0xf100, "Main"], [0xf101, "Fn1"], [0xf102, "Fn2"], [0xf103, "Fn3"],
+  [0xf200, "Reset"], [0xf201, "Win Mode"], [0xf202, "Mac Mode"], [0xf203, "Calibrate"], [0xf205, "P1"], [0xf206, "P2"], [0xf207, "P3"], [0xf208, "P4"], [0xf209, "Win Lock"],
+  [0xf401, "USB"], [0xf402, "2.4G"], [0xf403, "BT1"], [0xf404, "BT2"], [0xf405, "BT3"], [0xf406, "Clear Pair"], [0xf407, "Battery"],
+]);
+function virtualKeycodeLabel(keycode, allowExtendedCombination = false) {
+  const value = Number(keycode), exact = VIRTUAL_KEYCODE_LABELS.get(value);
+  if (exact) return exact;
+  const combination = decodeCombinationKeycode(value, allowExtendedCombination);
+  if (combination) return combinationLabel(combination.modifiers.map(({ value: mask }) => mask), combination.trigger).replaceAll(" ", "");
+  const compact = keycodeLabel(value)
+    .replace(/^Switch to (?:configuration|profile) ([1-4])$/i, "P$1")
+    .replace(/^Numpad /, "Num")
+    .replace(/^Gamepad /, "GP ")
+    .replace(/^Decorative lighting (\d+) /, "D$1 ")
+    .replace(/^Decorative lighting /, "D ")
+    .replace(/^Lighting /, "RGB ")
+    .replace(/brightness/gi, "Bright")
+    .replace(/Previous/gi, "Prev")
+    .replace(/Forward/gi, "Fwd")
+    .replace(/Windows/gi, "Win")
+    .replace(/macOS/gi, "Mac")
+    .replace(/Control/gi, "Ctrl")
+    .replace(/Arrow/gi, "")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ")
+    .trim();
+  return compact.length <= 11 ? compact : compact.split(" ").map((word) => word.length > 5 ? word.slice(0, 4) : word).join(" ").slice(0, 11);
+}
 function syncCombinationEditor(keycode = displayedKeycode(selectedKey())) {
   const combination = decodeCombinationKeycode(keycode), basicTrigger = COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === Number(keycode)) ? Number(keycode) : 4;
   state.mappingCombination.modifiers = new Set(combination?.modifiers.map(({ value }) => value) || [0x01]);
