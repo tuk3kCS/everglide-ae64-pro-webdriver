@@ -9,6 +9,7 @@ const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
   "js/app/foundation.js",
+  "js/app/i18n.js",
   "js/app/switches.js",
   "js/app/theme.js",
   "js/app/mapping.js",
@@ -207,14 +208,20 @@ async function main() {
 
   for (const action of ["actions/checkout@v6", "actions/configure-pages@v6", "actions/upload-pages-artifact@v5", "actions/deploy-pages@v5"])
     if (!pagesWorkflow.includes(action)) throw new Error(`GitHub Pages workflow is missing ${action}.`);
-  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "js/app/*.js", "assets/images/axis.png", "assets/images/he_switch_images", "scripts/build-switch-image-manifest.cjs", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json", "assets/tutorial-videos/*.webm"])
+  for (const file of ["index.html", "styles.css", "protocol.js", "app.js", "languages.xml", "about.html", "robots.txt", "sitemap.xml", "js/app/*.js", "assets/images/axis.png", "assets/images/he_switch_images", "scripts/build-switch-image-manifest.cjs", "assets/hall-effect-switches/supported-switches.json", "assets/hall-effect-switches/catalog-overrides.json", "assets/tutorial-videos/*.webm"])
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
-  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/") || !pagesWorkflow.includes("path: _site"))
+  if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html robots.txt sitemap.xml _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
   if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
+  const publicUrl = "https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/";
+  for (const marker of ['name="robots" content="index, follow', `rel="canonical" href="${publicUrl}"`, 'type="application/ld+json"', '"@type": "WebApplication"'])
+    if (!html.includes(marker)) throw new Error(`Search metadata is missing: ${marker}.`);
+  const robots = read("robots.txt"), sitemap = read("sitemap.xml");
+  if (!robots.includes("User-agent: *") || !robots.includes("Allow: /") || !robots.includes(`${publicUrl}sitemap.xml`)) throw new Error("robots.txt must allow crawling and advertise the sitemap.");
+  if (!sitemap.includes(`<loc>${publicUrl}</loc>`) || !sitemap.includes("<urlset")) throw new Error("sitemap.xml must include the canonical GitHub Pages URL.");
   let previousScript = -1;
   for (const file of ["protocol.js", ...APP_FILES]) {
     const script = `<script src="${file}"></script>`;
@@ -237,6 +244,15 @@ async function main() {
   for (const removedId of ['id="demoButton"', 'id="heroDemo"', 'id="features"', 'id="protocol"']) if (html.includes(removedId)) throw new Error(`Removed landing-page section remains: ${removedId}.`);
   if (!app.includes("navigator.hid.getDevices") || !app.includes("detectKnownKeyboard") || !app.includes("state.knownDevice")) throw new Error("Known WebHID devices are not detected for direct connection.");
   if (!xml.includes('<language code="en"') || !xml.includes('<language code="vi"')) throw new Error("English and Vietnamese XML languages are required.");
+  const languageBlocks = Object.fromEntries(
+    [...xml.matchAll(/<language code="([^"]+)"[^>]*>([\s\S]*?)<\/language>/g)].map((match) => [
+      match[1],
+      [...match[2].matchAll(/<string key="([^"]+)"/g)].map((entry) => entry[1]),
+    ]),
+  );
+  equal([...languageBlocks.en].sort(), [...languageBlocks.vi].sort(), "Every XML language must expose the same translation keys.");
+  if (languageBlocks.en.length < 300 || new Set(languageBlocks.en).size !== languageBlocks.en.length)
+    throw new Error("Language XML must retain the expanded, duplicate-free application catalog.");
   if (!html.includes('data-page="about"') || html.indexOf('data-page="about"') < html.indexOf('data-page="diagnostics"')) throw new Error("About Us must appear below Diagnostics.");
   if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");
   for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);

@@ -939,6 +939,7 @@ function render() {
   document.querySelector("#pageContent").innerHTML = pages[state.page]();
   renderToolbar();
   renderStatus();
+  translateRenderedContent(document.querySelector("#pageContent"));
   bindPage();
 }
 function renderToolbar() {

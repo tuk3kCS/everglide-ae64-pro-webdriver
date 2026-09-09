@@ -971,29 +971,3 @@ async function loadLanguages() {
   populateLanguageSelectors();
   translateStaticPage();
 }
-function populateLanguageSelectors() {
-  const html = Object.entries(state.translations)
-    .map(
-      ([code, strings]) =>
-        `<option value="${esc(code)}" ${code === state.language ? "selected" : ""}>${esc(strings.languageName || code)}</option>`,
-    )
-    .join("");
-  document.querySelectorAll(".language-select").forEach((select) => {
-    select.innerHTML = html;
-  });
-}
-function translateStaticPage() {
-  document.documentElement.lang = state.language;
-  document.querySelectorAll("[data-i18n]").forEach((node) => {
-    node.textContent = t(node.dataset.i18n);
-  });
-}
-function setLanguage(language) {
-  if (!state.translations[language]) return;
-  state.language = language;
-  localStorage.setItem(LANGUAGE_KEY, language);
-  populateLanguageSelectors();
-  translateStaticPage();
-  if (!document.querySelector("#workspace").classList.contains("hidden"))
-    render();
-}
