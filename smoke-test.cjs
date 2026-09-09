@@ -653,6 +653,9 @@ async function main() {
     const remapped = keyboardHtml();
     const result = {
       labels: [virtualKeycodeLabel(34), virtualKeycodeLabel(225), virtualKeycodeLabel(0xf205)],
+      mediaLabels: [virtualKeycodeLabel(0x20e9), virtualKeycodeLabel(0x20ea), virtualKeycodeLabel(0x20cd), virtualKeycodeLabel(0x20b5), virtualKeycodeLabel(0x2192)],
+      mouseLabels: [virtualKeycodeLabel(0x4600), virtualKeycodeLabel(0x4a01)],
+      lightingLabels: [virtualKeycodeLabel(0xf302), virtualKeycodeLabel(0xf314), virtualKeycodeLabel(0xf328)],
       shiftedNumber: defaults.includes('<span class="mapped">5/%</span>'),
       compactProfile: remapped.includes('<span class="mapped">P1</span>'),
       compactShift: remapped.includes('<span class="mapped">LShift</span>'),
@@ -661,7 +664,16 @@ async function main() {
     state.profile = savedProfile; state.page = savedPage;
     return result;
   })()`, browser);
-  equal(compactKeyLabels, { labels: ["5/%", "LShift", "P1"], shiftedNumber: true, compactProfile: true, compactShift: true, fullTitle: true }, "Virtual key mapping labels must show shifted symbols, compact long names, and retain the full assignment in the title.");
+  equal(compactKeyLabels, {
+    labels: ["5/%", "LShift", "P1"],
+    mediaLabels: ["Vol +", "Vol -", "Play/Ps", "Next", "Calc"],
+    mouseLabels: ["M ←", "Whl +"],
+    lightingLabels: ["RGB Br +", "D1 Spd +", "D2 Dir"],
+    shiftedNumber: true,
+    compactProfile: true,
+    compactShift: true,
+    fullTitle: true,
+  }, "Virtual key mapping labels must use intentional compact names and retain the full assignment in the title.");
   equal(settingsEnums.selectorCoverage, {
     empty: "Empty Key",
     transparent: "Transparent Key",

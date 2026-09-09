@@ -138,9 +138,29 @@ const VIRTUAL_KEYCODE_LABELS = new Map([
   [41, "Esc"], [42, "Bksp"], [45, "-/_"], [46, "=/+"], [47, "[/{"], [48, "]/}"], [49, "\\/|"], [50, "#/~"], [51, ";/:"], [52, "'/\""], [53, "`/~"], [54, ",/<"], [55, "./>"], [56, "//?"], [57, "Caps"],
   [70, "PrtSc"], [71, "ScrLk"], [75, "PgUp"], [78, "PgDn"], [79, "→"], [80, "←"], [81, "↓"], [82, "↑"], [83, "NumLk"],
   [224, "LCtrl"], [225, "LShift"], [226, "LAlt"], [227, "LWin"], [228, "RCtrl"], [229, "RShift"], [230, "RAlt"], [231, "RWin"],
+  [0x1152, "Ctrl Ctr"], [0x1329, "Task Mgr"], [0x1807, "Desktop"], [0x1808, "Explorer"], [0x1815, "Run"],
+  [0x206f, "Bright +"], [0x2070, "Bright -"], [0x20b5, "Next"], [0x20b6, "Prev"], [0x20b7, "Stop"],
+  [0x20cd, "Play/Ps"], [0x20e2, "Mute"], [0x20e9, "Vol +"], [0x20ea, "Vol -"],
+  [0x2183, "Music"], [0x218a, "Mail"], [0x2192, "Calc"], [0x2194, "PC"], [0x2223, "Browser"],
+  [0x4000, "M Rel"], [0x4100, "M Left"], [0x4200, "M Right"], [0x4300, "M Mid"], [0x4400, "M Fwd"], [0x4500, "M Back"],
+  [0x4600, "M ←"], [0x4700, "M →"], [0x4800, "M ↑"], [0x4900, "M ↓"], [0x4a01, "Whl +"], [0x4b01, "Whl -"],
   [0, "Empty"], [1, "Trans"], [0xf100, "Main"], [0xf101, "Fn1"], [0xf102, "Fn2"], [0xf103, "Fn3"],
   [0xf200, "Reset"], [0xf201, "Win Mode"], [0xf202, "Mac Mode"], [0xf203, "Calibrate"], [0xf205, "P1"], [0xf206, "P2"], [0xf207, "P3"], [0xf208, "P4"], [0xf209, "Win Lock"],
+  [0xf300, "RGB Mode"], [0xf301, "RGB Color"], [0xf302, "RGB Br +"], [0xf303, "RGB Br -"], [0xf304, "RGB Spd +"], [0xf305, "RGB Spd -"], [0xf306, "RGB Prev"], [0xf307, "RGB On/Off"], [0xf308, "RGB Dir"],
+  ...Array.from({ length: 3 }, (_, index) => {
+    const area = index + 1, base = 0xf300 + area * 0x10;
+    return [
+      [base, `D${area} Mode`], [base + 1, `D${area} Color`], [base + 2, `D${area} Br +`],
+      [base + 3, `D${area} Br -`], [base + 4, `D${area} Spd +`], [base + 5, `D${area} Spd -`],
+      [base + 6, `D${area} Prev`], [base + 7, `D${area} On/Off`], [base + 8, `D${area} Dir`],
+    ];
+  }).flat(),
   [0xf401, "USB"], [0xf402, "2.4G"], [0xf403, "BT1"], [0xf404, "BT2"], [0xf405, "BT3"], [0xf406, "Clear Pair"], [0xf407, "Battery"],
+  [0x5201, "D-pad ↑"], [0x5202, "D-pad ↓"], [0x5204, "D-pad ←"], [0x5208, "D-pad →"],
+  [0x5301, "LB"], [0x5302, "RB"], [0x5400, "LT"], [0x5500, "RT"],
+  [0x5240, "LS Press"], [0x5280, "RS Press"],
+  [0x5601, "LS →"], [0x5602, "LS ←"], [0x5801, "LS ↑"], [0x5802, "LS ↓"],
+  [0x5a01, "RS →"], [0x5a02, "RS ←"], [0x5c01, "RS ↑"], [0x5c02, "RS ↓"],
 ]);
 function virtualKeycodeLabel(keycode, allowExtendedCombination = false) {
   const value = Number(keycode), exact = VIRTUAL_KEYCODE_LABELS.get(value);
