@@ -13,6 +13,7 @@ const APP_FILES = [
   "js/gamepad/template.js",
   "js/gamepad/studio.js",
   "js/firmware/flasher.js",
+  "js/firmware/reconnect.js",
   "js/lighting/fn-rgb.js",
   "js/app/foundation.js",
   "js/app/i18n.js",

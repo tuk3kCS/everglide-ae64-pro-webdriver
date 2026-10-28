@@ -20,22 +20,6 @@
       "changelog": []
     },
     {
-      "id": "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin",
-      "file": "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin",
-      "name": "Experimental XInput v0.1",
-      "kind": "custom",
-      "experimental": true,
-      "version": "Custom",
-      "appVersion": "0.1.0.0",
-      "date": "2026-10-28",
-      "bytes": 131464,
-      "sha256": "fa97bcfef4cffe1fb8f2309ba537d2491dbc0fe7162eaec1db2c3d1ea220d69a",
-      "boardId": "0030000A",
-      "payloadCrc32": "51591266",
-      "description": "Native Xbox/XInput controller with configurable analog keys. Experimental; mappings are session-only.",
-      "changelog": []
-    },
-    {
       "id": "XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin",
       "file": "XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin",
       "name": "Factory v0.1.0.0",

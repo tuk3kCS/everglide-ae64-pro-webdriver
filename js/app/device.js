@@ -107,10 +107,14 @@ async function optional(label, operation, fallback = null) {
   }
 }
 
-async function connectKeyboard(device = null, { silent = false } = {}) {
-  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return false;
+async function connectKeyboard(device = null, { silent = false, choose = false } = {}) {
+  if (firmwareView.detecting) await firmwareView.detectionDone;
+  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.connecting) return false;
+  if (!choose && state.bootloaderConnected && state.transport?.connected && (!device || state.transport.device === device)) return true;
+  const recovering = state.bootloaderConnected || firmwareView.recoveryRequired;
+  state.connecting = true;
   state.bootloaderConnected = false;
-  const targetDevice = device || state.knownDevice;
+  const targetDevice = choose ? null : device || state.knownDevice;
   if (!silent)
     showProgress(
       targetDevice ? "Opening AE64 Pro" : "Connecting to AE64 Pro",
@@ -123,9 +127,15 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     resetFnLightingCapability();
     if (state.transport) await state.transport.close();
     state.transport = targetDevice
-      ? new AE64HidTransport(targetDevice)
-      : await AE64HidTransport.request();
+      ? new AE64HidTransport(targetDevice, { allowBootloader: true })
+      : await AE64HidTransport.request({ allowBootloader: true });
     if (targetDevice) await state.transport.open();
+    const connectionInfo = await state.transport.getDeviceInfo();
+    if (connectionInfo.boardId !== window.AE64Firmware.BOARD || ![0, 255].includes(connectionInfo.runMode))
+      throw new Error("This device is not a supported AE64 Pro application or recovery keyboard.");
+    if (connectionInfo.runMode === 255) {
+      enterFirmwareRecovery(state.transport, connectionInfo); return true;
+    }
     await optional("open-web-driver handshake", () =>
       state.transport.openWebDriver(),
     );
@@ -151,7 +161,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       decorativePalette,
     ] = await Promise.all([
       state.transport.getProtocolVersion(),
-      state.transport.getDeviceInfo(),
+      Promise.resolve(connectionInfo),
       state.transport.getDeviceFeature(),
       state.transport.getRtPrecision(),
       optional(
@@ -288,6 +298,8 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       automatic: Boolean(targetDevice),
       remappedPositions: state.hardware.keyPositions.size,
     });
+    firmwareView.recoveryRequired = false; firmwareView.recoveryMessage = "";
+    if (recovering && firmwareView.phase === "error") firmwareProgress({ phase: "idle", percent: 0, detail: "Keyboard application reconnected." });
     openWorkspace();
     startProfilePolling();
     maybeShowCalibrationRecommendation();
@@ -297,13 +309,16 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     log("Connection failed", error.message);
     if (state.transport) await state.transport.close().catch(() => undefined);
     state.transport = null;
+    state.bootloaderConnected = Boolean(recovering);
     stopProfilePolling();
     if (targetDevice === state.knownDevice) state.knownDevice = null;
     if (!silent) showToast(`Could not connect: ${error.message}`, true);
     renderStatus();
     return false;
   } finally {
+    state.connecting = false;
     if (!silent) hideProgress();
+    renderStatus();
   }
 }
 async function detectKnownKeyboard() {
@@ -313,9 +328,11 @@ async function detectKnownKeyboard() {
   )
     return;
   try {
-    state.knownDevice =
-      (await navigator.hid.getDevices()).find(isAe64Device) || null;
+    const devices = (await navigator.hid.getDevices()).filter(window.AE64FirmwareReconnect.eligible);
+    devices.sort((a, b) => Number(b.collections.some((c) => c.usagePage === 0xff80)) - Number(a.collections.some((c) => c.usagePage === 0xff80)));
+    state.knownDevice = devices[0] || null;
     if (state.knownDevice) log("Authorized keyboard detected");
+    for (const device of devices) { await detectFirmwareRecovery(device); if (state.transport?.connected || state.connecting) break; }
   } catch (error) {
     log("Keyboard detection failed", error.message);
   }

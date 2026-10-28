@@ -915,6 +915,7 @@ function aboutPage() {
 
 function render() {
   if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return;
+  if (state.bootloaderConnected) state.page = "firmware";
   disposeGamepadPage();
   stopPolling();
   if (state.page !== "lighting" || !state.liveLighting) {
@@ -969,10 +970,10 @@ function renderStatus() {
   const count = dirtyCount(),
     autoApply = Boolean(state.autoApply),
     writing = Boolean(state.writeInFlight);
-  document.querySelector("#connectionStatus").textContent = connected()
+  document.querySelector("#connectionStatus").textContent = state.bootloaderConnected ? (state.transport?.connected ? "Recovery mode · select firmware" : "Recovery keyboard disconnected") : connected()
     ? `Connected · FW ${state.hardware.info?.firmware || "?"}`
     : t("offline");
-  document.querySelector("#connectionDot").className = connected()
+  document.querySelector("#connectionDot").className = connected() || state.bootloaderConnected && state.transport?.connected
     ? ""
     : "offline";
   document.querySelector("#dirtyStatus").textContent = writing
@@ -990,7 +991,7 @@ function renderStatus() {
   document.querySelector("#stagedEditsBody").textContent = autoApply
     ? t("autoApplyHint")
     : t("stagedEditsBody");
-  document.querySelector("#connectionLabel").textContent = connected()
+  document.querySelector("#connectionLabel").textContent = state.bootloaderConnected ? (state.transport?.connected ? "Recovery mode · firmware required" : "Recovery keyboard disconnected") : connected()
     ? `Connected · FW ${state.hardware.info?.firmware || "?"}`
     : t("offlineWorkspace");
   updateToolShell();

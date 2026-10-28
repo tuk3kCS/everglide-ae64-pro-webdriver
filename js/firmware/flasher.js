@@ -84,7 +84,6 @@
           try { await command(lease, COMMAND.ENTER, undefined, undefined, 10000); }
           catch (error) { this.progress({ phase: "awaitingBoot", percent: 0, detail: "Waiting for the bootloader after the application disconnected.", entryError: error.message }); }
           await lease.release(); lease = null; await active.close().catch(() => {});
-          await this.delay(6000);
           this.progress({ phase: "awaitingBoot", percent: 0, written: 0, total: image.length });
           const found = await this.reconnect({ mode: 255, original, preferred: active.device });
           active = found.transport; lease = await active.acquireExclusive();
@@ -108,7 +107,7 @@
         validated = true;
         this.progress({ phase: "restarting", percent: 98, written: image.length, total: image.length });
         try { await command(lease, COMMAND.RESTART); } catch (_) { /* Reset can remove USB before its response. */ }
-        await lease.release(); lease = null; await active.close().catch(() => {}); await this.delay(3000);
+        await lease.release(); lease = null; await active.close().catch(() => {});
         this.progress({ phase: "awaitingApp", percent: 99, written: image.length, total: image.length });
         // Reconnect to the device actually written, including an explicitly
         // selected bootloader. Never fall back to an untouched original keyboard.

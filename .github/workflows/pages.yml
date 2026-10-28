@@ -33,6 +33,8 @@ jobs:
           node smoke-test.cjs
           node tests/firmware/flasher-tests.cjs
           node tests/firmware/ui-tests.cjs
+          node tests/firmware/reconnect-tests.cjs
+          node tests/firmware/recovery-tests.cjs
           node tests/gamepad/tests.cjs
           node tests/gamepad/protocol-tests.cjs
           node tests/gamepad/travel-limits-tests.cjs

@@ -4,10 +4,11 @@ let activeGamepadStudio = null;
 function disposeGamepadPage() {
   activeGamepadStudio?.dispose(); activeGamepadStudio = null;
 }
-function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight); }
+function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight || state.connecting); }
 function updateToolShell() {
   const busy = toolOperationBusy();
   document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename,#backHomeButton,#sidebarThemeSelect,.language-select,#connectButton,#heroConnect").forEach((node) => { node.disabled = busy; });
+  if (state.bootloaderConnected) document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename").forEach((node) => { node.disabled = busy || node.dataset?.page !== "firmware"; });
   document.querySelector(".work-actions")?.classList.toggle("hidden", ["gamepad", "firmware"].includes(state.page));
   if (!document.querySelector("#workspace")?.classList.contains?.("hidden") && window.location && window.location.hash !== `#${state.page}`)
     window.history?.replaceState(null, "", `#${state.page}`);

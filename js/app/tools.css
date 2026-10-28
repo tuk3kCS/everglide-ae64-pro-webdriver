@@ -31,6 +31,9 @@
 .firmware-hash { font-family: ui-monospace,monospace; font-size: .72rem; }
 .firmware-note { padding: 1rem; border-left: 2px solid var(--amber); background: color-mix(in srgb,var(--amber) 7%,transparent); color: var(--text)!important; font-size: .8rem; line-height: 1.75; }
 .firmware-start { width: 100%; margin: 1.3rem 0; }
+.firmware-recovery { margin-bottom: 1.4rem; border-color: var(--amber); }
+.firmware-recovery h2 { margin: .8rem 0; }
+.firmware-recovery p { color: var(--muted); line-height: 1.7; }
 .firmware-device p { color: var(--muted); line-height: 1.7; }
 .firmware-progress { padding-top: 1.2rem; border-top: 1px solid var(--line); }
 .firmware-progress strong { display: block; margin-bottom: 1rem; }

@@ -98,11 +98,12 @@
 
     static supported() { return Boolean(global.navigator?.hid); }
 
-    static async request() {
+    static async request({ allowBootloader = false } = {}) {
       if (!AE64HidTransport.supported()) throw new Error("WebHID is unavailable. Use desktop Chrome or Edge on HTTPS or localhost.");
-      const devices = await global.navigator.hid.requestDevice({ filters: DEVICE_FILTERS });
+      const filters = allowBootloader ? [...DEVICE_FILTERS, { vendorId: 0x1ca6, usagePage: 0xff80 }] : DEVICE_FILTERS;
+      const devices = await global.navigator.hid.requestDevice({ filters });
       if (!devices.length) throw new Error("No AE64 Pro was selected.");
-      const transport = new AE64HidTransport(devices[0]);
+      const transport = new AE64HidTransport(devices[0], { allowBootloader });
       await transport.open();
       return transport;
     }

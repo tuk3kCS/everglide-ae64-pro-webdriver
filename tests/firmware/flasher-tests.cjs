@@ -2,6 +2,7 @@
 // All devices below are in-memory simulations. Never opens a USB/HID device.
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), os = require("node:os"), crypto = require("node:crypto");
 const F = require("../../js/firmware/flasher.js"), { AE64HidTransport } = require("../../protocol.js");
+const { Reconnector } = require("../../js/firmware/reconnect.js");
 let checks = 0;
 function check(value, message) { checks++; assert.ok(value, message); }
 function equal(a, b, message) { checks++; assert.deepEqual(a, b, message); }
@@ -68,6 +69,18 @@ async function main() {
   equal(k.sent.filter((p) => p[0] === 8).map((p) => p[1]).slice(-2), [3, 4]);
   equal(answer.chunkAckWords, [0x12345678], "Unknown per-chunk ACK words are recorded; final validation gates success.");
   equal(success.events.at(-1).percent, 100);check(!success.update.running);await answer.transport.close();
+  // Full automatic flow with new HID objects in both modes and another AE64.
+  const originalApp = new Keyboard(), autoBoot = new Keyboard({ mode: 255 }), autoApp = new Keyboard(), secondKeyboard = new Keyboard({ mode: 255, serial: 2 });
+  const automatic = await updater(originalApp, { delay: async () => { throw new Error("Fixed mode delays must not be used"); }, reconnect: async (expected) => {
+    const target = expected.mode === 255 ? autoBoot : autoApp;
+    const reconnect = new Reconnector({ getDevices: async () => [secondKeyboard, target], checkIdentity: F.checkIdentity, timeout: 1000,
+      inspect: async (device) => { const transport = await open(device), lease = await transport.acquireExclusive();try { return { transport, info: await F.identity(lease) }; } finally { await lease.release(); } } });
+    return reconnect.wait(expected);
+  } });
+  const autoResult = await automatic.update.run(automatic.prepared, automatic.t);
+  equal(autoResult.transport.device, autoApp);equal(Buffer.concat(autoBoot.chunks.map((b) => Buffer.from(b))), Buffer.from(automatic.prepared.bytes));
+  check(secondKeyboard.sent.every((p) => p[0] === 1 && p[1] === 2), "The other keyboard only receives identity reads.");
+  check(!originalApp.sent.some((p) => p[0] === 8 && p[1] === 2));await autoResult.transport.close();
   // Validation failure must never reboot a potentially unusable application.
   const failed = new Keyboard({ validate: false }), invalid = await updater(failed);
   await assert.rejects(invalid.update.run(invalid.prepared, invalid.t), /rejected the complete image/);checks++;

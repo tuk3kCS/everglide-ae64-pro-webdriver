@@ -112,7 +112,9 @@ if (navigator.hid) {
   navigator.hid.addEventListener("disconnect", (event) => {
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
+      const disconnected = state.transport;
       state.transport = null;
+      disconnected.close().catch(() => {});
       resetFnLightingCapability();
       state.livePressDistance = false;
       stopTravelPolling(true);
@@ -120,15 +122,17 @@ if (navigator.hid) {
       stopProfilePolling();
       resetCalibrationSession();
       if (state.firmwareBusy) { log("Keyboard USB transition during firmware update"); return; }
+      if (state.bootloaderConnected) noteFirmwareRecoveryDisconnect();
       log("Keyboard disconnected");
       render();
-      showToast("AE64 Pro disconnected.", true);
+      showToast(state.bootloaderConnected ? "Recovery keyboard disconnected. Reconnect it to finish the firmware update." : "AE64 Pro disconnected.", true);
     }
   });
   navigator.hid.addEventListener("connect", (event) => {
-    if (isAe64Device(event.device)) {
+    if (window.AE64FirmwareReconnect.eligible(event.device)) {
       state.knownDevice = event.device;
       log("Authorized keyboard detected");
+      if (!state.firmwareBusy) detectFirmwareRecovery(event.device);
     }
   });
 }

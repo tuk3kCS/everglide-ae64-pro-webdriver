@@ -63,7 +63,8 @@ async function main() {
   const bytes = fs.readFileSync(path.join(root, "firmware", stock.file));
   pendingFirst = { file: stock.file, promise: new Promise((resolve) => { release = () => resolve({ ok: true, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) }); }) };
   const first = vm.runInContext("selectCatalogFirmware(stockId)", context);
-  await vm.runInContext("selectCatalogFirmware('AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin')", context);
+  context.customId = catalog.firmwares.find((e) => e.kind === "custom").id;
+  await vm.runInContext("selectCatalogFirmware(customId)", context);
   release();await first;pendingFirst = null;
   assert.equal(vm.runInContext("firmwareView.prepared.entry.kind", context), "custom");
   // Only the explicit Start action invokes the updater, with the reviewed image.

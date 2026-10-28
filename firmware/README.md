@@ -33,7 +33,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 The newest experimental custom build is **XInput + Fn RGB v0.2**, adding persistent static per-key colors across four onboard profiles and three Fn layers. Its new hardware behavior remains untested. See `../docs/firmware-research/fn-rgb/README.md` for native evidence, storage accounting, usage and limitations. The original v0.1 image is retained separately.
 
-The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions. The separately named `AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin` is also included. Its source/build evidence and limitations are under `custom/ae64-xinput/`.
+The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 
 Add new `.bin` files anywhere under this directory and run `node scripts/build-firmware-catalog.cjs` from the repository root. The script verifies the AE64 board header and payload CRC, then records the file's size and SHA-256. Invalid images fail catalog generation. GitHub Pages regenerates the catalog and copies the actual binary files into the deployment. No directory-listing service or factory API is required at runtime.
 
@@ -41,6 +41,8 @@ The UI also supports choosing a local binary directly. It validates the header, 
 
 The updater follows the reconstructed `08 01`, `08 02`, `08 03`, `08 04` lifecycle. It sends the full 4096-byte header plus payload, using at most 56 bytes per write packet. A per-chunk response is treated as receipt, not an invented success status. Only the separate validation reply byte 2 equal to 1 permits restart. Transfer failures are not blindly retried and failed validation never triggers an automatic application restart.
 
-A bootloader reconnect may require an explicit device selection. Automatic reconnect requires matching identity; it never chooses another same-model keyboard by list position alone. Background configuration traffic is paused and an exclusive transport lease blocks other requests during flashing.
+Bootloader and application reconnection are automatic, with no fixed startup delays or normal mode-selection prompts. A replaced HID object is matched by its reported serial; an unrelated or ambiguous same-model keyboard is never chosen as a fallback. Browser permissions still apply. If automatic reconnection fails, the updater stops and offers Reconnect keyboard. Background configuration traffic is paused and an exclusive transport lease blocks other requests during flashing.
+
+The normal connection flow accepts both application and recovery collections, then reads identity before any application handshake or settings request. Recovery mode opens Firmware and requires a fresh image choice. Recovery disconnects retain this state; an authorized replug is detected automatically when no other device session is active. The driver will not resume an interrupted partial image automatically: choose the firmware and explicitly start a complete new transfer.
 
 The new integrated updater is covered by simulated lifecycle/failure tests, real-image CRC/hash/packet tests and deployment tests. It has not been exercised on physical hardware. Do not treat file checks as proof of bootloader acceptance, a working application or recovery. The 256 KiB supported size bound comes from the stock application's inferred active-region backup behavior.

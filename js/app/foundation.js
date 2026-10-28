@@ -817,7 +817,7 @@ function loadSavedProfile() {
 
 const state = {
   page: "overview",
-  firmwareBusy: false, gamepadBusy: false, fnLightingBusy: false, bootloaderConnected: false,
+  firmwareBusy: false, gamepadBusy: false, fnLightingBusy: false, bootloaderConnected: false, connecting: false,
   performanceTab: "trigger",
   performanceWorkspace: "tuning", showNormalReleaseExperimental: false,
   deadZoneMemory: new Map(), switchAssignmentKeys: new Set(),
