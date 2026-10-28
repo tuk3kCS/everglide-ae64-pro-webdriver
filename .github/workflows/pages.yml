@@ -28,7 +28,14 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Run offline regression tests
-        run: node smoke-test.cjs
+        run: |
+          node scripts/build-firmware-catalog.cjs
+          node smoke-test.cjs
+          node tests/firmware/flasher-tests.cjs
+          node tests/firmware/ui-tests.cjs
+          node tests/gamepad/tests.cjs
+          node tests/gamepad/protocol-tests.cjs
+          node tests/gamepad/travel-limits-tests.cjs
 
       - name: Package public site
         shell: bash
@@ -37,6 +44,11 @@ jobs:
           mkdir -p _site/js/app _site/assets/images _site/assets/hall-effect-switches _site/assets/tutorial-videos
           cp index.html styles.css protocol.js app.js languages.xml about.html robots.txt sitemap.xml _site/
           cp js/app/*.js _site/js/app/
+          cp js/app/tools.css _site/js/app/
+          mkdir -p _site/js/gamepad _site/js/firmware
+          cp js/gamepad/*.js js/gamepad/*.css _site/js/gamepad/
+          cp js/firmware/*.js _site/js/firmware/
+          node scripts/package-firmware.cjs _site
           cp assets/images/axis.png _site/assets/images/
           cp -R assets/images/he_switch_images _site/assets/images/
           node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json

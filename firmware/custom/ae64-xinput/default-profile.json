@@ -1,0 +1,213 @@
+{
+  "schema": "ae64-gamepad",
+  "version": 1,
+  "name": "Analog essentials",
+  "mode": "controller",
+  "transport": "xinput",
+  "bindings": [
+    {
+      "control": "LT",
+      "key": 15,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RT",
+      "key": 17,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "LX-",
+      "key": 29,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "LX+",
+      "key": 31,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "LY-",
+      "key": 30,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "LY+",
+      "key": 16,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RX-",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RX+",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RY-",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RY+",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "A",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "B",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "X",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "Y",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "LB",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "RB",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "BACK",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "START",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "L3",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "R3",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "DPAD_UP",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "DPAD_DOWN",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "DPAD_LEFT",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    },
+    {
+      "control": "DPAD_RIGHT",
+      "key": null,
+      "startMm": 0.5,
+      "endMm": 3.5,
+      "maxTravelMm": 4,
+      "curve": "linear"
+    }
+  ],
+  "sticks": [
+    {
+      "opposition": "difference",
+      "circular": true,
+      "deadzone": 0.05
+    },
+    {
+      "opposition": "difference",
+      "circular": true,
+      "deadzone": 0.05
+    }
+  ]
+}

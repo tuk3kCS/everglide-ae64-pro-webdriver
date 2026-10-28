@@ -30,7 +30,7 @@
     <string key="featureHiddenBody">Calibration, raw travel, magnetic-axis metadata and advanced-key inspection stay visible.</string>
     <string key="protocolEyebrow">CAPTURE-DERIVED, DEVICE-LOCAL</string>
     <string key="protocolTitle">The keyboard is the source of truth.</string>
-    <string key="protocolBody">The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is intentionally excluded.</string>
+    <string key="protocolBody">The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is available separately, with file checks and an explicit review.</string>
     <string key="offlineWorkspace">Offline workspace</string>
     <string key="overview">Overview</string>
     <string key="performance">Performance</string>
@@ -426,6 +426,10 @@
     <string key="actionCount">{0}/4 ACTIONS</string>
     <string key="outputCount">{0}/{1} OUTPUTS</string>
     <string key="eventCount">{0} EVENTS</string>
+      <string key="gamepadMode">Gamepad mode</string>
+    <string key="firmwareUpdate">Firmware</string>
+    <string key="hardwareSolution">Hardware Solution</string>
+    <string key="softwareSolution">Software Solution</string>
   </language>
   <language code="vi" name="Tiếng Việt">
     <string key="brandTagline">Trình điều khiển WebHID độc lập</string>
@@ -452,7 +456,7 @@
     <string key="featureHiddenBody">Luôn hiển thị cân chỉnh, hành trình thô, dữ liệu trục từ và chế độ phím nâng cao.</string>
     <string key="protocolEyebrow">TỪ BẢN GHI GÓI TIN · CHẠY CỤC BỘ</string>
     <string key="protocolTitle">Bàn phím là nguồn dữ liệu chuẩn.</string>
-    <string key="protocolBody">Trình điều khiển đọc dữ liệu hiện tại trước khi sửa, giữ nguyên trường do firmware quản lý, chỉ ghi thay đổi đã xếp hàng, lưu đúng nhóm tham số và đọc lại giá trị quan trọng. Cập nhật firmware bị loại trừ có chủ ý.</string>
+    <string key="protocolBody">Trình điều khiển đọc dữ liệu hiện tại trước khi sửa, giữ nguyên trường do firmware quản lý, chỉ ghi thay đổi đã xếp hàng, lưu đúng nhóm tham số và đọc lại giá trị quan trọng. Cập nhật firmware được cung cấp riêng, có kiểm tra tệp và xác nhận trước khi ghi.</string>
     <string key="offlineWorkspace">Không gian ngoại tuyến</string>
     <string key="overview">Tổng quan</string>
     <string key="performance">Hiệu năng</string>
@@ -848,5 +852,9 @@
     <string key="actionCount">{0}/4 HÀNH ĐỘNG</string>
     <string key="outputCount">{0}/{1} ĐẦU RA</string>
     <string key="eventCount">{0} SỰ KIỆN</string>
+      <string key="gamepadMode">Chế độ tay cầm</string>
+    <string key="firmwareUpdate">Firmware</string>
+    <string key="hardwareSolution">Giải pháp phần cứng</string>
+    <string key="softwareSolution">Giải pháp phần mềm</string>
   </language>
 </translations>

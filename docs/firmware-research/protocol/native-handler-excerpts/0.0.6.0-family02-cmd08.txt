@@ -1,0 +1,28 @@
+payload+0x00b614 container+0x00c614 VMA0x8002c614 03c72151 lbu        a4, 0x512(gp)
+payload+0x00b618 container+0x00c618 VMA0x8002c618 9387014d addi       a5, gp, 0x4d0
+payload+0x00b61c container+0x00c61c VMA0x8002c61c 09c7     c.beqz     a4, 0xa
+payload+0x00b61e container+0x00c61e VMA0x8002c61e 7d57     c.li       a4, -1
+payload+0x00b620 container+0x00c620 VMA0x8002c620 2381e700 sb         a4, 2(a5)
+payload+0x00b624 container+0x00c624 VMA0x8002c624 8280     c.jr       ra
+payload+0x00b626 container+0x00c626 VMA0x8002c626 13070020 addi       a4, zero, 0x200
+payload+0x00b62a container+0x00c62a VMA0x8002c62a 2391e700 sh         a4, 2(a5)
+payload+0x00b62e container+0x00c62e VMA0x8002c62e 37b70380 lui        a4, 0x8003b
+payload+0x00b632 container+0x00c632 VMA0x8002c632 9306c77b addi       a3, a4, 0x7bc
+payload+0x00b636 container+0x00c636 VMA0x8002c636 d052     c.lw       a2, 0x24(a3)
+payload+0x00b638 container+0x00c638 VMA0x8002c638 0357c77b lhu        a4, 0x7bc(a4)
+payload+0x00b63c container+0x00c63c VMA0x8002c63c 23820700 sb         zero, 4(a5)
+payload+0x00b640 container+0x00c640 VMA0x8002c640 a382c700 sb         a2, 5(a5)
+payload+0x00b644 container+0x00c644 VMA0x8002c644 13168700 slli       a2, a4, 8
+payload+0x00b648 container+0x00c648 VMA0x8002c648 2183     c.srli     a4, 8
+payload+0x00b64a container+0x00c64a VMA0x8002c64a 518f     c.or       a4, a2
+payload+0x00b64c container+0x00c64c VMA0x8002c64c 2393e700 sh         a4, 6(a5)
+payload+0x00b650 container+0x00c650 VMA0x8002c650 0547     c.li       a4, 1
+payload+0x00b652 container+0x00c652 VMA0x8002c652 2384e700 sb         a4, 8(a5)
+payload+0x00b656 container+0x00c656 VMA0x8002c656 b84e     c.lw       a4, 0x58(a3)
+payload+0x00b658 container+0x00c658 VMA0x8002c658 a384e700 sb         a4, 9(a5)
+payload+0x00b65c container+0x00c65c VMA0x8002c65c 03d74603 lhu        a4, 0x34(a3)
+payload+0x00b660 container+0x00c660 VMA0x8002c660 93168700 slli       a3, a4, 8
+payload+0x00b664 container+0x00c664 VMA0x8002c664 2183     c.srli     a4, 8
+payload+0x00b666 container+0x00c666 VMA0x8002c666 558f     c.or       a4, a3
+payload+0x00b668 container+0x00c668 VMA0x8002c668 2395e700 sh         a4, 0xa(a5)
+payload+0x00b66c container+0x00c66c VMA0x8002c66c 8280     c.jr       ra

@@ -1,0 +1,13 @@
+{
+  "purpose": "Host tests and isolated RV32 compilation of newly written portable key logic only. Not a complete MCU firmware build.",
+  "compiler": "Zig 0.17.0, Windows x86_64",
+  "source_index": "https://ziglang.org/download/index.json",
+  "download_url": "https://ziglang.org/download/0.17.0/zig-x86_64-windows-0.17.0.zip",
+  "expected_sha256": "b5663f69581dcf391293fbf16c06cb80d81d806545ce618b4d0bab7f0eb8c428",
+  "actual_sha256": "b5663f69581dcf391293fbf16c06cb80d81d806545ce618b4d0bab7f0eb8c428",
+  "archive_bytes": 100268137,
+  "global_installation": false,
+  "compiler_bundled_in_deliverable": false,
+  "capstone_version": "5.0.7",
+  "native_decompiler_available": false
+}

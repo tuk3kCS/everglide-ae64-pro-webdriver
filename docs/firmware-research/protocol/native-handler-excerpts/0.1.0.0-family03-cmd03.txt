@@ -1,0 +1,42 @@
+payload+0x00bff4 container+0x00cff4 VMA0x8002cff4 9387c165 addi       a5, gp, 0x65c
+payload+0x00bff8 container+0x00cff8 VMA0x8002cff8 83c52700 lbu        a1, 2(a5)
+payload+0x00bffc container+0x00cffc VMA0x8002cffc 8d46     c.li       a3, 3
+payload+0x00bffe container+0x00cffe VMA0x8002cffe 1387c161 addi       a4, gp, 0x61c
+payload+0x00c002 container+0x00d002 VMA0x8002d002 63f6b600 bgeu       a3, a1, 0xc
+payload+0x00c006 container+0x00d006 VMA0x8002d006 fd57     c.li       a5, -1
+payload+0x00c008 container+0x00d008 VMA0x8002d008 2301f700 sb         a5, 2(a4)
+payload+0x00c00c container+0x00d00c VMA0x8002d00c 8280     c.jr       ra
+payload+0x00c00e container+0x00d00e VMA0x8002d00e 83c63700 lbu        a3, 3(a5)
+payload+0x00c012 container+0x00d012 VMA0x8002d012 2301b700 sb         a1, 2(a4)
+payload+0x00c016 container+0x00d016 VMA0x8002d016 1546     c.li       a2, 5
+payload+0x00c018 container+0x00d018 VMA0x8002d018 6376d600 bgeu       a2, a3, 0xc
+payload+0x00c01c container+0x00d01c VMA0x8002d01c fd57     c.li       a5, -1
+payload+0x00c01e container+0x00d01e VMA0x8002d01e a301f700 sb         a5, 3(a4)
+payload+0x00c022 container+0x00d022 VMA0x8002d022 8280     c.jr       ra
+payload+0x00c024 container+0x00d024 VMA0x8002d024 03c64700 lbu        a2, 4(a5)
+payload+0x00c028 container+0x00d028 VMA0x8002d028 a301d700 sb         a3, 3(a4)
+payload+0x00c02c container+0x00d02c VMA0x8002d02c d147     c.li       a5, 0x14
+payload+0x00c02e container+0x00d02e VMA0x8002d02e 63f6c700 bgeu       a5, a2, 0xc
+payload+0x00c032 container+0x00d032 VMA0x8002d032 fd57     c.li       a5, -1
+payload+0x00c034 container+0x00d034 VMA0x8002d034 2302f700 sb         a5, 4(a4)
+payload+0x00c038 container+0x00d038 VMA0x8002d038 8280     c.jr       ra
+payload+0x00c03a container+0x00d03a VMA0x8002d03a b7370800 lui        a5, 0x83
+payload+0x00c03e container+0x00d03e VMA0x8002d03e 83c797ba lbu        a5, -0x457(a5)
+payload+0x00c042 container+0x00d042 VMA0x8002d042 2302c700 sb         a2, 4(a4)
+payload+0x00c046 container+0x00d046 VMA0x8002d046 8a07     c.slli     a5, 2
+payload+0x00c048 container+0x00d048 VMA0x8002d048 ae97     c.add      a5, a1
+payload+0x00c04a container+0x00d04a VMA0x8002d04a 9305e002 addi       a1, zero, 0x2e
+payload+0x00c04e container+0x00d04e VMA0x8002d04e 3306b602 mul        a2, a2, a1
+payload+0x00c052 container+0x00d052 VMA0x8002d052 8607     c.slli     a5, 1
+payload+0x00c054 container+0x00d054 VMA0x8002d054 b297     c.add      a5, a2
+payload+0x00c056 container+0x00d056 VMA0x8002d056 1306603c addi       a2, zero, 0x3c6
+payload+0x00c05a container+0x00d05a VMA0x8002d05a b386c602 mul        a3, a3, a2
+payload+0x00c05e container+0x00d05e VMA0x8002d05e b697     c.add      a5, a3
+payload+0x00c060 container+0x00d060 VMA0x8002d060 b7560800 lui        a3, 0x85
+payload+0x00c064 container+0x00d064 VMA0x8002d064 938686f2 addi       a3, a3, -0xd8
+payload+0x00c068 container+0x00d068 VMA0x8002d068 b697     c.add      a5, a3
+payload+0x00c06a container+0x00d06a VMA0x8002d06a 83d70700 lhu        a5, 0(a5)
+payload+0x00c06e container+0x00d06e VMA0x8002d06e a302f700 sb         a5, 5(a4)
+payload+0x00c072 container+0x00d072 VMA0x8002d072 a183     c.srli     a5, 8
+payload+0x00c074 container+0x00d074 VMA0x8002d074 2303f700 sb         a5, 6(a4)
+payload+0x00c078 container+0x00d078 VMA0x8002d078 8280     c.jr       ra

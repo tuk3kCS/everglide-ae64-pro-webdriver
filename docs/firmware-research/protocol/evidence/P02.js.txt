@@ -1,0 +1,1 @@
+(function(e){e[e.AppToBoot=1]="AppToBoot",e[e.Flash=2]="Flash",e[e.ValiDate=3]="ValiDate",e[e.BootToApp=4]="BootToApp"})(sd||(sd={})),

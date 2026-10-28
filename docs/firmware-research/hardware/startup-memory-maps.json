@@ -1,0 +1,382 @@
+[
+  {
+    "version": "0.0.5.0",
+    "payload_vma": 2147618816,
+    "startup_registers": {
+      "gp": 527104,
+      "tp": 578608,
+      "sp": 627712
+    },
+    "section_init_payload_offset": 80722,
+    "section_init_calls": [
+      {
+        "call_payload_offset": 80752,
+        "call_target_payload_offset": 15482,
+        "destination": 0,
+        "source_or_fill": 2147618890,
+        "length": 3800
+      },
+      {
+        "call_payload_offset": 80778,
+        "call_target_payload_offset": 15504,
+        "destination": 525712,
+        "source_or_fill": 0,
+        "length": 52896
+      },
+      {
+        "call_payload_offset": 80808,
+        "call_target_payload_offset": 15504,
+        "destination": 594940,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 80838,
+        "call_target_payload_offset": 15504,
+        "destination": 594944,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 80870,
+        "call_target_payload_offset": 15482,
+        "destination": 525056,
+        "source_or_fill": 2147730176,
+        "length": 656
+      },
+      {
+        "call_payload_offset": 80902,
+        "call_target_payload_offset": 15482,
+        "destination": 3800,
+        "source_or_fill": 2147730832,
+        "length": 352
+      },
+      {
+        "call_payload_offset": 80938,
+        "call_target_payload_offset": 15482,
+        "destination": 578608,
+        "source_or_fill": 2147731184,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 80974,
+        "call_target_payload_offset": 15482,
+        "destination": 578608,
+        "source_or_fill": 2147731184,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81010,
+        "call_target_payload_offset": 15482,
+        "destination": 594944,
+        "source_or_fill": 2147731184,
+        "length": 0
+      }
+    ],
+    "limits": "Argument reconstruction from inert linear disassembly. Section names inferred; no executed startup or full flash partition map."
+  },
+  {
+    "version": "0.0.6.0",
+    "payload_vma": 2147618816,
+    "startup_registers": {
+      "gp": 527104,
+      "tp": 578104,
+      "sp": 625664
+    },
+    "section_init_payload_offset": 80792,
+    "section_init_calls": [
+      {
+        "call_payload_offset": 80822,
+        "call_target_payload_offset": 15482,
+        "destination": 0,
+        "source_or_fill": 2147618890,
+        "length": 3800
+      },
+      {
+        "call_payload_offset": 80848,
+        "call_target_payload_offset": 15504,
+        "destination": 525712,
+        "source_or_fill": 0,
+        "length": 52392
+      },
+      {
+        "call_payload_offset": 80878,
+        "call_target_payload_offset": 15504,
+        "destination": 592892,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 80908,
+        "call_target_payload_offset": 15504,
+        "destination": 592896,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 80940,
+        "call_target_payload_offset": 15482,
+        "destination": 525056,
+        "source_or_fill": 2147730320,
+        "length": 656
+      },
+      {
+        "call_payload_offset": 80972,
+        "call_target_payload_offset": 15482,
+        "destination": 3800,
+        "source_or_fill": 2147730976,
+        "length": 352
+      },
+      {
+        "call_payload_offset": 81008,
+        "call_target_payload_offset": 15482,
+        "destination": 578104,
+        "source_or_fill": 2147731328,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81044,
+        "call_target_payload_offset": 15482,
+        "destination": 578104,
+        "source_or_fill": 2147731328,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81080,
+        "call_target_payload_offset": 15482,
+        "destination": 592896,
+        "source_or_fill": 2147731328,
+        "length": 0
+      }
+    ],
+    "limits": "Argument reconstruction from inert linear disassembly. Section names inferred; no executed startup or full flash partition map."
+  },
+  {
+    "version": "0.0.7.0",
+    "payload_vma": 2147618816,
+    "startup_registers": {
+      "gp": 527104,
+      "tp": 578112,
+      "sp": 625664
+    },
+    "section_init_payload_offset": 81158,
+    "section_init_calls": [
+      {
+        "call_payload_offset": 81188,
+        "call_target_payload_offset": 15482,
+        "destination": 0,
+        "source_or_fill": 2147618890,
+        "length": 3800
+      },
+      {
+        "call_payload_offset": 81214,
+        "call_target_payload_offset": 15504,
+        "destination": 525712,
+        "source_or_fill": 0,
+        "length": 52400
+      },
+      {
+        "call_payload_offset": 81244,
+        "call_target_payload_offset": 15504,
+        "destination": 592892,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81274,
+        "call_target_payload_offset": 15504,
+        "destination": 592896,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81306,
+        "call_target_payload_offset": 15482,
+        "destination": 525056,
+        "source_or_fill": 2147730704,
+        "length": 656
+      },
+      {
+        "call_payload_offset": 81338,
+        "call_target_payload_offset": 15482,
+        "destination": 3800,
+        "source_or_fill": 2147731360,
+        "length": 352
+      },
+      {
+        "call_payload_offset": 81374,
+        "call_target_payload_offset": 15482,
+        "destination": 578112,
+        "source_or_fill": 2147731712,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81410,
+        "call_target_payload_offset": 15482,
+        "destination": 578112,
+        "source_or_fill": 2147731712,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 81446,
+        "call_target_payload_offset": 15482,
+        "destination": 592896,
+        "source_or_fill": 2147731712,
+        "length": 0
+      }
+    ],
+    "limits": "Argument reconstruction from inert linear disassembly. Section names inferred; no executed startup or full flash partition map."
+  },
+  {
+    "version": "0.0.8.0",
+    "payload_vma": 2147618816,
+    "startup_registers": {
+      "gp": 527104,
+      "tp": 578360,
+      "sp": 625664
+    },
+    "section_init_payload_offset": 82350,
+    "section_init_calls": [
+      {
+        "call_payload_offset": 82380,
+        "call_target_payload_offset": 15482,
+        "destination": 0,
+        "source_or_fill": 2147618890,
+        "length": 3800
+      },
+      {
+        "call_payload_offset": 82406,
+        "call_target_payload_offset": 15542,
+        "destination": 525712,
+        "source_or_fill": 0,
+        "length": 52648
+      },
+      {
+        "call_payload_offset": 82436,
+        "call_target_payload_offset": 15542,
+        "destination": 592892,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 82466,
+        "call_target_payload_offset": 15542,
+        "destination": 592896,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 82498,
+        "call_target_payload_offset": 15482,
+        "destination": 525056,
+        "source_or_fill": 2147731944,
+        "length": 656
+      },
+      {
+        "call_payload_offset": 82530,
+        "call_target_payload_offset": 15482,
+        "destination": 3800,
+        "source_or_fill": 2147732600,
+        "length": 352
+      },
+      {
+        "call_payload_offset": 82566,
+        "call_target_payload_offset": 15482,
+        "destination": 578360,
+        "source_or_fill": 2147732952,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 82602,
+        "call_target_payload_offset": 15482,
+        "destination": 578360,
+        "source_or_fill": 2147732952,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 82638,
+        "call_target_payload_offset": 15482,
+        "destination": 592896,
+        "source_or_fill": 2147732952,
+        "length": 0
+      }
+    ],
+    "limits": "Argument reconstruction from inert linear disassembly. Section names inferred; no executed startup or full flash partition map."
+  },
+  {
+    "version": "0.1.0.0",
+    "payload_vma": 2147618816,
+    "startup_registers": {
+      "gp": 527104,
+      "tp": 578440,
+      "sp": 625664
+    },
+    "section_init_payload_offset": 82868,
+    "section_init_calls": [
+      {
+        "call_payload_offset": 82898,
+        "call_target_payload_offset": 15482,
+        "destination": 0,
+        "source_or_fill": 2147618890,
+        "length": 3800
+      },
+      {
+        "call_payload_offset": 82924,
+        "call_target_payload_offset": 15542,
+        "destination": 525720,
+        "source_or_fill": 0,
+        "length": 52720
+      },
+      {
+        "call_payload_offset": 82954,
+        "call_target_payload_offset": 15542,
+        "destination": 592892,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 82984,
+        "call_target_payload_offset": 15542,
+        "destination": 592896,
+        "source_or_fill": 0,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 83016,
+        "call_target_payload_offset": 15482,
+        "destination": 525056,
+        "source_or_fill": 2147732480,
+        "length": 664
+      },
+      {
+        "call_payload_offset": 83048,
+        "call_target_payload_offset": 15482,
+        "destination": 3800,
+        "source_or_fill": 2147733144,
+        "length": 352
+      },
+      {
+        "call_payload_offset": 83084,
+        "call_target_payload_offset": 15482,
+        "destination": 578440,
+        "source_or_fill": 2147733496,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 83120,
+        "call_target_payload_offset": 15482,
+        "destination": 578440,
+        "source_or_fill": 2147733496,
+        "length": 0
+      },
+      {
+        "call_payload_offset": 83156,
+        "call_target_payload_offset": 15482,
+        "destination": 592896,
+        "source_or_fill": 2147733496,
+        "length": 0
+      }
+    ],
+    "limits": "Argument reconstruction from inert linear disassembly. Section names inferred; no executed startup or full flash partition map."
+  }
+]

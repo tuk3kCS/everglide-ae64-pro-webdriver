@@ -1,6 +1,6 @@
 # AE64 Pro Control
 
-An unofficial, local-first WebHID driver for the Everglide AE64 Pro magnetic keyboard. It replaces the slow manufacturer-hosted web app with a static site that talks directly to the keyboard; there is no account, cloud dependency, analytics, or firmware updater.
+An unofficial, local-first WebHID driver for the Everglide AE64 Pro magnetic keyboard. It replaces the manufacturer-hosted web app with a static site that talks directly to the keyboard, including local firmware updates and gamepad configuration. No account, cloud dependency or analytics is required.
 
 ## How to use
 
@@ -46,7 +46,42 @@ Deliberately deferred to the advanced release:
 - Destructive factory restore (visible but disabled pending physical-device verification)
 - Decorative/secondary-light editors beyond the discovered read surface
 
-Firmware update and bootloader commands are intentionally excluded from both the UI and protocol API.
+## Firmware updates
+
+Open the **Firmware** tab, choose a release from `/firmware`, connect the intended keyboard, and select **Review and flash firmware**. The final **Start firmware update** button is the only action that begins a transfer. Five untouched factory releases and the experimental XInput binary are included. A local `.bin` picker is also available.
+
+The updater checks the image header, board ID, payload length, CRC-32 and catalog SHA-256 before requesting the bootloader. It streams the complete container in 56-byte chunks, requires the keyboard's separate image-validation result, restarts it, then verifies application reconnection. Normal configuration traffic is paused and excluded from the transport while updating. If USB permission changes during the restart, use **Select keyboard bootloader** or **Select restarted keyboard** when prompted.
+
+The updater's lifecycle, failures, packets and six image streams are tested with simulated devices. The new integrated updater has not been exercised on physical hardware. The custom image was flashed separately by the user; Windows subsequently enumerated the keyboard as an Xbox 360 controller. A successful Windows driver binding does not establish every analog mapping or a recovery guarantee.
+
+After adding or replacing a `.bin` anywhere under `firmware/`, run `node scripts/build-firmware-catalog.cjs`. Static hosting uses the generated `firmware/catalog.json`; GitHub Pages regenerates it and packages the binary files automatically. See [firmware/README.md](firmware/README.md).
+
+## Gamepad mode
+
+The **Gamepad mode** tab offers two solutions:
+
+- **Hardware Solution** contains the former Gamepad Studio controls directly inside the main app: analog triggers and both sticks, digital controller buttons, adjustable travel windows, response curves, stick settings, simulation, live travel, JSON profiles and capability-gated configuration uploads. It shares the main keyboard connection and stops its polling when you leave the tab.
+- **Software Solution** opens [Hall Analog Mapper](https://github.com/z750sasr/he-kb-analog-mapper), a Windows application that creates a virtual Xbox controller from Hall travel with factory firmware.
+
+The standalone `/gamepad` page has been removed. Use `/#gamepad` for a direct link into the main app; `/#firmware` opens the flasher. Existing browser-local gamepad drafts use the same storage key and remain available.
+
+Custom mappings are session-only. Click **Use keyboard travel limits** before applying: the tested keyboard reports **3.31 mm**, so a **3.50 mm** full-output setting is rejected. The button adjusts every oversized assignment in the local draft; Apply performs the device upload. Lower valid ranges, such as **1–3 mm**, are preserved. A confirmed rejection is shown separately from an uncertain/lost commit reply.
+
+Firmware source, linker/patch builder, verification results, original compiled image and portable component tests are in [firmware/custom/ae64-xinput](firmware/custom/ae64-xinput). Reconstructed version changes, protocol evidence and the development pipeline are in [docs/firmware-research](docs/firmware-research).
+
+## Offline checks
+
+```powershell
+node scripts/build-firmware-catalog.cjs
+node smoke-test.cjs
+node tests/firmware/flasher-tests.cjs
+node tests/firmware/ui-tests.cjs
+node tests/gamepad/tests.cjs
+node tests/gamepad/protocol-tests.cjs
+node tests/gamepad/travel-limits-tests.cjs
+```
+
+These tests use fake transports and do not send firmware or configuration commands to a real keyboard. The optional compiled-C protocol harness can be passed to `protocol-tests.cjs` for cross-language transfer verification.
 
 ## Contributing
 

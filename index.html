@@ -36,6 +36,8 @@
     }
   </script>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="js/gamepad/studio.css">
+  <link rel="stylesheet" href="js/app/tools.css">
 </head>
 <body>
   <header class="topbar" id="topbar">
@@ -60,6 +62,8 @@
         <p class="lead" data-i18n="heroLead">Configure actuation, Rapid Trigger, remaps, RGB, profiles and the keyboard's hidden diagnostic controls directly through WebHID.</p>
         <div class="hero-actions">
           <button class="button primary big" id="heroConnect" type="button"><span data-i18n="connectKeyboard">Connect keyboard</span><b>→</b></button>
+          <button class="button ghost" id="openGamepadTools" type="button">Gamepad mode</button>
+          <button class="button ghost" id="openFirmwareTools" type="button">Firmware</button>
         </div>
         <p class="compatibility"><i></i><span data-i18n="compatibility">Desktop Chrome or Edge · HTTPS or localhost · no account required</span></p>
       </div>
@@ -97,7 +101,8 @@
         <button data-page="lighting" type="button"><span>✦</span><b data-i18n="lighting">Lighting</b></button>
         <button data-page="settings" type="button"><span>◉</span><b data-i18n="settings">Device settings</b></button>
         <button data-page="diagnostics" type="button"><span>≋</span><b data-i18n="diagnostics">Diagnostics</b></button>
-        <a class="external-nav-link" href="https://github.com/z750sasr/he-kb-analog-mapper" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">&#127918;</span>Gamepad Mode</a>
+        <button data-page="gamepad" type="button"><span>◈</span><b data-i18n="gamepadMode">Gamepad mode</b></button>
+        <button data-page="firmware" type="button"><span>⇩</span><b data-i18n="firmwareUpdate">Firmware</b></button>
         <button data-page="about" type="button"><span>ⓘ</span><b data-i18n="about">About us</b></button>
       </nav>
       <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span id="stagedEditsBody" data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
@@ -293,6 +298,11 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="protocol.js"></script>
+  <script src="js/gamepad/model.js"></script>
+  <script src="js/gamepad/protocol.js"></script>
+  <script src="js/gamepad/template.js"></script>
+  <script src="js/gamepad/studio.js"></script>
+  <script src="js/firmware/flasher.js"></script>
   <script src="js/app/foundation.js"></script>
   <script src="js/app/i18n.js"></script>
   <script src="js/app/switches.js"></script>
@@ -305,6 +315,8 @@
   <script src="js/app/mt-end-toggle.js"></script>
   <script src="js/app/macro.js"></script>
   <script src="js/app/lighting-color.js"></script>
+  <script src="js/app/gamepad-page.js"></script>
+  <script src="js/app/firmware-page.js"></script>
   <script src="js/app/pages.js"></script>
   <script src="js/app/interactions.js"></script>
   <script src="js/app/device.js"></script>

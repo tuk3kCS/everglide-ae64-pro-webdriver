@@ -379,7 +379,7 @@ const FALLBACK_TRANSLATIONS = {
     protocolEyebrow: "CAPTURE-DERIVED, DEVICE-LOCAL",
     protocolTitle: "The keyboard is the source of truth.",
     protocolBody:
-      "The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is intentionally excluded.",
+      "The driver reads the current hardware record before editing, preserves firmware-owned fields, writes only staged changes, commits the correct parameter group, and reads important values back. Firmware flashing is available separately, with file checks and an explicit review.",
     offlineWorkspace: "Offline workspace",
     overview: "Overview",
     performance: "Performance",
@@ -431,7 +431,7 @@ const FALLBACK_TRANSLATIONS = {
     protocolEyebrow: "TỪ BẢN GHI GÓI TIN · CHẠY CỤC BỘ",
     protocolTitle: "Bàn phím là nguồn dữ liệu chuẩn.",
     protocolBody:
-      "Trình điều khiển đọc dữ liệu hiện tại trước khi sửa, giữ nguyên trường do firmware quản lý, chỉ ghi thay đổi đã xếp hàng, lưu đúng nhóm tham số và đọc lại giá trị quan trọng. Cập nhật firmware bị loại trừ có chủ ý.",
+      "Trình điều khiển đọc dữ liệu hiện tại trước khi sửa, giữ nguyên trường do firmware quản lý, chỉ ghi thay đổi đã xếp hàng, lưu đúng nhóm tham số và đọc lại giá trị quan trọng. Cập nhật firmware được cung cấp riêng, có kiểm tra tệp và xác nhận trước khi ghi.",
     offlineWorkspace: "Không gian ngoại tuyến",
     overview: "Tổng quan",
     performance: "Hiệu năng",
@@ -817,6 +817,7 @@ function loadSavedProfile() {
 
 const state = {
   page: "overview",
+  firmwareBusy: false, gamepadBusy: false, bootloaderConnected: false,
   performanceTab: "trigger",
   performanceWorkspace: "tuning", showNormalReleaseExperimental: false,
   deadZoneMemory: new Map(), switchAssignmentKeys: new Set(),
@@ -889,7 +890,7 @@ const t = (key) =>
   state.translations[state.language]?.[key] ||
   state.translations.en?.[key] ||
   key;
-const connected = () => Boolean(state.transport?.connected);
+const connected = () => Boolean(state.transport?.connected && !state.firmwareBusy && !state.bootloaderConnected);
 function displayedKeycode(key, layer = state.profile.layer) {
   const resolvedLayer = Number(layer),
     token = `${resolvedLayer}:${key.id}`;
@@ -971,3 +972,8 @@ async function loadLanguages() {
   populateLanguageSelectors();
   translateStaticPage();
 }
+
+Object.assign(FALLBACK_TRANSLATIONS.en, { gamepadMode: "Gamepad mode", firmwareUpdate: "Firmware", hardwareSolution: "Hardware Solution", softwareSolution: "Software Solution" });
+Object.assign(FALLBACK_TRANSLATIONS.vi, { gamepadMode: "Chế độ tay cầm", firmwareUpdate: "Firmware", hardwareSolution: "Giải pháp phần cứng", softwareSolution: "Giải pháp phần mềm" });
+Object.assign(state.translations.en, FALLBACK_TRANSLATIONS.en);
+Object.assign(state.translations.vi, FALLBACK_TRANSLATIONS.vi);

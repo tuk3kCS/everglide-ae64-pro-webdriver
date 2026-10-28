@@ -1,0 +1,3992 @@
+8003d000 15c1     c.beqz       a0, 0x24
+8003d002 2105     c.addi       a0, 8
+8003d004 b7050480 lui          a1, 0x80040
+8003d008 938505fd addi         a1, a1, -0x30
+8003d00c 13868500 addi         a2, a1, 8
+8003d010 83960500 lh           a3, 0(a1)
+8003d014 8905     c.addi       a1, 2
+8003d016 231cd5fe sh           a3, -8(a0)
+8003d01a 2310d500 sh           a3, 0(a0)
+8003d01e 0905     c.addi       a0, 2
+8003d020 e398c5fe bne          a1, a2, -0x10
+8003d024 8280     c.jr         ra
+8003d026 630d0512 beqz         a0, 0x13a
+8003d02a 0111     c.addi       sp, -0x20
+8003d02c 06ce     c.swsp       ra, 0x1c(sp)
+8003d02e 22cc     c.swsp       s0, 0x18(sp)
+8003d030 26ca     c.swsp       s1, 0x14(sp)
+8003d032 4ac8     c.swsp       s2, 0x10(sp)
+8003d034 4ec6     c.swsp       s3, 0xc(sp)
+8003d036 2a89     c.mv         s2, a0
+8003d038 0964     c.lui        s0, 2
+8003d03a 13040471 addi         s0, s0, 0x710
+8003d03e 93098500 addi         s3, a0, 8
+8003d042 13068014 addi         a2, zero, 0x148
+8003d046 4e85     c.mv         a0, s3
+8003d048 8145     c.li         a1, 0
+8003d04a 97300000 auipc        ra, 3
+8003d04e e78000f2 jalr         ra, ra, -0xe0
+8003d052 814e     c.li         t4, 0
+8003d054 8548     c.li         a7, 1
+8003d056 1308090d addi         a6, s2, 0xd0
+8003d05a 9302690e addi         t0, s2, 0xe6
+8003d05e 13034006 addi         t1, zero, 0x64
+8003d062 7d5f     c.li         t5, -1
+8003d064 b70f0480 lui          t6, 0x80040
+8003d068 938f0ffd addi         t6, t6, -0x30
+8003d06c d943     c.li         t2, 0x16
+8003d06e 23201901 sw           a7, 0(s2)
+8003d072 23220900 sw           zero, 4(s2)
+8003d076 054e     c.li         t3, 1
+8003d078 b3856e02 mul          a1, t4, t1
+8003d07c ce95     c.add        a1, s3
+8003d07e 23811507 sb           a7, 0x62(a1)
+8003d082 13850503 addi         a0, a1, 0x30
+8003d086 8546     c.li         a3, 1
+8003d088 13866501 addi         a2, a1, 0x16
+8003d08c 2380e501 sb           t5, 0(a1)
+8003d090 23928500 sh           s0, 4(a1)
+8003d094 238be501 sb           t5, 0x16(a1)
+8003d098 239d8500 sh           s0, 0x1a(a1)
+8003d09c 9384e500 addi         s1, a1, 0xe
+8003d0a0 fe87     c.mv         a5, t6
+8003d0a2 03970700 lh           a4, 0(a5)
+8003d0a6 239ce4fe sh           a4, -8(s1)
+8003d0aa 2390e400 sh           a4, 0(s1)
+8003d0ae 8904     c.addi       s1, 2
+8003d0b0 8907     c.addi       a5, 2
+8003d0b2 e398c4fe bne          s1, a2, -0x10
+8003d0b6 13864502 addi         a2, a1, 0x24
+8003d0ba 9384c502 addi         s1, a1, 0x2c
+8003d0be fe85     c.mv         a1, t6
+8003d0c0 03970500 lh           a4, 0(a1)
+8003d0c4 231ce6fe sh           a4, -8(a2)
+8003d0c8 2310e600 sh           a4, 0(a2)
+8003d0cc 0906     c.addi       a2, 2
+8003d0ce 8905     c.addi       a1, 2
+8003d0d0 e31896fe bne          a2, s1, -0x10
+8003d0d4 13f61600 andi         a2, a3, 1
+8003d0d8 aa85     c.mv         a1, a0
+8003d0da 8146     c.li         a3, 0
+8003d0dc 55f6     c.bnez       a2, -0x54
+8003d0de b3857e02 mul          a1, t4, t2
+8003d0e2 3305b800 add          a0, a6, a1
+8003d0e6 2300e501 sb           t5, 0(a0)
+8003d0ea 23128500 sh           s0, 4(a0)
+8003d0ee 3905     c.addi       a0, 0xe
+8003d0f0 9695     c.add        a1, t0
+8003d0f2 7e86     c.mv         a2, t6
+8003d0f4 83160600 lh           a3, 0(a2)
+8003d0f8 231cd5fe sh           a3, -8(a0)
+8003d0fc 2310d500 sh           a3, 0(a0)
+8003d100 0905     c.addi       a0, 2
+8003d102 0906     c.addi       a2, 2
+8003d104 e318b5fe bne          a0, a1, -0x10
+8003d108 13751e00 andi         a0, t3, 1
+8003d10c 854e     c.li         t4, 1
+8003d10e 014e     c.li         t3, 0
+8003d110 25f5     c.bnez       a0, -0x98
+8003d112 8565     c.lui        a1, 1
+8003d114 93060910 addi         a3, s2, 0x100
+8003d118 1305c913 addi         a0, s2, 0x13c
+8003d11c 938585bb addi         a1, a1, -0x448
+8003d120 1307f00f addi         a4, zero, 0xff
+8003d124 1386057d addi         a2, a1, 0x7d0
+8003d128 239ee6fe sh           a4, -4(a3)
+8003d12c 239fc6fe sh           a2, -2(a3)
+8003d130 2390b600 sh           a1, 0(a3)
+8003d134 9906     c.addi       a3, 6
+8003d136 e399a6fe bne          a3, a0, -0xe
+8003d13a 93064915 addi         a3, s2, 0x154
+8003d13e 1307f00f addi         a4, zero, 0xff
+8003d142 231ee5fe sh           a4, -4(a0)
+8003d146 231fc5fe sh           a2, -2(a0)
+8003d14a 2310b500 sh           a1, 0(a0)
+8003d14e 1905     c.addi       a0, 6
+8003d150 e319d5fe bne          a0, a3, -0xe
+8003d154 f240     c.lwsp       ra, 0x1c(sp)
+8003d156 6244     c.lwsp       s0, 0x18(sp)
+8003d158 d244     c.lwsp       s1, 0x14(sp)
+8003d15a 4249     c.lwsp       s2, 0x10(sp)
+8003d15c b249     c.lwsp       s3, 0xc(sp)
+8003d15e 0561     c.addi16sp   sp, 0x20
+8003d160 8280     c.jr         ra
+8003d162 39c1     c.beqz       a0, 0x46
+8003d164 3971     c.addi16sp   sp, -0x40
+8003d166 06de     c.swsp       ra, 0x3c(sp)
+8003d168 22dc     c.swsp       s0, 0x38(sp)
+8003d16a 26da     c.swsp       s1, 0x34(sp)
+8003d16c 4ad8     c.swsp       s2, 0x30(sp)
+8003d16e 4ed6     c.swsp       s3, 0x2c(sp)
+8003d170 52d4     c.swsp       s4, 0x28(sp)
+8003d172 56d2     c.swsp       s5, 0x24(sp)
+8003d174 5ad0     c.swsp       s6, 0x20(sp)
+8003d176 5ece     c.swsp       s7, 0x1c(sp)
+8003d178 62cc     c.swsp       s8, 0x18(sp)
+8003d17a 66ca     c.swsp       s9, 0x14(sp)
+8003d17c 6ac8     c.swsp       s10, 0x10(sp)
+8003d17e 6ec6     c.swsp       s11, 0xc(sp)
+8003d180 2a8d     c.mv         s10, a0
+8003d182 4841     c.lw         a0, 4(a0)
+8003d184 0949     c.li         s2, 2
+8003d186 6372a902 bgeu         s2, a0, 0x24
+8003d18a 0145     c.li         a0, 0
+8003d18c f250     c.lwsp       ra, 0x3c(sp)
+8003d18e 6254     c.lwsp       s0, 0x38(sp)
+8003d190 d254     c.lwsp       s1, 0x34(sp)
+8003d192 4259     c.lwsp       s2, 0x30(sp)
+8003d194 b259     c.lwsp       s3, 0x2c(sp)
+8003d196 225a     c.lwsp       s4, 0x28(sp)
+8003d198 925a     c.lwsp       s5, 0x24(sp)
+8003d19a 025b     c.lwsp       s6, 0x20(sp)
+8003d19c f24b     c.lwsp       s7, 0x1c(sp)
+8003d19e 624c     c.lwsp       s8, 0x18(sp)
+8003d1a0 d24c     c.lwsp       s9, 0x14(sp)
+8003d1a2 424d     c.lwsp       s10, 0x10(sp)
+8003d1a4 b24d     c.lwsp       s11, 0xc(sp)
+8003d1a6 2161     c.addi16sp   sp, 0x40
+8003d1a8 8280     c.jr         ra
+8003d1aa 814c     c.li         s9, 0
+8003d1ac 93098d00 addi         s3, s10, 8
+8003d1b0 130a0d0d addi         s4, s10, 0xd0
+8003d1b4 054b     c.li         s6, 1
+8003d1b6 930a4006 addi         s5, zero, 0x64
+8003d1ba 930b0027 addi         s7, zero, 0x270
+8003d1be 594c     c.li         s8, 0x16
+8003d1c0 b3845c03 mul          s1, s9, s5
+8003d1c4 ce94     c.add        s1, s3
+8003d1c6 03d50406 lhu          a0, 0x60(s1)
+8003d1ca 93554500 srli         a1, a0, 4
+8003d1ce e3eebbfa bltu         s7, a1, -0x44
+8003d1d2 09c5     c.beqz       a0, 0xa
+8003d1d4 03c52406 lbu          a0, 0x62(s1)
+8003d1d8 0589     c.andi       a0, 1
+8003d1da 4dd9     c.beqz       a0, -0x4e
+8003d1dc 938d0403 addi         s11, s1, 0x30
+8003d1e0 0544     c.li         s0, 1
+8003d1e2 c854     c.lw         a0, 0x2c(s1)
+8003d1e4 e363a9fa bltu         s2, a0, -0x5a
+8003d1e8 2685     c.mv         a0, s1
+8003d1ea 97000000 auipc        ra, 0
+8003d1ee e780800a jalr         ra, ra, 0xa8
+8003d1f2 49dd     c.beqz       a0, -0x66
+8003d1f4 13856401 addi         a0, s1, 0x16
+8003d1f8 97000000 auipc        ra, 0
+8003d1fc e780a009 jalr         ra, ra, 0x9a
+8003d200 51d5     c.beqz       a0, -0x74
+8003d202 13751400 andi         a0, s0, 1
+8003d206 ee84     c.mv         s1, s11
+8003d208 0144     c.li         s0, 0
+8003d20a 61fd     c.bnez       a0, -0x28
+8003d20c 33858c03 mul          a0, s9, s8
+8003d210 5295     c.add        a0, s4
+8003d212 97000000 auipc        ra, 0
+8003d216 e7800008 jalr         ra, ra, 0x80
+8003d21a 2dd9     c.beqz       a0, -0x8e
+8003d21c 13751b00 andi         a0, s6, 1
+8003d220 854c     c.li         s9, 1
+8003d222 014b     c.li         s6, 0
+8003d224 51fd     c.bnez       a0, -0x64
+8003d226 93050d10 addi         a1, s10, 0x100
+8003d22a 2946     c.li         a2, 0xa
+8003d22c 930600f4 addi         a3, zero, -0xc0
+8003d230 0967     c.lui        a4, 2
+8003d232 13070771 addi         a4, a4, 0x710
+8003d236 03c5c5ff lbu          a0, -4(a1)
+8003d23a 130515f0 addi         a0, a0, -0xff
+8003d23e e3e6a6f4 bltu         a3, a0, -0xb4
+8003d242 83d7e5ff lhu          a5, -2(a1)
+8003d246 0145     c.li         a0, 0
+8003d248 e362f7f4 bltu         a4, a5, -0xbc
+8003d24c 83d40500 lhu          s1, 0(a1)
+8003d250 e3fef4f2 bgeu         s1, a5, -0xc4
+8003d254 7d16     c.addi       a2, -1
+8003d256 9905     c.addi       a1, 6
+8003d258 79fe     c.bnez       a2, -0x22
+8003d25a 9305cd13 addi         a1, s10, 0x13c
+8003d25e 1146     c.li         a2, 4
+8003d260 930600f4 addi         a3, zero, -0xc0
+8003d264 0967     c.lui        a4, 2
+8003d266 13070771 addi         a4, a4, 0x710
+8003d26a 03c5c5ff lbu          a0, -4(a1)
+8003d26e 130515f0 addi         a0, a0, -0xff
+8003d272 e3eca6f0 bltu         a3, a0, -0xe8
+8003d276 83d7e5ff lhu          a5, -2(a1)
+8003d27a 0145     c.li         a0, 0
+8003d27c e368f7f0 bltu         a4, a5, -0xf0
+8003d280 83d40500 lhu          s1, 0(a1)
+8003d284 e3f4f4f0 bgeu         s1, a5, -0xf8
+8003d288 7d16     c.addi       a2, -1
+8003d28a 9905     c.addi       a1, 6
+8003d28c 79fe     c.bnez       a2, -0x22
+8003d28e 0545     c.li         a0, 1
+8003d290 f5bd     c.j          -0x104
+8003d292 83450500 lbu          a1, 0(a0)
+8003d296 938515f0 addi         a1, a1, -0xff
+8003d29a 130600f4 addi         a2, zero, -0xc0
+8003d29e 636fb606 bltu         a2, a1, 0x7e
+8003d2a2 83562500 lhu          a3, 2(a0)
+8003d2a6 03564500 lhu          a2, 4(a0)
+8003d2aa 8145     c.li         a1, 0
+8003d2ac 63f9c606 bgeu         a3, a2, 0x72
+8003d2b0 8966     c.lui        a3, 2
+8003d2b2 93860671 addi         a3, a3, 0x710
+8003d2b6 63e4c606 bltu         a3, a2, 0x68
+8003d2ba 83556500 lhu          a1, 6(a0)
+8003d2be b9ed     c.bnez       a1, 0x5e
+8003d2c0 8355e500 lhu          a1, 0xe(a0)
+8003d2c4 a1ed     c.bnez       a1, 0x58
+8003d2c6 0356c500 lhu          a2, 0xc(a0)
+8003d2ca 8965     c.lui        a1, 2
+8003d2cc 93850571 addi         a1, a1, 0x710
+8003d2d0 6316b604 bne          a2, a1, 0x4c
+8003d2d4 03564501 lhu          a2, 0x14(a0)
+8003d2d8 6312b604 bne          a2, a1, 0x44
+8003d2dc 03568500 lhu          a2, 8(a0)
+8003d2e0 15ce     c.beqz       a2, 0x3c
+8003d2e2 83550501 lhu          a1, 0x10(a0)
+8003d2e6 8966     c.lui        a3, 2
+8003d2e8 93861671 addi         a3, a3, 0x711
+8003d2ec 63f8d502 bgeu         a1, a3, 0x30
+8003d2f0 8356a500 lhu          a3, 0xa(a0)
+8003d2f4 6374d602 bgeu         a2, a3, 0x28
+8003d2f8 03552501 lhu          a0, 0x12(a0)
+8003d2fc 0966     c.lui        a2, 2
+8003d2fe 9182     c.srli       a3, 4
+8003d300 13061671 addi         a2, a2, 0x711
+8003d304 93b61627 sltiu        a3, a3, 0x271
+8003d308 3336c500 sltu         a2, a0, a2
+8003d30c 3335b500 sltu         a0, a0, a1
+8003d310 13451500 xori         a0, a0, 1
+8003d314 b375d600 and          a1, a2, a3
+8003d318 e98d     c.and        a1, a0
+8003d31a 11a0     c.j          4
+8003d31c 8145     c.li         a1, 0
+8003d31e 2e85     c.mv         a0, a1
+8003d320 8280     c.jr         ra
+8003d322 15c1     c.beqz       a0, 0x24
+8003d324 4111     c.addi       sp, -0x10
+8003d326 06c6     c.swsp       ra, 0xc(sp)
+8003d328 22c4     c.swsp       s0, 8(sp)
+8003d32a 2a84     c.mv         s0, a0
+8003d32c 13064002 addi         a2, zero, 0x24
+8003d330 8145     c.li         a1, 0
+8003d332 97300000 auipc        ra, 3
+8003d336 e78080c3 jalr         ra, ra, -0x3c8
+8003d33a 0545     c.li         a0, 1
+8003d33c a306a400 sb           a0, 0xd(s0)
+8003d340 b240     c.lwsp       ra, 0xc(sp)
+8003d342 2244     c.lwsp       s0, 8(sp)
+8003d344 4101     c.addi       sp, 0x10
+8003d346 8280     c.jr         ra
+8003d348 0111     c.addi       sp, -0x20
+8003d34a 06ce     c.swsp       ra, 0x1c(sp)
+8003d34c 22cc     c.swsp       s0, 0x18(sp)
+8003d34e 26ca     c.swsp       s1, 0x14(sp)
+8003d350 4ac8     c.swsp       s2, 0x10(sp)
+8003d352 4ec6     c.swsp       s3, 0xc(sp)
+8003d354 52c4     c.swsp       s4, 8(sp)
+8003d356 2a89     c.mv         s2, a0
+8003d358 97000000 auipc        ra, 0
+8003d35c e780a0e0 jalr         ra, ra, -0x1f6
+8003d360 63020512 beqz         a0, 0x124
+8003d364 014e     c.li         t3, 0
+8003d366 0145     c.li         a0, 0
+8003d368 8145     c.li         a1, 0
+8003d36a 854e     c.li         t4, 1
+8003d36c 13088900 addi         a6, s2, 8
+8003d370 9308090d addi         a7, s2, 0xd0
+8003d374 93024006 addi         t0, zero, 0x64
+8003d378 5943     c.li         t1, 0x16
+8003d37a 8543     c.li         t2, 1
+8003d37c 33075e02 mul          a4, t3, t0
+8003d380 4297     c.add        a4, a6
+8003d382 130f0703 addi         t5, a4, 0x30
+8003d386 8549     c.li         s3, 1
+8003d388 83440700 lbu          s1, 0(a4)
+8003d38c 03476701 lbu          a4, 0x16(a4)
+8003d390 b3969e00 sll          a3, t4, s1
+8003d394 938704fe addi         a5, s1, -0x20
+8003d398 3394ee00 sll          s0, t4, a4
+8003d39c 930f07fe addi         t6, a4, -0x20
+8003d3a0 13d6f701 srli         a2, a5, 0x1f
+8003d3a4 fd87     c.srai       a5, 0x1f
+8003d3a6 7d16     c.addi       a2, -1
+8003d3a8 f58f     c.and        a5, a3
+8003d3aa 337ad600 and          s4, a2, a3
+8003d3ae 93d6ff41 srai         a3, t6, 0x1f
+8003d3b2 13d6ff01 srli         a2, t6, 0x1f
+8003d3b6 e18e     c.and        a3, s0
+8003d3b8 7d16     c.addi       a2, -1
+8003d3ba 618e     c.and        a2, s0
+8003d3bc 93b40404 sltiu        s1, s1, 0x40
+8003d3c0 13370704 sltiu        a4, a4, 0x40
+8003d3c4 b3049040 neg          s1, s1
+8003d3c8 3307e040 neg          a4, a4
+8003d3cc e58f     c.and        a5, s1
+8003d3ce f98e     c.and        a3, a4
+8003d3d0 b3f44401 and          s1, s1, s4
+8003d3d4 798e     c.and        a2, a4
+8003d3d6 5d8d     c.or         a0, a5
+8003d3d8 c58d     c.or         a1, s1
+8003d3da 558d     c.or         a0, a3
+8003d3dc 93f61900 andi         a3, s3, 1
+8003d3e0 d18d     c.or         a1, a2
+8003d3e2 7a87     c.mv         a4, t5
+8003d3e4 8149     c.li         s3, 0
+8003d3e6 cdf2     c.bnez       a3, -0x5e
+8003d3e8 b3066e02 mul          a3, t3, t1
+8003d3ec c696     c.add        a3, a7
+8003d3ee 83c60600 lbu          a3, 0(a3)
+8003d3f2 13f71300 andi         a4, t2, 1
+8003d3f6 93b70604 sltiu        a5, a3, 0x40
+8003d3fa b394de00 sll          s1, t4, a3
+8003d3fe 8116     c.addi       a3, -0x20
+8003d400 13d4f641 srai         s0, a3, 0x1f
+8003d404 fd82     c.srli       a3, 0x1f
+8003d406 b307f040 neg          a5, a5
+8003d40a 658c     c.and        s0, s1
+8003d40c fd16     c.addi       a3, -1
+8003d40e e58e     c.and        a3, s1
+8003d410 7d8c     c.and        s0, a5
+8003d412 fd8e     c.and        a3, a5
+8003d414 418d     c.or         a0, s0
+8003d416 d58d     c.or         a1, a3
+8003d418 054e     c.li         t3, 1
+8003d41a 8143     c.li         t2, 0
+8003d41c 25f3     c.bnez       a4, -0xa0
+8003d41e 1307c90f addi         a4, s2, 0xfc
+8003d422 93068913 addi         a3, s2, 0x138
+8003d426 03460700 lbu          a2, 0(a4)
+8003d42a 1907     c.addi       a4, 6
+8003d42c 93370604 sltiu        a5, a2, 0x40
+8003d430 b394ce00 sll          s1, t4, a2
+8003d434 0116     c.addi       a2, -0x20
+8003d436 1354f641 srai         s0, a2, 0x1f
+8003d43a 7d82     c.srli       a2, 0x1f
+8003d43c b307f040 neg          a5, a5
+8003d440 658c     c.and        s0, s1
+8003d442 7d16     c.addi       a2, -1
+8003d444 658e     c.and        a2, s1
+8003d446 7d8c     c.and        s0, a5
+8003d448 7d8e     c.and        a2, a5
+8003d44a 418d     c.or         a0, s0
+8003d44c d18d     c.or         a1, a2
+8003d44e e31cd7fc bne          a4, a3, -0x28
+8003d452 13070915 addi         a4, s2, 0x150
+8003d456 03c60600 lbu          a2, 0(a3)
+8003d45a 9906     c.addi       a3, 6
+8003d45c 93370604 sltiu        a5, a2, 0x40
+8003d460 b394ce00 sll          s1, t4, a2
+8003d464 0116     c.addi       a2, -0x20
+8003d466 1354f641 srai         s0, a2, 0x1f
+8003d46a 7d82     c.srli       a2, 0x1f
+8003d46c b307f040 neg          a5, a5
+8003d470 658c     c.and        s0, s1
+8003d472 7d16     c.addi       a2, -1
+8003d474 658e     c.and        a2, s1
+8003d476 7d8c     c.and        s0, a5
+8003d478 7d8e     c.and        a2, a5
+8003d47a 418d     c.or         a0, s0
+8003d47c d18d     c.or         a1, a2
+8003d47e e39ce6fc bne          a3, a4, -0x28
+8003d482 11a0     c.j          4
+8003d484 8145     c.li         a1, 0
+8003d486 f240     c.lwsp       ra, 0x1c(sp)
+8003d488 6244     c.lwsp       s0, 0x18(sp)
+8003d48a d244     c.lwsp       s1, 0x14(sp)
+8003d48c 4249     c.lwsp       s2, 0x10(sp)
+8003d48e b249     c.lwsp       s3, 0xc(sp)
+8003d490 224a     c.lwsp       s4, 8(sp)
+8003d492 0561     c.addi16sp   sp, 0x20
+8003d494 8280     c.jr         ra
+8003d496 09c9     c.beqz       a0, 0x12
+8003d498 4c41     c.lw         a1, 4(a0)
+8003d49a 0546     c.li         a2, 1
+8003d49c 6396c500 bne          a1, a2, 0xc
+8003d4a0 17030000 auipc        t1, 0
+8003d4a4 670083ea jalr         zero, t1, -0x158
+8003d4a8 0145     c.li         a0, 0
+8003d4aa 8145     c.li         a1, 0
+8003d4ac 8280     c.jr         ra
+8003d4ae 630c080c beqz         a6, 0xd8
+8003d4b2 0111     c.addi       sp, -0x20
+8003d4b4 06ce     c.swsp       ra, 0x1c(sp)
+8003d4b6 22cc     c.swsp       s0, 0x18(sp)
+8003d4b8 26ca     c.swsp       s1, 0x14(sp)
+8003d4ba 4ac8     c.swsp       s2, 0x10(sp)
+8003d4bc 4ec6     c.swsp       s3, 0xc(sp)
+8003d4be 52c4     c.swsp       s4, 8(sp)
+8003d4c0 56c2     c.swsp       s5, 4(sp)
+8003d4c2 5ac0     c.swsp       s6, 0(sp)
+8003d4c4 c284     c.mv         s1, a6
+8003d4c6 2a8a     c.mv         s4, a0
+8003d4c8 23100800 sh           zero, 0(a6)
+8003d4cc 23110800 sh           zero, 2(a6)
+8003d4d0 23120800 sh           zero, 4(a6)
+8003d4d4 23130800 sh           zero, 6(a6)
+8003d4d8 23140800 sh           zero, 8(a6)
+8003d4dc 23150800 sh           zero, 0xa(a6)
+8003d4e0 23160800 sh           zero, 0xc(a6)
+8003d4e4 5dc1     c.beqz       a0, 0xa6
+8003d4e6 3e84     c.mv         s0, a5
+8003d4e8 ba8a     c.mv         s5, a4
+8003d4ea 368b     c.mv         s6, a3
+8003d4ec b289     c.mv         s3, a2
+8003d4ee 2e89     c.mv         s2, a1
+8003d4f0 2e85     c.mv         a0, a1
+8003d4f2 97000000 auipc        ra, 0
+8003d4f6 e78000c7 jalr         ra, ra, -0x390
+8003d4fa 63890906 beqz         s3, 0x72
+8003d4fe 3dc5     c.beqz       a0, 0x6e
+8003d500 0345ca00 lbu          a0, 0xc(s4)
+8003d504 09cd     c.beqz       a0, 0x1a
+8003d506 03250a00 lw           a0, 0(s4)
+8003d50a 83250900 lw           a1, 0(s2)
+8003d50e 6318b500 bne          a0, a1, 0x10
+8003d512 83258a00 lw           a1, 8(s4)
+8003d516 03254900 lw           a0, 4(s2)
+8003d51a 6386a502 beq          a1, a0, 0x2c
+8003d51e 13064002 addi         a2, zero, 0x24
+8003d522 5285     c.mv         a0, s4
+8003d524 8145     c.li         a1, 0
+8003d526 97300000 auipc        ra, 3
+8003d52a e78040a4 jalr         ra, ra, -0x5bc
+8003d52e 13051010 addi         a0, zero, 0x101
+8003d532 2316aa00 sh           a0, 0xc(s4)
+8003d536 03250900 lw           a0, 0(s2)
+8003d53a 83254900 lw           a1, 4(s2)
+8003d53e 2320aa00 sw           a0, 0(s4)
+8003d542 2324ba00 sw           a1, 8(s4)
+8003d546 0545     c.li         a0, 1
+8003d548 23228a00 sw           s0, 4(s4)
+8003d54c 2307aa00 sb           a0, 0xe(s4)
+8003d550 9dcd     c.beqz       a1, 0x3e
+8003d552 4a85     c.mv         a0, s2
+8003d554 97000000 auipc        ra, 0
+8003d558 e78040df jalr         ra, ra, -0x20c
+8003d55c 13c6faff not          a2, s5
+8003d560 9346fbff not          a3, s6
+8003d564 758d     c.and        a0, a3
+8003d566 f18d     c.and        a1, a2
+8003d568 4d8d     c.or         a0, a1
+8003d56a 39c1     c.beqz       a0, 0x46
+8003d56c 13064002 addi         a2, zero, 0x24
+8003d570 5285     c.mv         a0, s4
+8003d572 8145     c.li         a1, 0
+8003d574 97300000 auipc        ra, 3
+8003d578 e780609f jalr         ra, ra, -0x60a
+8003d57c 0145     c.li         a0, 0
+8003d57e 8545     c.li         a1, 1
+8003d580 a306ba00 sb           a1, 0xd(s4)
+8003d584 6dac     c.j          0x2ba
+8003d586 0145     c.li         a0, 0
+8003d588 8280     c.jr         ra
+8003d58a 0145     c.li         a0, 0
+8003d58c 4dac     c.j          0x2b2
+8003d58e a306aa00 sb           a0, 0xd(s4)
+8003d592 231a0a00 sh           zero, 0x14(s4)
+8003d596 231b0a00 sh           zero, 0x16(s4)
+8003d59a 231c0a00 sh           zero, 0x18(s4)
+8003d59e 231d0a00 sh           zero, 0x1a(s4)
+8003d5a2 231e0a00 sh           zero, 0x1c(s4)
+8003d5a6 231f0a00 sh           zero, 0x1e(s4)
+8003d5aa 23100a02 sh           zero, 0x20(s4)
+8003d5ae 41ac     c.j          0x290
+8003d5b0 8345da00 lbu          a1, 0xd(s4)
+8003d5b4 13058900 addi         a0, s2, 8
+8003d5b8 63830512 beqz         a1, 0x126
+8003d5bc 8143     c.li         t2, 0
+8003d5be 1308090d addi         a6, s2, 0xd0
+8003d5c2 0543     c.li         t1, 1
+8003d5c4 93024006 addi         t0, zero, 0x64
+8003d5c8 9306f00f addi         a3, zero, 0xff
+8003d5cc d948     c.li         a7, 0x16
+8003d5ce 0964     c.lui        s0, 2
+8003d5d0 13040471 addi         s0, s0, 0x710
+8003d5d4 b3855302 mul          a1, t2, t0
+8003d5d8 aa95     c.add        a1, a0
+8003d5da 13860503 addi         a2, a1, 0x30
+8003d5de 8547     c.li         a5, 1
+8003d5e0 03c70500 lbu          a4, 0(a1)
+8003d5e4 630dd700 beq          a4, a3, 0x1a
+8003d5e8 0607     c.slli       a4, 1
+8003d5ea 4e97     c.add        a4, s3
+8003d5ec 83540700 lhu          s1, 0(a4)
+8003d5f0 63e38400 bltu         s1, s0, 6
+8003d5f4 a284     c.mv         s1, s0
+8003d5f6 03d72500 lhu          a4, 2(a1)
+8003d5fa 6363970c bltu         a4, s1, 0xc6
+8003d5fe 03c76501 lbu          a4, 0x16(a1)
+8003d602 630dd700 beq          a4, a3, 0x1a
+8003d606 0607     c.slli       a4, 1
+8003d608 4e97     c.add        a4, s3
+8003d60a 03570700 lhu          a4, 0(a4)
+8003d60e 63638700 bltu         a4, s0, 6
+8003d612 2287     c.mv         a4, s0
+8003d614 83d58501 lhu          a1, 0x18(a1)
+8003d618 63e4e50a bltu         a1, a4, 0xa8
+8003d61c 13f71700 andi         a4, a5, 1
+8003d620 b285     c.mv         a1, a2
+8003d622 8147     c.li         a5, 0
+8003d624 55ff     c.bnez       a4, -0x44
+8003d626 b3851303 mul          a1, t2, a7
+8003d62a c295     c.add        a1, a6
+8003d62c 03c60500 lbu          a2, 0(a1)
+8003d630 630dd600 beq          a2, a3, 0x1a
+8003d634 0606     c.slli       a2, 1
+8003d636 4e96     c.add        a2, s3
+8003d638 03560600 lhu          a2, 0(a2)
+8003d63c 63638600 bltu         a2, s0, 6
+8003d640 2286     c.mv         a2, s0
+8003d642 83d52500 lhu          a1, 2(a1)
+8003d646 63edc506 bltu         a1, a2, 0x7a
+8003d64a 93751300 andi         a1, t1, 1
+8003d64e 8543     c.li         t2, 1
+8003d650 0143     c.li         t1, 0
+8003d652 c9f1     c.bnez       a1, -0x7e
+8003d654 13050910 addi         a0, s2, 0x100
+8003d658 a945     c.li         a1, 0xa
+8003d65a 1306f00f addi         a2, zero, 0xff
+8003d65e 8966     c.lui        a3, 2
+8003d660 93860671 addi         a3, a3, 0x710
+8003d664 0347c5ff lbu          a4, -4(a0)
+8003d668 630dc700 beq          a4, a2, 0x1a
+8003d66c 0607     c.slli       a4, 1
+8003d66e 4e97     c.add        a4, s3
+8003d670 03570700 lhu          a4, 0(a4)
+8003d674 6363d700 bltu         a4, a3, 6
+8003d678 3687     c.mv         a4, a3
+8003d67a 83570500 lhu          a5, 0(a0)
+8003d67e 63e1e704 bltu         a5, a4, 0x42
+8003d682 fd15     c.addi       a1, -1
+8003d684 1905     c.addi       a0, 6
+8003d686 f9fd     c.bnez       a1, -0x22
+8003d688 1305c913 addi         a0, s2, 0x13c
+8003d68c 9145     c.li         a1, 4
+8003d68e 1306f00f addi         a2, zero, 0xff
+8003d692 8966     c.lui        a3, 2
+8003d694 93860671 addi         a3, a3, 0x710
+8003d698 0347c5ff lbu          a4, -4(a0)
+8003d69c 630dc700 beq          a4, a2, 0x1a
+8003d6a0 0607     c.slli       a4, 1
+8003d6a2 4e97     c.add        a4, s3
+8003d6a4 03570700 lhu          a4, 0(a4)
+8003d6a8 6363d700 bltu         a4, a3, 6
+8003d6ac 3687     c.mv         a4, a3
+8003d6ae 83570500 lhu          a5, 0(a0)
+8003d6b2 63e7e700 bltu         a5, a4, 0xe
+8003d6b6 fd15     c.addi       a1, -1
+8003d6b8 1905     c.addi       a0, 6
+8003d6ba f9fd     c.bnez       a1, -0x22
+8003d6bc a3060a00 sb           zero, 0xd(s4)
+8003d6c0 231a0a00 sh           zero, 0x14(s4)
+8003d6c4 231b0a00 sh           zero, 0x16(s4)
+8003d6c8 231c0a00 sh           zero, 0x18(s4)
+8003d6cc 231d0a00 sh           zero, 0x1a(s4)
+8003d6d0 231e0a00 sh           zero, 0x1c(s4)
+8003d6d4 231f0a00 sh           zero, 0x1e(s4)
+8003d6d8 23100a02 sh           zero, 0x20(s4)
+8003d6dc 85a2     c.j          0x160
+8003d6de 93862400 addi         a3, s1, 2
+8003d6e2 13844400 addi         s0, s1, 4
+8003d6e6 938a6400 addi         s5, s1, 6
+8003d6ea ce85     c.mv         a1, s3
+8003d6ec 2686     c.mv         a2, s1
+8003d6ee 97000000 auipc        ra, 0
+8003d6f2 e7804016 jalr         ra, ra, 0x164
+8003d6f6 1305c906 addi         a0, s2, 0x6c
+8003d6fa ce85     c.mv         a1, s3
+8003d6fc 2286     c.mv         a2, s0
+8003d6fe d686     c.mv         a3, s5
+8003d700 97000000 auipc        ra, 0
+8003d704 e7802015 jalr         ra, ra, 0x152
+8003d708 1305090d addi         a0, s2, 0xd0
+8003d70c ce85     c.mv         a1, s3
+8003d70e 97000000 auipc        ra, 0
+8003d712 e7800027 jalr         ra, ra, 0x270
+8003d716 93158500 slli         a1, a0, 8
+8003d71a 898d     c.sub        a1, a0
+8003d71c 37351a00 lui          a0, 0x1a3
+8003d720 1304356e addi         s0, a0, 0x6e3
+8003d724 33b58502 mulhu        a0, a1, s0
+8003d728 0981     c.srli       a0, 2
+8003d72a 2384a400 sb           a0, 8(s1)
+8003d72e 1305690e addi         a0, s2, 0xe6
+8003d732 ce85     c.mv         a1, s3
+8003d734 97000000 auipc        ra, 0
+8003d738 e780a024 jalr         ra, ra, 0x24a
+8003d73c 8145     c.li         a1, 0
+8003d73e 93168500 slli         a3, a0, 8
+8003d742 13060910 addi         a2, s2, 0x100
+8003d746 0548     c.li         a6, 1
+8003d748 898e     c.sub        a3, a0
+8003d74a 9308f00f addi         a7, zero, 0xff
+8003d74e b3b68602 mulhu        a3, a3, s0
+8003d752 2947     c.li         a4, 0xa
+8003d754 8982     c.srli       a3, 2
+8003d756 a384d400 sb           a3, 9(s1)
+8003d75a 0964     c.lui        s0, 2
+8003d75c 13040471 addi         s0, s0, 0x710
+8003d760 8346c6ff lbu          a3, -4(a2)
+8003d764 63881603 beq          a3, a7, 0x30
+8003d768 8606     c.slli       a3, 1
+8003d76a ce96     c.add        a3, s3
+8003d76c 83d70600 lhu          a5, 0(a3)
+8003d770 63e38700 bltu         a5, s0, 6
+8003d774 a287     c.mv         a5, s0
+8003d776 03550a01 lhu          a0, 0x10(s4)
+8003d77a b316b800 sll          a3, a6, a1
+8003d77e 758d     c.and        a0, a3
+8003d780 19cd     c.beqz       a0, 0x1e
+8003d782 03550600 lhu          a0, 0(a2)
+8003d786 6377f500 bgeu         a0, a5, 0xe
+8003d78a 0395a400 lh           a0, 0xa(s1)
+8003d78e 558d     c.or         a0, a3
+8003d790 2395a400 sh           a0, 0xa(s1)
+8003d794 8505     c.addi       a1, 1
+8003d796 1906     c.addi       a2, 6
+8003d798 e394e5fc bne          a1, a4, -0x38
+8003d79c 31a0     c.j          0xc
+8003d79e 0355e6ff lhu          a0, -2(a2)
+8003d7a2 e3f4a7fe bgeu         a5, a0, -0x18
+8003d7a6 fdb7     c.j          -0x12
+8003d7a8 8145     c.li         a1, 0
+8003d7aa 0147     c.li         a4, 0
+8003d7ac 1306c913 addi         a2, s2, 0x13c
+8003d7b0 0548     c.li         a6, 1
+8003d7b2 9308f00f addi         a7, zero, 0xff
+8003d7b6 9142     c.li         t0, 4
+8003d7b8 8966     c.lui        a3, 2
+8003d7ba 93860671 addi         a3, a3, 0x710
+8003d7be 0345c6ff lbu          a0, -4(a2)
+8003d7c2 63041503 beq          a0, a7, 0x28
+8003d7c6 0605     c.slli       a0, 1
+8003d7c8 4e95     c.add        a0, s3
+8003d7ca 03540500 lhu          s0, 0(a0)
+8003d7ce 6363d400 bltu         s0, a3, 6
+8003d7d2 3684     c.mv         s0, a3
+8003d7d4 83472a01 lbu          a5, 0x12(s4)
+8003d7d8 3315b800 sll          a0, a6, a1
+8003d7dc e98f     c.and        a5, a0
+8003d7de 99cb     c.beqz       a5, 0x16
+8003d7e0 83570600 lhu          a5, 0(a2)
+8003d7e4 63f38700 bgeu         a5, s0, 6
+8003d7e8 498f     c.or         a4, a0
+8003d7ea 8505     c.addi       a1, 1
+8003d7ec 1906     c.addi       a2, 6
+8003d7ee e39855fc bne          a1, t0, -0x30
+8003d7f2 31a0     c.j          0xc
+8003d7f4 8357e6ff lhu          a5, -2(a2)
+8003d7f8 e378f4fe bgeu         s0, a5, -0x10
+8003d7fc fdb7     c.j          -0x12
+8003d7fe 0395a400 lh           a0, 0xa(s1)
+8003d802 93753700 andi         a1, a4, 3
+8003d806 0d46     c.li         a2, 3
+8003d808 2318aa00 sh           a0, 0x10(s4)
+8003d80c 2309ea00 sb           a4, 0x12(s4)
+8003d810 6384c500 beq          a1, a2, 8
+8003d814 ba85     c.mv         a1, a4
+8003d816 19a0     c.j          6
+8003d818 9375c7ff andi         a1, a4, -4
+8003d81c 318b     c.andi       a4, 0xc
+8003d81e 3145     c.li         a0, 0xc
+8003d820 6314a700 bne          a4, a0, 8
+8003d824 93f5350f andi         a1, a1, 0xf3
+8003d828 2386b400 sb           a1, 0xc(s1)
+8003d82c 13054a01 addi         a0, s4, 0x14
+8003d830 3946     c.li         a2, 0xe
+8003d832 a685     c.mv         a1, s1
+8003d834 97200000 auipc        ra, 2
+8003d838 e780a071 jalr         ra, ra, 0x71a
+8003d83c 0545     c.li         a0, 1
+8003d83e f240     c.lwsp       ra, 0x1c(sp)
+8003d840 6244     c.lwsp       s0, 0x18(sp)
+8003d842 d244     c.lwsp       s1, 0x14(sp)
+8003d844 4249     c.lwsp       s2, 0x10(sp)
+8003d846 b249     c.lwsp       s3, 0xc(sp)
+8003d848 224a     c.lwsp       s4, 8(sp)
+8003d84a 924a     c.lwsp       s5, 4(sp)
+8003d84c 024b     c.lwsp       s6, 0(sp)
+8003d84e 0561     c.addi16sp   sp, 0x20
+8003d850 8280     c.jr         ra
+8003d852 0111     c.addi       sp, -0x20
+8003d854 06ce     c.swsp       ra, 0x1c(sp)
+8003d856 22cc     c.swsp       s0, 0x18(sp)
+8003d858 26ca     c.swsp       s1, 0x14(sp)
+8003d85a 4ac8     c.swsp       s2, 0x10(sp)
+8003d85c 4ec6     c.swsp       s3, 0xc(sp)
+8003d85e 52c4     c.swsp       s4, 8(sp)
+8003d860 3689     c.mv         s2, a3
+8003d862 b289     c.mv         s3, a2
+8003d864 2e84     c.mv         s0, a1
+8003d866 aa84     c.mv         s1, a0
+8003d868 97000000 auipc        ra, 0
+8003d86c e7806040 jalr         ra, ra, 0x406
+8003d870 2a8a     c.mv         s4, a0
+8003d872 13850403 addi         a0, s1, 0x30
+8003d876 a285     c.mv         a1, s0
+8003d878 97000000 auipc        ra, 0
+8003d87c e780603f jalr         ra, ra, 0x3f6
+8003d880 83c52406 lbu          a1, 0x62(s1)
+8003d884 b5c9     c.beqz       a1, 0x74
+8003d886 b3054a03 mul          a1, s4, s4
+8003d88a 3306a502 mul          a2, a0, a0
+8003d88e b295     c.add        a1, a2
+8003d890 b7060040 lui          a3, 0x40000
+8003d894 3686     c.mv         a2, a3
+8003d896 8982     c.srli       a3, 2
+8003d898 e3eec5fe bltu         a1, a2, -4
+8003d89c 8146     c.li         a3, 0
+8003d89e 11ce     c.beqz       a2, 0x1c
+8003d8a0 2e87     c.mv         a4, a1
+8003d8a2 b387c600 add          a5, a3, a2
+8003d8a6 8582     c.srli       a3, 1
+8003d8a8 3334f700 sltu         s0, a4, a5
+8003d8ac 7d14     c.addi       s0, -1
+8003d8ae e18f     c.and        a5, s0
+8003d8b0 718c     c.and        s0, a2
+8003d8b2 0982     c.srli       a2, 2
+8003d8b4 1d8f     c.sub        a4, a5
+8003d8b6 a296     c.add        a3, s0
+8003d8b8 6df6     c.bnez       a2, -0x16
+8003d8ba 03d60406 lhu          a2, 0x60(s1)
+8003d8be 3387d602 mul          a4, a3, a3
+8003d8c2 b335b700 sltu         a1, a4, a1
+8003d8c6 ae96     c.add        a3, a1
+8003d8c8 637ed608 bgeu         a2, a3, 0x9c
+8003d8cc 8965     c.lui        a1, 2
+8003d8ce 93850571 addi         a1, a1, 0x710
+8003d8d2 3687     c.mv         a4, a3
+8003d8d4 63e3b600 bltu         a3, a1, 6
+8003d8d8 2e87     c.mv         a4, a1
+8003d8da 118f     c.sub        a4, a2
+8003d8dc 3386c540 sub          a2, a1, a2
+8003d8e0 b305b702 mul          a1, a4, a1
+8003d8e4 b3d5c502 divu         a1, a1, a2
+8003d8e8 33864503 mul          a2, a1, s4
+8003d8ec 3385a502 mul          a0, a1, a0
+8003d8f0 334ad602 div          s4, a2, a3
+8003d8f4 3345d502 div          a0, a0, a3
+8003d8f8 634e0a00 bltz         s4, 0x1c
+8003d8fc 9315fa00 slli         a1, s4, 0xf
+8003d900 b3854541 sub          a1, a1, s4
+8003d904 3716b7d1 lui          a2, 0xd1b71
+8003d908 13069675 addi         a2, a2, 0x759
+8003d90c b3b5c502 mulhu        a1, a1, a2
+8003d910 b581     c.srli       a1, 0xd
+8003d912 29a8     c.j          0x1a
+8003d914 3e0a     c.slli       s4, 0xf
+8003d916 b715b7d1 lui          a1, 0xd1b71
+8003d91a 33064041 neg          a2, s4
+8003d91e 93859575 addi         a1, a1, 0x759
+8003d922 b335b602 mulhu        a1, a2, a1
+8003d926 b581     c.srli       a1, 0xd
+8003d928 b305b040 neg          a1, a1
+8003d92c 2390b900 sh           a1, 0(s3)
+8003d930 634d0500 bltz         a0, 0x1a
+8003d934 9315f500 slli         a1, a0, 0xf
+8003d938 898d     c.sub        a1, a0
+8003d93a 3715b7d1 lui          a0, 0xd1b71
+8003d93e 13059575 addi         a0, a0, 0x759
+8003d942 33b5a502 mulhu        a0, a1, a0
+8003d946 3581     c.srli       a0, 0xd
+8003d948 0da0     c.j          0x22
+8003d94a 3e05     c.slli       a0, 0xf
+8003d94c b715b7d1 lui          a1, 0xd1b71
+8003d950 3305a040 neg          a0, a0
+8003d954 93859575 addi         a1, a1, 0x759
+8003d958 3335b502 mulhu        a0, a0, a1
+8003d95c 3581     c.srli       a0, 0xd
+8003d95e 3305a040 neg          a0, a0
+8003d962 21a0     c.j          8
+8003d964 0145     c.li         a0, 0
+8003d966 23900900 sh           zero, 0(s3)
+8003d96a 2310a900 sh           a0, 0(s2)
+8003d96e f240     c.lwsp       ra, 0x1c(sp)
+8003d970 6244     c.lwsp       s0, 0x18(sp)
+8003d972 d244     c.lwsp       s1, 0x14(sp)
+8003d974 4249     c.lwsp       s2, 0x10(sp)
+8003d976 b249     c.lwsp       s3, 0xc(sp)
+8003d978 224a     c.lwsp       s4, 8(sp)
+8003d97a 0561     c.addi16sp   sp, 0x20
+8003d97c 8280     c.jr         ra
+8003d97e 03460500 lbu          a2, 0(a0)
+8003d982 9306f00f addi         a3, zero, 0xff
+8003d986 6308d604 beq          a2, a3, 0x50
+8003d98a 0606     c.slli       a2, 1
+8003d98c b295     c.add        a1, a2
+8003d98e 83d50500 lhu          a1, 0(a1)
+8003d992 0966     c.lui        a2, 2
+8003d994 13060671 addi         a2, a2, 0x710
+8003d998 63e3c500 bltu         a1, a2, 6
+8003d99c b285     c.mv         a1, a2
+8003d99e 03562500 lhu          a2, 2(a0)
+8003d9a2 637ab602 bgeu         a2, a1, 0x34
+8003d9a6 83564500 lhu          a3, 4(a0)
+8003d9aa 0967     c.lui        a4, 2
+8003d9ac 63fad502 bgeu         a1, a3, 0x34
+8003d9b0 b387c540 sub          a5, a1, a2
+8003d9b4 93050771 addi         a1, a4, 0x710
+8003d9b8 3387b702 mul          a4, a5, a1
+8003d9bc 918e     c.sub        a3, a2
+8003d9be 3356d702 divu         a2, a4, a3
+8003d9c2 4105     c.addi       a0, 0x10
+8003d9c4 8d46     c.li         a3, 3
+8003d9c6 035785ff lhu          a4, -8(a0)
+8003d9ca 637ec700 bgeu         a4, a2, 0x1c
+8003d9ce fd16     c.addi       a3, -1
+8003d9d0 0905     c.addi       a0, 2
+8003d9d2 99c2     c.beqz       a3, 6
+8003d9d4 cdbf     c.j          -0xe
+8003d9d6 8145     c.li         a1, 0
+8003d9d8 13950501 slli         a0, a1, 0x10
+8003d9dc 4181     c.srli       a0, 0x10
+8003d9de 8280     c.jr         ra
+8003d9e0 93050771 addi         a1, a4, 0x710
+8003d9e4 d5bf     c.j          -0xc
+8003d9e6 835565ff lhu          a1, -0xa(a0)
+8003d9ea 8356e5ff lhu          a3, -2(a0)
+8003d9ee 03550500 lhu          a0, 0(a0)
+8003d9f2 0d8e     c.sub        a2, a1
+8003d9f4 158d     c.sub        a0, a3
+8003d9f6 3305c502 mul          a0, a0, a2
+8003d9fa 0d8f     c.sub        a4, a1
+8003d9fc b355e502 divu         a1, a0, a4
+8003da00 b695     c.add        a1, a3
+8003da02 d9bf     c.j          -0x2a
+8003da04 0147     c.li         a4, 0
+8003da06 25c1     c.beqz       a0, 0x60
+8003da08 b9ce     c.beqz       a3, 0x5e
+8003da0a 0347e500 lbu          a4, 0xe(a0)
+8003da0e 21cf     c.beqz       a4, 0x58
+8003da10 5841     c.lw         a4, 4(a0)
+8003da12 998d     c.sub        a1, a4
+8003da14 6378b604 bgeu         a2, a1, 0x50
+8003da18 23900600 sh           zero, 0(a3)
+8003da1c 23910600 sh           zero, 2(a3)
+8003da20 23920600 sh           zero, 4(a3)
+8003da24 23930600 sh           zero, 6(a3)
+8003da28 23940600 sh           zero, 8(a3)
+8003da2c 23950600 sh           zero, 0xa(a3)
+8003da30 23960600 sh           zero, 0xc(a3)
+8003da34 231a0500 sh           zero, 0x14(a0)
+8003da38 231b0500 sh           zero, 0x16(a0)
+8003da3c 231c0500 sh           zero, 0x18(a0)
+8003da40 231d0500 sh           zero, 0x1a(a0)
+8003da44 231e0500 sh           zero, 0x1c(a0)
+8003da48 231f0500 sh           zero, 0x1e(a0)
+8003da4c 23100502 sh           zero, 0x20(a0)
+8003da50 0547     c.li         a4, 1
+8003da52 a306e500 sb           a4, 0xd(a0)
+8003da56 23070500 sb           zero, 0xe(a0)
+8003da5a 23180500 sh           zero, 0x10(a0)
+8003da5e 23090500 sb           zero, 0x12(a0)
+8003da62 11a0     c.j          4
+8003da64 0147     c.li         a4, 0
+8003da66 3a85     c.mv         a0, a4
+8003da68 8280     c.jr         ra
+8003da6a 0146     c.li         a2, 0
+8003da6c 2dc5     c.beqz       a0, 0x6a
+8003da6e a5c5     c.beqz       a1, 0x68
+8003da70 03560500 lhu          a2, 0(a0)
+8003da74 83d60500 lhu          a3, 0(a1)
+8003da78 631ed604 bne          a2, a3, 0x5c
+8003da7c 03562500 lhu          a2, 2(a0)
+8003da80 83d62500 lhu          a3, 2(a1)
+8003da84 6318d604 bne          a2, a3, 0x50
+8003da88 03564500 lhu          a2, 4(a0)
+8003da8c 83d64500 lhu          a3, 4(a1)
+8003da90 6312d604 bne          a2, a3, 0x44
+8003da94 03566500 lhu          a2, 6(a0)
+8003da98 83d66500 lhu          a3, 6(a1)
+8003da9c 631cd602 bne          a2, a3, 0x38
+8003daa0 03468500 lbu          a2, 8(a0)
+8003daa4 83c68500 lbu          a3, 8(a1)
+8003daa8 6316d602 bne          a2, a3, 0x2c
+8003daac 03469500 lbu          a2, 9(a0)
+8003dab0 83c69500 lbu          a3, 9(a1)
+8003dab4 6310d602 bne          a2, a3, 0x20
+8003dab8 0356a500 lhu          a2, 0xa(a0)
+8003dabc 83d6a500 lhu          a3, 0xa(a1)
+8003dac0 631ad600 bne          a2, a3, 0x14
+8003dac4 0345c500 lbu          a0, 0xc(a0)
+8003dac8 83c5c500 lbu          a1, 0xc(a1)
+8003dacc 2d8d     c.xor        a0, a1
+8003dace 13361500 seqz         a2, a0
+8003dad2 11a0     c.j          4
+8003dad4 0146     c.li         a2, 0
+8003dad6 3285     c.mv         a0, a2
+8003dad8 8280     c.jr         ra
+8003dada 6dc1     c.beqz       a0, 0xe2
+8003dadc e5c1     c.beqz       a1, 0xe0
+8003dade 1546     c.li         a2, 5
+8003dae0 2380c500 sb           a2, 0(a1)
+8003dae4 0316a500 lh           a2, 0xa(a0)
+8003dae8 93166601 slli         a3, a2, 0x16
+8003daec f982     c.srli       a3, 0x1e
+8003daee a380c500 sb           a2, 1(a1)
+8003daf2 2381d500 sb           a3, 2(a1)
+8003daf6 0346c500 lbu          a2, 0xc(a0)
+8003dafa 0d48     c.li         a6, 3
+8003dafc 93783600 andi         a7, a2, 3
+8003db00 9376c600 andi         a3, a2, 0xc
+8003db04 13572600 srli         a4, a2, 2
+8003db08 93573600 srli         a5, a2, 3
+8003db0c d116     c.addi       a3, -0xc
+8003db0e b336d000 snez         a3, a3
+8003db12 758f     c.and        a4, a3
+8003db14 fd8e     c.and        a3, a5
+8003db16 638a0801 beq          a7, a6, 0x14
+8003db1a 93771600 andi         a5, a2, 1
+8003db1e 91c7     c.beqz       a5, 0xc
+8003db20 95e2     c.bnez       a3, 0x24
+8003db22 3306e040 neg          a2, a4
+8003db26 1d8a     c.andi       a2, 7
+8003db28 1da0     c.j          0x26
+8003db2a 098a     c.andi       a2, 2
+8003db2c 01ca     c.beqz       a2, 0x10
+8003db2e 0d46     c.li         a2, 3
+8003db30 6386c800 beq          a7, a2, 0xc
+8003db34 89ee     c.bnez       a3, 0x1a
+8003db36 13064700 addi         a2, a4, 4
+8003db3a 11a8     c.j          0x14
+8003db3c 11e7     c.bnez       a4, 0xc
+8003db3e 2146     c.li         a2, 8
+8003db40 91e6     c.bnez       a3, 0xc
+8003db42 31a0     c.j          0xc
+8003db44 0546     c.li         a2, 1
+8003db46 21a0     c.j          8
+8003db48 1946     c.li         a2, 6
+8003db4a 91c2     c.beqz       a3, 4
+8003db4c 0946     c.li         a2, 2
+8003db4e a381c500 sb           a2, 3(a1)
+8003db52 03160500 lh           a2, 0(a0)
+8003db56 93568600 srli         a3, a2, 8
+8003db5a 2382c500 sb           a2, 4(a1)
+8003db5e a382d500 sb           a3, 5(a1)
+8003db62 03572500 lhu          a4, 2(a0)
+8003db66 a166     c.lui        a3, 8
+8003db68 1386f6ff addi         a2, a3, -1
+8003db6c 6314d700 bne          a4, a3, 8
+8003db70 3287     c.mv         a4, a2
+8003db72 19a0     c.j          6
+8003db74 3307e040 neg          a4, a4
+8003db78 93578700 srli         a5, a4, 8
+8003db7c 2383e500 sb           a4, 6(a1)
+8003db80 a383f500 sb           a5, 7(a1)
+8003db84 03174500 lh           a4, 4(a0)
+8003db88 93578700 srli         a5, a4, 8
+8003db8c 2384e500 sb           a4, 8(a1)
+8003db90 a384f500 sb           a5, 9(a1)
+8003db94 03576500 lhu          a4, 6(a0)
+8003db98 6304d700 beq          a4, a3, 8
+8003db9c 3306e040 neg          a2, a4
+8003dba0 93568600 srli         a3, a2, 8
+8003dba4 2385c500 sb           a2, 0xa(a1)
+8003dba8 a385d500 sb           a3, 0xb(a1)
+8003dbac 03468500 lbu          a2, 8(a0)
+8003dbb0 2386c500 sb           a2, 0xc(a1)
+8003dbb4 03459500 lbu          a0, 9(a0)
+8003dbb8 a386a500 sb           a0, 0xd(a1)
+8003dbbc 8280     c.jr         ra
+8003dbbe 5dc5     c.beqz       a0, 0xae
+8003dbc0 d5c5     c.beqz       a1, 0xac
+8003dbc2 8146     c.li         a3, 0
+8003dbc4 8148     c.li         a7, 0
+8003dbc6 0357a500 lhu          a4, 0xa(a0)
+8003dbca b7070480 lui          a5, 0x80040
+8003dbce 938787fd addi         a5, a5, -0x28
+8003dbd2 2948     c.li         a6, 0xa
+8003dbd4 3356d700 srl          a2, a4, a3
+8003dbd8 058a     c.andi       a2, 1
+8003dbda 09c6     c.beqz       a2, 0xa
+8003dbdc 03960700 lh           a2, 0(a5)
+8003dbe0 b3681601 or           a7, a2, a7
+8003dbe4 8506     c.addi       a3, 1
+8003dbe6 8907     c.addi       a5, 2
+8003dbe8 e39606ff bne          a3, a6, -0x14
+8003dbec 8346c500 lbu          a3, 0xc(a0)
+8003dbf0 93f73600 andi         a5, a3, 3
+8003dbf4 0d47     c.li         a4, 3
+8003dbf6 6394e700 bne          a5, a4, 8
+8003dbfa 93f6c60f andi         a3, a3, 0xfc
+8003dbfe 13f8c600 andi         a6, a3, 0xc
+8003dc02 b147     c.li         a5, 0xc
+8003dc04 6303f800 beq          a6, a5, 6
+8003dc08 3d47     c.li         a4, 0xf
+8003dc0a f98e     c.and        a3, a4
+8003dc0c 13d78800 srli         a4, a7, 8
+8003dc10 33e61601 or           a2, a3, a7
+8003dc14 2380c500 sb           a2, 0(a1)
+8003dc18 a380e500 sb           a4, 1(a1)
+8003dc1c 03468500 lbu          a2, 8(a0)
+8003dc20 2381c500 sb           a2, 2(a1)
+8003dc24 03469500 lbu          a2, 9(a0)
+8003dc28 a381c500 sb           a2, 3(a1)
+8003dc2c 03160500 lh           a2, 0(a0)
+8003dc30 93568600 srli         a3, a2, 8
+8003dc34 2382c500 sb           a2, 4(a1)
+8003dc38 a382d500 sb           a3, 5(a1)
+8003dc3c 03162500 lh           a2, 2(a0)
+8003dc40 93568600 srli         a3, a2, 8
+8003dc44 2383c500 sb           a2, 6(a1)
+8003dc48 a383d500 sb           a3, 7(a1)
+8003dc4c 03164500 lh           a2, 4(a0)
+8003dc50 93568600 srli         a3, a2, 8
+8003dc54 2384c500 sb           a2, 8(a1)
+8003dc58 a384d500 sb           a3, 9(a1)
+8003dc5c 03156500 lh           a0, 6(a0)
+8003dc60 13568500 srli         a2, a0, 8
+8003dc64 2385a500 sb           a0, 0xa(a1)
+8003dc68 a385c500 sb           a2, 0xb(a1)
+8003dc6c 8280     c.jr         ra
+8003dc6e 4111     c.addi       sp, -0x10
+8003dc70 06c6     c.swsp       ra, 0xc(sp)
+8003dc72 22c4     c.swsp       s0, 8(sp)
+8003dc74 26c2     c.swsp       s1, 4(sp)
+8003dc76 4ac0     c.swsp       s2, 0(sp)
+8003dc78 ae84     c.mv         s1, a1
+8003dc7a 2a84     c.mv         s0, a0
+8003dc7c 97000000 auipc        ra, 0
+8003dc80 e78020d0 jalr         ra, ra, -0x2fe
+8003dc84 2a89     c.mv         s2, a0
+8003dc86 13056401 addi         a0, s0, 0x16
+8003dc8a a685     c.mv         a1, s1
+8003dc8c 97000000 auipc        ra, 0
+8003dc90 e78020cf jalr         ra, ra, -0x30e
+8003dc94 4c54     c.lw         a1, 0x2c(s0)
+8003dc96 0546     c.li         a2, 1
+8003dc98 6397c500 bne          a1, a2, 0xe
+8003dc9c 63050900 beqz         s2, 0xa
+8003dca0 19c1     c.beqz       a0, 6
+8003dca2 0145     c.li         a0, 0
+8003dca4 0da0     c.j          0x22
+8003dca6 0946     c.li         a2, 2
+8003dca8 639dc500 bne          a1, a2, 0x1a
+8003dcac b3452501 xor          a1, a0, s2
+8003dcb0 93b51500 seqz         a1, a1
+8003dcb4 6364a900 bltu         s2, a0, 8
+8003dcb8 33052041 neg          a0, s2
+8003dcbc fd15     c.addi       a1, -1
+8003dcbe 6d8d     c.and        a0, a1
+8003dcc0 19a0     c.j          6
+8003dcc2 33052541 sub          a0, a0, s2
+8003dcc6 b240     c.lwsp       ra, 0xc(sp)
+8003dcc8 2244     c.lwsp       s0, 8(sp)
+8003dcca 9244     c.lwsp       s1, 4(sp)
+8003dccc 0249     c.lwsp       s2, 0(sp)
+8003dcce 4101     c.addi       sp, 0x10
+8003dcd0 8280     c.jr         ra
+8003dcd2 63020512 beqz         a0, 0x124
+8003dcd6 7971     c.addi16sp   sp, -0x30
+8003dcd8 06d6     c.swsp       ra, 0x2c(sp)
+8003dcda 22d4     c.swsp       s0, 0x28(sp)
+8003dcdc 26d2     c.swsp       s1, 0x24(sp)
+8003dcde 4ad0     c.swsp       s2, 0x20(sp)
+8003dce0 4ece     c.swsp       s3, 0x1c(sp)
+8003dce2 52cc     c.swsp       s4, 0x18(sp)
+8003dce4 56ca     c.swsp       s5, 0x14(sp)
+8003dce6 5ac8     c.swsp       s6, 0x10(sp)
+8003dce8 5ec6     c.swsp       s7, 0xc(sp)
+8003dcea 62c4     c.swsp       s8, 8(sp)
+8003dcec 66c2     c.swsp       s9, 4(sp)
+8003dcee 6ac0     c.swsp       s10, 0(sp)
+8003dcf0 2a89     c.mv         s2, a0
+8003dcf2 93098500 addi         s3, a0, 8
+8003dcf6 13064010 addi         a2, zero, 0x104
+8003dcfa 4e85     c.mv         a0, s3
+8003dcfc 8145     c.li         a1, 0
+8003dcfe 97200000 auipc        ra, 2
+8003dd02 e780c026 jalr         ra, ra, 0x26c
+8003dd06 8144     c.li         s1, 0
+8003dd08 054a     c.li         s4, 1
+8003dd0a 930a090d addi         s5, s2, 0xd0
+8003dd0e 130b4006 addi         s6, zero, 0x64
+8003dd12 7d5c     c.li         s8, -1
+8003dd14 930c803e addi         s9, zero, 0x3e8
+8003dd18 d94b     c.li         s7, 0x16
+8003dd1a 23204901 sw           s4, 0(s2)
+8003dd1e 23220900 sw           zero, 4(s2)
+8003dd22 054d     c.li         s10, 1
+8003dd24 33856403 mul          a0, s1, s6
+8003dd28 3384a900 add          s0, s3, a0
+8003dd2c 23014407 sb           s4, 0x62(s0)
+8003dd30 23008401 sb           s8, 0(s0)
+8003dd34 23110400 sh           zero, 2(s0)
+8003dd38 23129401 sh           s9, 4(s0)
+8003dd3c 13056400 addi         a0, s0, 6
+8003dd40 97f0ffff auipc        ra, 0xfffff
+8003dd44 e780002c jalr         ra, ra, 0x2c0
+8003dd48 230b8401 sb           s8, 0x16(s0)
+8003dd4c 231c0400 sh           zero, 0x18(s0)
+8003dd50 231d9401 sh           s9, 0x1a(s0)
+8003dd54 1305c401 addi         a0, s0, 0x1c
+8003dd58 97f0ffff auipc        ra, 0xfffff
+8003dd5c e780802a jalr         ra, ra, 0x2a8
+8003dd60 23088403 sb           s8, 0x30(s0)
+8003dd64 23190402 sh           zero, 0x32(s0)
+8003dd68 231a9403 sh           s9, 0x34(s0)
+8003dd6c 13056403 addi         a0, s0, 0x36
+8003dd70 97f0ffff auipc        ra, 0xfffff
+8003dd74 e7800029 jalr         ra, ra, 0x290
+8003dd78 23038405 sb           s8, 0x46(s0)
+8003dd7c 23140404 sh           zero, 0x48(s0)
+8003dd80 23159405 sh           s9, 0x4a(s0)
+8003dd84 1305c404 addi         a0, s0, 0x4c
+8003dd88 97f0ffff auipc        ra, 0xfffff
+8003dd8c e7808027 jalr         ra, ra, 0x278
+8003dd90 33857403 mul          a0, s1, s7
+8003dd94 5695     c.add        a0, s5
+8003dd96 23008501 sb           s8, 0(a0)
+8003dd9a 23110500 sh           zero, 2(a0)
+8003dd9e 23129501 sh           s9, 4(a0)
+8003dda2 1905     c.addi       a0, 6
+8003dda4 97f0ffff auipc        ra, 0xfffff
+8003dda8 e780c025 jalr         ra, ra, 0x25c
+8003ddac 13751d00 andi         a0, s10, 1
+8003ddb0 8544     c.li         s1, 1
+8003ddb2 014d     c.li         s10, 0
+8003ddb4 25f9     c.bnez       a0, -0x90
+8003ddb6 1305c90f addi         a0, s2, 0xfc
+8003ddba 93056910 addi         a1, s2, 0x106
+8003ddbe 7d56     c.li         a2, -1
+8003ddc0 2300c500 sb           a2, 0(a0)
+8003ddc4 0505     c.addi       a0, 1
+8003ddc6 e31db5fe bne          a0, a1, -6
+8003ddca 7d55     c.li         a0, -1
+8003ddcc 2303a910 sb           a0, 0x106(s2)
+8003ddd0 a303a910 sb           a0, 0x107(s2)
+8003ddd4 2304a910 sb           a0, 0x108(s2)
+8003ddd8 a304a910 sb           a0, 0x109(s2)
+8003dddc b250     c.lwsp       ra, 0x2c(sp)
+8003ddde 2254     c.lwsp       s0, 0x28(sp)
+8003dde0 9254     c.lwsp       s1, 0x24(sp)
+8003dde2 0259     c.lwsp       s2, 0x20(sp)
+8003dde4 f249     c.lwsp       s3, 0x1c(sp)
+8003dde6 624a     c.lwsp       s4, 0x18(sp)
+8003dde8 d24a     c.lwsp       s5, 0x14(sp)
+8003ddea 424b     c.lwsp       s6, 0x10(sp)
+8003ddec b24b     c.lwsp       s7, 0xc(sp)
+8003ddee 224c     c.lwsp       s8, 8(sp)
+8003ddf0 924c     c.lwsp       s9, 4(sp)
+8003ddf2 024d     c.lwsp       s10, 0(sp)
+8003ddf4 4561     c.addi16sp   sp, 0x30
+8003ddf6 8280     c.jr         ra
+8003ddf8 4971     c.addi16sp   sp, -0x170
+8003ddfa 23261116 sw           ra, 0x16c(sp)
+8003ddfe 7008     c.addi4spn   a2, sp, 0x1c
+8003de00 1408     c.addi4spn   a3, sp, 0x10
+8003de02 3800     c.addi4spn   a4, sp, 8
+8003de04 97000000 auipc        ra, 0
+8003de08 e7800001 jalr         ra, ra, 0x10
+8003de0c 8320c116 lw           ra, 0x16c(sp)
+8003de10 7561     c.addi16sp   sp, 0x170
+8003de12 8280     c.jr         ra
+8003de14 3971     c.addi16sp   sp, -0x40
+8003de16 06de     c.swsp       ra, 0x3c(sp)
+8003de18 22dc     c.swsp       s0, 0x38(sp)
+8003de1a 26da     c.swsp       s1, 0x34(sp)
+8003de1c 4ad8     c.swsp       s2, 0x30(sp)
+8003de1e 4ed6     c.swsp       s3, 0x2c(sp)
+8003de20 52d4     c.swsp       s4, 0x28(sp)
+8003de22 56d2     c.swsp       s5, 0x24(sp)
+8003de24 5ad0     c.swsp       s6, 0x20(sp)
+8003de26 5ece     c.swsp       s7, 0x1c(sp)
+8003de28 62cc     c.swsp       s8, 0x18(sp)
+8003de2a 66ca     c.swsp       s9, 0x14(sp)
+8003de2c 6ac8     c.swsp       s10, 0x10(sp)
+8003de2e 6ec6     c.swsp       s11, 0xc(sp)
+8003de30 630c051e beqz         a0, 0x1f8
+8003de34 ba89     c.mv         s3, a4
+8003de36 368b     c.mv         s6, a3
+8003de38 3289     c.mv         s2, a2
+8003de3a ae8a     c.mv         s5, a1
+8003de3c 2a8a     c.mv         s4, a0
+8003de3e 3285     c.mv         a0, a2
+8003de40 97f0ffff auipc        ra, 0xfffff
+8003de44 e780601e jalr         ra, ra, 0x1e6
+8003de48 014d     c.li         s10, 0
+8003de4a 03250a00 lw           a0, 0(s4)
+8003de4e 83254a00 lw           a1, 4(s4)
+8003de52 23200b00 sw           zero, 0(s6)
+8003de56 23220b00 sw           zero, 4(s6)
+8003de5a 23a00900 sw           zero, 0(s3)
+8003de5e 23a20900 sw           zero, 4(s3)
+8003de62 13068a00 addi         a2, s4, 8
+8003de66 93068900 addi         a3, s2, 8
+8003de6a 854c     c.li         s9, 1
+8003de6c 13074006 addi         a4, zero, 0x64
+8003de70 2320a900 sw           a0, 0(s2)
+8003de74 2322b900 sw           a1, 4(s2)
+8003de78 b304ed02 mul          s1, s10, a4
+8003de7c 33049600 add          s0, a2, s1
+8003de80 b694     c.add        s1, a3
+8003de82 03150406 lh           a0, 0x60(s0)
+8003de86 83452406 lbu          a1, 0x62(s0)
+8003de8a 930b0403 addi         s7, s0, 0x30
+8003de8e 138c0403 addi         s8, s1, 0x30
+8003de92 2390a406 sh           a0, 0x60(s1)
+8003de96 2381b406 sb           a1, 0x62(s1)
+8003de9a 854d     c.li         s11, 1
+8003de9c 4854     c.lw         a0, 0x2c(s0)
+8003de9e c8d4     c.sw         a0, 0x2c(s1)
+8003dea0 2285     c.mv         a0, s0
+8003dea2 d685     c.mv         a1, s5
+8003dea4 2686     c.mv         a2, s1
+8003dea6 da86     c.mv         a3, s6
+8003dea8 97000000 auipc        ra, 0
+8003deac e780607e jalr         ra, ra, 0x7e6
+8003deb0 630c0516 beqz         a0, 0x178
+8003deb4 13056401 addi         a0, s0, 0x16
+8003deb8 13866401 addi         a2, s1, 0x16
+8003debc d685     c.mv         a1, s5
+8003debe da86     c.mv         a3, s6
+8003dec0 97000000 auipc        ra, 0
+8003dec4 e780e07c jalr         ra, ra, 0x7ce
+8003dec8 63000516 beqz         a0, 0x160
+8003decc 13f51d00 andi         a0, s11, 1
+8003ded0 e284     c.mv         s1, s8
+8003ded2 5e84     c.mv         s0, s7
+8003ded4 814d     c.li         s11, 0
+8003ded6 79f1     c.bnez       a0, -0x3a
+8003ded8 5945     c.li         a0, 0x16
+8003deda 3306ad02 mul          a2, s10, a0
+8003dede 13050a0d addi         a0, s4, 0xd0
+8003dee2 3295     c.add        a0, a2
+8003dee4 9305090d addi         a1, s2, 0xd0
+8003dee8 2e96     c.add        a2, a1
+8003deea d685     c.mv         a1, s5
+8003deec da86     c.mv         a3, s6
+8003deee 97000000 auipc        ra, 0
+8003def2 e780007a jalr         ra, ra, 0x7a0
+8003def6 63090512 beqz         a0, 0x132
+8003defa 13f51c00 andi         a0, s9, 1
+8003defe 054d     c.li         s10, 1
+8003df00 814c     c.li         s9, 0
+8003df02 13068a00 addi         a2, s4, 8
+8003df06 93068900 addi         a3, s2, 8
+8003df0a 13074006 addi         a4, zero, 0x64
+8003df0e 2df5     c.bnez       a0, -0x96
+8003df10 0548     c.li         a6, 1
+8003df12 9306ca0f addi         a3, s4, 0xfc
+8003df16 2947     c.li         a4, 0xa
+8003df18 930700f4 addi         a5, zero, -0xc0
+8003df1c 83c50600 lbu          a1, 0(a3)
+8003df20 138615f0 addi         a2, a1, -0xff
+8003df24 63e2c710 bltu         a5, a2, 0x104
+8003df28 13b60504 sltiu        a2, a1, 0x40
+8003df2c b314b800 sll          s1, a6, a1
+8003df30 8115     c.addi       a1, -0x20
+8003df32 13d4f501 srli         s0, a1, 0x1f
+8003df36 fd85     c.srai       a1, 0x1f
+8003df38 7d14     c.addi       s0, -1
+8003df3a e58d     c.and        a1, s1
+8003df3c 658c     c.and        s0, s1
+8003df3e 83a40900 lw           s1, 0(s3)
+8003df42 03a54900 lw           a0, 4(s3)
+8003df46 3306c040 neg          a2, a2
+8003df4a f18d     c.and        a1, a2
+8003df4c 618e     c.and        a2, s0
+8003df4e 7d17     c.addi       a4, -1
+8003df50 c58d     c.or         a1, s1
+8003df52 498e     c.or         a2, a0
+8003df54 23a0b900 sw           a1, 0(s3)
+8003df58 23a2c900 sw           a2, 4(s3)
+8003df5c 8506     c.addi       a3, 1
+8003df5e 5dff     c.bnez       a4, -0x42
+8003df60 93066a10 addi         a3, s4, 0x106
+8003df64 1147     c.li         a4, 4
+8003df66 930800f4 addi         a7, zero, -0xc0
+8003df6a 83c40600 lbu          s1, 0(a3)
+8003df6e 138514f0 addi         a0, s1, -0xff
+8003df72 63eba80a bltu         a7, a0, 0xb6
+8003df76 13b50404 sltiu        a0, s1, 0x40
+8003df7a 33149800 sll          s0, a6, s1
+8003df7e 8114     c.addi       s1, -0x20
+8003df80 7d17     c.addi       a4, -1
+8003df82 93d7f401 srli         a5, s1, 0x1f
+8003df86 fd84     c.srai       s1, 0x1f
+8003df88 3305a040 neg          a0, a0
+8003df8c fd17     c.addi       a5, -1
+8003df8e e18c     c.and        s1, s0
+8003df90 e18f     c.and        a5, s0
+8003df92 e98c     c.and        s1, a0
+8003df94 7d8d     c.and        a0, a5
+8003df96 c58d     c.or         a1, s1
+8003df98 498e     c.or         a2, a0
+8003df9a 23a0b900 sw           a1, 0(s3)
+8003df9e 23a2c900 sw           a2, 4(s3)
+8003dfa2 8506     c.addi       a3, 1
+8003dfa4 79f3     c.bnez       a4, -0x3a
+8003dfa6 8146     c.li         a3, 0
+8003dfa8 03254b00 lw           a0, 4(s6)
+8003dfac 83270b00 lw           a5, 0(s6)
+8003dfb0 93080004 addi         a7, zero, 0x40
+8003dfb4 498e     c.or         a2, a0
+8003dfb6 7975     c.lui        a0, 0xffffe
+8003dfb8 b3e4b700 or           s1, a5, a1
+8003dfbc 9302f58e addi         t0, a0, -0x711
+8003dfc0 23209b00 sw           s1, 0(s6)
+8003dfc4 2322cb00 sw           a2, 4(s6)
+8003dfc8 1303958f addi         t1, a0, -0x707
+8003dfcc 5684     c.mv         s0, s5
+8003dfce 3315d800 sll          a0, a6, a3
+8003dfd2 938706fe addi         a5, a3, -0x20
+8003dfd6 13d7f701 srli         a4, a5, 0x1f
+8003dfda fd87     c.srai       a5, 0x1f
+8003dfdc b3759500 and          a1, a0, s1
+8003dfe0 7d17     c.addi       a4, -1
+8003dfe2 fd8d     c.and        a1, a5
+8003dfe4 718d     c.and        a0, a2
+8003dfe6 798d     c.and        a0, a4
+8003dfe8 4d8d     c.or         a0, a1
+8003dfea 01c9     c.beqz       a0, 0x10
+8003dfec 638e0a02 beqz         s5, 0x3c
+8003dff0 03550400 lhu          a0, 0(s0)
+8003dff4 1695     c.add        a0, t0
+8003dff6 63696502 bltu         a0, t1, 0x32
+8003dffa 8506     c.addi       a3, 1
+8003dffc 0904     c.addi       s0, 2
+8003dffe e39816fd bne          a3, a7, -0x30
+8003e002 4a85     c.mv         a0, s2
+8003e004 f250     c.lwsp       ra, 0x3c(sp)
+8003e006 6254     c.lwsp       s0, 0x38(sp)
+8003e008 d254     c.lwsp       s1, 0x34(sp)
+8003e00a 4259     c.lwsp       s2, 0x30(sp)
+8003e00c b259     c.lwsp       s3, 0x2c(sp)
+8003e00e 225a     c.lwsp       s4, 0x28(sp)
+8003e010 925a     c.lwsp       s5, 0x24(sp)
+8003e012 025b     c.lwsp       s6, 0x20(sp)
+8003e014 f24b     c.lwsp       s7, 0x1c(sp)
+8003e016 624c     c.lwsp       s8, 0x18(sp)
+8003e018 d24c     c.lwsp       s9, 0x14(sp)
+8003e01a 424d     c.lwsp       s10, 0x10(sp)
+8003e01c b24d     c.lwsp       s11, 0xc(sp)
+8003e01e 2161     c.addi16sp   sp, 0x40
+8003e020 17f3ffff auipc        t1, 0xfffff
+8003e024 67002314 jalr         zero, t1, 0x142
+8003e028 0145     c.li         a0, 0
+8003e02a f250     c.lwsp       ra, 0x3c(sp)
+8003e02c 6254     c.lwsp       s0, 0x38(sp)
+8003e02e d254     c.lwsp       s1, 0x34(sp)
+8003e030 4259     c.lwsp       s2, 0x30(sp)
+8003e032 b259     c.lwsp       s3, 0x2c(sp)
+8003e034 225a     c.lwsp       s4, 0x28(sp)
+8003e036 925a     c.lwsp       s5, 0x24(sp)
+8003e038 025b     c.lwsp       s6, 0x20(sp)
+8003e03a f24b     c.lwsp       s7, 0x1c(sp)
+8003e03c 624c     c.lwsp       s8, 0x18(sp)
+8003e03e d24c     c.lwsp       s9, 0x14(sp)
+8003e040 424d     c.lwsp       s10, 0x10(sp)
+8003e042 b24d     c.lwsp       s11, 0xc(sp)
+8003e044 2161     c.addi16sp   sp, 0x40
+8003e046 8280     c.jr         ra
+8003e048 4971     c.addi16sp   sp, -0x170
+8003e04a 23261116 sw           ra, 0x16c(sp)
+8003e04e 7008     c.addi4spn   a2, sp, 0x1c
+8003e050 1408     c.addi4spn   a3, sp, 0x10
+8003e052 3800     c.addi4spn   a4, sp, 8
+8003e054 97000000 auipc        ra, 0
+8003e058 e78000dc jalr         ra, ra, -0x240
+8003e05c c245     c.lwsp       a1, 0x10(sp)
+8003e05e 5246     c.lwsp       a2, 0x14(sp)
+8003e060 b306a040 neg          a3, a0
+8003e064 33f5b600 and          a0, a3, a1
+8003e068 b3f5c600 and          a1, a3, a2
+8003e06c 8320c116 lw           ra, 0x16c(sp)
+8003e070 7561     c.addi16sp   sp, 0x170
+8003e072 8280     c.jr         ra
+8003e074 15c9     c.beqz       a0, 0x34
+8003e076 5041     c.lw         a2, 4(a0)
+8003e078 8546     c.li         a3, 1
+8003e07a 6316d602 bne          a2, a3, 0x2c
+8003e07e 4971     c.addi16sp   sp, -0x170
+8003e080 23261116 sw           ra, 0x16c(sp)
+8003e084 7008     c.addi4spn   a2, sp, 0x1c
+8003e086 1408     c.addi4spn   a3, sp, 0x10
+8003e088 3800     c.addi4spn   a4, sp, 8
+8003e08a 97000000 auipc        ra, 0
+8003e08e e780a0d8 jalr         ra, ra, -0x276
+8003e092 d245     c.lwsp       a1, 0x14(sp)
+8003e094 4246     c.lwsp       a2, 0x10(sp)
+8003e096 3305a040 neg          a0, a0
+8003e09a e98d     c.and        a1, a0
+8003e09c 718d     c.and        a0, a2
+8003e09e 8320c116 lw           ra, 0x16c(sp)
+8003e0a2 7561     c.addi16sp   sp, 0x170
+8003e0a4 8280     c.jr         ra
+8003e0a6 0145     c.li         a0, 0
+8003e0a8 8145     c.li         a1, 0
+8003e0aa 8280     c.jr         ra
+8003e0ac 1dc5     c.beqz       a0, 0x2e
+8003e0ae 4111     c.addi       sp, -0x10
+8003e0b0 06c6     c.swsp       ra, 0xc(sp)
+8003e0b2 22c4     c.swsp       s0, 8(sp)
+8003e0b4 2a84     c.mv         s0, a0
+8003e0b6 1306000d addi         a2, zero, 0xd0
+8003e0ba 8145     c.li         a1, 0
+8003e0bc 97200000 auipc        ra, 2
+8003e0c0 e780e0ea jalr         ra, ra, -0x152
+8003e0c4 2285     c.mv         a0, s0
+8003e0c6 97f0ffff auipc        ra, 0xfffff
+8003e0ca e780c025 jalr         ra, ra, 0x25c
+8003e0ce 0545     c.li         a0, 1
+8003e0d0 a308a402 sb           a0, 0x31(s0)
+8003e0d4 b240     c.lwsp       ra, 0xc(sp)
+8003e0d6 2244     c.lwsp       s0, 8(sp)
+8003e0d8 4101     c.addi       sp, 0x10
+8003e0da 8280     c.jr         ra
+8003e0dc 130101dd addi         sp, sp, -0x230
+8003e0e0 23261122 sw           ra, 0x22c(sp)
+8003e0e4 23248122 sw           s0, 0x228(sp)
+8003e0e8 23229122 sw           s1, 0x224(sp)
+8003e0ec 23202123 sw           s2, 0x220(sp)
+8003e0f0 232e3121 sw           s3, 0x21c(sp)
+8003e0f4 232c4121 sw           s4, 0x218(sp)
+8003e0f8 232a5121 sw           s5, 0x214(sp)
+8003e0fc 23286121 sw           s6, 0x210(sp)
+8003e100 23267121 sw           s7, 0x20c(sp)
+8003e104 23248121 sw           s8, 0x208(sp)
+8003e108 23229121 sw           s9, 0x204(sp)
+8003e10c 2320a121 sw           s10, 0x200(sp)
+8003e110 232eb11f sw           s11, 0x1fc(sp)
+8003e114 ddce     c.beqz       a3, 0xbe
+8003e116 368d     c.mv         s10, a3
+8003e118 aa89     c.mv         s3, a0
+8003e11a 23900600 sh           zero, 0(a3)
+8003e11e 23910600 sh           zero, 2(a3)
+8003e122 23920600 sh           zero, 4(a3)
+8003e126 23930600 sh           zero, 6(a3)
+8003e12a 23940600 sh           zero, 8(a3)
+8003e12e 23950600 sh           zero, 0xa(a3)
+8003e132 23960600 sh           zero, 0xc(a3)
+8003e136 51cd     c.beqz       a0, 0x9c
+8003e138 b28c     c.mv         s9, a2
+8003e13a 63020614 beqz         a2, 0x144
+8003e13e 2e89     c.mv         s2, a1
+8003e140 83a54c00 lw           a1, 4(s9)
+8003e144 7011     c.addi4spn   a2, sp, 0xac
+8003e146 1411     c.addi4spn   a3, sp, 0xa0
+8003e148 3809     c.addi4spn   a4, sp, 0x98
+8003e14a 4a85     c.mv         a0, s2
+8003e14c 97000000 auipc        ra, 0
+8003e150 e78080cc jalr         ra, ra, -0x338
+8003e154 63050512 beqz         a0, 0x12a
+8003e158 03c50903 lbu          a0, 0x30(s3)
+8003e15c 054c     c.li         s8, 1
+8003e15e 138a0904 addi         s4, s3, 0x40
+8003e162 35c9     c.beqz       a0, 0x74
+8003e164 03a54902 lw           a0, 0x24(s3)
+8003e168 83250900 lw           a1, 0(s2)
+8003e16c 6315b506 bne          a0, a1, 0x6a
+8003e170 83a8c902 lw           a7, 0x2c(s3)
+8003e174 83254900 lw           a1, 4(s2)
+8003e178 639fb804 bne          a7, a1, 0x5e
+8003e17c 0a5b     c.lwsp       s6, 0xa0(sp)
+8003e17e 1a54     c.lwsp       s0, 0xa4(sp)
+8003e180 83a5c903 lw           a1, 0x3c(s3)
+8003e184 03a68903 lw           a2, 0x38(s3)
+8003e188 a18d     c.xor        a1, s0
+8003e18a 33466601 xor          a2, a2, s6
+8003e18e d18d     c.or         a1, a2
+8003e190 b9e1     c.bnez       a1, 0x46
+8003e192 03a64c00 lw           a2, 4(s9)
+8003e196 13080004 addi         a6, zero, 0x40
+8003e19a 5287     c.mv         a4, s4
+8003e19c b317bc00 sll          a5, s8, a1
+8003e1a0 138505fe addi         a0, a1, -0x20
+8003e1a4 9356f501 srli         a3, a0, 0x1f
+8003e1a8 7d85     c.srai       a0, 0x1f
+8003e1aa fd16     c.addi       a3, -1
+8003e1ac 7d8d     c.and        a0, a5
+8003e1ae fd8e     c.and        a3, a5
+8003e1b0 33756501 and          a0, a0, s6
+8003e1b4 e18e     c.and        a3, s0
+8003e1b6 558d     c.or         a0, a3
+8003e1b8 19c5     c.beqz       a0, 0xe
+8003e1ba 03550700 lhu          a0, 0(a4)
+8003e1be 83560600 lhu          a3, 0(a2)
+8003e1c2 631ad500 bne          a0, a3, 0x14
+8003e1c6 8505     c.addi       a1, 1
+8003e1c8 0906     c.addi       a2, 2
+8003e1ca 0907     c.addi       a4, 2
+8003e1cc e39805fd bne          a1, a6, -0x30
+8003e1d0 51a0     c.j          0x84
+8003e1d2 0144     c.li         s0, 0
+8003e1d4 f1a0     c.j          0xcc
+8003e1d6 1306000d addi         a2, zero, 0xd0
+8003e1da 4e85     c.mv         a0, s3
+8003e1dc 8145     c.li         a1, 0
+8003e1de 97200000 auipc        ra, 2
+8003e1e2 e780c0d8 jalr         ra, ra, -0x274
+8003e1e6 4e85     c.mv         a0, s3
+8003e1e8 97f0ffff auipc        ra, 0xfffff
+8003e1ec e780a013 jalr         ra, ra, 0x13a
+8003e1f0 8145     c.li         a1, 0
+8003e1f2 0146     c.li         a2, 0
+8003e1f4 13051010 addi         a0, zero, 0x101
+8003e1f8 1a54     c.lwsp       s0, 0xa4(sp)
+8003e1fa 2398a902 sh           a0, 0x30(s3)
+8003e1fe 03250900 lw           a0, 0(s2)
+8003e202 83284900 lw           a7, 4(s2)
+8003e206 0a5b     c.lwsp       s6, 0xa0(sp)
+8003e208 23ae8902 sw           s0, 0x3c(s3)
+8003e20c 23a2a902 sw           a0, 0x24(s3)
+8003e210 23a61903 sw           a7, 0x2c(s3)
+8003e214 23ac6903 sw           s6, 0x38(s3)
+8003e218 93060004 addi         a3, zero, 0x40
+8003e21c 3315cc00 sll          a0, s8, a2
+8003e220 130706fe addi         a4, a2, -0x20
+8003e224 9357f701 srli         a5, a4, 0x1f
+8003e228 7d87     c.srai       a4, 0x1f
+8003e22a fd17     c.addi       a5, -1
+8003e22c 698f     c.and        a4, a0
+8003e22e 7d8d     c.and        a0, a5
+8003e230 33776701 and          a4, a4, s6
+8003e234 618d     c.and        a0, s0
+8003e236 598d     c.or         a0, a4
+8003e238 11c9     c.beqz       a0, 0x14
+8003e23a 03a54c00 lw           a0, 4(s9)
+8003e23e 2e95     c.add        a0, a1
+8003e240 03150500 lh           a0, 0(a0)
+8003e244 3307ba00 add          a4, s4, a1
+8003e248 2310a700 sh           a0, 0(a4)
+8003e24c 0506     c.addi       a2, 1
+8003e24e 8905     c.addi       a1, 2
+8003e250 e316d6fc bne          a2, a3, -0x34
+8003e254 63840808 beqz         a7, 0x88
+8003e258 33658b00 or           a0, s6, s0
+8003e25c 01c5     c.beqz       a0, 8
+8003e25e 03a50c00 lw           a0, 0(s9)
+8003e262 11cd     c.beqz       a0, 0x1c
+8003e264 83aa8c00 lw           s5, 8(s9)
+8003e268 03aacc00 lw           s4, 0xc(s9)
+8003e26c 13c5faff not          a0, s5
+8003e270 9345faff not          a1, s4
+8003e274 e18d     c.and        a1, s0
+8003e276 3375ab00 and          a0, s6, a0
+8003e27a 4d8d     c.or         a0, a1
+8003e27c 59c5     c.beqz       a0, 0x8e
+8003e27e 1306000d addi         a2, zero, 0xd0
+8003e282 4e85     c.mv         a0, s3
+8003e284 8145     c.li         a1, 0
+8003e286 97200000 auipc        ra, 2
+8003e28a e78040ce jalr         ra, ra, -0x31c
+8003e28e 4e85     c.mv         a0, s3
+8003e290 97f0ffff auipc        ra, 0xfffff
+8003e294 e7802009 jalr         ra, ra, 0x92
+8003e298 0144     c.li         s0, 0
+8003e29a 0545     c.li         a0, 1
+8003e29c a388a902 sb           a0, 0x31(s3)
+8003e2a0 2285     c.mv         a0, s0
+8003e2a2 8320c122 lw           ra, 0x22c(sp)
+8003e2a6 03248122 lw           s0, 0x228(sp)
+8003e2aa 83244122 lw           s1, 0x224(sp)
+8003e2ae 03290122 lw           s2, 0x220(sp)
+8003e2b2 8329c121 lw           s3, 0x21c(sp)
+8003e2b6 032a8121 lw           s4, 0x218(sp)
+8003e2ba 832a4121 lw           s5, 0x214(sp)
+8003e2be 032b0121 lw           s6, 0x210(sp)
+8003e2c2 832bc120 lw           s7, 0x20c(sp)
+8003e2c6 032c8120 lw           s8, 0x208(sp)
+8003e2ca 832c4120 lw           s9, 0x204(sp)
+8003e2ce 032d0120 lw           s10, 0x200(sp)
+8003e2d2 832dc11f lw           s11, 0x1fc(sp)
+8003e2d6 13010123 addi         sp, sp, 0x230
+8003e2da 8280     c.jr         ra
+8003e2dc 03a5cc01 lw           a0, 0x1c(s9)
+8003e2e0 0544     c.li         s0, 1
+8003e2e2 23a4a902 sw           a0, 0x28(s3)
+8003e2e6 a3888902 sb           s0, 0x31(s3)
+8003e2ea 23898902 sb           s0, 0x32(s3)
+8003e2ee 23a0090c sw           zero, 0xc0(s3)
+8003e2f2 23a2090c sw           zero, 0xc4(s3)
+8003e2f6 23a4090c sw           zero, 0xc8(s3)
+8003e2fa 2396090c sh           zero, 0xcc(s3)
+8003e2fe 4e85     c.mv         a0, s3
+8003e300 97f0ffff auipc        ra, 0xfffff
+8003e304 e7802002 jalr         ra, ra, 0x22
+8003e308 61bf     c.j          -0x68
+8003e30a ea45     c.lwsp       a1, 0x98(sp)
+8003e30c fa4b     c.lwsp       s7, 0x9c(sp)
+8003e30e 33e57501 or           a0, a1, s7
+8003e312 01c5     c.beqz       a0, 8
+8003e314 03c58c01 lbu          a0, 0x18(s9)
+8003e318 3dd1     c.beqz       a0, -0x9a
+8003e31a 2ec2     c.swsp       a1, 4(sp)
+8003e31c 2808     c.addi4spn   a0, sp, 0x18
+8003e31e 13060008 addi         a2, zero, 0x80
+8003e322 930d8101 addi         s11, sp, 0x18
+8003e326 8145     c.li         a1, 0
+8003e328 97200000 auipc        ra, 2
+8003e32c e78020c4 jalr         ra, ra, -0x3be
+8003e330 0145     c.li         a0, 0
+8003e332 8145     c.li         a1, 0
+8003e334 13080004 addi         a6, zero, 0x40
+8003e338 8966     c.lui        a3, 2
+8003e33a 93860671 addi         a3, a3, 0x710
+8003e33e 3317bc00 sll          a4, s8, a1
+8003e342 138605fe addi         a2, a1, -0x20
+8003e346 9357f601 srli         a5, a2, 0x1f
+8003e34a 7d86     c.srai       a2, 0x1f
+8003e34c b3746701 and          s1, a4, s6
+8003e350 fd17     c.addi       a5, -1
+8003e352 658e     c.and        a2, s1
+8003e354 618f     c.and        a4, s0
+8003e356 7d8f     c.and        a4, a5
+8003e358 598e     c.or         a2, a4
+8003e35a 15c6     c.beqz       a2, 0x2c
+8003e35c 03a60c00 lw           a2, 0(s9)
+8003e360 03a74c00 lw           a4, 4(s9)
+8003e364 2a96     c.add        a2, a0
+8003e366 b307a700 add          a5, a4, a0
+8003e36a 03570600 lhu          a4, 0(a2)
+8003e36e 83d70700 lhu          a5, 0(a5)
+8003e372 e3e6e7f0 bltu         a5, a4, -0xf4
+8003e376 3306d702 mul          a2, a4, a3
+8003e37a 3356f602 divu         a2, a2, a5
+8003e37e 3387ad00 add          a4, s11, a0
+8003e382 2310c700 sh           a2, 0(a4)
+8003e386 8505     c.addi       a1, 1
+8003e388 0905     c.addi       a0, 2
+8003e38a e39a05fb bne          a1, a6, -0x4c
+8003e38e 03accc01 lw           s8, 0x1c(s9)
+8003e392 03c51903 lbu          a0, 0x31(s3)
+8003e396 8545     c.li         a1, 1
+8003e398 23a48903 sw           s8, 0x28(s3)
+8003e39c 2389b902 sb           a1, 0x32(s3)
+8003e3a0 31cd     c.beqz       a0, 0x5c
+8003e3a2 83a50c00 lw           a1, 0(s9)
+8003e3a6 03a70c01 lw           a4, 0x10(s9)
+8003e3aa 83a74c01 lw           a5, 0x14(s9)
+8003e3ae 4a85     c.mv         a0, s2
+8003e3b0 1246     c.lwsp       a2, 4(sp)
+8003e3b2 de86     c.mv         a3, s7
+8003e3b4 97000000 auipc        ra, 0
+8003e3b8 e780800c jalr         ra, ra, 0xc8
+8003e3bc 0dc1     c.beqz       a0, 0x22
+8003e3be 6c11     c.addi4spn   a1, sp, 0xac
+8003e3c0 3008     c.addi4spn   a2, sp, 0x18
+8003e3c2 1308a100 addi         a6, sp, 0xa
+8003e3c6 4e85     c.mv         a0, s3
+8003e3c8 d686     c.mv         a3, s5
+8003e3ca 5287     c.mv         a4, s4
+8003e3cc e287     c.mv         a5, s8
+8003e3ce 97f0ffff auipc        ra, 0xfffff
+8003e3d2 e780000e jalr         ra, ra, 0xe0
+8003e3d6 e30405ea beqz         a0, -0x158
+8003e3da a3880902 sb           zero, 0x31(s3)
+8003e3de 2390090c sh           zero, 0xc0(s3)
+8003e3e2 2391090c sh           zero, 0xc2(s3)
+8003e3e6 2392090c sh           zero, 0xc4(s3)
+8003e3ea 2393090c sh           zero, 0xc6(s3)
+8003e3ee 2394090c sh           zero, 0xc8(s3)
+8003e3f2 2395090c sh           zero, 0xca(s3)
+8003e3f6 2396090c sh           zero, 0xcc(s3)
+8003e3fa 3da8     c.j          0x3e
+8003e3fc 6c11     c.addi4spn   a1, sp, 0xac
+8003e3fe 3008     c.addi4spn   a2, sp, 0x18
+8003e400 4e85     c.mv         a0, s3
+8003e402 d686     c.mv         a3, s5
+8003e404 5287     c.mv         a4, s4
+8003e406 e287     c.mv         a5, s8
+8003e408 6a88     c.mv         a6, s10
+8003e40a 97f0ffff auipc        ra, 0xfffff
+8003e40e e780400a jalr         ra, ra, 0xa4
+8003e412 0dc5     c.beqz       a0, 0x2a
+8003e414 83a50c01 lw           a1, 0x10(s9)
+8003e418 03a64c01 lw           a2, 0x14(s9)
+8003e41c 4a85     c.mv         a0, s2
+8003e41e ea86     c.mv         a3, s10
+8003e420 97000000 auipc        ra, 0
+8003e424 e7802011 jalr         ra, ra, 0x112
+8003e428 1385090c addi         a0, s3, 0xc0
+8003e42c 3946     c.li         a2, 0xe
+8003e42e ea85     c.mv         a1, s10
+8003e430 97200000 auipc        ra, 2
+8003e434 e780e0b1 jalr         ra, ra, -0x4e2
+8003e438 0544     c.li         s0, 1
+8003e43a 9db5     c.j          -0x19a
+8003e43c 1306000d addi         a2, zero, 0xd0
+8003e440 4e85     c.mv         a0, s3
+8003e442 8145     c.li         a1, 0
+8003e444 97200000 auipc        ra, 2
+8003e448 e78060b2 jalr         ra, ra, -0x4da
+8003e44c 4e85     c.mv         a0, s3
+8003e44e 97f0ffff auipc        ra, 0xfffff
+8003e452 e78040ed jalr         ra, ra, -0x12c
+8003e456 0144     c.li         s0, 0
+8003e458 0545     c.li         a0, 1
+8003e45a a388a902 sb           a0, 0x31(s3)
+8003e45e 23100d00 sh           zero, 0(s10)
+8003e462 23110d00 sh           zero, 2(s10)
+8003e466 23120d00 sh           zero, 4(s10)
+8003e46a 23130d00 sh           zero, 6(s10)
+8003e46e 23140d00 sh           zero, 8(s10)
+8003e472 23150d00 sh           zero, 0xa(s10)
+8003e476 23160d00 sh           zero, 0xc(s10)
+8003e47a 1db5     c.j          -0x1da
+8003e47c fd8e     c.and        a3, a5
+8003e47e 798e     c.and        a2, a4
+8003e480 558e     c.or         a2, a3
+8003e482 01c6     c.beqz       a2, 8
+8003e484 0145     c.li         a0, 0
+8003e486 0589     c.andi       a0, 1
+8003e488 8280     c.jr         ra
+8003e48a 814e     c.li         t4, 0
+8003e48c 93038500 addi         t2, a0, 8
+8003e490 9302050d addi         t0, a0, 0xd0
+8003e494 054e     c.li         t3, 1
+8003e496 93084006 addi         a7, zero, 0x64
+8003e49a 130ff00f addi         t5, zero, 0xff
+8003e49e 5948     c.li         a6, 0x16
+8003e4a0 4163     c.lui        t1, 0x10
+8003e4a2 7d13     c.addi       t1, -1
+8003e4a4 33851e03 mul          a0, t4, a7
+8003e4a8 1e95     c.add        a0, t2
+8003e4aa 93060503 addi         a3, a0, 0x30
+8003e4ae 0546     c.li         a2, 1
+8003e4b0 83470500 lbu          a5, 0(a0)
+8003e4b4 638ae701 beq          a5, t5, 0x14
+8003e4b8 8607     c.slli       a5, 1
+8003e4ba ae97     c.add        a5, a1
+8003e4bc 83d70700 lhu          a5, 0(a5)
+8003e4c0 03572500 lhu          a4, 2(a0)
+8003e4c4 e360f7fc bltu         a4, a5, -0x40
+8003e4c8 83476501 lbu          a5, 0x16(a0)
+8003e4cc 638ae701 beq          a5, t5, 0x14
+8003e4d0 8607     c.slli       a5, 1
+8003e4d2 ae97     c.add        a5, a1
+8003e4d4 03d70700 lhu          a4, 0(a5)
+8003e4d8 03558501 lhu          a0, 0x18(a0)
+8003e4dc e364e5fa bltu         a0, a4, -0x58
+8003e4e0 13771600 andi         a4, a2, 1
+8003e4e4 3685     c.mv         a0, a3
+8003e4e6 0146     c.li         a2, 0
+8003e4e8 61f7     c.bnez       a4, -0x38
+8003e4ea 33850e03 mul          a0, t4, a6
+8003e4ee 1695     c.add        a0, t0
+8003e4f0 03460500 lbu          a2, 0(a0)
+8003e4f4 6308e603 beq          a2, t5, 0x30
+8003e4f8 0606     c.slli       a2, 1
+8003e4fa 2e96     c.add        a2, a1
+8003e4fc 03160600 lh           a2, 0(a2)
+8003e500 03152500 lh           a0, 2(a0)
+8003e504 33766600 and          a2, a2, t1
+8003e508 b3766500 and          a3, a0, t1
+8003e50c 33b5c600 sltu         a0, a3, a2
+8003e510 7d15     c.addi       a0, -1
+8003e512 e3eac6f6 bltu         a3, a2, -0x8c
+8003e516 13461e00 xori         a2, t3, 1
+8003e51a 058a     c.andi       a2, 1
+8003e51c 854e     c.li         t4, 1
+8003e51e 014e     c.li         t3, 0
+8003e520 3df2     c.bnez       a2, -0x9a
+8003e522 49b7     c.j          -0x7e
+8003e524 13751e00 andi         a0, t3, 1
+8003e528 854e     c.li         t4, 1
+8003e52a 014e     c.li         t3, 0
+8003e52c 25fd     c.bnez       a0, -0x88
+8003e52e 0545     c.li         a0, 1
+8003e530 99bf     c.j          -0xaa
+8003e532 0147     c.li         a4, 0
+8003e534 8542     c.li         t0, 1
+8003e536 1308c50f addi         a6, a0, 0xfc
+8003e53a a948     c.li         a7, 0xa
+8003e53c b307e800 add          a5, a6, a4
+8003e540 83c70700 lbu          a5, 0(a5)
+8003e544 13b30704 sltiu        t1, a5, 0x40
+8003e548 b393f200 sll          t2, t0, a5
+8003e54c 8117     c.addi       a5, -0x20
+8003e54e 13def741 srai         t3, a5, 0x1f
+8003e552 93def701 srli         t4, a5, 0x1f
+8003e556 330f6040 neg          t5, t1
+8003e55a 33737e00 and          t1, t3, t2
+8003e55e fd1e     c.addi       t4, -1
+8003e560 b3f37e00 and          t2, t4, t2
+8003e564 b377bf00 and          a5, t5, a1
+8003e568 33f36700 and          t1, a5, t1
+8003e56c b377cf00 and          a5, t5, a2
+8003e570 b3f77700 and          a5, a5, t2
+8003e574 b367f300 or           a5, t1, a5
+8003e578 89cb     c.beqz       a5, 0x12
+8003e57a 0393a600 lh           t1, 0xa(a3)
+8003e57e b397e200 sll          a5, t0, a4
+8003e582 b367f300 or           a5, t1, a5
+8003e586 2395f600 sh           a5, 0xa(a3)
+8003e58a 0507     c.addi       a4, 1
+8003e58c e31817fb bne          a4, a7, -0x50
+8003e590 8147     c.li         a5, 0
+8003e592 13036510 addi         t1, a0, 0x106
+8003e596 1148     c.li         a6, 4
+8003e598 8548     c.li         a7, 1
+8003e59a 3307f300 add          a4, t1, a5
+8003e59e 03470700 lbu          a4, 0(a4)
+8003e5a2 93330704 sltiu        t2, a4, 0x40
+8003e5a6 339fe200 sll          t5, t0, a4
+8003e5aa 0117     c.addi       a4, -0x20
+8003e5ac 135ef741 srai         t3, a4, 0x1f
+8003e5b0 935ef701 srli         t4, a4, 0x1f
+8003e5b4 33057040 neg          a0, t2
+8003e5b8 b373ee01 and          t2, t3, t5
+8003e5bc fd1e     c.addi       t4, -1
+8003e5be 33feee01 and          t3, t4, t5
+8003e5c2 3377b500 and          a4, a0, a1
+8003e5c6 33777700 and          a4, a4, t2
+8003e5ca 718d     c.and        a0, a2
+8003e5cc 3375c501 and          a0, a0, t3
+8003e5d0 598d     c.or         a0, a4
+8003e5d2 01c9     c.beqz       a0, 0x10
+8003e5d4 03c5c600 lbu          a0, 0xc(a3)
+8003e5d8 3397f800 sll          a4, a7, a5
+8003e5dc 598d     c.or         a0, a4
+8003e5de 2386a600 sb           a0, 0xc(a3)
+8003e5e2 8507     c.addi       a5, 1
+8003e5e4 e39b07fb bne          a5, a6, -0x4a
+8003e5e8 03c5c600 lbu          a0, 0xc(a3)
+8003e5ec 93753500 andi         a1, a0, 3
+8003e5f0 0d46     c.li         a2, 3
+8003e5f2 6394c500 bne          a1, a2, 8
+8003e5f6 1375c50f andi         a0, a0, 0xfc
+8003e5fa 1377c500 andi         a4, a0, 0xc
+8003e5fe 6386c500 beq          a1, a2, 0xc
+8003e602 b145     c.li         a1, 0xc
+8003e604 6303b700 beq          a4, a1, 6
+8003e608 8280     c.jr         ra
+8003e60a b145     c.li         a1, 0xc
+8003e60c 6314b700 bne          a4, a1, 8
+8003e610 1375350f andi         a0, a0, 0xf3
+8003e614 2386a600 sb           a0, 0xc(a3)
+8003e618 8280     c.jr         ra
+8003e61a 4111     c.addi       sp, -0x10
+8003e61c 06c6     c.swsp       ra, 0xc(sp)
+8003e61e 22c4     c.swsp       s0, 8(sp)
+8003e620 2a84     c.mv         s0, a0
+8003e622 0145     c.li         a0, 0
+8003e624 2dc0     c.beqz       s0, 0x62
+8003e626 a5c2     c.beqz       a3, 0x60
+8003e628 03452403 lbu          a0, 0x32(s0)
+8003e62c 29cd     c.beqz       a0, 0x5a
+8003e62e 0854     c.lw         a0, 0x28(s0)
+8003e630 898d     c.sub        a1, a0
+8003e632 6379b604 bgeu         a2, a1, 0x52
+8003e636 23900600 sh           zero, 0(a3)
+8003e63a 23910600 sh           zero, 2(a3)
+8003e63e 23920600 sh           zero, 4(a3)
+8003e642 23930600 sh           zero, 6(a3)
+8003e646 23940600 sh           zero, 8(a3)
+8003e64a 23950600 sh           zero, 0xa(a3)
+8003e64e 23960600 sh           zero, 0xc(a3)
+8003e652 2310040c sh           zero, 0xc0(s0)
+8003e656 2311040c sh           zero, 0xc2(s0)
+8003e65a 2312040c sh           zero, 0xc4(s0)
+8003e65e 2313040c sh           zero, 0xc6(s0)
+8003e662 2314040c sh           zero, 0xc8(s0)
+8003e666 2315040c sh           zero, 0xca(s0)
+8003e66a 2316040c sh           zero, 0xcc(s0)
+8003e66e 2285     c.mv         a0, s0
+8003e670 97f0ffff auipc        ra, 0xfffff
+8003e674 e78020cb jalr         ra, ra, -0x34e
+8003e678 0545     c.li         a0, 1
+8003e67a a308a402 sb           a0, 0x31(s0)
+8003e67e 23090402 sb           zero, 0x32(s0)
+8003e682 11a0     c.j          4
+8003e684 0145     c.li         a0, 0
+8003e686 b240     c.lwsp       ra, 0xc(sp)
+8003e688 2244     c.lwsp       s0, 8(sp)
+8003e68a 4101     c.addi       sp, 0x10
+8003e68c 8280     c.jr         ra
+8003e68e 0111     c.addi       sp, -0x20
+8003e690 06ce     c.swsp       ra, 0x1c(sp)
+8003e692 22cc     c.swsp       s0, 0x18(sp)
+8003e694 26ca     c.swsp       s1, 0x14(sp)
+8003e696 4ac8     c.swsp       s2, 0x10(sp)
+8003e698 4ec6     c.swsp       s3, 0xc(sp)
+8003e69a 3689     c.mv         s2, a3
+8003e69c b289     c.mv         s3, a2
+8003e69e aa84     c.mv         s1, a0
+8003e6a0 03460500 lbu          a2, 0(a0)
+8003e6a4 130516f0 addi         a0, a2, -0xff
+8003e6a8 930600f4 addi         a3, zero, -0xc0
+8003e6ac 63eba606 bltu         a3, a0, 0x76
+8003e6b0 2e84     c.mv         s0, a1
+8003e6b2 83d62400 lhu          a3, 2(s1)
+8003e6b6 83d54400 lhu          a1, 4(s1)
+8003e6ba 0145     c.li         a0, 0
+8003e6bc 63f4b606 bgeu         a3, a1, 0x68
+8003e6c0 8966     c.lui        a3, 2
+8003e6c2 93860671 addi         a3, a3, 0x710
+8003e6c6 63efb604 bltu         a3, a1, 0x5e
+8003e6ca 2380c900 sb           a2, 0(s3)
+8003e6ce 13856900 addi         a0, s3, 6
+8003e6d2 93856400 addi         a1, s1, 6
+8003e6d6 4146     c.li         a2, 0x10
+8003e6d8 97200000 auipc        ra, 2
+8003e6dc e7806087 jalr         ra, ra, -0x78a
+8003e6e0 83c50400 lbu          a1, 0(s1)
+8003e6e4 1305f00f addi         a0, zero, 0xff
+8003e6e8 639ba500 bne          a1, a0, 0x16
+8003e6ec 0965     c.lui        a0, 2
+8003e6ee 13050571 addi         a0, a0, 0x710
+8003e6f2 23910900 sh           zero, 2(s3)
+8003e6f6 2392a900 sh           a0, 4(s3)
+8003e6fa 0545     c.li         a0, 1
+8003e6fc 25a0     c.j          0x28
+8003e6fe 15c0     c.beqz       s0, 0x24
+8003e700 13951500 slli         a0, a1, 1
+8003e704 2a94     c.add        s0, a0
+8003e706 03550400 lhu          a0, 0(s0)
+8003e70a 7976     c.lui        a2, 0xffffe
+8003e70c 9306f68e addi         a3, a2, -0x711
+8003e710 aa96     c.add        a3, a0
+8003e712 1306968f addi         a2, a2, -0x707
+8003e716 63e6c600 bltu         a3, a2, 0xc
+8003e71a 03d64400 lhu          a2, 4(s1)
+8003e71e 637ac500 bgeu         a0, a2, 0x14
+8003e722 0145     c.li         a0, 0
+8003e724 f240     c.lwsp       ra, 0x1c(sp)
+8003e726 6244     c.lwsp       s0, 0x18(sp)
+8003e728 d244     c.lwsp       s1, 0x14(sp)
+8003e72a 4249     c.lwsp       s2, 0x10(sp)
+8003e72c b249     c.lwsp       s3, 0xc(sp)
+8003e72e 0561     c.addi16sp   sp, 0x20
+8003e730 8280     c.jr         ra
+8003e732 83d62400 lhu          a3, 2(s1)
+8003e736 0967     c.lui        a4, 2
+8003e738 13070771 addi         a4, a4, 0x710
+8003e73c b386e602 mul          a3, a3, a4
+8003e740 33d5a602 divu         a0, a3, a0
+8003e744 93b60504 sltiu        a3, a1, 0x40
+8003e748 2391a900 sh           a0, 2(s3)
+8003e74c 83570400 lhu          a5, 0(s0)
+8003e750 938405fe addi         s1, a1, -0x20
+8003e754 0545     c.li         a0, 1
+8003e756 3306e602 mul          a2, a2, a4
+8003e75a 3356f602 divu         a2, a2, a5
+8003e75e 03270900 lw           a4, 0(s2)
+8003e762 83274900 lw           a5, 4(s2)
+8003e766 fd80     c.srli       s1, 0x1f
+8003e768 b315b500 sll          a1, a0, a1
+8003e76c b306d040 neg          a3, a3
+8003e770 f58d     c.and        a1, a3
+8003e772 b3069040 neg          a3, s1
+8003e776 fd14     c.addi       s1, -1
+8003e778 ed8e     c.and        a3, a1
+8003e77a e58d     c.and        a1, s1
+8003e77c dd8d     c.or         a1, a5
+8003e77e d98e     c.or         a3, a4
+8003e780 2392c900 sh           a2, 4(s3)
+8003e784 2320d900 sw           a3, 0(s2)
+8003e788 2322b900 sw           a1, 4(s2)
+8003e78c 61bf     c.j          -0x68
+8003e78e 9dc9     c.beqz       a1, 0x36
+8003e790 0148     c.li         a6, 0
+8003e792 fd56     c.li         a3, -1
+8003e794 3787b8ed lui          a4, 0xedb88
+8003e798 13070732 addi         a4, a4, 0x320
+8003e79c b3070501 add          a5, a0, a6
+8003e7a0 83c70700 lbu          a5, 0(a5)
+8003e7a4 bd8e     c.xor        a3, a5
+8003e7a6 a147     c.li         a5, 8
+8003e7a8 13d61600 srli         a2, a3, 1
+8003e7ac fe06     c.slli       a3, 0x1f
+8003e7ae fd86     c.srai       a3, 0x1f
+8003e7b0 f98e     c.and        a3, a4
+8003e7b2 fd17     c.addi       a5, -1
+8003e7b4 b18e     c.xor        a3, a2
+8003e7b6 edfb     c.bnez       a5, -0xe
+8003e7b8 0508     c.addi       a6, 1
+8003e7ba e311b8fe bne          a6, a1, -0x1e
+8003e7be 13c5f6ff not          a0, a3
+8003e7c2 8280     c.jr         ra
+8003e7c4 0145     c.li         a0, 0
+8003e7c6 8280     c.jr         ra
+8003e7c8 0d71     c.addi16sp   sp, -0x160
+8003e7ca 232e1114 sw           ra, 0x15c(sp)
+8003e7ce 232c8114 sw           s0, 0x158(sp)
+8003e7d2 232a9114 sw           s1, 0x154(sp)
+8003e7d6 23282115 sw           s2, 0x150(sp)
+8003e7da 23263115 sw           s3, 0x14c(sp)
+8003e7de 23244115 sw           s4, 0x148(sp)
+8003e7e2 23225115 sw           s5, 0x144(sp)
+8003e7e6 23206115 sw           s6, 0x140(sp)
+8003e7ea 232e7113 sw           s7, 0x13c(sp)
+8003e7ee 232c8113 sw           s8, 0x138(sp)
+8003e7f2 232a9113 sw           s9, 0x134(sp)
+8003e7f6 2328a113 sw           s10, 0x130(sp)
+8003e7fa 2326b113 sw           s11, 0x12c(sp)
+8003e7fe aa84     c.mv         s1, a0
+8003e800 0145     c.li         a0, 0
+8003e802 63870426 beqz         s1, 0x26e
+8003e806 328a     c.mv         s4, a2
+8003e808 63040626 beqz         a2, 0x268
+8003e80c b689     c.mv         s3, a3
+8003e80e 63810626 beqz         a3, 0x262
+8003e812 3a89     c.mv         s2, a4
+8003e814 630e0724 beqz         a4, 0x25c
+8003e818 2e84     c.mv         s0, a1
+8003e81a 03c50400 lbu          a0, 0(s1)
+8003e81e 93051004 addi         a1, zero, 0x41
+8003e822 6316b524 bne          a0, a1, 0x24c
+8003e826 03c51400 lbu          a0, 1(s1)
+8003e82a 93057004 addi         a1, zero, 0x47
+8003e82e 6310b524 bne          a0, a1, 0x240
+8003e832 03c52400 lbu          a0, 2(s1)
+8003e836 93053004 addi         a1, zero, 0x43
+8003e83a 631ab522 bne          a0, a1, 0x234
+8003e83e 03c53400 lbu          a0, 3(s1)
+8003e842 93051003 addi         a1, zero, 0x31
+8003e846 6314b522 bne          a0, a1, 0x228
+8003e84a 03c54400 lbu          a0, 4(s1)
+8003e84e 8545     c.li         a1, 1
+8003e850 631fb520 bne          a0, a1, 0x21e
+8003e854 03c55400 lbu          a0, 5(s1)
+8003e858 8945     c.li         a1, 2
+8003e85a 63eaa520 bltu         a1, a0, 0x214
+8003e85e 03c56400 lbu          a0, 6(s1)
+8003e862 7515     c.addi       a0, -3
+8003e864 f955     c.li         a1, -2
+8003e866 6364b520 bltu         a0, a1, 0x208
+8003e86a 03c59400 lbu          a0, 9(s1)
+8003e86e 63100520 bnez         a0, 0x200
+8003e872 03c5f400 lbu          a0, 0xf(s1)
+8003e876 83c5e400 lbu          a1, 0xe(s1)
+8003e87a 2205     c.slli       a0, 8
+8003e87c 4d8d     c.or         a0, a1
+8003e87e e145     c.li         a1, 0x18
+8003e880 6317b51e bne          a0, a1, 0x1ee
+8003e884 0808     c.addi4spn   a0, sp, 0x10
+8003e886 97f0ffff auipc        ra, 0xfffff
+8003e88a e780c044 jalr         ra, ra, 0x44c
+8003e88e 8145     c.li         a1, 0
+8003e890 03c55400 lbu          a0, 5(s1)
+8003e894 1388a400 addi         a6, s1, 0xa
+8003e898 8547     c.li         a5, 1
+8003e89a 130b8101 addi         s6, sp, 0x18
+8003e89e 1d43     c.li         t1, 7
+8003e8a0 9548     c.li         a7, 5
+8003e8a2 0967     c.lui        a4, 2
+8003e8a4 1307b751 addi         a4, a4, 0x51b
+8003e8a8 22c8     c.swsp       s0, 0x10(sp)
+8003e8aa 2aca     c.swsp       a0, 0x14(sp)
+8003e8ac 93024006 addi         t0, zero, 0x64
+8003e8b0 3385b400 add          a0, s1, a1
+8003e8b4 03447500 lbu          s0, 7(a0)
+8003e8b8 636b831a bltu         t1, s0, 0x1b6
+8003e8bc 0145     c.li         a0, 0
+8003e8be 63e9881a bltu         a7, s0, 0x1b2
+8003e8c2 93961500 slli         a3, a1, 1
+8003e8c6 c296     c.add        a3, a6
+8003e8c8 03c61600 lbu          a2, 1(a3)
+8003e8cc 83c60600 lbu          a3, 0(a3)
+8003e8d0 2206     c.slli       a2, 8
+8003e8d2 d18e     c.or         a3, a2
+8003e8d4 636ed718 bltu         a4, a3, 0x19c
+8003e8d8 13751400 andi         a0, s0, 1
+8003e8dc 19e1     c.bnez       a0, 6
+8003e8de 63980618 bnez         a3, 0x190
+8003e8e2 0580     c.srli       s0, 1
+8003e8e4 b3855502 mul          a1, a1, t0
+8003e8e8 13f61700 andi         a2, a5, 1
+8003e8ec da95     c.add        a1, s6
+8003e8ee c0d5     c.sw         s0, 0x2c(a1)
+8003e8f0 e0cd     c.sw         s0, 0x5c(a1)
+8003e8f2 2390d506 sh           a3, 0x60(a1)
+8003e8f6 2381a506 sb           a0, 0x62(a1)
+8003e8fa 8545     c.li         a1, 1
+8003e8fc 8147     c.li         a5, 0
+8003e8fe 4dfa     c.bnez       a2, -0x4e
+8003e900 814b     c.li         s7, 0
+8003e902 8148     c.li         a7, 0
+8003e904 930d2110 addi         s11, sp, 0x102
+8003e908 930a010e addi         s5, sp, 0xe0
+8003e90c 138c7401 addi         s8, s1, 0x17
+8003e910 a15c     c.li         s9, -0x18
+8003e912 f972     c.lui        t0, 0xffffe
+8003e914 1303f00b addi         t1, zero, 0xbf
+8003e918 054e     c.li         t3, 1
+8003e91a 930ef00f addi         t4, zero, 0xff
+8003e91e 254f     c.li         t5, 9
+8003e920 0565     c.lui        a0, 1
+8003e922 8965     c.lui        a1, 2
+8003e924 938ff28e addi         t6, t0, -0x711
+8003e928 130505a2 addi         a0, a0, -0x5e0
+8003e92c 2ac2     c.swsp       a0, 4(sp)
+8003e92e 138505cf addi         a0, a1, -0x310
+8003e932 2ac0     c.swsp       a0, 0(sp)
+8003e934 7ec4     c.swsp       t6, 8(sp)
+8003e936 83459cff lbu          a1, -7(s8)
+8003e93a 138605fc addi         a2, a1, -0x40
+8003e93e 0145     c.li         a0, 0
+8003e940 63686612 bltu         a2, t1, 0x130
+8003e944 034dacff lbu          s10, -6(s8)
+8003e948 6364ae13 bltu         t3, s10, 0x128
+8003e94c 03460c00 lbu          a2, 0(s8)
+8003e950 8346fcff lbu          a3, -1(s8)
+8003e954 2206     c.slli       a2, 8
+8003e956 3367d600 or           a4, a2, a3
+8003e95a 3306f701 add          a2, a4, t6
+8003e95e 9386928f addi         a3, t0, -0x707
+8003e962 6367d610 bltu         a2, a3, 0x10e
+8003e966 0346ccff lbu          a2, -4(s8)
+8003e96a 8346bcff lbu          a3, -5(s8)
+8003e96e 8347ecff lbu          a5, -2(s8)
+8003e972 0344dcff lbu          s0, -3(s8)
+8003e976 2206     c.slli       a2, 8
+8003e978 558e     c.or         a2, a3
+8003e97a 93968700 slli         a3, a5, 8
+8003e97e c18e     c.or         a3, s0
+8003e980 6378d60e bgeu         a2, a3, 0xf0
+8003e984 6366d70e bltu         a4, a3, 0xec
+8003e988 6388d503 beq          a1, t4, 0x30
+8003e98c 138505fe addi         a0, a1, -0x20
+8003e990 3317be00 sll          a4, t3, a1
+8003e994 7d81     c.srli       a0, 0x1f
+8003e996 b307a040 neg          a5, a0
+8003e99a 1304f5ff addi         s0, a0, -1
+8003e99e 33f5e700 and          a0, a5, a4
+8003e9a2 618f     c.and        a4, s0
+8003e9a4 b3777501 and          a5, a0, s7
+8003e9a8 33741701 and          s0, a4, a7
+8003e9ac c18f     c.or         a5, s0
+8003e9ae e1e3     c.bnez       a5, 0xc0
+8003e9b0 b36b7501 or           s7, a0, s7
+8003e9b4 b3681701 or           a7, a4, a7
+8003e9b8 13858c01 addi         a0, s9, 0x18
+8003e9bc 636caf06 bltu         t5, a0, 0x78
+8003e9c0 46c6     c.swsp       a7, 0xc(sp)
+8003e9c2 5684     c.mv         s0, s5
+8003e9c4 0947     c.li         a4, 2
+8003e9c6 6369e502 bltu         a0, a4, 0x32
+8003e9ca 232e6111 sw           s6, 0x11c(sp)
+8003e9ce b800     c.addi4spn   a4, sp, 0x48
+8003e9d0 2320e112 sw           a4, 0x120(sp)
+8003e9d4 f818     c.addi4spn   a4, sp, 0x7c
+8003e9d6 2322e112 sw           a4, 0x124(sp)
+8003e9da 7811     c.addi4spn   a4, sp, 0xac
+8003e9dc 2324e112 sw           a4, 0x128(sp)
+8003e9e0 13971c00 slli         a4, s9, 1
+8003e9e4 1307c702 addi         a4, a4, 0x2c
+8003e9e8 719b     c.andi       a4, -4
+8003e9ea 7c0a     c.addi4spn   a5, sp, 0x11c
+8003e9ec 3e97     c.add        a4, a5
+8003e9ee 0043     c.lw         s0, 0(a4)
+8003e9f0 7e05     c.slli       a0, 0x1f
+8003e9f2 7d85     c.srai       a0, 0x1f
+8003e9f4 5989     c.andi       a0, 0x16
+8003e9f6 2a94     c.add        s0, a0
+8003e9f8 2300b400 sb           a1, 0(s0)
+8003e9fc 2311c400 sh           a2, 2(s0)
+8003ea00 2312d400 sh           a3, 4(s0)
+8003ea04 13056400 addi         a0, s0, 6
+8003ea08 97e0ffff auipc        ra, 0xffffe
+8003ea0c e780805f jalr         ra, ra, 0x5f8
+8003ea10 b248     c.lwsp       a7, 0xc(sp)
+8003ea12 f972     c.lui        t0, 0xffffe
+8003ea14 1303f00b addi         t1, zero, 0xbf
+8003ea18 054e     c.li         t3, 1
+8003ea1a 930ef00f addi         t4, zero, 0xff
+8003ea1e 254f     c.li         t5, 9
+8003ea20 a24f     c.lwsp       t6, 8(sp)
+8003ea22 630b0d00 beqz         s10, 0x16
+8003ea26 1245     c.lwsp       a0, 4(sp)
+8003ea28 2318a400 sh           a0, 0x10(s0)
+8003ea2c 0245     c.lwsp       a0, 0(sp)
+8003ea2e 2319a400 sh           a0, 0x12(s0)
+8003ea32 19a0     c.j          6
+8003ea34 2380bd00 sb           a1, 0(s11)
+8003ea38 850d     c.addi       s11, 1
+8003ea3a 850c     c.addi       s9, 1
+8003ea3c d90a     c.addi       s5, 0x16
+8003ea3e 210c     c.addi       s8, 8
+8003ea40 e39b0cee bnez         s9, -0x10a
+8003ea44 0808     c.addi4spn   a0, sp, 0x10
+8003ea46 d285     c.mv         a1, s4
+8003ea48 97f0ffff auipc        ra, 0xfffff
+8003ea4c e780003b jalr         ra, ra, 0x3b0
+8003ea50 05c1     c.beqz       a0, 0x20
+8003ea52 0c08     c.addi4spn   a1, sp, 0x10
+8003ea54 1306c010 addi         a2, zero, 0x10c
+8003ea58 4e85     c.mv         a0, s3
+8003ea5a 97100000 auipc        ra, 1
+8003ea5e e780404f jalr         ra, ra, 0x4f4
+8003ea62 03c56400 lbu          a0, 6(s1)
+8003ea66 2300a900 sb           a0, 0(s2)
+8003ea6a 0545     c.li         a0, 1
+8003ea6c 11a0     c.j          4
+8003ea6e 0145     c.li         a0, 0
+8003ea70 8320c115 lw           ra, 0x15c(sp)
+8003ea74 03248115 lw           s0, 0x158(sp)
+8003ea78 83244115 lw           s1, 0x154(sp)
+8003ea7c 03290115 lw           s2, 0x150(sp)
+8003ea80 8329c114 lw           s3, 0x14c(sp)
+8003ea84 032a8114 lw           s4, 0x148(sp)
+8003ea88 832a4114 lw           s5, 0x144(sp)
+8003ea8c 032b0114 lw           s6, 0x140(sp)
+8003ea90 832bc113 lw           s7, 0x13c(sp)
+8003ea94 032c8113 lw           s8, 0x138(sp)
+8003ea98 832c4113 lw           s9, 0x134(sp)
+8003ea9c 032d0113 lw           s10, 0x130(sp)
+8003eaa0 832dc112 lw           s11, 0x12c(sp)
+8003eaa4 3561     c.addi16sp   sp, 0x160
+8003eaa6 8280     c.jr         ra
+8003eaa8 130101d8 addi         sp, sp, -0x280
+8003eaac 232e1126 sw           ra, 0x27c(sp)
+8003eab0 232c8126 sw           s0, 0x278(sp)
+8003eab4 232a9126 sw           s1, 0x274(sp)
+8003eab8 23282127 sw           s2, 0x270(sp)
+8003eabc 23263127 sw           s3, 0x26c(sp)
+8003eac0 23244127 sw           s4, 0x268(sp)
+8003eac4 23225127 sw           s5, 0x264(sp)
+8003eac8 23206127 sw           s6, 0x260(sp)
+8003eacc 2e84     c.mv         s0, a1
+8003eace 2a8b     c.mv         s6, a0
+8003ead0 9d45     c.li         a1, 7
+8003ead2 0145     c.li         a0, 0
+8003ead4 63e4d50c bltu         a1, a3, 0xc8
+8003ead8 63020b0c beqz         s6, 0xc4
+8003eadc 61c0     c.beqz       s0, 0xc0
+8003eade ba84     c.mv         s1, a4
+8003eae0 55cf     c.beqz       a4, 0xbc
+8003eae2 4289     c.mv         s2, a6
+8003eae4 be89     c.mv         s3, a5
+8003eae6 b68a     c.mv         s5, a3
+8003eae8 328a     c.mv         s4, a2
+8003eaea d40a     c.addi4spn   a3, sp, 0x154
+8003eaec 13073115 addi         a4, sp, 0x153
+8003eaf0 2285     c.mv         a0, s0
+8003eaf2 b285     c.mv         a1, a2
+8003eaf4 2686     c.mv         a2, s1
+8003eaf6 97000000 auipc        ra, 0
+8003eafa e78020cd jalr         ra, ra, -0x32e
+8003eafe 59cd     c.beqz       a0, 0x9e
+8003eb00 03258115 lw           a0, 0x158(sp)
+8003eb04 11c5     c.beqz       a0, 0xc
+8003eb06 03453115 lbu          a0, 0x153(sp)
+8003eb0a 33755501 and          a0, a0, s5
+8003eb0e 59c5     c.beqz       a0, 0x8e
+8003eb10 13053108 addi         a0, sp, 0x83
+8003eb14 93053115 addi         a1, sp, 0x153
+8003eb18 03460400 lbu          a2, 0(s0)
+8003eb1c 2300c500 sb           a2, 0(a0)
+8003eb20 0505     c.addi       a0, 1
+8003eb22 0504     c.addi       s0, 1
+8003eb24 e31ab5fe bne          a0, a1, -0xc
+8003eb28 13850408 addi         a0, s1, 0x80
+8003eb2c 93052100 addi         a1, sp, 2
+8003eb30 03960400 lh           a2, 0(s1)
+8003eb34 8904     c.addi       s1, 2
+8003eb36 2390c500 sh           a2, 0(a1)
+8003eb3a 8905     c.addi       a1, 2
+8003eb3c e39aa4fe bne          s1, a0, -0xc
+8003eb40 13060031 addi         a2, zero, 0x310
+8003eb44 5a85     c.mv         a0, s6
+8003eb46 8145     c.li         a1, 0
+8003eb48 97100000 auipc        ra, 1
+8003eb4c e7802042 jalr         ra, ra, 0x422
+8003eb50 13050b0d addi         a0, s6, 0xd0
+8003eb54 93053108 addi         a1, sp, 0x83
+8003eb58 5a86     c.mv         a2, s6
+8003eb5a 83c60500 lbu          a3, 0(a1)
+8003eb5e 2300d600 sb           a3, 0(a2)
+8003eb62 0506     c.addi       a2, 1
+8003eb64 8505     c.addi       a1, 1
+8003eb66 e31aa6fe bne          a2, a0, -0xc
+8003eb6a 13050b27 addi         a0, s6, 0x270
+8003eb6e 93052100 addi         a1, sp, 2
+8003eb72 13062108 addi         a2, sp, 0x82
+8003eb76 83960500 lh           a3, 0(a1)
+8003eb7a 8905     c.addi       a1, 2
+8003eb7c 2310d500 sh           a3, 0(a0)
+8003eb80 0905     c.addi       a0, 2
+8003eb82 e39ac5fe bne          a1, a2, -0xc
+8003eb86 0545     c.li         a0, 1
+8003eb88 23284b2f sw           s4, 0x2f0(s6)
+8003eb8c 23065b31 sb           s5, 0x30c(s6)
+8003eb90 a306ab30 sb           a0, 0x30d(s6)
+8003eb94 23283b31 sw           s3, 0x310(s6)
+8003eb98 232a2b31 sw           s2, 0x314(s6)
+8003eb9c 8320c127 lw           ra, 0x27c(sp)
+8003eba0 03248127 lw           s0, 0x278(sp)
+8003eba4 83244127 lw           s1, 0x274(sp)
+8003eba8 03290127 lw           s2, 0x270(sp)
+8003ebac 8329c126 lw           s3, 0x26c(sp)
+8003ebb0 032a8126 lw           s4, 0x268(sp)
+8003ebb4 832a4126 lw           s5, 0x264(sp)
+8003ebb8 032b0126 lw           s6, 0x260(sp)
+8003ebbc 13010128 addi         sp, sp, 0x280
+8003ebc0 8280     c.jr         ra
+8003ebc2 4971     c.addi16sp   sp, -0x170
+8003ebc4 23261116 sw           ra, 0x16c(sp)
+8003ebc8 23248116 sw           s0, 0x168(sp)
+8003ebcc 23229116 sw           s1, 0x164(sp)
+8003ebd0 23202117 sw           s2, 0x160(sp)
+8003ebd4 232e3115 sw           s3, 0x15c(sp)
+8003ebd8 232c4115 sw           s4, 0x158(sp)
+8003ebdc aa84     c.mv         s1, a0
+8003ebde 0145     c.li         a0, 0
+8003ebe0 6385051c beqz         a1, 0x1ca
+8003ebe4 3284     c.mv         s0, a2
+8003ebe6 6302061c beqz         a2, 0x1c4
+8003ebea 03c50500 lbu          a0, 0(a1)
+8003ebee 4146     c.li         a2, 0x10
+8003ebf0 631cc51a bne          a0, a2, 0x1b8
+8003ebf4 03c51500 lbu          a0, 1(a1)
+8003ebf8 1305a5fd addi         a0, a0, -0x26
+8003ebfc 6956     c.li         a2, -6
+8003ebfe 6365c51a bltu         a0, a2, 0x1aa
+8003ec02 03c54500 lbu          a0, 4(a1)
+8003ec06 13061004 addi         a2, zero, 0x41
+8003ec0a 631fc518 bne          a0, a2, 0x19e
+8003ec0e 03c55500 lbu          a0, 5(a1)
+8003ec12 13067004 addi         a2, zero, 0x47
+8003ec16 6319c518 bne          a0, a2, 0x192
+8003ec1a 03c56500 lbu          a0, 6(a1)
+8003ec1e 13060005 addi         a2, zero, 0x50
+8003ec22 6313c518 bne          a0, a2, 0x186
+8003ec26 03c57500 lbu          a0, 7(a1)
+8003ec2a 13061003 addi         a2, zero, 0x31
+8003ec2e 631dc516 bne          a0, a2, 0x17a
+8003ec32 1305b100 addi         a0, sp, 0xb
+8003ec36 1306b104 addi         a2, sp, 0x4b
+8003ec3a 03c70500 lbu          a4, 0(a1)
+8003ec3e 2300e500 sb           a4, 0(a0)
+8003ec42 0505     c.addi       a0, 1
+8003ec44 8505     c.addi       a1, 1
+8003ec46 e31ac5fe bne          a0, a2, -0xc
+8003ec4a 130a0404 addi         s4, s0, 0x40
+8003ec4e 2285     c.mv         a0, s0
+8003ec50 23000500 sb           zero, 0(a0)
+8003ec54 0505     c.addi       a0, 1
+8003ec56 e31d45ff bne          a0, s4, -6
+8003ec5a 13058400 addi         a0, s0, 8
+8003ec5e 9305b100 addi         a1, sp, 0xb
+8003ec62 2286     c.mv         a2, s0
+8003ec64 03c70500 lbu          a4, 0(a1)
+8003ec68 2300e600 sb           a4, 0(a2)
+8003ec6c 0506     c.addi       a2, 1
+8003ec6e 8505     c.addi       a1, 1
+8003ec70 e31aa6fe bne          a2, a0, -0xc
+8003ec74 85c0     c.beqz       s1, 0x20
+8003ec76 03c5e430 lbu          a0, 0x30e(s1)
+8003ec7a 23aed42e sw           a3, 0x2fc(s1)
+8003ec7e 19c9     c.beqz       a0, 0x16
+8003ec80 03a50430 lw           a0, 0x300(s1)
+8003ec84 898e     c.sub        a3, a0
+8003ec86 0565     c.lui        a0, 1
+8003ec88 13059538 addi         a0, a0, 0x389
+8003ec8c 63e4a600 bltu         a3, a0, 8
+8003ec90 23870430 sb           zero, 0x30e(s1)
+8003ec94 0345d100 lbu          a0, 0xd(sp)
+8003ec98 8545     c.li         a1, 1
+8003ec9a 6318b52e bne          a0, a1, 0x2f0
+8003ec9e 03453101 lbu          a0, 0x13(sp)
+8003eca2 6314052e bnez         a0, 0x2e8
+8003eca6 03464101 lbu          a2, 0x14(sp)
+8003ecaa 13056003 addi         a0, zero, 0x36
+8003ecae 636ec52c bltu         a0, a2, 0x2dc
+8003ecb2 1d45     c.li         a0, 7
+8003ecb4 638c042c beqz         s1, 0x2d8
+8003ecb8 83c5d430 lbu          a1, 0x30d(s1)
+8003ecbc 6388052c beqz         a1, 0x2d0
+8003ecc0 8346c100 lbu          a3, 0xc(sp)
+8003ecc4 93055002 addi         a1, zero, 0x25
+8003ecc8 a3040400 sb           zero, 9(s0)
+8003eccc 638ab612 beq          a3, a1, 0x134
+8003ecd0 13074002 addi         a4, zero, 0x24
+8003ecd4 93055101 addi         a1, sp, 0x15
+8003ecd8 6387e60e beq          a3, a4, 0xee
+8003ecdc 13070002 addi         a4, zero, 0x20
+8003ece0 639ee61a bne          a3, a4, 0x1bc
+8003ece4 0945     c.li         a0, 2
+8003ece6 6313062a bnez         a2, 0x2a6
+8003ecea 0145     c.li         a0, 0
+8003ecec a945     c.li         a1, 0xa
+8003ecee 13060003 addi         a2, zero, 0x30
+8003ecf2 2305b400 sb           a1, 0xa(s0)
+8003ecf6 a3050400 sb           zero, 0xb(s0)
+8003ecfa 2306c400 sb           a2, 0xc(s0)
+8003ecfe a3060400 sb           zero, 0xd(s0)
+8003ed02 83c5c430 lbu          a1, 0x30c(s1)
+8003ed06 6146     c.li         a2, 0x18
+8003ed08 8546     c.li         a3, 1
+8003ed0a 4148     c.li         a6, 0x10
+8003ed0c 2307b400 sb           a1, 0xe(s0)
+8003ed10 a307c400 sb           a2, 0xf(s0)
+8003ed14 2308d400 sb           a3, 0x10(s0)
+8003ed18 a3080400 sb           zero, 0x11(s0)
+8003ed1c 83a6042f lw           a3, 0x2f0(s1)
+8003ed20 93087002 addi         a7, zero, 0x27
+8003ed24 9305000d addi         a1, zero, 0xd0
+8003ed28 7d56     c.li         a2, -1
+8003ed2a 13d78600 srli         a4, a3, 8
+8003ed2e 93d70601 srli         a5, a3, 0x10
+8003ed32 93d28601 srli         t0, a3, 0x18
+8003ed36 2309d400 sb           a3, 0x12(s0)
+8003ed3a a309e400 sb           a4, 0x13(s0)
+8003ed3e 230af400 sb           a5, 0x14(s0)
+8003ed42 a30a5400 sb           t0, 0x15(s0)
+8003ed46 b786b8ed lui          a3, 0xedb88
+8003ed4a 230b0401 sb           a6, 0x16(s0)
+8003ed4e a30b1401 sb           a7, 0x17(s0)
+8003ed52 230cb400 sb           a1, 0x18(s0)
+8003ed56 a30c0400 sb           zero, 0x19(s0)
+8003ed5a 93860632 addi         a3, a3, 0x320
+8003ed5e 3387a400 add          a4, s1, a0
+8003ed62 03470700 lbu          a4, 0(a4)
+8003ed66 398e     c.xor        a2, a4
+8003ed68 2147     c.li         a4, 8
+8003ed6a 93571600 srli         a5, a2, 1
+8003ed6e 7e06     c.slli       a2, 0x1f
+8003ed70 7d86     c.srai       a2, 0x1f
+8003ed72 758e     c.and        a2, a3
+8003ed74 7d17     c.addi       a4, -1
+8003ed76 3d8e     c.xor        a2, a5
+8003ed78 6dfb     c.bnez       a4, -0xe
+8003ed7a 0505     c.addi       a0, 1
+8003ed7c e311b5fe bne          a0, a1, -0x1e
+8003ed80 1345f6ff not          a0, a2
+8003ed84 d145     c.li         a1, 0x14
+8003ed86 13568500 srli         a2, a0, 8
+8003ed8a 93560501 srli         a3, a0, 0x10
+8003ed8e 13578501 srli         a4, a0, 0x18
+8003ed92 a304b400 sb           a1, 9(s0)
+8003ed96 230da400 sb           a0, 0x1a(s0)
+8003ed9a a30dc400 sb           a2, 0x1b(s0)
+8003ed9e 230ed400 sb           a3, 0x1c(s0)
+8003eda2 a30ee400 sb           a4, 0x1d(s0)
+8003eda6 91a8     c.j          0x54
+8003eda8 0145     c.li         a0, 0
+8003edaa 8320c116 lw           ra, 0x16c(sp)
+8003edae 03248116 lw           s0, 0x168(sp)
+8003edb2 83244116 lw           s1, 0x164(sp)
+8003edb6 03290116 lw           s2, 0x160(sp)
+8003edba 8329c115 lw           s3, 0x15c(sp)
+8003edbe 032a8115 lw           s4, 0x158(sp)
+8003edc2 7561     c.addi16sp   sp, 0x170
+8003edc4 8280     c.jr         ra
+8003edc6 a146     c.li         a3, 8
+8003edc8 0945     c.li         a0, 2
+8003edca 6311d61c bne          a2, a3, 0x1c2
+8003edce 03c5e430 lbu          a0, 0x30e(s1)
+8003edd2 15c1     c.beqz       a0, 0x24
+8003edd4 0145     c.li         a0, 0
+8003edd6 13864430 addi         a2, s1, 0x304
+8003edda 9386c430 addi         a3, s1, 0x30c
+8003edde 03c70500 lbu          a4, 0(a1)
+8003ede2 83470600 lbu          a5, 0(a2)
+8003ede6 0506     c.addi       a2, 1
+8003ede8 3d8f     c.xor        a4, a5
+8003edea 598d     c.or         a0, a4
+8003edec 8505     c.addi       a1, 1
+8003edee e318d6fe bne          a2, a3, -0x10
+8003edf2 63130518 bnez         a0, 0x186
+8003edf6 23870430 sb           zero, 0x30e(s1)
+8003edfa 23040400 sb           zero, 8(s0)
+8003edfe 4da2     c.j          0x1a2
+8003ee00 1d45     c.li         a0, 7
+8003ee02 6314a618 bne          a2, a0, 0x188
+8003ee06 8345b101 lbu          a1, 0x1b(sp)
+8003ee0a 1385f5fc addi         a0, a1, -0x31
+8003ee0e 130600fd addi         a2, zero, -0x30
+8003ee12 636cc516 bltu         a0, a2, 0x178
+8003ee16 8346a101 lbu          a3, 0x1a(sp)
+8003ee1a 03469101 lbu          a2, 0x19(sp)
+8003ee1e 13978600 slli         a4, a3, 8
+8003ee22 3365c700 or           a0, a4, a2
+8003ee26 b307b500 add          a5, a0, a1
+8003ee2a 1308000d addi         a6, zero, 0xd0
+8003ee2e 0945     c.li         a0, 2
+8003ee30 636ef814 bltu         a6, a5, 0x15c
+8003ee34 03485101 lbu          a6, 0x15(sp)
+8003ee38 83487101 lbu          a7, 0x17(sp)
+8003ee3c 83428101 lbu          t0, 0x18(sp)
+8003ee40 83436101 lbu          t2, 0x16(sp)
+8003ee44 03a3042f lw           t1, 0x2f0(s1)
+8003ee48 13950801 slli         a0, a7, 0x10
+8003ee4c 93978201 slli         a5, t0, 0x18
+8003ee50 5d8d     c.or         a0, a5
+8003ee52 93978300 slli         a5, t2, 8
+8003ee56 b3e70701 or           a5, a5, a6
+8003ee5a 5d8d     c.or         a0, a5
+8003ee5c 631e6510 bne          a0, t1, 0x11c
+8003ee60 23050401 sb           a6, 0xa(s0)
+8003ee64 a3057400 sb           t2, 0xb(s0)
+8003ee68 23061401 sb           a7, 0xc(s0)
+8003ee6c a3065400 sb           t0, 0xd(s0)
+8003ee70 2307c400 sb           a2, 0xe(s0)
+8003ee74 a307d400 sb           a3, 0xf(s0)
+8003ee78 13050401 addi         a0, s0, 0x10
+8003ee7c 2697     c.add        a4, s1
+8003ee7e 3a96     c.add        a2, a4
+8003ee80 b306b500 add          a3, a0, a1
+8003ee84 03470600 lbu          a4, 0(a2)
+8003ee88 2300e500 sb           a4, 0(a0)
+8003ee8c 0505     c.addi       a0, 1
+8003ee8e 0506     c.addi       a2, 1
+8003ee90 e31ad5fe bne          a0, a3, -0xc
+8003ee94 9905     c.addi       a1, 6
+8003ee96 a304b400 sb           a1, 9(s0)
+8003ee9a 85b7     c.j          -0xa0
+8003ee9c 03a70431 lw           a4, 0x310(s1)
+8003eea0 75c7     c.beqz       a4, 0xec
+8003eea2 13053002 addi         a0, zero, 0x23
+8003eea6 638fa60e beq          a3, a0, 0xfe
+8003eeaa 13052002 addi         a0, zero, 0x22
+8003eeae 6387a60c beq          a3, a0, 0xce
+8003eeb2 13051002 addi         a0, zero, 0x21
+8003eeb6 6395a61c bne          a3, a0, 0x1ca
+8003eeba 4945     c.li         a0, 0x12
+8003eebc 6317a60c bne          a2, a0, 0xce
+8003eec0 0345e101 lbu          a0, 0x1e(sp)
+8003eec4 8345d101 lbu          a1, 0x1d(sp)
+8003eec8 2205     c.slli       a0, 8
+8003eeca 4d8d     c.or         a0, a1
+8003eecc 9305000d addi         a1, zero, 0xd0
+8003eed0 631db50a bne          a0, a1, 0xba
+8003eed4 0146     c.li         a2, 0
+8003eed6 9305f101 addi         a1, sp, 0x1f
+8003eeda 13057102 addi         a0, sp, 0x27
+8003eede ae86     c.mv         a3, a1
+8003eee0 03c70600 lbu          a4, 0(a3)
+8003eee4 8506     c.addi       a3, 1
+8003eee6 598e     c.or         a2, a4
+8003eee8 e39ca6fe bne          a3, a0, -8
+8003eeec 0945     c.li         a0, 2
+8003eeee 59ce     c.beqz       a2, 0x9e
+8003eef0 03456101 lbu          a0, 0x16(sp)
+8003eef4 03465101 lbu          a2, 0x15(sp)
+8003eef8 83467101 lbu          a3, 0x17(sp)
+8003eefc 03478101 lbu          a4, 0x18(sp)
+8003ef00 2205     c.slli       a0, 8
+8003ef02 518d     c.or         a0, a2
+8003ef04 83a7042f lw           a5, 0x2f0(s1)
+8003ef08 c206     c.slli       a3, 0x10
+8003ef0a 6207     c.slli       a4, 0x18
+8003ef0c 33e6e600 or           a2, a3, a4
+8003ef10 3368c500 or           a6, a0, a2
+8003ef14 0d45     c.li         a0, 3
+8003ef16 631bf806 bne          a6, a5, 0x76
+8003ef1a 83c6e430 lbu          a3, 0x30e(s1)
+8003ef1e 638e061c beqz         a3, 0x1dc
+8003ef22 8146     c.li         a3, 0
+8003ef24 13874430 addi         a4, s1, 0x304
+8003ef28 9388c430 addi         a7, s1, 0x30c
+8003ef2c 03c60500 lbu          a2, 0(a1)
+8003ef30 83470700 lbu          a5, 0(a4)
+8003ef34 0507     c.addi       a4, 1
+8003ef36 3d8e     c.xor        a2, a5
+8003ef38 d18e     c.or         a3, a2
+8003ef3a 8505     c.addi       a1, 1
+8003ef3c e31817ff bne          a4, a7, -0x10
+8003ef40 b1e6     c.bnez       a3, 0x4c
+8003ef42 8345a101 lbu          a1, 0x1a(sp)
+8003ef46 03469101 lbu          a2, 0x19(sp)
+8003ef4a 8346b101 lbu          a3, 0x1b(sp)
+8003ef4e 0347c101 lbu          a4, 0x1c(sp)
+8003ef52 a205     c.slli       a1, 8
+8003ef54 d18d     c.or         a1, a2
+8003ef56 03a6842f lw           a2, 0x2f8(s1)
+8003ef5a c206     c.slli       a3, 0x10
+8003ef5c 6207     c.slli       a4, 0x18
+8003ef5e d98e     c.or         a3, a4
+8003ef60 d58d     c.or         a1, a3
+8003ef62 6395c502 bne          a1, a2, 0x2a
+8003ef66 83a5442f lw           a1, 0x2f4(s1)
+8003ef6a 6311b802 bne          a6, a1, 0x22
+8003ef6e 03a5c42f lw           a0, 0x2fc(s1)
+8003ef72 23a0a430 sw           a0, 0x300(s1)
+8003ef76 51b5     c.j          -0x17c
+8003ef78 0d45     c.li         a0, 3
+8003ef7a 09a8     c.j          0x12
+8003ef7c 83c6e430 lbu          a3, 0x30e(s1)
+8003ef80 0d45     c.li         a0, 3
+8003ef82 89c6     c.beqz       a3, 0xa
+8003ef84 2d45     c.li         a0, 0xb
+8003ef86 637fa60e bgeu         a2, a0, 0xfe
+8003ef8a 0945     c.li         a0, 2
+8003ef8c 2304a400 sb           a0, 8(s0)
+8003ef90 a3040400 sb           zero, 9(s0)
+8003ef94 2904     c.addi       s0, 0xa
+8003ef96 23000400 sb           zero, 0(s0)
+8003ef9a 0504     c.addi       s0, 1
+8003ef9c e31d44ff bne          s0, s4, -6
+8003efa0 0545     c.li         a0, 1
+8003efa2 21b5     c.j          -0x1f8
+8003efa4 c146     c.li         a3, 0x10
+8003efa6 0945     c.li         a0, 2
+8003efa8 e312d6fe bne          a2, a3, -0x1c
+8003efac 03c6e430 lbu          a2, 0x30e(s1)
+8003efb0 0d45     c.li         a0, 3
+8003efb2 69de     c.beqz       a2, -0x26
+8003efb4 03a6042f lw           a2, 0x2f0(s1)
+8003efb8 83a9442f lw           s3, 0x2f4(s1)
+8003efbc e398c9fc bne          s3, a2, -0x30
+8003efc0 0146     c.li         a2, 0
+8003efc2 93864430 addi         a3, s1, 0x304
+8003efc6 1388c430 addi         a6, s1, 0x30c
+8003efca 83c70500 lbu          a5, 0(a1)
+8003efce 03c70600 lbu          a4, 0(a3)
+8003efd2 8506     c.addi       a3, 1
+8003efd4 3d8f     c.xor        a4, a5
+8003efd6 598e     c.or         a2, a4
+8003efd8 8505     c.addi       a1, 1
+8003efda e39806ff bne          a3, a6, -0x10
+8003efde 5df6     c.bnez       a2, -0x52
+8003efe0 8345e101 lbu          a1, 0x1e(sp)
+8003efe4 0346d101 lbu          a2, 0x1d(sp)
+8003efe8 8346f101 lbu          a3, 0x1f(sp)
+8003efec 03470102 lbu          a4, 0x20(sp)
+8003eff0 a205     c.slli       a1, 8
+8003eff2 d18d     c.or         a1, a2
+8003eff4 03a6842f lw           a2, 0x2f8(s1)
+8003eff8 c206     c.slli       a3, 0x10
+8003effa 6207     c.slli       a4, 0x18
+8003effc d98e     c.or         a3, a4
+8003effe 33e8d500 or           a6, a1, a3
+8003f002 e315c8f8 bne          a6, a2, -0x76
+8003f006 03462102 lbu          a2, 0x22(sp)
+8003f00a 83461102 lbu          a3, 0x21(sp)
+8003f00e 03473102 lbu          a4, 0x23(sp)
+8003f012 83474102 lbu          a5, 0x24(sp)
+8003f016 2206     c.slli       a2, 8
+8003f018 558e     c.or         a2, a3
+8003f01a 4207     c.slli       a4, 0x10
+8003f01c e207     c.slli       a5, 0x18
+8003f01e 5d8f     c.or         a4, a5
+8003f020 598e     c.or         a2, a4
+8003f022 e31536f7 bne          a2, s3, -0x96
+8003f026 1385041a addi         a0, s1, 0x1a0
+8003f02a 1306000d addi         a2, zero, 0xd0
+8003f02e 83460500 lbu          a3, 0(a0)
+8003f032 63830612 beqz         a3, 0x126
+8003f036 7d16     c.addi       a2, -1
+8003f038 0505     c.addi       a0, 1
+8003f03a 75fa     c.bnez       a2, -0xc
+8003f03c 0145     c.li         a0, 0
+8003f03e 1389040d addi         s2, s1, 0xd0
+8003f042 7d56     c.li         a2, -1
+8003f044 b786b8ed lui          a3, 0xedb88
+8003f048 93860632 addi         a3, a3, 0x320
+8003f04c 1307000d addi         a4, zero, 0xd0
+8003f050 b307a900 add          a5, s2, a0
+8003f054 83c70700 lbu          a5, 0(a5)
+8003f058 3d8e     c.xor        a2, a5
+8003f05a a147     c.li         a5, 8
+8003f05c 93551600 srli         a1, a2, 1
+8003f060 7e06     c.slli       a2, 0x1f
+8003f062 7d86     c.srai       a2, 0x1f
+8003f064 758e     c.and        a2, a3
+8003f066 fd17     c.addi       a5, -1
+8003f068 2d8e     c.xor        a2, a1
+8003f06a edfb     c.bnez       a5, -0xe
+8003f06c 0505     c.addi       a0, 1
+8003f06e e311e5fe bne          a0, a4, -0x1e
+8003f072 33450601 xor          a0, a2, a6
+8003f076 fd55     c.li         a1, -1
+8003f078 6302b50e beq          a0, a1, 0xe4
+8003f07c 1945     c.li         a0, 6
+8003f07e 39b7     c.j          -0xf2
+8003f080 0545     c.li         a0, 1
+8003f082 29b7     c.j          -0xf6
+8003f084 0347e101 lbu          a4, 0x1e(sp)
+8003f088 0348d101 lbu          a6, 0x1d(sp)
+8003f08c 93188700 slli         a7, a4, 8
+8003f090 33e50801 or           a0, a7, a6
+8003f094 3295     c.add        a0, a2
+8003f096 930655f2 addi         a3, a0, -0xdb
+8003f09a 9307f0f2 addi         a5, zero, -0xd1
+8003f09e 0945     c.li         a0, 2
+8003f0a0 e3e6f6ee bltu         a3, a5, -0x114
+8003f0a4 8147     c.li         a5, 0
+8003f0a6 13854430 addi         a0, s1, 0x304
+8003f0aa 9382c430 addi         t0, s1, 0x30c
+8003f0ae 03c70500 lbu          a4, 0(a1)
+8003f0b2 83460500 lbu          a3, 0(a0)
+8003f0b6 0505     c.addi       a0, 1
+8003f0b8 b98e     c.xor        a3, a4
+8003f0ba d58f     c.or         a5, a3
+8003f0bc 8505     c.addi       a1, 1
+8003f0be e31855fe bne          a0, t0, -0x10
+8003f0c2 0d45     c.li         a0, 3
+8003f0c4 e39407ec bnez         a5, -0x138
+8003f0c8 83a6c42f lw           a3, 0x2fc(s1)
+8003f0cc 4698     c.add        a6, a7
+8003f0ce 1305f101 addi         a0, sp, 0x1f
+8003f0d2 2698     c.add        a6, s1
+8003f0d4 4296     c.add        a2, a6
+8003f0d6 9305081a addi         a1, a6, 0x1a0
+8003f0da 13066619 addi         a2, a2, 0x196
+8003f0de 23a0d430 sw           a3, 0x300(s1)
+8003f0e2 8546     c.li         a3, 1
+8003f0e4 03470500 lbu          a4, 0(a0)
+8003f0e8 2380d500 sb           a3, 0(a1)
+8003f0ec 2388e5f2 sb           a4, -0xd0(a1)
+8003f0f0 8505     c.addi       a1, 1
+8003f0f2 0505     c.addi       a0, 1
+8003f0f4 e398c5fe bne          a1, a2, -0x10
+8003f0f8 09b3     c.j          -0x2fe
+8003f0fa 0345a101 lbu          a0, 0x1a(sp)
+8003f0fe 03469101 lbu          a2, 0x19(sp)
+8003f102 8346b101 lbu          a3, 0x1b(sp)
+8003f106 0347c101 lbu          a4, 0x1c(sp)
+8003f10a 2205     c.slli       a0, 8
+8003f10c 518d     c.or         a0, a2
+8003f10e c206     c.slli       a3, 0x10
+8003f110 6207     c.slli       a4, 0x18
+8003f112 d98e     c.or         a3, a4
+8003f114 0546     c.li         a2, 1
+8003f116 c98e     c.or         a3, a0
+8003f118 13854430 addi         a0, s1, 0x304
+8003f11c 23aa042f sw           a6, 0x2f4(s1)
+8003f120 23acd42e sw           a3, 0x2f8(s1)
+8003f124 2387c430 sb           a2, 0x30e(s1)
+8003f128 1386c430 addi         a2, s1, 0x30c
+8003f12c 83c60500 lbu          a3, 0(a1)
+8003f130 2300d500 sb           a3, 0(a0)
+8003f134 0505     c.addi       a0, 1
+8003f136 8505     c.addi       a1, 1
+8003f138 e31ac5fe bne          a0, a2, -0xc
+8003f13c 03a5c42f lw           a0, 0x2fc(s1)
+8003f140 23a0a430 sw           a0, 0x300(s1)
+8003f144 1385041a addi         a0, s1, 0x1a0
+8003f148 93850427 addi         a1, s1, 0x270
+8003f14c 23000500 sb           zero, 0(a0)
+8003f150 0505     c.addi       a0, 1
+8003f152 e31db5fe bne          a0, a1, -6
+8003f156 55b1     c.j          -0x35c
+8003f158 1545     c.li         a0, 5
+8003f15a 0dbd     c.j          -0x1ce
+8003f15c 8509     c.addi       s3, 1
+8003f15e 13860427 addi         a2, s1, 0x270
+8003f162 f400     c.addi4spn   a3, sp, 0x4c
+8003f164 1307b104 addi         a4, sp, 0x4b
+8003f168 4a85     c.mv         a0, s2
+8003f16a ce85     c.mv         a1, s3
+8003f16c 97f0ffff auipc        ra, 0xfffff
+8003f170 e780c065 jalr         ra, ra, 0x65c
+8003f174 2dc5     c.beqz       a0, 0x6a
+8003f176 4645     c.lwsp       a0, 0x50(sp)
+8003f178 0346b104 lbu          a2, 0x4b(sp)
+8003f17c 09c5     c.beqz       a0, 0xa
+8003f17e 03c5c430 lbu          a0, 0x30c(s1)
+8003f182 718d     c.and        a0, a2
+8003f184 2dc1     c.beqz       a0, 0x62
+8003f186 03a70431 lw           a4, 0x310(s1)
+8003f18a 03a54431 lw           a0, 0x314(s1)
+8003f18e ec00     c.addi4spn   a1, sp, 0x4c
+8003f190 ca86     c.mv         a3, s2
+8003f192 0297     c.jalr       a4
+8003f194 39c5     c.beqz       a0, 0x4e
+8003f196 2685     c.mv         a0, s1
+8003f198 8345050d lbu          a1, 0xd0(a0)
+8003f19c 2300b500 sb           a1, 0(a0)
+8003f1a0 0505     c.addi       a0, 1
+8003f1a2 e31b25ff bne          a0, s2, -0xa
+8003f1a6 23a8342f sw           s3, 0x2f0(s1)
+8003f1aa 23870430 sb           zero, 0x30e(s1)
+8003f1ae 13d58900 srli         a0, s3, 8
+8003f1b2 93d50901 srli         a1, s3, 0x10
+8003f1b6 13d68901 srli         a2, s3, 0x18
+8003f1ba 23053401 sb           s3, 0xa(s0)
+8003f1be a305a400 sb           a0, 0xb(s0)
+8003f1c2 2306b400 sb           a1, 0xc(s0)
+8003f1c6 a306c400 sb           a2, 0xd(s0)
+8003f1ca 03c5c430 lbu          a0, 0x30c(s1)
+8003f1ce 9545     c.li         a1, 5
+8003f1d0 7605     c.slli       a0, 0x1d
+8003f1d2 7d81     c.srli       a0, 0x1f
+8003f1d4 a304b400 sb           a1, 9(s0)
+8003f1d8 2307a400 sb           a0, 0xe(s0)
+8003f1dc 39b9     c.j          -0x3e2
+8003f1de 1145     c.li         a0, 4
+8003f1e0 75b3     c.j          -0x254
+8003f1e2 2145     c.li         a0, 8
+8003f1e4 65b3     c.j          -0x258
+8003f1e6 1d45     c.li         a0, 7
+8003f1e8 55b3     c.j          -0x25c
+8003f1ea 29c9     c.beqz       a0, 0x52
+8003f1ec 83450500 lbu          a1, 0(a0)
+8003f1f0 1306f00f addi         a2, zero, 0xff
+8003f1f4 6384c504 beq          a1, a2, 0x48
+8003f1f8 03461500 lbu          a2, 1(a0)
+8003f1fc 9376060f andi         a3, a2, 0xf0
+8003f200 13070008 addi         a4, zero, 0x80
+8003f204 8145     c.li         a1, 0
+8003f206 639ce602 bne          a3, a4, 0x38
+8003f20a 3d8a     c.andi       a2, 0xf
+8003f20c 0dca     c.beqz       a2, 0x32
+8003f20e 83452500 lbu          a1, 2(a0)
+8003f212 c115     c.addi       a1, -0x10
+8003f214 4556     c.li         a2, -0xf
+8003f216 63e3c502 bltu         a1, a2, 0x26
+8003f21a 83453500 lbu          a1, 3(a0)
+8003f21e 1386f5ff addi         a2, a1, -1
+8003f222 bd45     c.li         a1, 0xf
+8003f224 63ecc500 bltu         a1, a2, 0x18
+8003f228 03464500 lbu          a2, 4(a0)
+8003f22c 7d16     c.addi       a2, -1
+8003f22e 63e7c500 bltu         a1, a2, 0xe
+8003f232 03455500 lbu          a0, 5(a0)
+8003f236 b335a000 snez         a1, a0
+8003f23a 11a0     c.j          4
+8003f23c 8145     c.li         a1, 0
+8003f23e 2e85     c.mv         a0, a1
+8003f240 8280     c.jr         ra
+8003f242 2dc1     c.beqz       a0, 0x62
+8003f244 4111     c.addi       sp, -0x10
+8003f246 06c6     c.swsp       ra, 0xc(sp)
+8003f248 22c4     c.swsp       s0, 8(sp)
+8003f24a 26c2     c.swsp       s1, 4(sp)
+8003f24c 4ac0     c.swsp       s2, 0(sp)
+8003f24e 3284     c.mv         s0, a2
+8003f250 2e89     c.mv         s2, a1
+8003f252 aa84     c.mv         s1, a0
+8003f254 2e85     c.mv         a0, a1
+8003f256 97000000 auipc        ra, 0
+8003f25a e78040f9 jalr         ra, ra, -0x6c
+8003f25e aa85     c.mv         a1, a0
+8003f260 0145     c.li         a0, 0
+8003f262 05cc     c.beqz       s0, 0x38
+8003f264 9dc9     c.beqz       a1, 0x36
+8003f266 0840     c.lw         a0, 0(s0)
+8003f268 0dc9     c.beqz       a0, 0x32
+8003f26a 13850403 addi         a0, s1, 0x30
+8003f26e a685     c.mv         a1, s1
+8003f270 23800500 sb           zero, 0(a1)
+8003f274 8505     c.addi       a1, 1
+8003f276 e39da5fe bne          a1, a0, -6
+8003f27a 1946     c.li         a2, 6
+8003f27c 2685     c.mv         a0, s1
+8003f27e ca85     c.mv         a1, s2
+8003f280 97100000 auipc        ra, 1
+8003f284 e780e0cc jalr         ra, ra, -0x332
+8003f288 0840     c.lw         a0, 0(s0)
+8003f28a 88c4     c.sw         a0, 8(s1)
+8003f28c 4840     c.lw         a0, 4(s0)
+8003f28e c8c4     c.sw         a0, 0xc(s1)
+8003f290 0844     c.lw         a0, 8(s0)
+8003f292 88c8     c.sw         a0, 0x10(s1)
+8003f294 4844     c.lw         a0, 0xc(s0)
+8003f296 c8c8     c.sw         a0, 0x14(s1)
+8003f298 0545     c.li         a0, 1
+8003f29a b240     c.lwsp       ra, 0xc(sp)
+8003f29c 2244     c.lwsp       s0, 8(sp)
+8003f29e 9244     c.lwsp       s1, 4(sp)
+8003f2a0 0249     c.lwsp       s2, 0(sp)
+8003f2a2 4101     c.addi       sp, 0x10
+8003f2a4 8280     c.jr         ra
+8003f2a6 63880512 beqz         a1, 0x130
+8003f2aa 5d71     c.addi16sp   sp, -0x50
+8003f2ac 86c6     c.swsp       ra, 0x4c(sp)
+8003f2ae a2c4     c.swsp       s0, 0x48(sp)
+8003f2b0 a6c2     c.swsp       s1, 0x44(sp)
+8003f2b2 cac0     c.swsp       s2, 0x40(sp)
+8003f2b4 4ede     c.swsp       s3, 0x3c(sp)
+8003f2b6 52dc     c.swsp       s4, 0x38(sp)
+8003f2b8 56da     c.swsp       s5, 0x34(sp)
+8003f2ba 5ad8     c.swsp       s6, 0x30(sp)
+8003f2bc 5ed6     c.swsp       s7, 0x2c(sp)
+8003f2be 2e84     c.mv         s0, a1
+8003f2c0 aa84     c.mv         s1, a0
+8003f2c2 97000000 auipc        ra, 0
+8003f2c6 e78080f2 jalr         ra, ra, -0xd8
+8003f2ca 7dc9     c.beqz       a0, 0xf6
+8003f2cc 2548     c.li         a6, 9
+8003f2ce 9148     c.li         a7, 4
+8003f2d0 0943     c.li         t1, 2
+8003f2d2 fd53     c.li         t2, -1
+8003f2d4 130ed005 addi         t3, zero, 0x5d
+8003f2d8 0546     c.li         a2, 1
+8003f2da c54e     c.li         t4, 0x11
+8003f2dc 130f1002 addi         t5, zero, 0x21
+8003f2e0 93025002 addi         t0, zero, 0x25
+8003f2e4 d14f     c.li         t6, 0x14
+8003f2e6 4d49     c.li         s2, 0x13
+8003f2e8 214a     c.li         s4, 8
+8003f2ea 9d49     c.li         s3, 7
+8003f2ec 954a     c.li         s5, 5
+8003f2ee 0d4b     c.li         s6, 3
+8003f2f0 930b0002 addi         s7, zero, 0x20
+8003f2f4 03c70400 lbu          a4, 0(s1)
+8003f2f8 83c51400 lbu          a1, 1(s1)
+8003f2fc 83c62400 lbu          a3, 2(s1)
+8003f300 83c73400 lbu          a5, 3(s1)
+8003f304 03c54400 lbu          a0, 4(s1)
+8003f308 230c0100 sb           zero, 0x18(sp)
+8003f30c a30c2101 sb           s2, 0x19(sp)
+8003f310 230dd100 sb           a3, 0x1a(sp)
+8003f314 a30d4101 sb           s4, 0x1b(sp)
+8003f318 93048402 addi         s1, s0, 0x28
+8003f31c 23046100 sb           t1, 8(sp)
+8003f320 a3047100 sb           t2, 9(sp)
+8003f324 2305c101 sb           t3, 0xa(sp)
+8003f328 a305c100 sb           a2, 0xb(sp)
+8003f32c 23060100 sb           zero, 0xc(sp)
+8003f330 a306d101 sb           t4, 0xd(sp)
+8003f334 2307e101 sb           t5, 0xe(sp)
+8003f338 a3070100 sb           zero, 0xf(sp)
+8003f33c 230af101 sb           t6, 0x14(sp)
+8003f340 a30a0100 sb           zero, 0x15(sp)
+8003f344 230b0100 sb           zero, 0x16(sp)
+8003f348 a30b0100 sb           zero, 0x17(sp)
+8003f34c 230e0100 sb           zero, 0x1c(sp)
+8003f350 a30e0100 sb           zero, 0x1d(sp)
+8003f354 230f3101 sb           s3, 0x1e(sp)
+8003f358 a30f5101 sb           s5, 0x1f(sp)
+8003f35c 23020101 sb           a6, 4(sp)
+8003f360 a3021101 sb           a7, 5(sp)
+8003f364 2303e100 sb           a4, 6(sp)
+8003f368 a3030100 sb           zero, 7(sp)
+8003f36c 2308c100 sb           a2, 0x10(sp)
+8003f370 a308c100 sb           a2, 0x11(sp)
+8003f374 23095100 sb           t0, 0x12(sp)
+8003f378 a309b100 sb           a1, 0x13(sp)
+8003f37c 2300b102 sb           a1, 0x20(sp)
+8003f380 a3006103 sb           s6, 0x21(sp)
+8003f384 23017103 sb           s7, 0x22(sp)
+8003f388 a3010102 sb           zero, 0x23(sp)
+8003f38c 2302f102 sb           a5, 0x24(sp)
+8003f390 a3023103 sb           s3, 0x25(sp)
+8003f394 23035103 sb           s5, 0x26(sp)
+8003f398 a303d102 sb           a3, 0x27(sp)
+8003f39c 23046103 sb           s6, 0x28(sp)
+8003f3a0 a3047103 sb           s7, 0x29(sp)
+8003f3a4 23050102 sb           zero, 0x2a(sp)
+8003f3a8 a305a102 sb           a0, 0x2b(sp)
+8003f3ac 4800     c.addi4spn   a0, sp, 4
+8003f3ae 83450500 lbu          a1, 0(a0)
+8003f3b2 2300b400 sb           a1, 0(s0)
+8003f3b6 0504     c.addi       s0, 1
+8003f3b8 0505     c.addi       a0, 1
+8003f3ba e31a94fe bne          s0, s1, -0xc
+8003f3be 0545     c.li         a0, 1
+8003f3c0 b640     c.lwsp       ra, 0x4c(sp)
+8003f3c2 2644     c.lwsp       s0, 0x48(sp)
+8003f3c4 9644     c.lwsp       s1, 0x44(sp)
+8003f3c6 0649     c.lwsp       s2, 0x40(sp)
+8003f3c8 f259     c.lwsp       s3, 0x3c(sp)
+8003f3ca 625a     c.lwsp       s4, 0x38(sp)
+8003f3cc d25a     c.lwsp       s5, 0x34(sp)
+8003f3ce 425b     c.lwsp       s6, 0x30(sp)
+8003f3d0 b25b     c.lwsp       s7, 0x2c(sp)
+8003f3d2 6161     c.addi16sp   sp, 0x50
+8003f3d4 8280     c.jr         ra
+8003f3d6 0145     c.li         a0, 0
+8003f3d8 8280     c.jr         ra
+8003f3da 19cd     c.beqz       a0, 0x1e
+8003f3dc 93052501 addi         a1, a0, 0x12
+8003f3e0 37060480 lui          a2, 0x80040
+8003f3e4 13060605 addi         a2, a2, 0x50
+8003f3e8 83460600 lbu          a3, 0(a2)
+8003f3ec 2300d500 sb           a3, 0(a0)
+8003f3f0 0505     c.addi       a0, 1
+8003f3f2 0506     c.addi       a2, 1
+8003f3f4 e31ab5fe bne          a0, a1, -0xc
+8003f3f8 8280     c.jr         ra
+8003f3fa d5c1     c.beqz       a1, 0xa4
+8003f3fc 0111     c.addi       sp, -0x20
+8003f3fe 06ce     c.swsp       ra, 0x1c(sp)
+8003f400 22cc     c.swsp       s0, 0x18(sp)
+8003f402 26ca     c.swsp       s1, 0x14(sp)
+8003f404 2e84     c.mv         s0, a1
+8003f406 aa84     c.mv         s1, a0
+8003f408 97000000 auipc        ra, 0
+8003f40c e78020de jalr         ra, ra, -0x21e
+8003f410 51c1     c.beqz       a0, 0x84
+8003f412 4948     c.li         a6, 0x12
+8003f414 8d48     c.li         a7, 3
+8003f416 9302d004 addi         t0, zero, 0x4d
+8003f41a 13073005 addi         a4, zero, 0x53
+8003f41e 93076004 addi         a5, zero, 0x46
+8003f422 93054005 addi         a1, zero, 0x54
+8003f426 13061003 addi         a2, zero, 0x31
+8003f42a 93060003 addi         a3, zero, 0x30
+8003f42e 83c45400 lbu          s1, 5(s1)
+8003f432 13052401 addi         a0, s0, 0x12
+8003f436 23010101 sb           a6, 2(sp)
+8003f43a a3011101 sb           a7, 3(sp)
+8003f43e 23025100 sb           t0, 4(sp)
+8003f442 a3020100 sb           zero, 5(sp)
+8003f446 2303e100 sb           a4, 6(sp)
+8003f44a a3030100 sb           zero, 7(sp)
+8003f44e 2304f100 sb           a5, 8(sp)
+8003f452 a3040100 sb           zero, 9(sp)
+8003f456 2305b100 sb           a1, 0xa(sp)
+8003f45a a3050100 sb           zero, 0xb(sp)
+8003f45e 2306c100 sb           a2, 0xc(sp)
+8003f462 a3060100 sb           zero, 0xd(sp)
+8003f466 2307d100 sb           a3, 0xe(sp)
+8003f46a a3070100 sb           zero, 0xf(sp)
+8003f46e 2308d100 sb           a3, 0x10(sp)
+8003f472 a3080100 sb           zero, 0x11(sp)
+8003f476 23099100 sb           s1, 0x12(sp)
+8003f47a a3090100 sb           zero, 0x13(sp)
+8003f47e 93052100 addi         a1, sp, 2
+8003f482 03c60500 lbu          a2, 0(a1)
+8003f486 2300c400 sb           a2, 0(s0)
+8003f48a 0504     c.addi       s0, 1
+8003f48c 8505     c.addi       a1, 1
+8003f48e e31aa4fe bne          s0, a0, -0xc
+8003f492 0545     c.li         a0, 1
+8003f494 f240     c.lwsp       ra, 0x1c(sp)
+8003f496 6244     c.lwsp       s0, 0x18(sp)
+8003f498 d244     c.lwsp       s1, 0x14(sp)
+8003f49a 0561     c.addi16sp   sp, 0x20
+8003f49c 8280     c.jr         ra
+8003f49e 0145     c.li         a0, 0
+8003f4a0 8280     c.jr         ra
+8003f4a2 bdc9     c.beqz       a1, 0x76
+8003f4a4 4111     c.addi       sp, -0x10
+8003f4a6 06c6     c.swsp       ra, 0xc(sp)
+8003f4a8 22c4     c.swsp       s0, 8(sp)
+8003f4aa 26c2     c.swsp       s1, 4(sp)
+8003f4ac 2e84     c.mv         s0, a1
+8003f4ae aa84     c.mv         s1, a0
+8003f4b0 97000000 auipc        ra, 0
+8003f4b4 e780a0d3 jalr         ra, ra, -0x2c6
+8003f4b8 39c9     c.beqz       a0, 0x56
+8003f4ba 13058402 addi         a0, s0, 0x28
+8003f4be a285     c.mv         a1, s0
+8003f4c0 23800500 sb           zero, 0(a1)
+8003f4c4 8505     c.addi       a1, 1
+8003f4c6 e39da5fe bne          a1, a0, -6
+8003f4ca 93058002 addi         a1, zero, 0x28
+8003f4ce 0545     c.li         a0, 1
+8003f4d0 1146     c.li         a2, 4
+8003f4d2 2300b400 sb           a1, 0(s0)
+8003f4d6 a302a400 sb           a0, 5(s0)
+8003f4da 2303c400 sb           a2, 6(s0)
+8003f4de 2304a400 sb           a0, 8(s0)
+8003f4e2 83c60400 lbu          a3, 0(s1)
+8003f4e6 93052401 addi         a1, s0, 0x12
+8003f4ea 13068401 addi         a2, s0, 0x18
+8003f4ee 2308d400 sb           a3, 0x10(s0)
+8003f4f2 a308a400 sb           a0, 0x11(s0)
+8003f4f6 b7060480 lui          a3, 0x80040
+8003f4fa 93862606 addi         a3, a3, 0x62
+8003f4fe 03c70600 lbu          a4, 0(a3)
+8003f502 2380e500 sb           a4, 0(a1)
+8003f506 8505     c.addi       a1, 1
+8003f508 8506     c.addi       a3, 1
+8003f50a e39ac5fe bne          a1, a2, -0xc
+8003f50e b240     c.lwsp       ra, 0xc(sp)
+8003f510 2244     c.lwsp       s0, 8(sp)
+8003f512 9244     c.lwsp       s1, 4(sp)
+8003f514 4101     c.addi       sp, 0x10
+8003f516 8280     c.jr         ra
+8003f518 0145     c.li         a0, 0
+8003f51a 8280     c.jr         ra
+8003f51c 2dcf     c.beqz       a4, 0x7a
+8003f51e 3971     c.addi16sp   sp, -0x40
+8003f520 06de     c.swsp       ra, 0x3c(sp)
+8003f522 22dc     c.swsp       s0, 0x38(sp)
+8003f524 26da     c.swsp       s1, 0x34(sp)
+8003f526 4ad8     c.swsp       s2, 0x30(sp)
+8003f528 4ed6     c.swsp       s3, 0x2c(sp)
+8003f52a 52d4     c.swsp       s4, 0x28(sp)
+8003f52c 3a84     c.mv         s0, a4
+8003f52e aa84     c.mv         s1, a0
+8003f530 0145     c.li         a0, 0
+8003f532 23200700 sw           zero, 0(a4)
+8003f536 c5c4     c.beqz       s1, 0xa8
+8003f538 2e8a     c.mv         s4, a1
+8003f53a d5c1     c.beqz       a1, 0xa4
+8003f53c 3689     c.mv         s2, a3
+8003f53e b289     c.mv         s3, a2
+8003f540 2685     c.mv         a0, s1
+8003f542 97000000 auipc        ra, 0
+8003f546 e78080ca jalr         ra, ra, -0x358
+8003f54a 51c9     c.beqz       a0, 0x94
+8003f54c 03450a00 lbu          a0, 0(s4)
+8003f550 9305000c addi         a1, zero, 0xc0
+8003f554 6303b504 beq          a0, a1, 0x46
+8003f558 93050008 addi         a1, zero, 0x80
+8003f55c 6310b508 bne          a0, a1, 0x80
+8003f560 03451a00 lbu          a0, 1(s4)
+8003f564 9945     c.li         a1, 6
+8003f566 631bb506 bne          a0, a1, 0x76
+8003f56a 03552a00 lhu          a0, 2(s4)
+8003f56e 9305e03e addi         a1, zero, 0x3ee
+8003f572 6315b506 bne          a0, a1, 0x6a
+8003f576 03554a00 lhu          a0, 4(s4)
+8003f57a 93059040 addi         a1, zero, 0x409
+8003f57e 6303b500 beq          a0, a1, 6
+8003f582 29ed     c.bnez       a0, 0x5a
+8003f584 8a85     c.mv         a1, sp
+8003f586 2685     c.mv         a0, s1
+8003f588 97000000 auipc        ra, 0
+8003f58c e78020e7 jalr         ra, ra, -0x18e
+8003f590 39c5     c.beqz       a0, 0x4e
+8003f592 4945     c.li         a0, 0x12
+8003f594 15a8     c.j          0x34
+8003f596 0145     c.li         a0, 0
+8003f598 8280     c.jr         ra
+8003f59a 03451a00 lbu          a0, 1(s4)
+8003f59e 83c55400 lbu          a1, 5(s1)
+8003f5a2 631db502 bne          a0, a1, 0x3a
+8003f5a6 03552a00 lhu          a0, 2(s4)
+8003f5aa 0de9     c.bnez       a0, 0x32
+8003f5ac 03554a00 lhu          a0, 4(s4)
+8003f5b0 9145     c.li         a1, 4
+8003f5b2 6315b502 bne          a0, a1, 0x2a
+8003f5b6 8a85     c.mv         a1, sp
+8003f5b8 2685     c.mv         a0, s1
+8003f5ba 97000000 auipc        ra, 0
+8003f5be e78080ee jalr         ra, ra, -0x118
+8003f5c2 11cd     c.beqz       a0, 0x1c
+8003f5c4 13058002 addi         a0, zero, 0x28
+8003f5c8 83556a00 lhu          a1, 6(s4)
+8003f5cc 6363b500 bltu         a0, a1, 6
+8003f5d0 2e85     c.mv         a0, a1
+8003f5d2 6365a900 bltu         s2, a0, 0xa
+8003f5d6 639c0900 bnez         s3, 0x18
+8003f5da 91c9     c.beqz       a1, 0x14
+8003f5dc 0145     c.li         a0, 0
+8003f5de f250     c.lwsp       ra, 0x3c(sp)
+8003f5e0 6254     c.lwsp       s0, 0x38(sp)
+8003f5e2 d254     c.lwsp       s1, 0x34(sp)
+8003f5e4 4259     c.lwsp       s2, 0x30(sp)
+8003f5e6 b259     c.lwsp       s3, 0x2c(sp)
+8003f5e8 225a     c.lwsp       s4, 0x28(sp)
+8003f5ea 2161     c.addi16sp   sp, 0x40
+8003f5ec 8280     c.jr         ra
+8003f5ee 81cd     c.beqz       a1, 0x18
+8003f5f0 b385a900 add          a1, s3, a0
+8003f5f4 0a86     c.mv         a2, sp
+8003f5f6 83460600 lbu          a3, 0(a2)
+8003f5fa 2380d900 sb           a3, 0(s3)
+8003f5fe 8509     c.addi       s3, 1
+8003f600 0506     c.addi       a2, 1
+8003f602 e39ab9fe bne          s3, a1, -0xc
+8003f606 08c0     c.sw         a0, 0(s0)
+8003f608 0545     c.li         a0, 1
+8003f60a d1bf     c.j          -0x2c
+8003f60c 95c1     c.beqz       a1, 0x24
+8003f60e 13864501 addi         a2, a1, 0x14
+8003f612 ae86     c.mv         a3, a1
+8003f614 23800600 sb           zero, 0(a3)
+8003f618 8506     c.addi       a3, 1
+8003f61a e39dc6fe bne          a3, a2, -6
+8003f61e 5146     c.li         a2, 0x14
+8003f620 a380c500 sb           a2, 1(a1)
+8003f624 11c5     c.beqz       a0, 0xc
+8003f626 8905     c.addi       a1, 2
+8003f628 17e3ffff auipc        t1, 0xffffe
+8003f62c 67006359 jalr         zero, t1, 0x596
+8003f630 8280     c.jr         ra
+8003f632 0dc1     c.beqz       a0, 0x22
+8003f634 230cb500 sb           a1, 0x18(a0)
+8003f638 a30c0500 sb           zero, 0x19(a0)
+8003f63c 9305a501 addi         a1, a0, 0x1a
+8003f640 1306e502 addi         a2, a0, 0x2e
+8003f644 23800500 sb           zero, 0(a1)
+8003f648 8505     c.addi       a1, 1
+8003f64a e39dc5fe bne          a1, a2, -6
+8003f64e d145     c.li         a1, 0x14
+8003f650 a30db500 sb           a1, 0x1b(a0)
+8003f654 8280     c.jr         ra
+8003f656 4111     c.addi       sp, -0x10
+8003f658 06c6     c.swsp       ra, 0xc(sp)
+8003f65a 22c4     c.swsp       s0, 8(sp)
+8003f65c 26c2     c.swsp       s1, 4(sp)
+8003f65e 4ac0     c.swsp       s2, 0(sp)
+8003f660 8144     c.li         s1, 0
+8003f662 25c1     c.beqz       a0, 0x60
+8003f664 b9cd     c.beqz       a1, 0x5e
+8003f666 2a84     c.mv         s0, a0
+8003f668 03458501 lbu          a0, 0x18(a0)
+8003f66c 31c9     c.beqz       a0, 0x54
+8003f66e 03459401 lbu          a0, 0x19(s0)
+8003f672 39e5     c.bnez       a0, 0x4e
+8003f674 0844     c.lw         a0, 8(s0)
+8003f676 29c5     c.beqz       a0, 0x4a
+8003f678 1309a401 addi         s2, s0, 0x1a
+8003f67c 1305e402 addi         a0, s0, 0x2e
+8003f680 4a86     c.mv         a2, s2
+8003f682 23000600 sb           zero, 0(a2)
+8003f686 0506     c.addi       a2, 1
+8003f688 e31da6fe bne          a2, a0, -6
+8003f68c 5145     c.li         a0, 0x14
+8003f68e a30da400 sb           a0, 0x1b(s0)
+8003f692 1306c401 addi         a2, s0, 0x1c
+8003f696 2e85     c.mv         a0, a1
+8003f698 b285     c.mv         a1, a2
+8003f69a 97e0ffff auipc        ra, 0xffffe
+8003f69e e7804052 jalr         ra, ra, 0x524
+8003f6a2 83451400 lbu          a1, 1(s0)
+8003f6a6 1844     c.lw         a4, 8(s0)
+8003f6a8 4848     c.lw         a0, 0x14(s0)
+8003f6aa 8544     c.li         s1, 1
+8003f6ac a30c9400 sb           s1, 0x19(s0)
+8003f6b0 d146     c.li         a3, 0x14
+8003f6b2 4a86     c.mv         a2, s2
+8003f6b4 0297     c.jalr       a4
+8003f6b6 11e5     c.bnez       a0, 0xc
+8003f6b8 8144     c.li         s1, 0
+8003f6ba a30c0400 sb           zero, 0x19(s0)
+8003f6be 11a0     c.j          4
+8003f6c0 8144     c.li         s1, 0
+8003f6c2 2685     c.mv         a0, s1
+8003f6c4 b240     c.lwsp       ra, 0xc(sp)
+8003f6c6 2244     c.lwsp       s0, 8(sp)
+8003f6c8 9244     c.lwsp       s1, 4(sp)
+8003f6ca 0249     c.lwsp       s2, 0(sp)
+8003f6cc 4101     c.addi       sp, 0x10
+8003f6ce 8280     c.jr         ra
+8003f6d0 19c5     c.beqz       a0, 0xe
+8003f6d2 03461500 lbu          a2, 1(a0)
+8003f6d6 6394c500 bne          a1, a2, 8
+8003f6da a30c0500 sb           zero, 0x19(a0)
+8003f6de 8280     c.jr         ra
+8003f6e0 4111     c.addi       sp, -0x10
+8003f6e2 06c6     c.swsp       ra, 0xc(sp)
+8003f6e4 22c4     c.swsp       s0, 8(sp)
+8003f6e6 15cd     c.beqz       a0, 0x3c
+8003f6e8 03478501 lbu          a4, 0x18(a0)
+8003f6ec 1dcb     c.beqz       a4, 0x36
+8003f6ee 0947     c.li         a4, 2
+8003f6f0 0144     c.li         s0, 0
+8003f6f2 63e9e602 bltu         a3, a4, 0x32
+8003f6f6 1dc6     c.beqz       a2, 0x2e
+8003f6f8 03472500 lbu          a4, 2(a0)
+8003f6fc 6394e502 bne          a1, a4, 0x28
+8003f700 83450600 lbu          a1, 0(a2)
+8003f704 0547     c.li         a4, 1
+8003f706 6384e502 beq          a1, a4, 0x28
+8003f70a 81ed     c.bnez       a1, 0x18
+8003f70c a145     c.li         a1, 8
+8003f70e 0144     c.li         s0, 0
+8003f710 639ab600 bne          a3, a1, 0x14
+8003f714 83461600 lbu          a3, 1(a2)
+8003f718 6396b600 bne          a3, a1, 0xc
+8003f71c 83452600 lbu          a1, 2(a2)
+8003f720 9dc5     c.beqz       a1, 0x2e
+8003f722 0144     c.li         s0, 0
+8003f724 2285     c.mv         a0, s0
+8003f726 b240     c.lwsp       ra, 0xc(sp)
+8003f728 2244     c.lwsp       s0, 8(sp)
+8003f72a 4101     c.addi       sp, 0x10
+8003f72c 8280     c.jr         ra
+8003f72e 8d45     c.li         a1, 3
+8003f730 0144     c.li         s0, 0
+8003f732 e399b6fe bne          a3, a1, -0xe
+8003f736 83461600 lbu          a3, 1(a2)
+8003f73a e395b6fe bne          a3, a1, -0x16
+8003f73e 1449     c.lw         a3, 0x10(a0)
+8003f740 0544     c.li         s0, 1
+8003f742 edd2     c.beqz       a3, -0x1e
+8003f744 4849     c.lw         a0, 0x14(a0)
+8003f746 83452600 lbu          a1, 2(a2)
+8003f74a 8296     c.jalr       a3
+8003f74c e1bf     c.j          -0x28
+8003f74e 5445     c.lw         a3, 0xc(a0)
+8003f750 0544     c.li         s0, 1
+8003f752 e9da     c.beqz       a3, -0x2e
+8003f754 4849     c.lw         a0, 0x14(a0)
+8003f756 83453600 lbu          a1, 3(a2)
+8003f75a 03464600 lbu          a2, 4(a2)
+8003f75e 8296     c.jalr       a3
+8003f760 d1b7     c.j          -0x3c
+8003f762 4111     c.addi       sp, -0x10
+8003f764 06c6     c.swsp       ra, 0xc(sp)
+8003f766 22c4     c.swsp       s0, 8(sp)
+8003f768 37b40800 lui          s0, 0x8b
+8003f76c 13040498 addi         s0, s0, -0x680
+8003f770 b7050800 lui          a1, 0x80
+8003f774 13054466 addi         a0, s0, 0x664
+8003f778 13868531 addi         a2, a1, 0x318
+8003f77c 9305f46b addi         a1, s0, 0x6bf
+8003f780 83460600 lbu          a3, 0(a2)
+8003f784 0506     c.addi       a2, 1
+8003f786 13071500 addi         a4, a0, 1
+8003f78a 2300d500 sb           a3, 0(a0)
+8003f78e 3a85     c.mv         a0, a4
+8003f790 e318b7fe bne          a4, a1, -0x10
+8003f794 0945     c.li         a0, 2
+8003f796 13063008 addi         a2, zero, 0x83
+8003f79a 9146     c.li         a3, 4
+8003f79c a302a466 sb           a0, 0x665(s0)
+8003f7a0 2313c466 sh           a2, 0x666(s0)
+8003f7a4 2304d466 sb           a3, 0x668(s0)
+8003f7a8 37050480 lui          a0, 0x80040
+8003f7ac 1305c517 addi         a0, a0, 0x17c
+8003f7b0 97000000 auipc        ra, 0
+8003f7b4 e78060af jalr         ra, ra, -0x50a
+8003f7b8 13054466 addi         a0, s0, 0x664
+8003f7bc b240     c.lwsp       ra, 0xc(sp)
+8003f7be 2244     c.lwsp       s0, 8(sp)
+8003f7c0 4101     c.addi       sp, 0x10
+8003f7c2 8280     c.jr         ra
+8003f7c4 4111     c.addi       sp, -0x10
+8003f7c6 06c6     c.swsp       ra, 0xc(sp)
+8003f7c8 22c4     c.swsp       s0, 8(sp)
+8003f7ca 37b40800 lui          s0, 0x8b
+8003f7ce 13040498 addi         s0, s0, -0x680
+8003f7d2 b7050800 lui          a1, 0x80
+8003f7d6 1305746e addi         a0, s0, 0x6e7
+8003f7da 13868531 addi         a2, a1, 0x318
+8003f7de 93052474 addi         a1, s0, 0x742
+8003f7e2 83460600 lbu          a3, 0(a2)
+8003f7e6 0506     c.addi       a2, 1
+8003f7e8 13071500 addi         a4, a0, 1
+8003f7ec 2300d500 sb           a3, 0(a0)
+8003f7f0 3a85     c.mv         a0, a4
+8003f7f2 e318b7fe bne          a4, a1, -0x10
+8003f7f6 37850004 lui          a0, 0x4008
+8003f7fa 13057530 addi         a0, a0, 0x307
+8003f7fe 2324a46e sw           a0, 0x6e8(s0)
+8003f802 37050480 lui          a0, 0x80040
+8003f806 1305c517 addi         a0, a0, 0x17c
+8003f80a 97000000 auipc        ra, 0
+8003f80e e780c0a9 jalr         ra, ra, -0x564
+8003f812 1305746e addi         a0, s0, 0x6e7
+8003f816 b240     c.lwsp       ra, 0xc(sp)
+8003f818 2244     c.lwsp       s0, 8(sp)
+8003f81a 4101     c.addi       sp, 0x10
+8003f81c 8280     c.jr         ra
+8003f81e 3971     c.addi16sp   sp, -0x40
+8003f820 06de     c.swsp       ra, 0x3c(sp)
+8003f822 22dc     c.swsp       s0, 0x38(sp)
+8003f824 26da     c.swsp       s1, 0x34(sp)
+8003f826 4ad8     c.swsp       s2, 0x30(sp)
+8003f828 4ed6     c.swsp       s3, 0x2c(sp)
+8003f82a 52d4     c.swsp       s4, 0x28(sp)
+8003f82c 56d2     c.swsp       s5, 0x24(sp)
+8003f82e 5ad0     c.swsp       s6, 0x20(sp)
+8003f830 5ece     c.swsp       s7, 0x1c(sp)
+8003f832 2e89     c.mv         s2, a1
+8003f834 aa8a     c.mv         s5, a0
+8003f836 37b50800 lui          a0, 0x8b
+8003f83a 13050598 addi         a0, a0, -0x680
+8003f83e 9305f57f addi         a1, a0, 0x7ff
+8003f842 93851508 addi         a1, a1, 0x81
+8003f846 93061500 addi         a3, a0, 1
+8003f84a 23000500 sb           zero, 0(a0)
+8003f84e 3685     c.mv         a0, a3
+8003f850 e39bb6fe bne          a3, a1, -0xa
+8003f854 37b40800 lui          s0, 0x8b
+8003f858 13040498 addi         s0, s0, -0x680
+8003f85c 8965     c.lui        a1, 2
+8003f85e 130bf47f addi         s6, s0, 0x7ff
+8003f862 1305645b addi         a0, s0, 0x5b6
+8003f866 93850571 addi         a1, a1, 0x710
+8003f86a a324cb04 sw           a2, 0x49(s6)
+8003f86e 13066463 addi         a2, s0, 0x636
+8003f872 2310b500 sh           a1, 0(a0)
+8003f876 0905     c.addi       a0, 2
+8003f878 e31dc5fe bne          a0, a2, -6
+8003f87c a30d0100 sb           zero, 0x1b(sp)
+8003f880 9309645b addi         s3, s0, 0x5b6
+8003f884 93068431 addi         a3, s0, 0x318
+8003f888 370a0480 lui          s4, 0x80040
+8003f88c 130aca09 addi         s4, s4, 0x9c
+8003f890 8545     c.li         a1, 1
+8003f892 1307b101 addi         a4, sp, 0x1b
+8003f896 854b     c.li         s7, 1
+8003f898 5285     c.mv         a0, s4
+8003f89a 4e86     c.mv         a2, s3
+8003f89c 97f0ffff auipc        ra, 0xfffff
+8003f8a0 e780c0f2 jalr         ra, ra, -0xd4
+8003f8a4 13058442 addi         a0, s0, 0x428
+8003f8a8 97f0ffff auipc        ra, 0xfffff
+8003f8ac e7804080 jalr         ra, ra, -0x7fc
+8003f8b0 b7070480 lui          a5, 0x80040
+8003f8b4 9387a799 addi         a5, a5, -0x666
+8003f8b8 0546     c.li         a2, 1
+8003f8ba 8946     c.li         a3, 2
+8003f8bc 2285     c.mv         a0, s0
+8003f8be d285     c.mv         a1, s4
+8003f8c0 4e87     c.mv         a4, s3
+8003f8c2 0148     c.li         a6, 0
+8003f8c4 97f0ffff auipc        ra, 0xfffff
+8003f8c8 e780401e jalr         ra, ra, 0x1e4
+8003f8cc 37050480 lui          a0, 0x80040
+8003f8d0 1305c516 addi         a0, a0, 0x16c
+8003f8d4 0c41     c.lw         a1, 0(a0)
+8003f8d6 5041     c.lw         a2, 4(a0)
+8003f8d8 1445     c.lw         a3, 8(a0)
+8003f8da 4845     c.lw         a0, 0xc(a0)
+8003f8dc 2ec4     c.swsp       a1, 8(sp)
+8003f8de 32c6     c.swsp       a2, 0xc(sp)
+8003f8e0 36c8     c.swsp       a3, 0x10(sp)
+8003f8e2 2aca     c.swsp       a0, 0x14(sp)
+8003f8e4 1305844f addi         a0, s0, 0x4f8
+8003f8e8 b7040480 lui          s1, 0x80040
+8003f8ec 9384c417 addi         s1, s1, 0x17c
+8003f8f0 3000     c.addi4spn   a2, sp, 8
+8003f8f2 a685     c.mv         a1, s1
+8003f8f4 97000000 auipc        ra, 0
+8003f8f8 e780e094 jalr         ra, ra, -0x6b2
+8003f8fc 9305a476 addi         a1, s0, 0x76a
+8003f900 2685     c.mv         a0, s1
+8003f902 97000000 auipc        ra, 0
+8003f906 e78080af jalr         ra, ra, -0x508
+8003f90a 9305c477 addi         a1, s0, 0x77c
+8003f90e 2685     c.mv         a0, s1
+8003f910 97000000 auipc        ra, 0
+8003f914 e78020b9 jalr         ra, ra, -0x46e
+8003f918 13055008 addi         a0, zero, 0x85
+8003f91c 93044465 addi         s1, s0, 0x654
+8003f920 b7050480 lui          a1, 0x80040
+8003f924 938545a1 addi         a1, a1, -0x5ec
+8003f928 1546     c.li         a2, 5
+8003f92a 9309c465 addi         s3, s0, 0x65c
+8003f92e b7060480 lui          a3, 0x80040
+8003f932 938646a2 addi         a3, a3, -0x5dc
+8003f936 232aa464 sw           a0, 0x654(s0)
+8003f93a 232cb464 sw           a1, 0x658(s0)
+8003f93e 232ec464 sw           a2, 0x65c(s0)
+8003f942 2320d466 sw           a3, 0x660(s0)
+8003f946 93058463 addi         a1, s0, 0x638
+8003f94a 5685     c.mv         a0, s5
+8003f94c 9720ffff auipc        ra, 0xffff2
+8003f950 e78080b4 jalr         ra, ra, -0x4b8
+8003f954 5685     c.mv         a0, s5
+8003f956 a685     c.mv         a1, s1
+8003f958 9720ffff auipc        ra, 0xffff2
+8003f95c e78020b7 jalr         ra, ra, -0x48e
+8003f960 5685     c.mv         a0, s5
+8003f962 ce85     c.mv         a1, s3
+8003f964 9720ffff auipc        ra, 0xffff2
+8003f968 e78060b6 jalr         ra, ra, -0x49a
+8003f96c a3027b05 sb           s7, 0x45(s6)
+8003f970 37060480 lui          a2, 0x80040
+8003f974 1306c6a5 addi         a2, a2, -0x5a4
+8003f978 5685     c.mv         a0, s5
+8003f97a ca85     c.mv         a1, s2
+8003f97c 9720ffff auipc        ra, 0xffff2
+8003f980 e78020c6 jalr         ra, ra, -0x39e
+8003f984 f250     c.lwsp       ra, 0x3c(sp)
+8003f986 6254     c.lwsp       s0, 0x38(sp)
+8003f988 d254     c.lwsp       s1, 0x34(sp)
+8003f98a 4259     c.lwsp       s2, 0x30(sp)
+8003f98c b259     c.lwsp       s3, 0x2c(sp)
+8003f98e 225a     c.lwsp       s4, 0x28(sp)
+8003f990 925a     c.lwsp       s5, 0x24(sp)
+8003f992 025b     c.lwsp       s6, 0x20(sp)
+8003f994 f24b     c.lwsp       s7, 0x1c(sp)
+8003f996 2161     c.addi16sp   sp, 0x40
+8003f998 8280     c.jr         ra
+8003f99a 0945     c.li         a0, 2
+8003f99c 6306a600 beq          a2, a0, 0xc
+8003f9a0 c841     c.lw         a0, 4(a1)
+8003f9a2 19c1     c.beqz       a0, 6
+8003f9a4 0145     c.li         a0, 0
+8003f9a6 8280     c.jr         ra
+8003f9a8 4111     c.addi       sp, -0x10
+8003f9aa 06c6     c.swsp       ra, 0xc(sp)
+8003f9ac 22c4     c.swsp       s0, 8(sp)
+8003f9ae 26c2     c.swsp       s1, 4(sp)
+8003f9b0 73740430 csrrci       s0, mstatus, 8
+8003f9b4 b7b40800 lui          s1, 0x8b
+8003f9b8 93840498 addi         s1, s1, -0x680
+8003f9bc 13858431 addi         a0, s1, 0x318
+8003f9c0 1306c010 addi         a2, zero, 0x10c
+8003f9c4 97000000 auipc        ra, 0
+8003f9c8 e780a058 jalr         ra, ra, 0x58a
+8003f9cc 13858442 addi         a0, s1, 0x428
+8003f9d0 97e0ffff auipc        ra, 0xffffe
+8003f9d4 e780c06d jalr         ra, ra, 0x6dc
+8003f9d8 23a40452 sw           zero, 0x528(s1)
+8003f9dc 23a60452 sw           zero, 0x52c(s1)
+8003f9e0 23a80452 sw           zero, 0x530(s1)
+8003f9e4 239a0452 sh           zero, 0x534(s1)
+8003f9e8 2188     c.andi       s0, 8
+8003f9ea 0545     c.li         a0, 1
+8003f9ec 19c0     c.beqz       s0, 6
+8003f9ee 73600430 csrsi        mstatus, 8
+8003f9f2 b240     c.lwsp       ra, 0xc(sp)
+8003f9f4 2244     c.lwsp       s0, 8(sp)
+8003f9f6 9244     c.lwsp       s1, 4(sp)
+8003f9f8 4101     c.addi       sp, 0x10
+8003f9fa 8280     c.jr         ra
+8003f9fc 4111     c.addi       sp, -0x10
+8003f9fe 06c6     c.swsp       ra, 0xc(sp)
+8003fa00 0145     c.li         a0, 0
+8003fa02 9710ffff auipc        ra, 0xffff1
+8003fa06 e780208e jalr         ra, ra, -0x71e
+8003fa0a 13351500 seqz         a0, a0
+8003fa0e b240     c.lwsp       ra, 0xc(sp)
+8003fa10 4101     c.addi       sp, 0x10
+8003fa12 8280     c.jr         ra
+8003fa14 37b50800 lui          a0, 0x8b
+8003fa18 130585e7 addi         a0, a0, -0x188
+8003fa1c 17030000 auipc        t1, 0
+8003fa20 670043cb jalr         zero, t1, -0x34c
+8003fa24 b286     c.mv         a3, a2
+8003fa26 37b50800 lui          a0, 0x8b
+8003fa2a 13050598 addi         a0, a0, -0x680
+8003fa2e 1306f57f addi         a2, a0, 0x7ff
+8003fa32 13070004 addi         a4, zero, 0x40
+8003fa36 a3030604 sb           zero, 0x47(a2)
+8003fa3a 636dd700 bltu         a4, a3, 0x1a
+8003fa3e 4111     c.addi       sp, -0x10
+8003fa40 06c6     c.swsp       ra, 0xc(sp)
+8003fa42 1305854f addi         a0, a0, 0x4f8
+8003fa46 0506     c.addi       a2, 1
+8003fa48 97000000 auipc        ra, 0
+8003fa4c e78080c9 jalr         ra, ra, -0x368
+8003fa50 b240     c.lwsp       ra, 0xc(sp)
+8003fa52 4101     c.addi       sp, 0x10
+8003fa54 17030000 auipc        t1, 0
+8003fa58 6700a34a jalr         zero, t1, 0x4aa
+8003fa5c 4111     c.addi       sp, -0x10
+8003fa5e 06c6     c.swsp       ra, 0xc(sp)
+8003fa60 22c4     c.swsp       s0, 8(sp)
+8003fa62 26c2     c.swsp       s1, 4(sp)
+8003fa64 4ac0     c.swsp       s2, 0(sp)
+8003fa66 2e84     c.mv         s0, a1
+8003fa68 2a89     c.mv         s2, a0
+8003fa6a 1385f5ff addi         a0, a1, -1
+8003fa6e ad45     c.li         a1, 0xb
+8003fa70 b7b40800 lui          s1, 0x8b
+8003fa74 93840498 addi         s1, s1, -0x680
+8003fa78 63e0a50a bltu         a1, a0, 0xa0
+8003fa7c 0a05     c.slli       a0, 2
+8003fa7e b7050480 lui          a1, 0x80040
+8003fa82 9385c506 addi         a1, a1, 0x6c
+8003fa86 2e95     c.add        a0, a1
+8003fa88 0841     c.lw         a0, 0(a0)
+8003fa8a 0285     c.jr         a0
+8003fa8c 1385f47f addi         a0, s1, 0x7ff
+8003fa90 23030504 sb           zero, 0x46(a0)
+8003fa94 a3030504 sb           zero, 0x47(a0)
+8003fa98 1385844f addi         a0, s1, 0x4f8
+8003fa9c 8145     c.li         a1, 0
+8003fa9e 97000000 auipc        ra, 0
+8003faa2 e78040b9 jalr         ra, ra, -0x46c
+8003faa6 91a0     c.j          0x44
+8003faa8 1385f47f addi         a0, s1, 0x7ff
+8003faac 23030504 sb           zero, 0x46(a0)
+8003fab0 a3030504 sb           zero, 0x47(a0)
+8003fab4 1385844f addi         a0, s1, 0x4f8
+8003fab8 8545     c.li         a1, 1
+8003faba 97000000 auipc        ra, 0
+8003fabe e78080b7 jalr         ra, ra, -0x488
+8003fac2 13858442 addi         a0, s1, 0x428
+8003fac6 97e0ffff auipc        ra, 0xffffe
+8003faca e780605e jalr         ra, ra, 0x5e6
+8003face 23a40452 sw           zero, 0x528(s1)
+8003fad2 23a60452 sw           zero, 0x52c(s1)
+8003fad6 23a80452 sw           zero, 0x530(s1)
+8003fada 239a0452 sh           zero, 0x534(s1)
+8003fade 0da8     c.j          0x32
+8003fae0 1385f47f addi         a0, s1, 0x7ff
+8003fae4 8545     c.li         a1, 1
+8003fae6 2303b504 sb           a1, 0x46(a0)
+8003faea 13858442 addi         a0, s1, 0x428
+8003faee 97e0ffff auipc        ra, 0xffffe
+8003faf2 e780e05b jalr         ra, ra, 0x5be
+8003faf6 23a40452 sw           zero, 0x528(s1)
+8003fafa 23a60452 sw           zero, 0x52c(s1)
+8003fafe 23a80452 sw           zero, 0x530(s1)
+8003fb02 239a0452 sh           zero, 0x534(s1)
+8003fb06 09a8     c.j          0x12
+8003fb08 1385f47f addi         a0, s1, 0x7ff
+8003fb0c 23030504 sb           zero, 0x46(a0)
+8003fb10 97000000 auipc        ra, 0
+8003fb14 e780e03e jalr         ra, ra, 0x3ee
+8003fb18 1385f47f addi         a0, s1, 0x7ff
+8003fb1c 83279504 lw           a5, 0x49(a0)
+8003fb20 89cb     c.beqz       a5, 0x12
+8003fb22 4a85     c.mv         a0, s2
+8003fb24 a285     c.mv         a1, s0
+8003fb26 b240     c.lwsp       ra, 0xc(sp)
+8003fb28 2244     c.lwsp       s0, 8(sp)
+8003fb2a 9244     c.lwsp       s1, 4(sp)
+8003fb2c 0249     c.lwsp       s2, 0(sp)
+8003fb2e 4101     c.addi       sp, 0x10
+8003fb30 8287     c.jr         a5
+8003fb32 b240     c.lwsp       ra, 0xc(sp)
+8003fb34 2244     c.lwsp       s0, 8(sp)
+8003fb36 9244     c.lwsp       s1, 4(sp)
+8003fb38 0249     c.lwsp       s2, 0(sp)
+8003fb3a 4101     c.addi       sp, 0x10
+8003fb3c 8280     c.jr         ra
+8003fb3e cdc6     c.beqz       a3, 0xaa
+8003fb40 45c6     c.beqz       a2, 0xa8
+8003fb42 ddc1     c.beqz       a1, 0xa6
+8003fb44 37b80800 lui          a6, 0x8b
+8003fb48 13080898 addi         a6, a6, -0x680
+8003fb4c 9307f87f addi         a5, a6, 0x7ff
+8003fb50 83c75704 lbu          a5, 0x45(a5)
+8003fb54 858b     c.andi       a5, 1
+8003fb56 c9cb     c.beqz       a5, 0x92
+8003fb58 83c70500 lbu          a5, 0(a1)
+8003fb5c 13070008 addi         a4, zero, 0x80
+8003fb60 6390e704 bne          a5, a4, 0x40
+8003fb64 03c71500 lbu          a4, 1(a1)
+8003fb68 9947     c.li         a5, 6
+8003fb6a 631ff706 bne          a4, a5, 0x7e
+8003fb6e 03d72500 lhu          a4, 2(a1)
+8003fb72 9307e03e addi         a5, zero, 0x3ee
+8003fb76 6319f706 bne          a4, a5, 0x72
+8003fb7a 83d74500 lhu          a5, 4(a1)
+8003fb7e 13079040 addi         a4, zero, 0x409
+8003fb82 6383e700 beq          a5, a4, 6
+8003fb86 ade3     c.bnez       a5, 0x62
+8003fb88 03d56500 lhu          a0, 6(a1)
+8003fb8c 9305a876 addi         a1, a6, 0x76a
+8003fb90 4947     c.li         a4, 0x12
+8003fb92 0cc2     c.sw         a1, 0(a2)
+8003fb94 6363e500 bltu         a0, a4, 6
+8003fb98 4945     c.li         a0, 0x12
+8003fb9a 88c2     c.sw         a0, 0(a3)
+8003fb9c 0545     c.li         a0, 1
+8003fb9e 8280     c.jr         ra
+8003fba0 93f80706 andi         a7, a5, 0x60
+8003fba4 13070004 addi         a4, zero, 0x40
+8003fba8 6390e804 bne          a7, a4, 0x40
+8003fbac 83c81500 lbu          a7, 1(a1)
+8003fbb0 13070002 addi         a4, zero, 0x20
+8003fbb4 639ae802 bne          a7, a4, 0x34
+8003fbb8 1305000c addi         a0, zero, 0xc0
+8003fbbc 639aa702 bne          a5, a0, 0x34
+8003fbc0 03d52500 lhu          a0, 2(a1)
+8003fbc4 15e5     c.bnez       a0, 0x2c
+8003fbc6 03d54500 lhu          a0, 4(a1)
+8003fbca 1147     c.li         a4, 4
+8003fbcc 6312e502 bne          a0, a4, 0x24
+8003fbd0 03d56500 lhu          a0, 6(a1)
+8003fbd4 9305c877 addi         a1, a6, 0x77c
+8003fbd8 13078002 addi         a4, zero, 0x28
+8003fbdc 0cc2     c.sw         a1, 0(a2)
+8003fbde e36ee5fa bltu         a0, a4, -0x44
+8003fbe2 13058002 addi         a0, zero, 0x28
+8003fbe6 55bf     c.j          -0x4c
+8003fbe8 17030000 auipc        t1, 0
+8003fbec 6700033e jalr         zero, t1, 0x3e0
+8003fbf0 0145     c.li         a0, 0
+8003fbf2 8280     c.jr         ra
+8003fbf4 1d71     c.addi16sp   sp, -0x60
+8003fbf6 86ce     c.swsp       ra, 0x5c(sp)
+8003fbf8 a2cc     c.swsp       s0, 0x58(sp)
+8003fbfa a6ca     c.swsp       s1, 0x54(sp)
+8003fbfc cac8     c.swsp       s2, 0x50(sp)
+8003fbfe cec6     c.swsp       s3, 0x4c(sp)
+8003fc00 d2c4     c.swsp       s4, 0x48(sp)
+8003fc02 d6c2     c.swsp       s5, 0x44(sp)
+8003fc04 dac0     c.swsp       s6, 0x40(sp)
+8003fc06 5ede     c.swsp       s7, 0x3c(sp)
+8003fc08 62dc     c.swsp       s8, 0x38(sp)
+8003fc0a 66da     c.swsp       s9, 0x34(sp)
+8003fc0c 6ad8     c.swsp       s10, 0x30(sp)
+8003fc0e 6ed6     c.swsp       s11, 0x2c(sp)
+8003fc10 9770feff auipc        ra, 0xfffe7
+8003fc14 e780e02b jalr         ra, ra, 0x2be
+8003fc18 37ba0800 lui          s4, 0x8b
+8003fc1c 130a0a98 addi         s4, s4, -0x680
+8003fc20 1305fa7f addi         a0, s4, 0x7ff
+8003fc24 03455504 lbu          a0, 0x45(a0)
+8003fc28 63030514 beqz         a0, 0x146
+8003fc2c b7da0800 lui          s5, 0x8d
+8003fc30 97000000 auipc        ra, 0
+8003fc34 e780c015 jalr         ra, ra, 0x15c
+8003fc38 93098a31 addi         s3, s4, 0x318
+8003fc3c 13096a5b addi         s2, s4, 0x5b6
+8003fc40 4e85     c.mv         a0, s3
+8003fc42 ca85     c.mv         a1, s2
+8003fc44 97e0ffff auipc        ra, 0xffffe
+8003fc48 e7800043 jalr         ra, ra, 0x430
+8003fc4c 014e     c.li         t3, 0
+8003fc4e 814e     c.li         t4, 0
+8003fc50 014b     c.li         s6, 0
+8003fc52 814b     c.li         s7, 0
+8003fc54 814c     c.li         s9, 0
+8003fc56 054f     c.li         t5, 1
+8003fc58 37660800 lui          a2, 0x86
+8003fc5c b7360800 lui          a3, 0x83
+8003fc60 37080480 lui          a6, 0x80040
+8003fc64 13082818 addi         a6, a6, 0x182
+8003fc68 9948     c.li         a7, 6
+8003fc6a 9302666a addi         t0, a2, 0x6a6
+8003fc6e 1383061a addi         t1, a3, 0x1a0
+8003fc72 8543     c.li         t2, 1
+8003fc74 33067800 add          a2, a6, t2
+8003fc78 834ff6ff lbu          t6, -1(a2)
+8003fc7c 63830f0a beqz         t6, 0xa6
+8003fc80 13961c00 slli         a2, s9, 1
+8003fc84 5296     c.add        a2, s4
+8003fc86 1307665b addi         a4, a2, 0x5b6
+8003fc8a e69f     c.add        t6, s9
+8003fc8c 1a84     c.mv         s0, t1
+8003fc8e 968d     c.mv         s11, t0
+8003fc90 035d0400 lhu          s10, 0(s0)
+8003fc94 138c0cfe addi         s8, s9, -0x20
+8003fc98 b3169f01 sll          a3, t5, s9
+8003fc9c 8314a401 lh           s1, 0x1a(s0)
+8003fca0 1356fc01 srli         a2, s8, 0x1f
+8003fca4 b307c040 neg          a5, a2
+8003fca8 7d16     c.addi       a2, -1
+8003fcaa 33fcd700 and          s8, a5, a3
+8003fcae f18e     c.and        a3, a2
+8003fcb0 13769d00 andi         a2, s10, 9
+8003fcb4 231097f8 sh           s1, -0x80(a4)
+8003fcb8 6312e603 bne          a2, t5, 0x24
+8003fcbc 03c60d00 lbu          a2, 0(s11)
+8003fcc0 631ee601 bne          a2, t5, 0x1c
+8003fcc4 03560700 lhu          a2, 0(a4)
+8003fcc8 13361600 seqz         a2, a2
+8003fccc 7d16     c.addi       a2, -1
+8003fcce b3778601 and          a5, a2, s8
+8003fcd2 758e     c.and        a2, a3
+8003fcd4 b36ed601 or           t4, a2, t4
+8003fcd8 33eec701 or           t3, a5, t3
+8003fcdc 03468400 lbu          a2, 8(s0)
+8003fce0 b377ac00 and          a5, s8, a0
+8003fce4 b3f4b600 and          s1, a3, a1
+8003fce8 c58f     c.or         a5, s1
+8003fcea 81cf     c.beqz       a5, 0x18
+8003fcec 83479400 lbu          a5, 9(s0)
+8003fcf0 89cb     c.beqz       a5, 0x12
+8003fcf2 a3040400 sb           zero, 9(s0)
+8003fcf6 83a70a2d lw           a5, 0x2d0(s5)
+8003fcfa 93e71700 ori          a5, a5, 1
+8003fcfe 23a8fa2c sw           a5, 0x2d0(s5)
+8003fd02 7e06     c.slli       a2, 0x1f
+8003fd04 850c     c.addi       s9, 1
+8003fd06 a90d     c.addi       s11, 0xa
+8003fd08 0907     c.addi       a4, 2
+8003fd0a 7d86     c.srai       a2, 0x1f
+8003fd0c b3778601 and          a5, a2, s8
+8003fd10 758e     c.and        a2, a3
+8003fd12 b36b7601 or           s7, a2, s7
+8003fd16 33eb6701 or           s6, a5, s6
+8003fd1a 13048404 addi         s0, s0, 0x48
+8003fd1e e399fcf7 bne          s9, t6, -0x8e
+8003fd22 8503     c.addi       t2, 1
+8003fd24 9382220d addi         t0, t0, 0xd2
+8003fd28 1303835e addi         t1, t1, 0x5e8
+8003fd2c e39413f5 bne          t2, a7, -0xb8
+8003fd30 13056a53 addi         a0, s4, 0x536
+8003fd34 8545     c.li         a1, 1
+8003fd36 2ac4     c.swsp       a0, 8(sp)
+8003fd38 4ac6     c.swsp       s2, 0xc(sp)
+8003fd3a 72c8     c.swsp       t3, 0x10(sp)
+8003fd3c 76ca     c.swsp       t4, 0x14(sp)
+8003fd3e 5acc     c.swsp       s6, 0x18(sp)
+8003fd40 5ece     c.swsp       s7, 0x1c(sp)
+8003fd42 2ed0     c.swsp       a1, 0x20(sp)
+8003fd44 9720ffff auipc        ra, 0xffff2
+8003fd48 e780209c jalr         ra, ra, -0x63e
+8003fd4c 2ad2     c.swsp       a0, 0x24(sp)
+8003fd4e 73740430 csrrci       s0, mstatus, 8
+8003fd52 13058a42 addi         a0, s4, 0x428
+8003fd56 93068a52 addi         a3, s4, 0x528
+8003fd5a 3000     c.addi4spn   a2, sp, 8
+8003fd5c ce85     c.mv         a1, s3
+8003fd5e 97e0ffff auipc        ra, 0xffffe
+8003fd62 e780e037 jalr         ra, ra, 0x37e
+8003fd66 2188     c.andi       s0, 8
+8003fd68 19c0     c.beqz       s0, 6
+8003fd6a 73600430 csrsi        mstatus, 8
+8003fd6e f640     c.lwsp       ra, 0x5c(sp)
+8003fd70 6644     c.lwsp       s0, 0x58(sp)
+8003fd72 d644     c.lwsp       s1, 0x54(sp)
+8003fd74 4649     c.lwsp       s2, 0x50(sp)
+8003fd76 b649     c.lwsp       s3, 0x4c(sp)
+8003fd78 264a     c.lwsp       s4, 0x48(sp)
+8003fd7a 964a     c.lwsp       s5, 0x44(sp)
+8003fd7c 064b     c.lwsp       s6, 0x40(sp)
+8003fd7e f25b     c.lwsp       s7, 0x3c(sp)
+8003fd80 625c     c.lwsp       s8, 0x38(sp)
+8003fd82 d25c     c.lwsp       s9, 0x34(sp)
+8003fd84 425d     c.lwsp       s10, 0x30(sp)
+8003fd86 b25d     c.lwsp       s11, 0x2c(sp)
+8003fd88 2561     c.addi16sp   sp, 0x60
+8003fd8a 8280     c.jr         ra
+8003fd8c 0143     c.li         t1, 0
+8003fd8e 054e     c.li         t3, 1
+8003fd90 37650800 lui          a0, 0x86
+8003fd94 37080480 lui          a6, 0x80040
+8003fd98 13082818 addi         a6, a6, 0x182
+8003fd9c 9948     c.li         a7, 6
+8003fd9e b7b20800 lui          t0, 0x8b
+8003fda2 938262f3 addi         t0, t0, -0xca
+8003fda6 0966     c.lui        a2, 2
+8003fda8 9303056a addi         t2, a0, 0x6a0
+8003fdac 13067670 addi         a2, a2, 0x707
+8003fdb0 b306c801 add          a3, a6, t3
+8003fdb4 83c6f6ff lbu          a3, -1(a3)
+8003fdb8 8dca     c.beqz       a3, 0x32
+8003fdba 93171300 slli         a5, t1, 1
+8003fdbe 3693     c.add        t1, a3
+8003fdc0 8606     c.slli       a3, 1
+8003fdc2 3387f200 add          a4, t0, a5
+8003fdc6 9697     c.add        a5, t0
+8003fdc8 be96     c.add        a3, a5
+8003fdca 9e87     c.mv         a5, t2
+8003fdcc 83d50700 lhu          a1, 0(a5)
+8003fdd0 138565ff addi         a0, a1, -0xa
+8003fdd4 3335c500 sltu         a0, a0, a2
+8003fdd8 3305a040 neg          a0, a0
+8003fddc 6d8d     c.and        a0, a1
+8003fdde 2310a700 sh           a0, 0(a4)
+8003fde2 0907     c.addi       a4, 2
+8003fde4 a907     c.addi       a5, 0xa
+8003fde6 e313d7fe bne          a4, a3, -0x1a
+8003fdea 050e     c.addi       t3, 1
+8003fdec 9383230d addi         t2, t2, 0xd2
+8003fdf0 e3101efd bne          t3, a7, -0x40
+8003fdf4 8280     c.jr         ra
+8003fdf6 0111     c.addi       sp, -0x20
+8003fdf8 06ce     c.swsp       ra, 0x1c(sp)
+8003fdfa 22cc     c.swsp       s0, 0x18(sp)
+8003fdfc 26ca     c.swsp       s1, 0x14(sp)
+8003fdfe 4ac8     c.swsp       s2, 0x10(sp)
+8003fe00 4ec6     c.swsp       s3, 0xc(sp)
+8003fe02 52c4     c.swsp       s4, 8(sp)
+8003fe04 9760feff auipc        ra, 0xfffe6
+8003fe08 e780005f jalr         ra, ra, 0x5f0
+8003fe0c b7b40800 lui          s1, 0x8b
+8003fe10 93840498 addi         s1, s1, -0x680
+8003fe14 1384f47f addi         s0, s1, 0x7ff
+8003fe18 03455404 lbu          a0, 0x45(s0)
+8003fe1c 31c9     c.beqz       a0, 0x54
+8003fe1e 9720ffff auipc        ra, 0xffff2
+8003fe22 e780808e jalr         ra, ra, -0x718
+8003fe26 f3790430 csrrci       s3, mstatus, 8
+8003fe2a 2a89     c.mv         s2, a0
+8003fe2c 13858442 addi         a0, s1, 0x428
+8003fe30 138a8452 addi         s4, s1, 0x528
+8003fe34 13062003 addi         a2, zero, 0x32
+8003fe38 ca85     c.mv         a1, s2
+8003fe3a d286     c.mv         a3, s4
+8003fe3c 97e0ffff auipc        ra, 0xffffe
+8003fe40 e780e07d jalr         ra, ra, 0x7de
+8003fe44 03456404 lbu          a0, 0x46(s0)
+8003fe48 19ed     c.bnez       a0, 0x1e
+8003fe4a 03251404 lw           a0, 0x41(s0)
+8003fe4e 630ca900 beq          s2, a0, 0x18
+8003fe52 1385844f addi         a0, s1, 0x4f8
+8003fe56 d285     c.mv         a1, s4
+8003fe58 97f0ffff auipc        ra, 0xfffff
+8003fe5c e780e07f jalr         ra, ra, 0x7fe
+8003fe60 19c1     c.beqz       a0, 6
+8003fe62 a3202405 sw           s2, 0x41(s0)
+8003fe66 13f58900 andi         a0, s3, 8
+8003fe6a 19c1     c.beqz       a0, 6
+8003fe6c 73600430 csrsi        mstatus, 8
+8003fe70 f240     c.lwsp       ra, 0x1c(sp)
+8003fe72 6244     c.lwsp       s0, 0x18(sp)
+8003fe74 d244     c.lwsp       s1, 0x14(sp)
+8003fe76 4249     c.lwsp       s2, 0x10(sp)
+8003fe78 b249     c.lwsp       s3, 0xc(sp)
+8003fe7a 224a     c.lwsp       s4, 8(sp)
+8003fe7c 0561     c.addi16sp   sp, 0x20
+8003fe7e 8280     c.jr         ra
+8003fe80 4111     c.addi       sp, -0x10
+8003fe82 06c6     c.swsp       ra, 0xc(sp)
+8003fe84 22c4     c.swsp       s0, 8(sp)
+8003fe86 26c2     c.swsp       s1, 4(sp)
+8003fe88 37b40800 lui          s0, 0x8b
+8003fe8c 13040498 addi         s0, s0, -0x680
+8003fe90 1305f47f addi         a0, s0, 0x7ff
+8003fe94 03455504 lbu          a0, 0x45(a0)
+8003fe98 39c9     c.beqz       a0, 0x56
+8003fe9a 97000000 auipc        ra, 0
+8003fe9e e78020ef jalr         ra, ra, -0x10e
+8003fea2 1305645b addi         a0, s0, 0x5b6
+8003fea6 93056463 addi         a1, s0, 0x636
+8003feaa 03160500 lh           a2, 0(a0)
+8003feae 231dc5ca sh           a2, -0x346(a0)
+8003feb2 0905     c.addi       a0, 2
+8003feb4 e31bb5fe bne          a0, a1, -0xa
+8003feb8 9720ffff auipc        ra, 0xffff2
+8003febc e780e084 jalr         ra, ra, -0x7b2
+8003fec0 aa86     c.mv         a3, a0
+8003fec2 9304447a addi         s1, s0, 0x7a4
+8003fec6 b7150800 lui          a1, 0x81
+8003feca 9385c515 addi         a1, a1, 0x15c
+8003fece 2285     c.mv         a0, s0
+8003fed0 2686     c.mv         a2, s1
+8003fed2 97f0ffff auipc        ra, 0xfffff
+8003fed6 e78000cf jalr         ra, ra, -0x310
+8003feda 11c9     c.beqz       a0, 0x14
+8003fedc 2685     c.mv         a0, s1
+8003fede b240     c.lwsp       ra, 0xc(sp)
+8003fee0 2244     c.lwsp       s0, 8(sp)
+8003fee2 9244     c.lwsp       s1, 4(sp)
+8003fee4 4101     c.addi       sp, 0x10
+8003fee6 17e3feff auipc        t1, 0xfffee
+8003feea 6700235f jalr         zero, t1, 0x5f2
+8003feee b240     c.lwsp       ra, 0xc(sp)
+8003fef0 2244     c.lwsp       s0, 8(sp)
+8003fef2 9244     c.lwsp       s1, 4(sp)
+8003fef4 4101     c.addi       sp, 0x10
+8003fef6 17030000 auipc        t1, 0
+8003fefa 6700a30c jalr         zero, t1, 0xca
+8003fefe 37b50800 lui          a0, 0x8b
+8003ff02 13050598 addi         a0, a0, -0x680
+8003ff06 83450551 lbu          a1, 0x510(a0)
+8003ff0a a9c1     c.beqz       a1, 0x42
+8003ff0c 4111     c.addi       sp, -0x10
+8003ff0e 06c6     c.swsp       ra, 0xc(sp)
+8003ff10 22c4     c.swsp       s0, 8(sp)
+8003ff12 1304f57f addi         s0, a0, 0x7ff
+8003ff16 03456404 lbu          a0, 0x46(s0)
+8003ff1a 0589     c.andi       a0, 1
+8003ff1c 0de5     c.bnez       a0, 0x2a
+8003ff1e 03457404 lbu          a0, 0x47(s0)
+8003ff22 0589     c.andi       a0, 1
+8003ff24 0de1     c.bnez       a0, 0x22
+8003ff26 0545     c.li         a0, 1
+8003ff28 a303a404 sb           a0, 0x47(s0)
+8003ff2c 13061400 addi         a2, s0, 1
+8003ff30 9545     c.li         a1, 5
+8003ff32 93060002 addi         a3, zero, 0x20
+8003ff36 0145     c.li         a0, 0
+8003ff38 9700ffff auipc        ra, 0xffff0
+8003ff3c e7806040 jalr         ra, ra, 0x406
+8003ff40 19c1     c.beqz       a0, 6
+8003ff42 a3030404 sb           zero, 0x47(s0)
+8003ff46 b240     c.lwsp       ra, 0xc(sp)
+8003ff48 2244     c.lwsp       s0, 8(sp)
+8003ff4a 4101     c.addi       sp, 0x10
+8003ff4c 8280     c.jr         ra
+8003ff4e 09ce     c.beqz       a2, 0x1a
+8003ff50 2a96     c.add        a2, a0
+8003ff52 aa86     c.mv         a3, a0
+8003ff54 03c70500 lbu          a4, 0(a1)
+8003ff58 8505     c.addi       a1, 1
+8003ff5a 93871600 addi         a5, a3, 1
+8003ff5e 2380e600 sb           a4, 0(a3)
+8003ff62 be86     c.mv         a3, a5
+8003ff64 e398c7fe bne          a5, a2, -0x10
+8003ff68 8280     c.jr         ra
+8003ff6a 11ca     c.beqz       a2, 0x14
+8003ff6c 2a96     c.add        a2, a0
+8003ff6e aa86     c.mv         a3, a0
+8003ff70 13871600 addi         a4, a3, 1
+8003ff74 2380b600 sb           a1, 0(a3)
+8003ff78 ba86     c.mv         a3, a4
+8003ff7a e31bc7fe bne          a4, a2, -0xa
+8003ff7e 8280     c.jr         ra
+8003ff80 6370b502 bgeu         a0, a1, 0x20
+8003ff84 0dce     c.beqz       a2, 0x3a
+8003ff86 2a96     c.add        a2, a0
+8003ff88 aa86     c.mv         a3, a0
+8003ff8a 03c70500 lbu          a4, 0(a1)
+8003ff8e 8505     c.addi       a1, 1
+8003ff90 93871600 addi         a5, a3, 1
+8003ff94 2380e600 sb           a4, 0(a3)
+8003ff98 be86     c.mv         a3, a5
+8003ff9a e398c7fe bne          a5, a2, -0x10
+8003ff9e 05a0     c.j          0x20
+8003ffa0 19ce     c.beqz       a2, 0x1e
+8003ffa2 9306f6ff addi         a3, a2, -1
+8003ffa6 3386d500 add          a2, a1, a3
+8003ffaa aa96     c.add        a3, a0
+8003ffac fd15     c.addi       a1, -1
+8003ffae 03470600 lbu          a4, 0(a2)
+8003ffb2 7d16     c.addi       a2, -1
+8003ffb4 2380e600 sb           a4, 0(a3)
+8003ffb8 fd16     c.addi       a3, -1
+8003ffba e31ab6fe bne          a2, a1, -0xc
+8003ffbe 8280     c.jr         ra
+8003ffc0 ef42fec4 jal          t0, -0x1b3b2
+8003ffc4 6fe06efb j            -0x1184a
+8003ffc8 ef427ec1 jal          t0, -0x1b3ea
+8003ffcc 6f00aff8 j            -0xf876

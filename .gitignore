@@ -3,3 +3,5 @@ _site/
 *.tgz
 *.har
 har/
+__pycache__/
+*.pyc

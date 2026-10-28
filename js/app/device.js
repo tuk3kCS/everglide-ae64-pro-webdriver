@@ -72,6 +72,8 @@ function openWorkspace() {
   window.scrollTo({ top: 0 });
 }
 async function returnHome() {
+  if (toolOperationBusy()) return;
+  disposeGamepadPage();
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   stopPolling();
   stopProfilePolling();
@@ -106,6 +108,8 @@ async function optional(label, operation, fallback = null) {
 }
 
 async function connectKeyboard(device = null, { silent = false } = {}) {
+  if (state.firmwareBusy || state.gamepadBusy) return false;
+  state.bootloaderConnected = false;
   const targetDevice = device || state.knownDevice;
   if (!silent)
     showProgress(

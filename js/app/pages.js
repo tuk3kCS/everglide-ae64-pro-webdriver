@@ -319,6 +319,8 @@ function pageCopy() {
       t("diagnostics"),
       "Feature bitmap, device metadata, protocol surface, and session log.",
     ],
+    gamepad: [t("gamepadMode"), "Native controller firmware or a Windows software mapper."],
+    firmware: [t("firmwareUpdate"), "Choose and flash a local firmware image."],
     about: [
       t("about"),
       "Project background, credits, links, and other author-written content.",
@@ -905,13 +907,15 @@ function capabilityCards() {
 }
 function diagnosticsPage() {
   const info = state.hardware.info || {};
-  return `<div class="page-grid"><section class="panel"><div class="panel-head"><div><h2>Device identity</h2><p>Configuration HID collection metadata.</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "LIVE" : "DEMO"}</span></div><ul class="fact-list"><li><span>VID:PID</span><strong>1CA6:300A</strong></li><li><span>Board ID</span><strong>${esc(info.boardIdHex || "0030000A expected")}</strong></li><li><span>Firmware</span><strong>${esc(info.firmware || "Connect to read")}</strong></li><li><span>Protocol</span><strong>${state.hardware.protocol ? `${state.hardware.protocol.main}.${state.hardware.protocol.sub}` : "Connect to read"}</strong></li><li><span>Serial</span><strong>${esc(info.serial || "Connect to read")}</strong></li><li><span>RT precision</span><strong>${Number(state.hardware.precision || 0.001).toFixed(3)} mm</strong></li></ul><div class="apply-row"><button class="button ghost" id="readLayoutStyle" type="button">Read layout metadata</button><button class="button ghost" id="exportLog" type="button">Export session log</button></div></section><section class="panel"><div class="panel-head"><div><h2>Firmware capabilities</h2><p>Hidden generic features remain visible even when their bit is off.</p></div></div>${capabilityCards()}</section><section class="panel full-span"><div class="panel-head"><div><h2>Supported protocol surface</h2><p>Firmware upgrade and bootloader commands are intentionally absent.</p></div><span class="badge ready">NO UPDATER</span></div><div class="capability-grid">${["Device identity", "Profiles", "System settings", "Four key layers", "Hall performance", "Raw axis data", "Base RGB", "Custom RGB", "Advanced key reads", "Macro read/write", "Calibration", "Read-back verify"].map((name) => `<article class="capability yes"><span>Available</span><strong>${name}</strong></article>`).join("")}</div><pre class="raw-output">${esc(JSON.stringify({ layoutStyle: state.hardware.layoutStyle, recent: state.hardware.logs.slice(0, 12) }, null, 2))}</pre></section></div>`;
+  return `<div class="page-grid"><section class="panel"><div class="panel-head"><div><h2>Device identity</h2><p>Configuration HID collection metadata.</p></div><span class="badge ${connected() ? "ready" : ""}">${connected() ? "LIVE" : "DEMO"}</span></div><ul class="fact-list"><li><span>VID:PID</span><strong>1CA6:300A</strong></li><li><span>Board ID</span><strong>${esc(info.boardIdHex || "0030000A expected")}</strong></li><li><span>Firmware</span><strong>${esc(info.firmware || "Connect to read")}</strong></li><li><span>Protocol</span><strong>${state.hardware.protocol ? `${state.hardware.protocol.main}.${state.hardware.protocol.sub}` : "Connect to read"}</strong></li><li><span>Serial</span><strong>${esc(info.serial || "Connect to read")}</strong></li><li><span>RT precision</span><strong>${Number(state.hardware.precision || 0.001).toFixed(3)} mm</strong></li></ul><div class="apply-row"><button class="button ghost" id="readLayoutStyle" type="button">Read layout metadata</button><button class="button ghost" id="exportLog" type="button">Export session log</button></div></section><section class="panel"><div class="panel-head"><div><h2>Firmware capabilities</h2><p>Hidden generic features remain visible even when their bit is off.</p></div></div>${capabilityCards()}</section><section class="panel full-span"><div class="panel-head"><div><h2>Supported protocol surface</h2><p>Firmware images are checked and flashed in the dedicated Firmware tab.</p></div><span class="badge ready">FIRMWARE TAB</span></div><div class="capability-grid">${["Device identity", "Profiles", "System settings", "Four key layers", "Hall performance", "Raw axis data", "Base RGB", "Custom RGB", "Advanced key reads", "Macro read/write", "Calibration", "Read-back verify"].map((name) => `<article class="capability yes"><span>Available</span><strong>${name}</strong></article>`).join("")}</div><pre class="raw-output">${esc(JSON.stringify({ layoutStyle: state.hardware.layoutStyle, recent: state.hardware.logs.slice(0, 12) }, null, 2))}</pre></section></div>`;
 }
 function aboutPage() {
   return `<section class="panel about-shell"><div class="panel-head"><div><h2>About us</h2><p>This page is authored as ordinary HTML in <code>about.html</code>.</p></div><span class="badge ready">AUTHOR HTML</span></div><iframe class="about-frame" src="about.html" title="About the AE64 Pro Control project"></iframe></section>`;
 }
 
 function render() {
+  if (state.firmwareBusy || state.gamepadBusy) return;
+  disposeGamepadPage();
   stopPolling();
   if (state.page !== "lighting" || !state.liveLighting) {
     state.hardware.fnPressed = false;
@@ -935,12 +939,16 @@ function render() {
     advanced: advancedPage,
     diagnostics: diagnosticsPage,
     about: aboutPage,
+    gamepad: gamepadPage,
+    firmware: firmwarePage,
   };
   document.querySelector("#pageContent").innerHTML = pages[state.page]();
   renderToolbar();
   renderStatus();
   translateRenderedContent(document.querySelector("#pageContent"));
   bindPage();
+  if (state.page === "gamepad") bindGamepadPage();
+  if (state.page === "firmware") bindFirmwarePage();
 }
 function renderToolbar() {
   const profiles = state.hardware.configIndexes
@@ -974,7 +982,7 @@ function renderStatus() {
       : autoApply
         ? t("autoApplyActive")
         : t("noPendingChanges");
-  document.querySelector("#applyButton").disabled = count === 0 || autoApply || writing;
+  document.querySelector("#applyButton").disabled = count === 0 || autoApply || writing || state.firmwareBusy || state.gamepadBusy;
   document.querySelector("#revertButton").disabled = count === 0 || writing;
   const autoApplyToggle = document.querySelector("#autoApplyToggle");
   autoApplyToggle.checked = autoApply;
@@ -985,5 +993,6 @@ function renderStatus() {
   document.querySelector("#connectionLabel").textContent = connected()
     ? `Connected · FW ${state.hardware.info?.firmware || "?"}`
     : t("offlineWorkspace");
+  updateToolShell();
   scheduleAutoApply();
 }

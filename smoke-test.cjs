@@ -8,6 +8,11 @@ const API = require("./protocol.js");
 const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
+  "js/gamepad/model.js",
+  "js/gamepad/protocol.js",
+  "js/gamepad/template.js",
+  "js/gamepad/studio.js",
+  "js/firmware/flasher.js",
   "js/app/foundation.js",
   "js/app/i18n.js",
   "js/app/switches.js",
@@ -20,6 +25,8 @@ const APP_FILES = [
   "js/app/mt-end-toggle.js",
   "js/app/macro.js",
   "js/app/lighting-color.js",
+  "js/app/gamepad-page.js",
+  "js/app/firmware-page.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -257,7 +264,10 @@ async function main() {
   if (!read("about.html").includes("This file owns the About Us page")) throw new Error("About Us must remain a directly authorable HTML document.");
   for (const key of ["autoApply", "experimental", "autoApplyHint", "autoApplyActive"]) if (!xml.includes(`key="${key}"`)) throw new Error(`Language XML omitted ${key}.`);
   for (const feature of ["DKS", "MPT", "MT", "TGL", "END", "SOCD", "RS", "MACRO", "COMBO"]) if (!app.includes(`\"${feature}\"`)) throw new Error(`Advanced feature ${feature} is not visible.`);
-  for (const forbidden of ["flashFirmware", "writeFirmware", "bootloaderCommand", "firmwareFileInput"]) if ([html, app, read("protocol.js")].some((source) => source.includes(forbidden))) throw new Error(`Firmware-update capability leaked into the project: ${forbidden}`);
+  for (const page of ["gamepad", "firmware"]) if (!html.includes(`data-page="${page}"`)) throw new Error(`Missing integrated ${page} tab.`);
+  if (fs.existsSync(path.join(root, "gamepad/index.html")) || html.includes('href="gamepad/"')) throw new Error("The retired standalone gamepad page remains.");
+  if (!app.includes("Hardware Solution") || !app.includes("Software Solution") || !app.includes("https://github.com/z750sasr/he-kb-analog-mapper")) throw new Error("Gamepad solution choices are missing.");
+  if (!pagesWorkflow.includes("package-firmware.cjs") || !pagesWorkflow.includes("js/gamepad/*.js")) throw new Error("Pages deployment omits gamepad assets or firmware files.");
 
   const elements = new Map();
   const documentListeners = new Map();
@@ -1454,7 +1464,8 @@ async function main() {
   const reconnectState = vm.runInContext("[Boolean(state.transport?.connected), state.transport !== injectedTransport, injectedTransport.device.opened]", browser);
   equal(reconnectState, [true, true, true], "Polling-rate changes must close the stale HID session and automatically reconnect.");
 
-  console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, language XML, feature visibility, and firmware-update exclusion verified.");
+  if (device.sent.some(({ packet }) => packet[0] === 8)) throw new Error("Ordinary configuration sent a firmware command without starting an update.");
+  console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, languages, integrated tools, and update isolation verified.");
 }
 
 main().catch((error) => { console.error(error.stack || error); process.exitCode = 1; });

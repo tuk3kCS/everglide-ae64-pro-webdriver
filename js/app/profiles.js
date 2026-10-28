@@ -54,7 +54,7 @@ function scheduleAutoApply() {
   state.timers.autoApply = null;
   if (
     !state.autoApply ||
-    state.writeInFlight ||
+    state.writeInFlight || state.firmwareBusy || state.gamepadBusy ||
     !connected() ||
     !dirtyCount()
   )
@@ -65,7 +65,7 @@ async function flushAutoApply() {
   state.timers.autoApply = null;
   if (
     !state.autoApply ||
-    state.writeInFlight ||
+    state.writeInFlight || state.firmwareBusy || state.gamepadBusy ||
     !connected() ||
     !dirtyCount()
   )

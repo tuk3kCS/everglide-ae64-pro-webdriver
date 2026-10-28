@@ -4,8 +4,8 @@
  * Everglide AE64 Pro WebHID protocol.
  *
  * Packet layouts were reconstructed from the captured manufacturer driver and
- * checked against the keyboard's USB HID descriptor. Firmware-update and
- * bootloader commands are deliberately absent.
+ * checked against the keyboard's USB HID descriptor. Firmware transfers live in
+ * js/firmware/flasher.js and acquire an exclusive connection lease.
  */
 (function exposeAE64Protocol(global) {
   const REPORT_ID = 0;
@@ -107,8 +107,10 @@
       return transport;
     }
 
-    constructor(device) {
+    constructor(device, { allowBootloader = false } = {}) {
       this.device = device;
+      this.allowBootloader = allowBootloader;
+      this.exclusiveToken = null;
       this.pending = null;
       this.queue = Promise.resolve();
       this.reportSubscribers = new Set();
@@ -119,7 +121,8 @@
 
     async open() {
       if (!this.device) throw new Error("No HID device was selected.");
-      const collection = this.device.collections?.some((item) => item.usagePage === 0xffb0 && item.usage === 0x01);
+      const collection = this.device.collections?.some((item) => (item.usagePage === 0xffb0 && item.usage === 0x01) ||
+        (this.allowBootloader && this.device.vendorId === 0x1ca6 && item.usagePage === 0xff80));
       if (!collection) throw new Error("The selected device does not expose the AE64 FFB0:0001 configuration collection.");
       if (!this.device.opened) await this.device.open();
       this.device.removeEventListener?.("inputreport", this.onInputReport);
@@ -165,6 +168,8 @@
 
     transact(payload, options = {}) {
       const settings = typeof options === "number" ? { timeout: options } : options;
+      if (this.exclusiveToken && settings.lease !== this.exclusiveToken)
+        return Promise.reject(new Error("This keyboard connection is reserved for a firmware update."));
       const timeout = settings.timeout || 1500;
       const request = Array.from(payload);
       const matcher = settings.matcher || ((reply) => reply[0] === request[0] && reply[1] === request[1]);
@@ -191,6 +196,20 @@
     }
 
     raw(payload, options) { return this.transact(payload, options); }
+
+    async acquireExclusive() {
+      if (this.exclusiveToken) throw new Error("A firmware update already owns this keyboard connection.");
+      const token = Symbol("firmware-update");
+      this.exclusiveToken = token;
+      await this.queue;
+      let released = false;
+      return {
+        request: (payload, options = {}) => released
+          ? Promise.reject(new Error("Firmware connection lease was released."))
+          : this.transact(payload, { ...options, lease: token }),
+        release: async () => { await this.queue; if (this.exclusiveToken === token) this.exclusiveToken = null; released = true; },
+      };
+    }
 
     async getProtocolVersion() {
       const data = await this.transact([FAMILY.DEVICE, 1]);

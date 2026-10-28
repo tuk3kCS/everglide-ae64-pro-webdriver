@@ -52,6 +52,7 @@ document
 document.querySelector("#sideNav").addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-page]");
   if (button) {
+    if (toolOperationBusy()) return;
     if (state.calibrationActive && button.dataset.page !== "performance") await stopCalibration(true);
     state.page = button.dataset.page;
     render();
@@ -117,6 +118,7 @@ if (navigator.hid) {
       stopLightingPolling();
       stopProfilePolling();
       resetCalibrationSession();
+      if (state.firmwareBusy) { log("Keyboard USB transition during firmware update"); return; }
       log("Keyboard disconnected");
       render();
       showToast("AE64 Pro disconnected.", true);
@@ -133,3 +135,9 @@ mountHero();
 Promise.allSettled([loadLanguages(), loadSwitchCatalog()]).finally(
   detectKnownKeyboard,
 );
+
+document.querySelector("#openGamepadTools").addEventListener("click", () => { state.page = "gamepad"; openWorkspace(); });
+document.querySelector("#openFirmwareTools").addEventListener("click", () => { state.page = "firmware"; openWorkspace(); });
+window.addEventListener("beforeunload", (event) => { if (state.firmwareBusy) { event.preventDefault(); event.returnValue = ""; } });
+const toolRoute = window.location?.hash?.slice(1);
+if (["overview", "keymap", "performance", "advanced", "lighting", "settings", "diagnostics", "about", "gamepad", "firmware"].includes(toolRoute)) { state.page = toolRoute; openWorkspace(); }
