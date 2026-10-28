@@ -1,0 +1,284 @@
+
+PAYLOAD REGION 0x1958c..0x195bc
+01958c 0000     c.unimp    
+01958e 0b80     .byte      0x0b, 0x80
+019590 0010     c.addi4spn s0, sp, 0x20
+019592 0b80     .byte      0x0b, 0x80
+019594 0020     c.fld      fs0, 0(s0)
+019596 0b80     .byte      0x0b, 0x80
+019598 0040     c.lw       s0, 0(s0)
+01959a 0b80     .byte      0x0b, 0x80
+01959c 0050     c.lw       s0, 0x20(s0)
+01959e 0b80     .byte      0x0b, 0x80
+0195a0 0060     c.flw      fs0, 0(s0)
+0195a2 0b80     .byte      0x0b, 0x80
+0195a4 0080     .byte      0x00, 0x80
+0195a6 0b80     .byte      0x0b, 0x80
+0195a8 0090     .byte      0x00, 0x90
+0195aa 0b80     .byte      0x0b, 0x80
+0195ac 00a0     c.fsd      fs0, 0(s0)
+0195ae 0b80     .byte      0x0b, 0x80
+0195b0 00c0     c.sw       s0, 0(s0)
+0195b2 0b80     .byte      0x0b, 0x80
+0195b4 00d0     c.sw       s0, 0x20(s0)
+0195b6 0b80     .byte      0x0b, 0x80
+0195b8 00e0     c.fsw      fs0, 0(s0)
+0195ba 0b80     .byte      0x0b, 0x80
+
+PAYLOAD REGION 0xae5e..0xaed0
+00ae5e ef827fd9 jal        t0, -0x726a
+00ae62 37340800 lui        s0, 0x83
+00ae66 930984ba addi       s3, s0, -0x458
+00ae6a 03c90900 lbu        s2, 0(s3)
+00ae6e 3147     c.li       a4, 0xc
+00ae70 b7a70380 lui        a5, 0x8003a
+00ae74 3307e902 mul        a4, s2, a4
+00ae78 9387c758 addi       a5, a5, 0x58c
+00ae7c 130484ba addi       s0, s0, -0x458
+00ae80 b7540800 lui        s1, 0x85
+00ae84 ba97     c.add      a5, a4
+00ae86 8847     c.lw       a0, 8(a5)
+00ae88 b7072520 lui        a5, 0x20250
+00ae8c 93878750 addi       a5, a5, 0x508
+00ae90 1841     c.lw       a4, 0(a0)
+00ae92 631df702 bne        a4, a5, 0x3a
+00ae96 5841     c.lw       a4, 4(a0)
+00ae98 b7172620 lui        a5, 0x20261
+00ae9c 93879792 addi       a5, a5, -0x6d7
+00aea0 6316f702 bne        a4, a5, 0x2c
+00aea4 8565     c.lui      a1, 1
+00aea6 9385456a addi       a1, a1, 0x6a4
+00aeaa 2105     c.addi     a0, 8
+00aeac 138684f2 addi       a2, s1, -0xd8
+00aeb0 ef70f03b jal        0x7bbe
+00aeb4 83c50900 lbu        a1, 0(s3)
+00aeb8 37950380 lui        a0, 0x80039
+00aebc 130505d7 addi       a0, a0, -0x290
+00aec0 efb0d008 jal        0xb88c
+00aec4 eff07fdd jal        -0x22a
+00aec8 6f801fd6 j          -0x72a0
+00aecc 0566     c.lui      a2, 1
+00aece 1306466a addi       a2, a2, 0x6a4
+
+PAYLOAD REGION 0xaf9a..0xb020
+00af9a ef825fc7 jal        t0, -0x738c
+00af9e b7340800 lui        s1, 0x83
+00afa2 938484ba addi       s1, s1, -0x458
+00afa6 83c70400 lbu        a5, 0(s1)
+00afaa 3149     c.li       s2, 0xc
+00afac 37a40380 lui        s0, 0x8003a
+00afb0 b3872703 mul        a5, a5, s2
+00afb4 1304c458 addi       s0, s0, 0x58c
+00afb8 4111     c.addi     sp, -0x10
+00afba 8965     c.lui      a1, 2
+00afbc a297     c.add      a5, s0
+00afbe 8847     c.lw       a0, 8(a5)
+00afc0 ef709025 jal        0x7a58
+00afc4 b7072520 lui        a5, 0x20250
+00afc8 93878750 addi       a5, a5, 0x508
+00afcc 3ec4     c.swsp     a5, 8(sp)
+00afce b7172620 lui        a5, 0x20261
+00afd2 93879792 addi       a5, a5, -0x6d7
+00afd6 3ec6     c.swsp     a5, 0xc(sp)
+00afd8 83c70400 lbu        a5, 0(s1)
+00afdc 37560800 lui        a2, 0x85
+00afe0 8565     c.lui      a1, 1
+00afe2 b3872703 mul        a5, a5, s2
+00afe6 130686f2 addi       a2, a2, -0xd8
+00afea 9385456a addi       a1, a1, 0x6a4
+00afee a297     c.add      a5, s0
+00aff0 8847     c.lw       a0, 8(a5)
+00aff2 2105     c.addi     a0, 8
+00aff4 ef70f024 jal        0x7a4e
+00aff8 83c70400 lbu        a5, 0(s1)
+00affc 3000     c.addi4spn a2, sp, 8
+00affe a145     c.li       a1, 8
+00b000 b3872703 mul        a5, a5, s2
+00b004 3e94     c.add      s0, a5
+00b006 0844     c.lw       a0, 8(s0)
+00b008 ef70b023 jal        0x7a3a
+00b00c 83c50400 lbu        a1, 0(s1)
+00b010 37950380 lui        a0, 0x80039
+00b014 1305c5dc addi       a0, a0, -0x234
+00b018 efb04073 jal        0xb734
+00b01c 4101     c.addi     sp, 0x10
+00b01e 6f805fc1 j          -0x73ec
+
+PAYLOAD REGION 0xb376..0xb3f4
+00b376 ef82ff87 jal        t0, -0x7782
+00b37a b7370800 lui        a5, 0x83
+00b37e 138787ba addi       a4, a5, -0x458
+00b382 8349d700 lbu        s3, 0xd(a4)
+00b386 2a89     c.mv       s2, a0
+00b388 938487ba addi       s1, a5, -0x458
+00b38c 21e1     c.bnez     a0, 0x40
+00b38e 8565     c.lui      a1, 1
+00b390 37050a80 lui        a0, 0x800a0
+00b394 ef704068 jal        0x7684
+00b398 37a40380 lui        s0, 0x8003a
+00b39c 8565     c.lui      a1, 1
+00b39e 37250a80 lui        a0, 0x800a2
+00b3a2 1304c458 addi       s0, s0, 0x58c
+00b3a6 ef702067 jal        0x7672
+00b3aa 130a0403 addi       s4, s0, 0x30
+00b3ae 0840     c.lw       a0, 0(s0)
+00b3b0 8565     c.lui      a1, 1
+00b3b2 ef706066 jal        0x7666
+00b3b6 4840     c.lw       a0, 4(s0)
+00b3b8 8565     c.lui      a1, 1
+00b3ba ef70e065 jal        0x765e
+00b3be 0844     c.lw       a0, 8(s0)
+00b3c0 8965     c.lui      a1, 2
+00b3c2 3104     c.addi     s0, 0xc
+00b3c4 ef704065 jal        0x7654
+00b3c8 e31344ff bne        s0, s4, -0x1a
+00b3cc eff07fc5 jal        -0x3aa
+00b3d0 eff0bfca jal        -0x356
+00b3d4 eff05fdf jal        -0x20c
+00b3d8 eff05f8c jal        -0x73c
+00b3dc eff01f97 jal        -0x690
+00b3e0 eff0ffa7 jal        -0x582
+00b3e4 63160900 bnez       s2, 0xc
+00b3e8 a3863401 sb         s3, 0xd(s1)
+00b3ec eff03fc6 jal        -0x39e
+00b3f0 6f809f83 j          -0x77c8
+
+PAYLOAD REGION 0x12a18..0x12a78
+012a18 ef126f9f jal        t0, -0xee0a
+012a1c 2e84     c.mv       s0, a1
+012a1e 2a89     c.mv       s2, a0
+012a20 3180     c.srli     s0, 0xc
+012a22 efa09ffb jal        -0x5048
+012a26 8144     c.li       s1, 0
+012a28 63968400 bne        s1, s0, 0xc
+012a2c efa01ffb jal        -0x5050
+012a30 6f102fa0 j          -0xedfe
+012a34 1395c400 slli       a0, s1, 0xc
+012a38 4a95     c.add      a0, s2
+012a3a efb0efac jal        -0x4d32
+012a3e 8504     c.addi     s1, 1
+012a40 e5b7     c.j        -0x18
+012a42 ef12cf9c jal        t0, -0xee34
+012a46 4111     c.addi     sp, -0x10
+012a48 2e84     c.mv       s0, a1
+012a4a 2ac6     c.swsp     a0, 0xc(sp)
+012a4c 32c4     c.swsp     a2, 8(sp)
+012a4e efa0dff8 jal        -0x5074
+012a52 13562400 srli       a2, s0, 2
+012a56 0d88     c.andi     s0, 3
+012a58 a245     c.lwsp     a1, 8(sp)
+012a5a 3245     c.lwsp     a0, 0xc(sp)
+012a5c 11c0     c.beqz     s0, 4
+012a5e 0506     c.addi     a2, 1
+012a60 efb0cfaf jal        -0x4d04
+012a64 efa09ff7 jal        -0x5088
+012a68 4101     c.addi     sp, 0x10
+012a6a 6f108f9c j          -0xee38
+012a6e b287     c.mv       a5, a2
+012a70 2e86     c.mv       a2, a1
+012a72 be85     c.mv       a1, a5
+012a74 6fb06fad j          -0x4d2a
+
+PAYLOAD REGION 0xdd08..0xdda6
+00dd08 ef527ff0 jal        t0, -0xa0fa
+00dd0c 4111     c.addi     sp, -0x10
+00dd0e 2a84     c.mv       s0, a0
+00dd10 02c6     c.swsp     zero, 0xc(sp)
+00dd12 a144     c.li       s1, 8
+00dd14 f3b70430 csrrc      a5, mstatus, s1
+00dd18 3ec6     c.swsp     a5, 0xc(sp)
+00dd1a b247     c.lwsp     a5, 0xc(sp)
+00dd1c ef401073 jal        0x4f30
+00dd20 ef40f074 jal        0x4f4e
+00dd24 ef403076 jal        0x4f62
+00dd28 1315c400 slli       a0, s0, 0xc
+00dd2c 8565     c.lui      a1, 1
+00dd2e 3181     c.srli     a0, 0xc
+00dd30 9720fd7f auipc      ra, 0x7ffd2
+00dd34 e780202b jalr       ra, ra, 0x2b2
+00dd38 ef40d06f jal        0x4efc
+00dd3c ef401072 jal        0x4f20
+00dd40 73a00430 csrs       mstatus, s1
+00dd44 4101     c.addi     sp, 0x10
+00dd46 6f50dfee j          -0xa114
+00dd4a ae87     c.mv       a5, a1
+00dd4c 9315c500 slli       a1, a0, 0xc
+00dd50 b181     c.srli     a1, 0xc
+00dd52 3e85     c.mv       a0, a5
+00dd54 1723fd7f auipc      t1, 0x7ffd2
+00dd58 67008321 jalr       zero, t1, 0x218
+00dd5c ef523feb jal        t0, -0xa14e
+00dd60 0111     c.addi     sp, -0x20
+00dd62 2a84     c.mv       s0, a0
+00dd64 2ec6     c.swsp     a1, 0xc(sp)
+00dd66 b284     c.mv       s1, a2
+00dd68 02ce     c.swsp     zero, 0x1c(sp)
+00dd6a 2149     c.li       s2, 8
+00dd6c f3370930 csrrc      a5, mstatus, s2
+00dd70 3ece     c.swsp     a5, 0x1c(sp)
+00dd72 f247     c.lwsp     a5, 0x1c(sp)
+00dd74 3204     c.slli     s0, 0xc
+00dd76 ef40706d jal        0x4ed6
+00dd7a ef40506f jal        0x4ef4
+00dd7e ef409070 jal        0x4f08
+00dd82 3245     c.lwsp     a0, 0xc(sp)
+00dd84 13962400 slli       a2, s1, 2
+00dd88 9355c400 srli       a1, s0, 0xc
+00dd8c 9720fd7f auipc      ra, 0x7ffd2
+00dd90 e780c020 jalr       ra, ra, 0x20c
+00dd94 ef40106a jal        0x4ea0
+00dd98 ef40506c jal        0x4ec4
+00dd9c 73200930 csrs       mstatus, s2
+00dda0 0561     c.addi16sp sp, 0x20
+00dda2 6f501fe9 j          -0xa170
+
+PAYLOAD REGION 0xb5ca..0xb65e
+00b5ca 0327442d lw         a4, 0x2d4(s0)
+00b5ce b7d70800 lui        a5, 0x8d
+00b5d2 93764700 andi       a3, a4, 4
+00b5d6 91ca     c.beqz     a3, 0x14
+00b5d8 6d9b     c.andi     a4, -5
+00b5da 232ae42c sw         a4, 0x2d4(s0)
+00b5de 03a7c427 lw         a4, 0x27c(s1)
+00b5e2 1307471f addi       a4, a4, 0x1f4
+00b5e6 23aae726 sw         a4, 0x274(a5)
+00b5ea 03a74727 lw         a4, 0x274(a5)
+00b5ee 19cb     c.beqz     a4, 0x16
+00b5f0 83a64727 lw         a3, 0x274(a5)
+00b5f4 03a7c427 lw         a4, 0x27c(s1)
+00b5f8 63f6e600 bgeu       a3, a4, 0xc
+00b5fc 23aa0726 sw         zero, 0x274(a5)
+00b600 eff0bf99 jal        -0x666
+00b604 8327442d lw         a5, 0x2d4(s0)
+00b608 13f70708 andi       a4, a5, 0x80
+00b60c 29cb     c.beqz     a4, 0x52
+00b60e 93f7f7f7 andi       a5, a5, -0x81
+00b612 232af42c sw         a5, 0x2d4(s0)
+00b616 37d40800 lui        s0, 0x8d
+00b61a 8327042d lw         a5, 0x2d0(s0)
+00b61e 93f70702 andi       a5, a5, 0x20
+00b622 85cb     c.beqz     a5, 0x30
+00b624 b7370800 lui        a5, 0x83
+00b628 9387c7b9 addi       a5, a5, -0x464
+00b62c a3800700 sb         zero, 1(a5)
+00b630 a3810700 sb         zero, 3(a5)
+00b634 23920700 sh         zero, 4(a5)
+00b638 ef900fb0 jal        -0x6d00
+00b63c 0545     c.li       a0, 1
+00b63e ef807ff4 jal        -0x70ba
+00b642 ef903fac jal        -0x653e
+00b646 8327042d lw         a5, 0x2d0(s0)
+00b64a 93f7f7fd andi       a5, a5, -0x21
+00b64e 2328f42c sw         a5, 0x2d0(s0)
+00b652 eff0afe4 jal        -0x9b6
+00b656 eff06fef jal        -0x90a
+00b65a eff05f80 jal        -0x7fc
+
+PAYLOAD REGION 0x10668..0x10682
+010668 ef326fda jal        t0, -0xca5a
+01066c b7c50800 lui        a1, 0x8c
+010670 37850800 lui        a0, 0x88
+010674 93854596 addi       a1, a1, -0x69c
+010678 13054596 addi       a0, a0, -0x69c
+01067c ef001054 jal        0xd40
+010680 eff0fffb jal        -0x42

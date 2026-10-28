@@ -13,7 +13,30 @@ static const struct stock_endpoint *ep_in,*ep_out;
 static void (*event_callback)(uint8_t,uint8_t);
 static bool fail_write;
 static const uint8_t *owned;
-void *test_stock_ram(uintptr_t a) { CHECK(a<sizeof(ram));return ram+a; }
+static uint8_t profile_flash[4][0x2000];
+static unsigned fn_renders,fn_saves;
+static bool fail_flash;
+void *test_stock_ram(uintptr_t a) {
+    if(a>=0x800b2000u&&a<0x800c0000u) {
+        unsigned profile=(unsigned)(a-0x800b2000u)/0x4000u,offset=(unsigned)(a-0x800b2000u)%0x4000u;
+        CHECK(profile<4&&offset<0x2000u);return profile_flash[profile]+offset;
+    }
+    CHECK(a<sizeof(ram));return ram+a;
+}
+void stock_fn_render(void) {
+    fn_renders++;for(unsigned i=0;i<360;i++)ram[0x8d084+i]=0x5a;
+}
+void stock_fn_load_original(void) {}
+void stock_fn_save_original(void) {
+    CHECK(ram[0x82ba8]<4);memset(profile_flash[ram[0x82ba8]],0xff,0x2000);fn_saves++;
+    /* Native records occupy the exact prefix; the trailer must not change it. */
+    memset(profile_flash[ram[0x82ba8]],0x69,0x16ac);
+}
+void stock_flash_program(uintptr_t address,uint32_t length,const uint8_t *data) {
+    CHECK(!(address&3)&&!(length&3)&&!((uintptr_t)data&3));
+    if(fail_flash)return;
+    uint8_t *destination=test_stock_ram(address);for(unsigned i=0;i<length;i++)destination[i]&=data[i];
+}
 void stock_scan(void) { scan_count++; }
 void stock_schedule(void) { schedule_count++; }
 void stock_dispatch_original(void) { dispatch_count++; }

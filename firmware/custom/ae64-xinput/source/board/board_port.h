@@ -3,6 +3,7 @@
 #define AE64_BOARD_PORT_H
 #include "ae64_gamepad_protocol.h"
 #include "ae64_xusb.h"
+#include "ae64_fn_rgb.h"
 struct stock_interface {
     int (*class_interface)(uint8_t, const struct ae64_usb_setup *, uint8_t **, uint32_t *);
     int (*class_endpoint)(uint8_t, const struct ae64_usb_setup *, uint8_t **, uint32_t *);
@@ -15,6 +16,10 @@ struct stock_interface {
 struct stock_endpoint { uint8_t address; void (*callback)(uint8_t, uint8_t, uint32_t); };
 void stock_scan(void);
 void stock_schedule(void);
+void stock_fn_render(void);
+void stock_fn_load_original(void);
+void stock_fn_save_original(void);
+void stock_flash_program(uintptr_t,uint32_t,const uint8_t *);
 void stock_dispatch_original(void);
 bool stock_ep0_original(uint8_t, const struct ae64_usb_setup *, uint8_t **, uint32_t *);
 void stock_add_interface(uint8_t, struct stock_interface *);
@@ -45,6 +50,9 @@ static inline void irq_unlock(uint32_t saved) {
 #endif
 void board_scan_hook(void);
 void board_schedule_hook(void);
+void board_fn_render_hook(void);
+void board_fn_load_hook(void);
+void board_fn_save_hook(void);
 void board_dispatch_hook(void);
 int board_usb_initialize(uint8_t,uintptr_t,void (*)(uint8_t,uint8_t));
 bool board_ep0_hook(uint8_t,const struct ae64_usb_setup *,uint8_t **,uint32_t *);

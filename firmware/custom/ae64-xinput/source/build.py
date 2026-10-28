@@ -37,7 +37,7 @@ def main():
     if sha(stock)!=STOCK_SHA:raise ValueError('Only the pinned stock v0.1.0.0 binary is supported')
     if struct.unpack_from('<IIIII',stock)!=(0xbeaf5aa5,0x0030000a,0x1000,len(stock)-4096,zlib.crc32(stock[4096:])):raise ValueError('Invalid stock container')
     zig=str(a.zig.resolve());elf=out/'ae64-xinput-experimental.elf'
-    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/runtime.c',root/'board/trampolines.S']
+    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/runtime.c',root/'board/trampolines.S']
     commands=[];objects=[]
     for source in sources:
         obj=out/(source.stem+'.o')
@@ -65,6 +65,9 @@ def main():
         payload[offset:offset+len(expected)]=replacement
         patches.append({'payload_offset':hex(offset),'container_offset':hex(offset+4096),'before':expected.hex(),'after':replacement.hex(),'reason':reason})
     def hook(offset,signature,symbol,rd=1):patch(offset,bytes.fromhex(signature),jal(BASE+offset,symbols[symbol]['address'],rd),symbol)
+    hook(0xa594,'ef90707d','board_fn_render_hook')
+    hook(0xae5e,'ef827fd9','board_fn_load_hook',0)
+    hook(0xaf9a,'ef825fc7','board_fn_save_hook',0)
     hook(0x6e08,'eff06f8c','board_scan_hook')
     hook(0x6e60,'efe04fd9','board_schedule_hook')
     hook(0xea70,'ef10f036','board_usb_initialize')
@@ -77,12 +80,12 @@ def main():
     replacement=lui_addi(11,0x8a960)
     patch(0x1066c,bytes.fromhex('b7c50800'),replacement[:4],'reserve patch state: heap end upper immediate')
     patch(0x10674,bytes.fromhex('93854596'),replacement[4:],'reserve patch state: heap end lower immediate')
-    patch(0x1bc80,bytes.fromhex('0200'),bytes.fromhex('0101'),'custom bcdDevice 0x0101; preserve VID/PID')
+    patch(0x1bc80,bytes.fromhex('0200'),bytes.fromhex('0201'),'custom bcdDevice 0x0102; preserve VID/PID')
     # Original startup copies/helpers and all original offsets are retained.
     if payload[0x1be98:0x1bff8]!=stock[0x1ce98:0x1cff8]:raise ValueError('Startup flash helpers changed')
     payload.extend(b'\xff'*(-len(payload)%8))
     header=bytearray(stock[:4096]);struct.pack_into('<II',header,12,len(payload),zlib.crc32(payload))
-    binary=out/'AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin';binary.write_bytes(header+payload)
+    binary=out/'AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin';binary.write_bytes(header+payload)
     result={'status':'EXPERIMENTAL_UNTESTED_ON_HARDWARE','stock_sha256':STOCK_SHA,'image':binary.name,'image_bytes':binary.stat().st_size,'image_sha256':sha(binary.read_bytes()),'payload_bytes':len(payload),'payload_crc32':f'{zlib.crc32(payload):08x}','original_payload_bytes':original_length,'append_vma':hex(APPEND),'reserved_ram':[hex(0x8a960),hex(0x8b960)],'sections':sections,'symbols':symbols,'patches':patches,'build_command':command,'compiler_version':subprocess.check_output([zig,'version'],text=True).strip(),'verified':{'host_tests':False,'hardware_boot':False,'windows_xinput':False,'bootloader_acceptance':False,'flashed':False}}
     result['build_commands']=commands
     result['heap']={'original_begin':'0x87964','original_end':'0x8b964','new_end':'0x8a960','remaining_bytes':0x8a960-0x87964,'reserved_bytes':0x8b964-0x8a960}

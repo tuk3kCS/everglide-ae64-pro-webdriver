@@ -113,6 +113,7 @@ if (navigator.hid) {
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
       state.transport = null;
+      resetFnLightingCapability();
       state.livePressDistance = false;
       stopTravelPolling(true);
       stopLightingPolling();
@@ -138,6 +139,6 @@ Promise.allSettled([loadLanguages(), loadSwitchCatalog()]).finally(
 
 document.querySelector("#openGamepadTools").addEventListener("click", () => { state.page = "gamepad"; openWorkspace(); });
 document.querySelector("#openFirmwareTools").addEventListener("click", () => { state.page = "firmware"; openWorkspace(); });
-window.addEventListener("beforeunload", (event) => { if (state.firmwareBusy) { event.preventDefault(); event.returnValue = ""; } });
+window.addEventListener("beforeunload", (event) => { if (state.firmwareBusy || state.fnLightingBusy) { event.preventDefault(); event.returnValue = ""; } });
 const toolRoute = window.location?.hash?.slice(1);
 if (["overview", "keymap", "performance", "advanced", "lighting", "settings", "diagnostics", "about", "gamepad", "firmware"].includes(toolRoute)) { state.page = toolRoute; openWorkspace(); }

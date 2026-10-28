@@ -32,7 +32,7 @@ function stopProfilePolling() {
   state.timers.profileGeneration += 1;
 }
 async function syncPhysicalProfile() {
-  if (!connected() || dirtyCount() || state.profileSyncInFlight) return false;
+  if (!connected() || state.fnLightingBusy || dirtyCount() || state.profileSyncInFlight) return false;
   const index = await state.transport.getCurrentConfig();
   if (Number(index) === Number(state.profile.profileIndex)) return false;
   if (!state.hardware.configIndexes.includes(Number(index))) return false;
@@ -108,7 +108,7 @@ async function optional(label, operation, fallback = null) {
 }
 
 async function connectKeyboard(device = null, { silent = false } = {}) {
-  if (state.firmwareBusy || state.gamepadBusy) return false;
+  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return false;
   state.bootloaderConnected = false;
   const targetDevice = device || state.knownDevice;
   if (!silent)
@@ -120,6 +120,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
     );
   try {
     stopProfilePolling();
+    resetFnLightingCapability();
     if (state.transport) await state.transport.close();
     state.transport = targetDevice
       ? new AE64HidTransport(targetDevice)
@@ -275,6 +276,7 @@ async function connectKeyboard(device = null, { silent = false } = {}) {
       () => readAllAdvancedRecords({ renderDuringLoad: false }),
       0,
     );
+    await probeFnLighting(state.transport);
     state.original = clone(state.profile);
     clearDirty();
     log("Connected", {

@@ -31,6 +31,8 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
+The newest experimental custom build is **XInput + Fn RGB v0.2**, adding persistent static per-key colors across four onboard profiles and three Fn layers. Its new hardware behavior remains untested. See `../docs/firmware-research/fn-rgb/README.md` for native evidence, storage accounting, usage and limitations. The original v0.1 image is retained separately.
+
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions. The separately named `AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin` is also included. Its source/build evidence and limitations are under `custom/ae64-xinput/`.
 
 Add new `.bin` files anywhere under this directory and run `node scripts/build-firmware-catalog.cjs` from the repository root. The script verifies the AE64 board header and payload CRC, then records the file's size and SHA-256. Invalid images fail catalog generation. GitHub Pages regenerates the catalog and copies the actual binary files into the deployment. No directory-listing service or factory API is required at runtime.

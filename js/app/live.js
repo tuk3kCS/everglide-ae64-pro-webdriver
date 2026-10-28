@@ -544,7 +544,7 @@ function stopLightingPolling() {
 }
 function startLightingLive() {
   stopLightingPolling();
-  if (!connected() || state.page !== "lighting" || !state.liveLighting) return;
+  if (!connected() || state.page !== "lighting" || !state.liveLighting || state.fnLightingBusy || state.lightingTab === "fn") return;
   const generation = state.timers.lightingGeneration;
   const read = async () => {
     if (

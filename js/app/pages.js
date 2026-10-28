@@ -523,7 +523,7 @@ function lightingRange(id, label, value, hint) {
   return `<label class="lighting-range" for="${id}"><span><b>${esc(label)}</b><output id="${id}Value">${Number(value)}</output></span><input id="${id}" type="range" min="0" max="100" step="1" value="${Number(value)}"><small>${esc(hint)}</small></label>`;
 }
 function lightingTabs() {
-  return `<div class="lighting-tabs" role="tablist" aria-label="Lighting sections"><button type="button" role="tab" data-lighting-tab="main" aria-selected="${state.lightingTab === "main"}" class="${state.lightingTab === "main" ? "active" : ""}"><span>01</span>${t("lightingMainKeyboard")}</button><button type="button" role="tab" data-lighting-tab="perKey" aria-selected="${state.lightingTab === "perKey"}" class="${state.lightingTab === "perKey" ? "active" : ""}"><span>02</span>${t("lightingPerKey")}</button><button type="button" role="tab" data-lighting-tab="strip" aria-selected="${state.lightingTab === "strip"}" class="${state.lightingTab === "strip" ? "active" : ""}"><span>03</span>${t("lightingDecorative")}</button></div>`;
+  return `<div class="lighting-tabs" role="tablist" aria-label="Lighting sections"><button type="button" role="tab" data-lighting-tab="main" aria-selected="${state.lightingTab === "main"}" class="${state.lightingTab === "main" ? "active" : ""}"><span>01</span>${t("lightingMainKeyboard")}</button><button type="button" role="tab" data-lighting-tab="perKey" aria-selected="${state.lightingTab === "perKey"}" class="${state.lightingTab === "perKey" ? "active" : ""}"><span>02</span>${t("lightingPerKey")}</button><button type="button" role="tab" data-lighting-tab="strip" aria-selected="${state.lightingTab === "strip"}" class="${state.lightingTab === "strip" ? "active" : ""}"><span>03</span>${t("lightingDecorative")}</button>${fnLightingTabButton()}</div>`;
 }
 function lightingPowerPanel(base, title, description, includeLedBanks = false) {
   const upper = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER),
@@ -676,7 +676,7 @@ function lightingPage() {
   const lighting = state.profile.lighting,
     keyboardOff = !lighting.base.open,
     stripOff = !lighting.decorative.base.open;
-  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() ? "ready" : ""}">${state.liveLighting && connected() ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
+  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() && state.lightingTab !== "fn" ? "ready" : ""}">${state.liveLighting && connected() && state.lightingTab !== "fn" ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${state.lightingTab === "fn" && fnLightingAvailable() ? fnLightingPage() : state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
 }
 function mappedOptions(options, current, supportedValues, labelFor) {
   const supported = new Set(supportedValues.map(Number)),
@@ -914,7 +914,7 @@ function aboutPage() {
 }
 
 function render() {
-  if (state.firmwareBusy || state.gamepadBusy) return;
+  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return;
   disposeGamepadPage();
   stopPolling();
   if (state.page !== "lighting" || !state.liveLighting) {
@@ -982,11 +982,11 @@ function renderStatus() {
       : autoApply
         ? t("autoApplyActive")
         : t("noPendingChanges");
-  document.querySelector("#applyButton").disabled = count === 0 || autoApply || writing || state.firmwareBusy || state.gamepadBusy;
-  document.querySelector("#revertButton").disabled = count === 0 || writing;
+  document.querySelector("#applyButton").disabled = count === 0 || autoApply || writing || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy;
+  document.querySelector("#revertButton").disabled = count === 0 || writing || state.fnLightingBusy;
   const autoApplyToggle = document.querySelector("#autoApplyToggle");
   autoApplyToggle.checked = autoApply;
-  autoApplyToggle.disabled = writing;
+  autoApplyToggle.disabled = writing || state.fnLightingBusy;
   document.querySelector("#stagedEditsBody").textContent = autoApply
     ? t("autoApplyHint")
     : t("stagedEditsBody");

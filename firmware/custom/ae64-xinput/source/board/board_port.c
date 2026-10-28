@@ -3,6 +3,7 @@
  */
 #include "board_port.h"
 #include "default_profile.h"
+#include "fn_storage.h"
 
 #define RECORD_BASE UINT32_C(0x82bb8)
 #define PERFORMANCE_BASE UINT32_C(0x865cc)
@@ -34,6 +35,9 @@ struct board_state {
     void (*original_event)(uint8_t,uint8_t);
 };
 static struct board_state state;
+static struct fn_rgb_context fn_protocol;
+static struct fn_storage fn_colors;
+static bool fn_save_ok;
 #ifndef AE64_HOST_TEST
 _Static_assert(sizeof(struct stock_interface)==28,"Stock RV32 interface ABI");
 _Static_assert(sizeof(struct stock_endpoint)==8,"Stock RV32 endpoint ABI");
@@ -49,6 +53,56 @@ static void copy(void *dst,const void *src,size_t n) {
     uint8_t *d=dst;const uint8_t *s=src;while(n--)*d++=*s++;
 }
 static void clear(void *dst,size_t n) { uint8_t *d=dst;while(n--)*d++=0; }
+static const uint8_t *fn_image(uint8_t profile) { return RAM(fn_storage_address(profile)); }
+static void fn_load_current(void) {
+    uint8_t profile=load8(0x82ba8);
+    if(profile<4)fn_storage_decode(&fn_colors,profile,fn_image(profile));
+    else fn_colors.loaded=false;
+}
+static void fn_ensure_current(void) {
+    if(!fn_colors.loaded||fn_colors.profile!=load8(0x82ba8))fn_load_current();
+}
+void board_fn_load_hook(void) {
+    stock_fn_load_original();fn_load_current();
+}
+void board_fn_save_hook(void) {
+    fn_ensure_current();stock_fn_save_original();fn_save_ok=false;
+    if(fn_colors.loaded&&fn_colors.profile==load8(0x82ba8))
+        fn_save_ok=fn_storage_append(&fn_colors,stock_flash_program,fn_image(fn_colors.profile));
+}
+static bool fn_read(void *user,uint8_t profile,uint8_t layer,uint8_t *colors,bool *enabled,uint32_t *revision) {
+    (void)user;
+    return fn_storage_read_image(fn_image(profile),profile,layer,colors,enabled,revision);
+}
+static bool fn_install(void *user,uint8_t profile,uint8_t layer,const uint8_t *colors,bool enabled,uint32_t revision) {
+    (void)user;
+    /* The native save serializes the active keymap. Never change this index
+     * merely to save another profile, which would overwrite its keymap. */
+    if(profile!=load8(0x82ba8)||profile>=4||layer<1||layer>3)return false;
+    fn_ensure_current();
+    if(!fn_colors.loaded||fn_colors.revision!=revision)return false;
+    copy(fn_colors.data+(layer-1u)*FN_RGB_BYTES,colors,FN_RGB_BYTES);
+    uint8_t bit=(uint8_t)(1u<<(layer-1u));
+    if(enabled)fn_colors.data[FN_STORAGE_COLORS]|=bit;
+    else fn_colors.data[FN_STORAGE_COLORS]&=(uint8_t)~bit;
+    fn_colors.revision++;
+    /* Native flash helpers manage interrupts themselves. Keep this outside
+     * irq_lock: one native helper unconditionally reenables interrupts. */
+    board_fn_save_hook();
+    if(!fn_save_ok)fn_load_current();
+    return fn_save_ok;
+}
+void board_fn_render_hook(void) {
+    stock_fn_render();fn_ensure_current();
+    uint8_t layer=load8(0x82b9d);
+    if(!fn_colors.loaded||!(load32(STOCK_FLAGS)&0x20u)||layer<1||layer>3||
+       !(fn_colors.data[FN_STORAGE_COLORS]&(1u<<(layer-1u))))return;
+    const uint8_t *colors=fn_colors.data+(layer-1u)*FN_RGB_BYTES;
+    for(unsigned row=0;row<6;row++)for(unsigned col=0;col<15;col++) {
+        const uint8_t *c=colors+(row*21u+col)*3u;
+        store32(0x8d084u+(row*15u+col)*4u,UINT32_C(0xff000000)|(uint32_t)c[0]<<16|(uint32_t)c[1]<<8|c[2]);
+    }
+}
 static uintptr_t record(unsigned row,unsigned column) { return RECORD_BASE+row*0x5e8u+column*0x48u; }
 static uintptr_t performance(unsigned row,unsigned column) { return PERFORMANCE_BASE+row*0xd2u+column*10u; }
 static bool usb_start(void *user,uint8_t endpoint,const uint8_t *data,size_t length) {
@@ -122,6 +176,8 @@ int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8
     gp_wire_decode(default_profile,1,state.maximum,&state.mapping,&transport);
     gp_physical_reset(&state.physical);
     gp_vendor_init(&state.vendor,default_profile,1,GP_CAP_XINPUT,state.maximum,install,0);
+    fn_rgb_init(&fn_protocol,fn_read,fn_install,0,true);
+    fn_ensure_current();
     const struct ae64_xusb_io io={usb_start,0,0,0};
     ae64_xusb_init(&state.xusb,&usb_config,&io);
     ae64_xusb_ms_string(&usb_config,state.os_string);
@@ -190,6 +246,9 @@ void board_dispatch_hook(void) {
         refresh_maxima();
         for(unsigned i=0;i<64;i++)state.vendor.max_travel_um[i]=state.maximum[i];
         const uint8_t *request=RAM(GP+0x65c);
+        if(fn_rgb_handle(&fn_protocol,request,state.reply,stock_tick())) {
+            stock_vendor_reply(state.reply);return;
+        }
         if(gp_vendor_handle(&state.vendor,request,state.reply,stock_tick())) {
             /* Native reply function copies into its persistent vendor-report queue. */
             stock_vendor_reply(state.reply);return;

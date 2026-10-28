@@ -1,0 +1,35 @@
+005a56 e31907e2 bnez       a4, -0x1ce
+005a5a 13b75700 sltiu      a4, a5, 5
+005a5e 0146     c.li       a2, 0
+005a60 19c3     c.beqz     a4, 6
+005a62 1146     c.li       a2, 4
+005a64 1d8e     c.sub      a2, a5
+005a66 8907     c.addi     a5, 2
+005a68 3305fc00 add        a0, s8, a5
+005a6c 8145     c.li       a1, 0
+005a6e efe08fa4 jal        -0x1db8
+005a72 b7370800 lui        a5, 0x83
+005a76 1387c7b9 addi       a4, a5, -0x464
+005a7a a3000c00 sb         zero, 1(s8)
+005a7e 8146     c.li       a3, 0
+005a80 8d47     c.li       a5, 3
+005a82 7d56     c.li       a2, -1
+005a84 83455700 lbu        a1, 5(a4)
+005a88 89c5     c.beqz     a1, 0xa
+005a8a 93f6f70f andi       a3, a5, 0xff
+005a8e 36d4     c.swsp     a3, 0x28(sp)
+005a90 8546     c.li       a3, 1
+005a92 fd17     c.addi     a5, -1
+005a94 7d17     c.addi     a4, -1
+005a96 e397c7fe bne        a5, a2, -0x12
+005a9a 81c6     c.beqz     a3, 8
+005a9c a257     c.lwsp     a5, 0x28(sp)
+005a9e a300fc00 sb         a5, 1(s8)
+005aa2 efe07fe9 jal        -0x116a
+005aa6 0545     c.li       a0, 1
+005aa8 efe0dfad jal        -0x1524
+005aac eff08fe5 jal        -0x9a8
+005ab0 37d70800 lui        a4, 0x8d
+005ab4 8327072d lw         a5, 0x2d0(a4)
+005ab8 93f7f7fd andi       a5, a5, -0x21
+005abc 51b5     c.j        -0x17c

@@ -1,0 +1,99 @@
+00a762 9247     c.lwsp     a5, 4(sp)
+00a764 6687     c.mv       a4, s9
+00a766 33d6b701 srl        a2, a5, s11
+00a76a 058a     c.andi     a2, 1
+00a76c 11c2     c.beqz     a2, 4
+00a76e 4a87     c.mv       a4, s2
+00a770 1303805e addi       t1, zero, 0x5e8
+00a774 33836d02 mul        t1, s11, t1
+00a778 5040     c.lw       a2, 4(s0)
+00a77a 83280c2d lw         a7, 0x2d0(s8)
+00a77e 13056700 addi       a0, a4, 6
+00a782 0a05     c.slli     a0, 2
+00a784 0a07     c.slli     a4, 2
+00a786 3295     c.add      a0, a2
+00a788 93f84800 andi       a7, a7, 4
+00a78c 3a96     c.add      a2, a4
+00a78e 8145     c.li       a1, 0
+00a790 8144     c.li       s1, 0
+00a792 d14e     c.li       t4, 0x14
+00a794 054e     c.li       t3, 1
+00a796 63ce4503 blt        a1, s4, 0x3c
+00a79a 8247     c.lwsp     a5, 0(sp)
+00a79c 9308c101 addi       a7, sp, 0x1c
+00a7a0 33d7b701 srl        a4, a5, s11
+00a7a4 058b     c.andi     a4, 1
+00a7a6 61cb     c.beqz     a4, 0xd0
+00a7a8 13972400 slli       a4, s1, 2
+00a7ac 7c08     c.addi4spn a5, sp, 0x1c
+00a7ae 3e97     c.add      a4, a5
+00a7b0 8148     c.li       a7, 0
+00a7b2 3385a801 add        a0, a7, s10
+00a7b6 7117     c.addi     a4, -4
+00a7b8 63c89808 blt        a7, s1, 0x90
+00a7bc 33094941 sub        s2, s2, s4
+00a7c0 33884c01 add        a6, s9, s4
+00a7c4 269d     c.add      s10, s1
+00a7c6 850d     c.addi     s11, 1
+00a7c8 1379f90f andi       s2, s2, 0xff
+00a7cc 937cf80f andi       s9, a6, 0xff
+00a7d0 69bd     c.j        -0x166
+00a7d2 639d7d03 bne        s11, s7, 0x3a
+00a7d6 1387c5ff addi       a4, a1, -4
+00a7da 6376ee00 bgeu       t3, a4, 0xc
+00a7de 138795ff addi       a4, a1, -7
+00a7e2 6367ee02 bltu       t3, a4, 0x2e
+00a7e6 2687     c.mv       a4, s1
+00a7e8 8504     c.addi     s1, 1
+00a7ea 93f4f40f andi       s1, s1, 0xff
+00a7ee 638c0800 beqz       a7, 0x18
+00a7f2 032f0500 lw         t5, 0(a0)
+00a7f6 0a07     c.slli     a4, 2
+00a7f8 93070706 addi       a5, a4, 0x60
+00a7fc 1808     c.addi4spn a4, sp, 0x10
+00a7fe 3e97     c.add      a4, a5
+00a800 2326e7fb sw         t5, -0x54(a4)
+00a804 01a8     c.j        0x10
+00a806 032f0600 lw         t5, 0(a2)
+00a80a f5b7     c.j        -0x14
+00a80c 63cbbb03 blt        s7, s11, 0x36
+00a810 63c9be02 blt        t4, a1, 0x32
+00a814 93078004 addi       a5, zero, 0x48
+00a818 3387f502 mul        a4, a1, a5
+00a81c 1a97     c.add      a4, t1
+00a81e 5697     c.add      a4, s5
+00a820 1843     c.lw       a4, 0(a4)
+00a822 058b     c.andi     a4, 1
+00a824 19cf     c.beqz     a4, 0x1e
+00a826 13871400 addi       a4, s1, 1
+00a82a 032f0600 lw         t5, 0(a2)
+00a82e 8a04     c.slli     s1, 2
+00a830 93870406 addi       a5, s1, 0x60
+00a834 1408     c.addi4spn a3, sp, 0x10
+00a836 b384d700 add        s1, a5, a3
+00a83a 23a6e4fb sw         t5, -0x54(s1)
+00a83e 9374f70f andi       s1, a4, 0xff
+00a842 8505     c.addi     a1, 1
+00a844 1106     c.addi     a2, 4
+00a846 81bf     c.j        -0xb0
+00a848 0c43     c.lw       a1, 0(a4)
+00a84a 13868155 addi       a2, gp, 0x558
+00a84e 46c6     c.swsp     a7, 0xc(sp)
+00a850 3ac4     c.swsp     a4, 8(sp)
+00a852 eff05fc0 jal        -0x3fc
+00a856 b248     c.lwsp     a7, 0xc(sp)
+00a858 2247     c.lwsp     a4, 8(sp)
+00a85a 8508     c.addi     a7, 1
+00a85c 99bf     c.j        -0xaa
+00a85e 83a50800 lw         a1, 0(a7)
+00a862 13868155 addi       a2, gp, 0x558
+00a866 3ac6     c.swsp     a4, 0xc(sp)
+00a868 46c4     c.swsp     a7, 8(sp)
+00a86a eff0dfbe jal        -0x414
+00a86e 3247     c.lwsp     a4, 0xc(sp)
+00a870 a248     c.lwsp     a7, 8(sp)
+00a872 0507     c.addi     a4, 1
+00a874 9108     c.addi     a7, 4
+00a876 3305a701 add        a0, a4, s10
+00a87a e34297fe blt        a4, s1, -0x1c
+00a87e 3dbf     c.j        -0xc2

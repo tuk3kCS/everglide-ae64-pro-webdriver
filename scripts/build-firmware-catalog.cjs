@@ -15,16 +15,16 @@ function generate() {
     const version = source.firmware_version || basename.match(/_v([0-9.]+)_/)?.[1] || "Custom";
     const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
     if (source.sha256 && sha256 !== source.sha256) throw new Error(`Factory image ${basename} differs from its original hash. Give custom builds their own filename.`);
-    const custom = !source.sha256, xinput = basename === "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin";
+    const custom = !source.sha256, fnRgb = basename === "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin", xinput = fnRgb || basename === "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin";
     const appVersion = xinput ? "0.1.0.0" : String(version).replace(/^v/, "");
     return {
-      id: relative, file: relative, name: xinput ? "Experimental XInput v0.1" : custom ? basename : `Factory ${String(version).startsWith("v") ? version : "v" + version}`,
+      id: relative, file: relative, name: fnRgb ? "Experimental XInput + Fn RGB v0.2" : xinput ? "Experimental XInput v0.1" : custom ? basename : `Factory ${String(version).startsWith("v") ? version : "v" + version}`,
       kind: custom ? "custom" : "stock", experimental: custom, version,
       appVersion: /^\d+\.\d+\.\d+\.\d+$/.test(appVersion) ? appVersion : undefined,
       date: source.firmware_time ? String(source.firmware_time).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") : (basename.match(/_(20\d{6})/)?.[1] || (xinput ? "2026-10-28" : "")).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"),
       bytes: info.bytes, sha256, boardId: "0030000A",
       payloadCrc32: info.crc32.toString(16).padStart(8, "0"),
-      description: xinput ? "Native Xbox/XInput controller with configurable analog keys. Experimental; mappings are session-only." : custom ? "Locally supplied custom AE64 Pro firmware. Review its documentation before flashing." : "Untouched manufacturer application for AE64 Pro.",
+      description: fnRgb ? "Native Xbox/XInput plus persistent per-key static Fn colors across 4 profiles × 3 layers. Gamepad mappings remain session-only. New build has not been tested on hardware." : xinput ? "Native Xbox/XInput controller with configurable analog keys. Experimental; mappings are session-only." : custom ? "Locally supplied custom AE64 Pro firmware. Review its documentation before flashing." : "Untouched manufacturer application for AE64 Pro.",
       changelog: source.remark ? [String(source.remark)] : [],
     };
   }).sort((a, b) => Number(b.experimental) - Number(a.experimental) || b.date.localeCompare(a.date) || b.file.localeCompare(a.file));

@@ -1,0 +1,47 @@
+00d300 ef625f8f jal        t0, -0x970c
+00d304 9385c165 addi       a1, gp, 0x65c
+00d308 03c72500 lbu        a4, 2(a1)
+00d30c 8547     c.li       a5, 1
+00d30e 9386c161 addi       a3, gp, 0x61c
+00d312 63f7e700 bgeu       a5, a4, 0xe
+00d316 fd57     c.li       a5, -1
+00d318 2381f600 sb         a5, 2(a3)
+00d31c 6f60df90 j          -0x96f4
+00d320 13060003 addi       a2, zero, 0x30
+00d324 3306c702 mul        a2, a4, a2
+00d328 93878155 addi       a5, gp, 0x558
+00d32c 2381e600 sb         a4, 2(a3)
+00d330 b297     c.add      a5, a2
+00d332 8443     c.lw       s1, 0(a5)
+00d334 83c73500 lbu        a5, 3(a1)
+00d338 31ef     c.bnez     a4, 0x5c
+00d33a 2147     c.li       a4, 8
+00d33c 6376f700 bgeu       a4, a5, 0xc
+00d340 fd57     c.li       a5, -1
+00d342 a381f600 sb         a5, 3(a3)
+00d346 d9bf     c.j        -0x2a
+00d348 3d47     c.li       a4, 0xf
+00d34a a381f600 sb         a5, 3(a3)
+00d34e b387e702 mul        a5, a5, a4
+00d352 83c50400 lbu        a1, 0(s1)
+00d356 1384c161 addi       s0, gp, 0x61c
+00d35a 8146     c.li       a3, 0
+00d35c 5545     c.li       a0, 0x15
+00d35e bd48     c.li       a7, 0xf
+00d360 13f7f70f andi       a4, a5, 0xff
+00d364 b307d700 add        a5, a4, a3
+00d368 93f7f70f andi       a5, a5, 0xff
+00d36c 33f8a702 remu       a6, a5, a0
+00d370 0146     c.li       a2, 0
+00d372 637bb800 bgeu       a6, a1, 0x16
+00d376 b3d7a702 divu       a5, a5, a0
+00d37a 9048     c.lw       a2, 0x10(s1)
+00d37c b387b702 mul        a5, a5, a1
+00d380 c297     c.add      a5, a6
+00d382 8a07     c.slli     a5, 2
+00d384 b297     c.add      a5, a2
+00d386 9043     c.lw       a2, 0(a5)
+00d388 50c0     c.sw       a2, 4(s0)
+00d38a 8506     c.addi     a3, 1
+00d38c 1104     c.addi     s0, 4
+00d38e e39b16fd bne        a3, a7, -0x2a

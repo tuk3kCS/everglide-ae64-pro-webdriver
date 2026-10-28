@@ -4,7 +4,7 @@ let activeGamepadStudio = null;
 function disposeGamepadPage() {
   activeGamepadStudio?.dispose(); activeGamepadStudio = null;
 }
-function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.writeInFlight); }
+function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight); }
 function updateToolShell() {
   const busy = toolOperationBusy();
   document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename,#backHomeButton,#sidebarThemeSelect,.language-select,#connectButton,#heroConnect").forEach((node) => { node.disabled = busy; });
@@ -26,7 +26,7 @@ function gamepadPage() {
 function bindGamepadPage() {
   document.querySelector("[data-gamepad-hardware]")?.addEventListener("click", () => document.querySelector("#gamepadHardware")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   document.querySelector("#openHardwareFirmware")?.addEventListener("click", () => {
-    firmwareView.selectedId = "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin";
+    firmwareView.selectedId = "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin";
     firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null; firmwareView.selectionError = "";
     state.page = "firmware"; render();
   });

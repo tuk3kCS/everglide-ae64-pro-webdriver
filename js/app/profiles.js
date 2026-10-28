@@ -54,7 +54,7 @@ function scheduleAutoApply() {
   state.timers.autoApply = null;
   if (
     !state.autoApply ||
-    state.writeInFlight || state.firmwareBusy || state.gamepadBusy ||
+    state.writeInFlight || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy ||
     !connected() ||
     !dirtyCount()
   )
@@ -65,7 +65,7 @@ async function flushAutoApply() {
   state.timers.autoApply = null;
   if (
     !state.autoApply ||
-    state.writeInFlight || state.firmwareBusy || state.gamepadBusy ||
+    state.writeInFlight || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy ||
     !connected() ||
     !dirtyCount()
   )
@@ -209,6 +209,7 @@ function requestApplyChanges() {
 }
 
 async function applyChanges({ automatic = false } = {}) {
+  if (state.fnLightingBusy) return false;
   if (!dirtyCount()) return false;
   if (!connected()) {
     showToast(
@@ -620,6 +621,7 @@ async function applyChanges({ automatic = false } = {}) {
 }
 
 function revertChanges() {
+  if (state.fnLightingBusy) return;
   clearTimeout(state.timers.autoApply);
   state.timers.autoApply = null;
   state.profile = clone(state.original);
@@ -706,6 +708,7 @@ async function reloadProfileFromDevice(index) {
   maybeShowCalibrationRecommendation();
 }
 async function switchProfile(index) {
+  if (toolOperationBusy()) return;
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
   if (dirtyCount()) {
     showToast("Apply or revert changes before switching profiles.", true);

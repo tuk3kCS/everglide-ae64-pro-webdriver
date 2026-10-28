@@ -31,9 +31,9 @@ def main():
         delta=((word>>31)&1)<<20|((word>>21)&1023)<<1|((word>>20)&1)<<11|((word>>12)&255)<<12
         if delta&(1<<20):delta-=1<<21
         return m.BASE+at+delta,(word>>7)&31
-    hooks=[(0x6e08,'board_scan_hook',1),(0x6e60,'board_schedule_hook',1),(0xea70,'board_usb_initialize',1),(0xd776,'board_dispatch_hook',0),(0xf752,'board_ep0_hook',0)]
+    hooks=[(0xa594,'board_fn_render_hook',1),(0xae5e,'board_fn_load_hook',0),(0xaf9a,'board_fn_save_hook',0),(0x6e08,'board_scan_hook',1),(0x6e60,'board_schedule_hook',1),(0xea70,'board_usb_initialize',1),(0xd776,'board_dispatch_hook',0),(0xf752,'board_ep0_hook',0)]
     for at,name,rd in hooks:check(decode_jal(at)==(symbols[name]['address'],rd),'Hook destination '+name)
-    for name,save,cont in [('stock_dispatch_original',0x80024c0e,0x8002e77a),('stock_ep0_original',0x80024bde,0x80030756)]:
+    for name,save,cont in [('stock_dispatch_original',0x80024c0e,0x8002e77a),('stock_ep0_original',0x80024bde,0x80030756),('stock_fn_load_original',0x80024bf4,0x8002be62),('stock_fn_save_original',0x80024c0e,0x8002bf9e)]:
         at=symbols[name]['address']-m.BASE
         check(decode_jal(at)==(save,5),'Trampoline save helper '+name)
         # Assembler may use a 32-bit JAL x0 or compressed C.J for the continuation.
@@ -43,21 +43,30 @@ def main():
     check(payload[0x10670:0x10674]==bytes.fromhex('37850800') and payload[0x10678:0x1067c]==bytes.fromhex('13054596'),'Heap begin instructions moved')
     check(payload[0x1066c:0x10670]+payload[0x10674:0x10678]==m.lui_addi(11,0x8a960),'Heap end reservation')
     check(payload[0x1be98:0x1bff8]==stock[0x1ce98:0x1cff8],'Copied native flash helper changed')
-    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/test_board.c'];exe=work/'board-tests.exe'
+    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/test_board.c'];exe=work/'board-tests.exe'
     compile_command=[str(a.zig.resolve()),'cc','-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in sources],'-o',str(exe)]
     subprocess.run(compile_command,check=True);test=subprocess.run([str(exe)],check=True,text=True,capture_output=True);print(test.stdout.strip())
     range_source=root/'board/test_range_regression.c';range_stdout=None
     if range_source.exists():
-        range_command=[str(a.zig.resolve()),'cc','-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),root/'board/board_port.c',range_source]],'-o',str(work/'range-tests.exe')]
+        range_command=[str(a.zig.resolve()),'cc','-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',range_source]],'-o',str(work/'range-tests.exe')]
         subprocess.run(range_command,check=True)
         range_stdout=subprocess.check_output([str(work/'range-tests.exe')],text=True);print(range_stdout.strip())
+    fn_tests={}
+    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/test_fn_storage.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/test_fn_board.c'])]:
+        command=[str(a.zig.resolve()),'cc','-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),*extra]],'-o',str(work/(name+'.exe'))]
+        subprocess.run(command,check=True)
+        result=subprocess.check_output([str(work/(name+'.exe'))],text=True).strip();print(result);fn_tests[name]=result
+    harness=work/'fn-harness.exe'
+    subprocess.run([str(a.zig.resolve()),'cc','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),root/'board/test_fn_harness.c']],'-o',str(harness)],check=True)
+    client_test=root.parents[3]/'tests/lighting/fn-protocol-tests.cjs'
+    fn_tests['browser_firmware']=subprocess.check_output(['node',str(client_test),'--harness',str(harness)],text=True).strip();print(fn_tests['browser_firmware'])
     # Independently packetize/reassemble the complete image, including its prefix.
     rebuilt=bytearray();count=0
     for off in range(0,len(image),56):
         chunk=image[off:off+56];packet=(bytes([8,2])+struct.pack('<IH',off,len(chunk))+chunk).ljust(64,b'\0')
         address,length=struct.unpack_from('<IH',packet,2);check(address==len(rebuilt) and length<=56,'Flash packet offset/length');rebuilt+=packet[8:8+length];count+=1
     check(rebuilt==image,'Flash packet round trip')
-    evidence={'offline_only':True,'image_sha256':manifest['image_sha256'],'image_bytes':len(image),'static_checks':'container, original-byte preservation, ELF sections, ABI, hook destinations, trampolines, heap boundaries, native flash helpers, packet round trip','board_test_stdout':test.stdout.strip(),'board_test_command':compile_command,'flash_packets':count,'hardware_boot':False,'windows_xinput':False,'bootloader_acceptance':False,'flashed':False}
+    evidence={'offline_only':True,'image_sha256':manifest['image_sha256'],'image_bytes':len(image),'static_checks':'container, original-byte preservation, ELF sections, ABI, hook destinations, trampolines, heap boundaries, native flash helpers, packet round trip','fn_tests':fn_tests,'board_test_stdout':test.stdout.strip(),'board_test_command':compile_command,'flash_packets':count,'hardware_boot':False,'windows_xinput':False,'bootloader_acceptance':False,'flashed':False}
     (out/'verification.json').write_text(json.dumps(evidence,indent=2)+'\n',encoding='utf8')
     if range_stdout:
         evidence['range_regression_stdout']=range_stdout.strip()

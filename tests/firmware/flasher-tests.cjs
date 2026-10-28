@@ -111,10 +111,10 @@ async function main() {
   const noStart = new Keyboard();new F.Updater({ reconnect: async () => {} });equal(noStart.sent.length, 0, "Constructing an updater does not start it.");
   // Deployment includes actual binaries/catalog, not just a list of filenames.
   const destination = fs.mkdtempSync(path.join(os.tmpdir(), "ae64-firmware-package-"));
-  const { packageFirmware } = require("../../scripts/package-firmware.cjs");equal(packageFirmware(destination), 6);
+  const { packageFirmware } = require("../../scripts/package-firmware.cjs");equal(packageFirmware(destination), catalog.firmwares.length);
   for (const e of catalog.firmwares) equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(destination, "firmware", e.file))).digest("hex"), e.sha256);
   if (path.dirname(destination) !== path.resolve(os.tmpdir()) || !path.basename(destination).startsWith("ae64-firmware-package-")) throw new Error("Unexpected test temporary directory.");
   fs.rmSync(destination, { recursive: true, force: true });
-  console.log(`PASS: ${checks} firmware checks; simulated lifecycle, isolation, failure handling, all six binary streams and deployment. No hardware accessed.`);
+  console.log(`PASS: ${checks} firmware checks; simulated lifecycle, isolation, failure handling, all ${catalog.firmwares.length} binary streams and deployment. No hardware accessed.`);
 }
 main().catch((error) => { console.error(error);process.exitCode = 1; });

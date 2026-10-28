@@ -87,3 +87,7 @@ These tests use fake transports and do not send firmware or configuration comman
 
 We are putting a lot of resources to speed up this project. This project is changing extensively day by day, so please don't fork this just yet!
 But we'd love to have other people to test the webdriver. If you find any bugs, please open a new issue and let us know!
+
+### Custom Fn lighting
+
+The experimental XInput + Fn RGB v0.2 image adds persistent per-key static colors for four onboard profiles and three Fn layers each. After flashing and reconnecting, Lighting shows an additional Fn layers editor only after a verified FNR1 capability response. Factory firmware keeps its existing controls. See [native evidence, storage accounting, setup and validation](docs/firmware-research/fn-rgb/README.md). The new build has not been hardware-tested.

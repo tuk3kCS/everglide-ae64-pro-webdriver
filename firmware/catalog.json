@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin",
+      "name": "Experimental XInput + Fn RGB v0.2",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-10-28",
+      "bytes": 134960,
+      "sha256": "0a10429b593fec1b70648f2379ec0f9ac01f71238c4c179c1e7d77b18951469c",
+      "boardId": "0030000A",
+      "payloadCrc32": "5d8a9a3a",
+      "description": "Native Xbox/XInput plus persistent per-key static Fn colors across 4 profiles × 3 layers. Gamepad mappings remain session-only. New build has not been tested on hardware.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin",
       "file": "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin",
       "name": "Experimental XInput v0.1",

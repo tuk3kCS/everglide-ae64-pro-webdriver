@@ -36,6 +36,8 @@ jobs:
           node tests/gamepad/tests.cjs
           node tests/gamepad/protocol-tests.cjs
           node tests/gamepad/travel-limits-tests.cjs
+          node tests/lighting/fn-ui-tests.cjs
+          node tests/lighting/fn-protocol-tests.cjs
 
       - name: Package public site
         shell: bash
@@ -44,8 +46,9 @@ jobs:
           mkdir -p _site/js/app _site/assets/images _site/assets/hall-effect-switches _site/assets/tutorial-videos
           cp index.html styles.css protocol.js app.js languages.xml about.html robots.txt sitemap.xml _site/
           cp js/app/*.js _site/js/app/
-          cp js/app/tools.css _site/js/app/
-          mkdir -p _site/js/gamepad _site/js/firmware
+          cp js/app/*.css _site/js/app/
+          mkdir -p _site/js/gamepad _site/js/firmware _site/js/lighting
+          cp js/lighting/*.js _site/js/lighting/
           cp js/gamepad/*.js js/gamepad/*.css _site/js/gamepad/
           cp js/firmware/*.js _site/js/firmware/
           node scripts/package-firmware.cjs _site

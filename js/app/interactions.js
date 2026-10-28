@@ -878,7 +878,8 @@ function bindPage() {
         render();
         showToast("All Decorative1 overrides staged for clearing.");
       });
-    if (state.liveLighting && connected()) startLightingLive();
+    if (state.liveLighting && connected() && state.lightingTab !== "fn" && !state.fnLightingBusy) startLightingLive();
+    bindFnLightingPage();
   }
   if (state.page === "settings") {
     document.querySelectorAll("[data-profile-slot]").forEach((button) =>
