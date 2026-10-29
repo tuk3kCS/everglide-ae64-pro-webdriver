@@ -26,9 +26,9 @@ The native Fn renderer is payload offset `1456A`, called by the compositor at `A
 - Each layer has an enable flag. Disabled or missing custom maps use the original factory action-group lighting.
 - The wrapper calls the factory renderer first, then replaces its main frame while an enabled Fn layer is held. Release returns to the normal effect on the next frame. Existing calibration indicators retain priority because their native overlay runs later.
 - Color words use the factory Fn intensity convention: full intensity, with the original LED channel scaling. The main effect brightness slider does not dim Fn colors, matching stock Fn behavior.
-- The main effect, normal per-key settings and perimeter strip still use their original controls. The new editor is an additional **Lighting → Fn layers** tab.
+- The main effect, normal per-key settings and perimeter strip still use their original controls. The new editor is an additional **Lighting → Fn 1 / Fn 2 / Fn 3** tab.
 - The driver probes a separate `FNR1` capability. Stock firmware and earlier gamepad-only firmware keep the original UI; a firmware version string alone cannot enable the editor.
-- The normal live RGB read command returns an earlier effect buffer, before the Fn overlay. The new editor therefore previews its own configured colors. It does not change the native effect buffer to fake a live Fn preview.
+- The normal live RGB read command returns an earlier effect buffer, before the Fn overlay. The shared keyboard preview therefore shows the selected Fn layer’s configured draft colors while editing. It does not change the native effect buffer to fake a live Fn preview.
 
 ## Storage fits
 
@@ -46,7 +46,7 @@ Saving inherits the factory erase/rewrite power-loss boundary; it is not a dual-
 
 1. Export existing keyboard settings and gamepad assignments.
 2. In **Firmware**, select **Experimental XInput + Fn RGB v0.2**, review it and start the update on the intended keyboard. Selecting it alone does not flash anything.
-3. Reconnect. In **Lighting → Fn layers**, choose the active onboard profile and Fn layer 1–3, then read its map.
+3. Reconnect. In **Lighting → Fn 1 / Fn 2 / Fn 3**, select the active onboard profile in the sidebar, choose the Fn 1, Fn 2 or Fn 3 button and read its map. Drag on the shared keyboard preview to select keys; Ctrl/⌘ toggles selection.
 4. Enable custom colors, select keys, choose colors and click **Apply Fn profile**. Apply writes and reads back the selected layer. The normal Auto apply setting does not apply Fn drafts.
 5. Hold a key mapped to that Fn layer to check the physical LEDs; release it to check the main effect. Repeat for the three layers and four profiles. Unplug/reconnect to validate persistence.
 6. Reapply an exported gamepad profile after reconnecting. Gamepad assignments remain session-only; Fn colors persist independently.
@@ -58,3 +58,5 @@ The separate extension uses family `10`, commands `30..35`, version 1 and magic 
 Offline validation includes 40,084 storage checks (including every single-bit corruption of a trailer), 1,865 protocol checks, 24,726 synthetic board checks, browser-client/C-firmware packet exchange, existing gamepad and range regressions, complete container/CRC/hook/trampoline audits, all seven catalog image streams and browser UI checks. These establish implementation consistency, not hardware LED behavior, bootloader acceptance or recovery.
 
 The rebuilt image, manifest, ELF and verification record are under `firmware/custom/ae64-xinput/v0.2/` and `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin`. Rebuild with `source/build.py`, then run `source/verify.py`; commands are in the custom firmware README. Native evidence is pinned to this stock release and does not establish layouts in future vendor builds.
+
+The Fn editor uses the sidebar’s active profile only. Its three layer buttons sit beside Keyboard, Per-key and Light strip. It reuses the single unified keyboard preview and rectangle selection; there is no second keyboard or profile dropdown inside the Fn editor. This UI revision does not change the firmware image or FNR1 protocol.

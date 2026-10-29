@@ -18,6 +18,7 @@ const context = {
   dirtyCount: () => 0, connected: () => true, render() {}, renderStatus() {}, stopPolling() {}, stopProfilePolling() {},
   showToast: (text) => notices.push(text), log() {},
   connectKeyboard: async () => { context.state.transport = fakeTransport; return true; },
+  rememberGamepadProfile() {},
   AE64GamepadTemplate: "<p>Hardware controls</p>", AE64GamepadStudio: { mount: () => ({ dispose() {} }) },
   AE64Firmware: { ...F, Updater: class { constructor(options) { this.options = options; } async run(prepared) { starts.push(prepared);this.options.progress({ phase: "complete", percent: 100 });return { transport: fakeTransport }; } } },
   fetch: async (url) => {

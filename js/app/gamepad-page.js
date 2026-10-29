@@ -20,9 +20,26 @@ function gamepadPage() {
       <button type="button" class="solution-card selected" data-gamepad-hardware aria-pressed="true"><span class="solution-icon">⌨</span><span class="badge experimental">CUSTOM FIRMWARE</span><h3 data-i18n="hardwareSolution">Hardware Solution</h3><p>Native Xbox / XInput from the keyboard. Configure analog travel and controller assignments below.</p><strong>Configure hardware →</strong></button>
       <a class="solution-card" href="https://github.com/z750sasr/he-kb-analog-mapper" target="_blank" rel="noopener noreferrer"><span class="solution-icon">◈</span><span class="badge">WINDOWS APP</span><h3 data-i18n="softwareSolution">Software Solution</h3><p>Use Hall Analog Mapper to turn keyboard travel into a virtual Xbox 360 controller while keeping factory firmware.</p><strong>Open the GitHub project ↗</strong></a>
     </div>
-    <section class="panel hardware-solution-info"><div><h2>Hardware Solution</h2><p>Requires the experimental AE64 XInput firmware. Read the keyboard's travel limits before applying a profile. Assignments last for the current powered session.</p></div><button class="button ghost" type="button" id="openHardwareFirmware">Choose hardware firmware</button></section>
+    <section class="panel hardware-solution-info"><div><h2>Hardware Solution</h2><p>Requires the experimental AE64 XInput firmware. Travel defaults follow each key's selected switch; review the ranges before applying. Assignments last for the current powered session.</p></div><button class="button ghost" type="button" id="openHardwareFirmware">Choose hardware firmware</button></section>
     <section class="gamepad-studio" id="gamepadHardware" aria-label="Hardware Solution controller configuration">${window.AE64GamepadTemplate}</section>
   </div>`;
+}
+function gamepadPhysicalKey(key) {
+  return keys.find((physical) => physical.uiRow === key.uiRow && physical.col === key.col);
+}
+function gamepadSwitchTravel(key, reported = null) {
+  const physical = gamepadPhysicalKey(key); if (!physical) return null;
+  const configured = state.profile.performance[physical.id], actual = reported || state.hardware.performance.get(physical.id),
+    entry = state.switchCatalog.find((item) => Number(item.axisV2Id) === Number(configured?.axisV2Id || actual?.axisV2Id)),
+    usable = (value) => Number.isInteger(value) && value >= 10 && value <= 10000,
+    selected = Number(entry?.axisRangeMax || configured?.axisRangeMax), device = Number(actual?.axisRangeMax),
+    maximum = usable(selected) ? (usable(device) ? Math.min(selected, device) : selected) : device;
+  return usable(maximum) ? { key: key.id, maxTravelUm: maximum, switchName: entry?.name || "" } : null;
+}
+function updateHardwareSolutionInfo(capabilities) {
+  const supported = Boolean(state.transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000a && capabilities.transports?.xinput === true);
+  const panel = document.querySelector(".hardware-solution-info");
+  if (panel) { panel.hidden = supported; panel.classList.toggle("hidden", supported); }
 }
 function bindGamepadPage() {
   document.querySelector("[data-gamepad-hardware]")?.addEventListener("click", () => document.querySelector("#gamepadHardware")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -33,6 +50,10 @@ function bindGamepadPage() {
   });
   activeGamepadStudio = window.AE64GamepadStudio.mount(document.querySelector("#gamepadHardware"), {
     getTransport: () => state.firmwareBusy || state.bootloaderConnected ? null : state.transport,
+    getKeyTravel: gamepadSwitchTravel,
+    onRead: rememberGamepadProfile, onApplied: rememberGamepadProfile,
+    onCapabilities: updateHardwareSolutionInfo,
+    readKeyTravel: async (key) => gamepadSwitchTravel(key, await state.transport.getPerformance(position(gamepadPhysicalKey(key)))),
     onConnect: () => connectKeyboard(),
     onNavigate: (page) => { if (!toolOperationBusy()) { state.page = page; render(); } },
     notify: showToast,

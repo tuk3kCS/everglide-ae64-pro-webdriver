@@ -1,0 +1,19 @@
+.controller-icon { display: inline-block; width: 28px; height: 28px; object-fit: contain; vertical-align: middle; flex: 0 0 auto; }
+.gamepad-studio .control-action { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; min-width: 45px; }
+.gamepad-studio .control-action .controller-icon { width: 30px; height: 30px; }
+.gamepad-studio .key { height: 55px; }
+.gamepad-studio .keyboard { width: 100%; grid-template-columns: minmax(0,1fr); margin-inline: 0; }
+.gamepad-studio .keyboard-row { min-width: 0; }
+.gamepad-studio .key small { display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+.gamepad-studio .key .controller-icon { width: 23px; height: 23px; }
+.gamepad-studio .preview-button { width: 37px; height: 37px; padding: 3px; border-radius: 8px; }
+.gamepad-studio .preview-button .controller-icon { width: 28px; height: 28px; }
+.overview-controller-badge { position: absolute; top: 3px; right: 3px; pointer-events: none; }
+.overview-controller-badge .controller-icon { width: clamp(16px,1.7vw,23px); height: clamp(16px,1.7vw,23px); }
+.overview-gamepad-key > .mapped { padding-right: clamp(15px,1.8vw,24px); }
+.overview-controller-badge.inactive,.gamepad-overview-assignments.inactive { opacity: .45; }
+.gamepad-overview-mode { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 12px 0; }
+.gamepad-overview-mode span { color: var(--muted); font-size: 12px; }
+.gamepad-overview-assignments { display: flex; flex-wrap: wrap; gap: 9px; margin: 16px 0; }
+.gamepad-overview-assignments > span { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
+.gamepad-overview-assignments small { color: var(--muted); font-size: 10px; }

@@ -22,10 +22,16 @@
   const CONTROL = new Map(CONTROLS.map((entry) => [entry.id, entry]));
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const um = (value) => Math.round(Number(value) * 1000);
-  function defaults() {
+  function defaultTravel(maxTravelMm = 4) {
+    const max = um(maxTravelMm);
+    if (!Number.isInteger(max) || max < 10 || max > 10000) throw new RangeError("Invalid switch travel limit.");
+    const end = Math.min(3500, max);
+    return { startMm: Math.min(500, end - 10) / 1000, endMm: end / 1000, maxTravelMm: max / 1000 };
+  }
+  function defaults(travelForKey = () => undefined) {
     const initial = { LT: 15, RT: 17, "LX-": 29, "LX+": 31, "LY-": 30, "LY+": 16 };
     return { schema: "ae64-gamepad", version: 1, name: "Analog essentials", mode: "controller", transport: "xinput",
-      bindings: CONTROLS.map(({ id }) => ({ control: id, key: initial[id] ?? null, startMm: 0.5, endMm: 3.5, maxTravelMm: 4, curve: "linear" })),
+      bindings: CONTROLS.map(({ id }) => ({ control: id, key: initial[id] ?? null, ...defaultTravel(initial[id] === undefined ? undefined : travelForKey(initial[id])), curve: "linear" })),
       sticks: [0, 1].map(() => ({ opposition: "difference", circular: true, deadzone: 0.05 })) };
   }
   function validate(config) {
@@ -95,7 +101,7 @@
     if (out.dpad.includes("DPAD_LEFT") && out.dpad.includes("DPAD_RIGHT")) out.dpad = out.dpad.filter((d) => !["DPAD_LEFT", "DPAD_RIGHT"].includes(d));
     return out;
   }
-  const api = Object.freeze({ ROWS, KEYS, CONTROLS, CONTROL, defaults, validate, level, evaluate, um, clamp });
+  const api = Object.freeze({ ROWS, KEYS, CONTROLS, CONTROL, defaultTravel, defaults, validate, level, evaluate, um, clamp });
   root.AE64GamepadModel = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

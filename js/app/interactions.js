@@ -213,11 +213,11 @@ async function selectMappingLayer(layer) {
 
 function refreshLightingSelection() {
   document
-    .querySelectorAll(".unified-lighting-preview [data-key]")
+    .querySelectorAll(".unified-lighting-preview [data-key],.unified-lighting-preview [data-fn-lighting-key]")
     .forEach((node) => {
       const selected =
         state.lightingTab === "perKey" &&
-        state.lightingSelectedKeys.has(Number(node.dataset.key));
+        state.lightingSelectedKeys.has(Number(node.dataset.key)) || fnLightingEditing() && fnLightingView.selected.has(Number(node.dataset.fnLightingKey));
       node.classList.toggle("selected", selected);
       node.setAttribute("aria-pressed", String(selected));
     });
@@ -233,14 +233,14 @@ function refreshLightingSelection() {
   const summary = document.querySelector("#lightingSelectionSummary");
   if (summary) {
     const count =
-        state.lightingTab === "perKey"
+        fnLightingEditing() ? fnLightingView.selected.size : state.lightingTab === "perKey"
           ? lightingKeyIds().length
           : stripLedIds().length,
       label =
-        state.lightingTab === "perKey"
+        fnLightingEditing() || state.lightingTab === "perKey"
           ? `key${count === 1 ? "" : "s"}`
           : `LED${count === 1 ? "" : "s"}`;
-    summary.innerHTML = `Selected: <b>${count} ${label}</b>`;
+    summary.innerHTML = fnLightingEditing() ? `Selected: <b>${count}</b> ${label}` : `Selected: <b>${count} ${label}</b>`;
   }
 }
 function refreshKeySelection() {
@@ -372,7 +372,9 @@ function marqueeSelection(initial, inside, ctrl) {
   return selection;
 }
 function commitLightingSelection(kind, selection, primary) {
-  if (kind === "key") {
+  if (kind === "fn") {
+    commitFnLightingSelection(selection, primary);
+  } else if (kind === "key") {
     state.lightingSelectedKeys = selection;
     if (selection.size) {
       state.profile.selected = selection.has(primary)
@@ -392,6 +394,7 @@ function commitLightingSelection(kind, selection, primary) {
 function updateLightingMarquee(event) {
   const drag = state.selectionDrag;
   if (!drag) return;
+  if (drag.kind === "fn" && (!fnLightingEditing() || drag.scope !== fnLightingDraftKey())) { cancelLightingSelection(); return; }
   const left = Math.min(drag.startX, event.clientX),
     top = Math.min(drag.startY, event.clientY),
     width = Math.abs(event.clientX - drag.startX),
@@ -419,7 +422,7 @@ function updateLightingMarquee(event) {
       );
     })
     .map((node) =>
-      Number(drag.kind === "key" ? node.dataset.key : node.dataset.stripLed),
+      Number(drag.kind === "fn" ? node.dataset.fnLightingKey : drag.kind === "key" ? node.dataset.key : node.dataset.stripLed),
     );
   commitLightingSelection(
     drag.kind,
@@ -427,7 +430,7 @@ function updateLightingMarquee(event) {
     drag.startIndex,
   );
 }
-function stopLightingSelection() {
+function cancelLightingSelection() {
   const drag = state.selectionDrag;
   if (!drag) return;
   document.removeEventListener("pointermove", updateLightingMarquee);
@@ -435,6 +438,15 @@ function stopLightingSelection() {
   document.removeEventListener("pointercancel", stopLightingSelection);
   state.selectionDrag = null;
   drag.marquee.classList.remove("active");
+}
+function stopLightingSelection(event) {
+  const drag = state.selectionDrag;
+  if (!drag) return;
+  cancelLightingSelection();
+  if (drag.kind === "fn" && (event?.type === "pointercancel" || drag.scope !== fnLightingDraftKey())) {
+    if (drag.scope === fnLightingDraftKey()) commitFnLightingSelection(drag.initial, drag.startIndex);
+    render(); return;
+  }
   if (!drag.moved) {
     const inside = Number.isInteger(drag.startIndex) ? [drag.startIndex] : [];
     commitLightingSelection(
@@ -446,18 +458,19 @@ function stopLightingSelection() {
   render();
 }
 function beginLightingSelection(event) {
-  if (event.button !== 0 || !["perKey", "strip"].includes(state.lightingTab))
+  if (event.button !== 0 || !["perKey", "strip"].includes(state.lightingTab) && !fnLightingEditing())
     return;
+  if (fnLightingEditing() && (fnLightingView.busy || !fnLightingDraft())) return;
   event.preventDefault();
   const surface = event.currentTarget,
-    kind = state.lightingTab === "perKey" ? "key" : "strip",
-    selector = kind === "key" ? "[data-key]" : "[data-strip-led]",
+    kind = fnLightingEditing() ? "fn" : state.lightingTab === "perKey" ? "key" : "strip",
+    selector = kind === "fn" ? "[data-fn-lighting-key]" : kind === "key" ? "[data-key]" : "[data-strip-led]",
     startNode = event.target.closest(selector),
     startIndex = startNode
-      ? Number(kind === "key" ? startNode.dataset.key : startNode.dataset.stripLed)
+      ? Number(kind === "fn" ? startNode.dataset.fnLightingKey : kind === "key" ? startNode.dataset.key : startNode.dataset.stripLed)
       : null,
     initial = new Set(
-      kind === "key" ? state.lightingSelectedKeys : state.stripSelection,
+      kind === "fn" ? fnLightingView.selected : kind === "key" ? state.lightingSelectedKeys : state.stripSelection,
     );
   state.selectionDrag = {
     surface,
@@ -468,7 +481,8 @@ function beginLightingSelection(event) {
     startY: event.clientY,
     startIndex: Number.isInteger(startIndex) ? startIndex : null,
     initial,
-    ctrl: event.ctrlKey,
+    ctrl: event.ctrlKey || event.metaKey,
+    scope: kind === "fn" ? fnLightingDraftKey() : null,
     moved: false,
   };
   document.addEventListener("pointermove", updateLightingMarquee);
@@ -476,13 +490,14 @@ function beginLightingSelection(event) {
   document.addEventListener("pointercancel", stopLightingSelection);
 }
 function bindLightingSelection() {
-  if (!["perKey", "strip"].includes(state.lightingTab)) return;
+  if (!["perKey", "strip"].includes(state.lightingTab) && !fnLightingEditing()) return;
   document
     .querySelector(".unified-preview-scroll")
     ?.addEventListener("pointerdown", beginLightingSelection);
 }
 
 function bindPage() {
+  if (state.page === "overview") bindGamepadOverview();
   if (state.page === "performance") bindKeySelection();
   if (state.page === "keymap") bindMappingKeySelection();
   if (state.page === "advanced") bindMappingKeySelection();
@@ -878,7 +893,7 @@ function bindPage() {
         render();
         showToast("All Decorative1 overrides staged for clearing.");
       });
-    if (state.liveLighting && connected() && state.lightingTab !== "fn" && !state.fnLightingBusy) startLightingLive();
+    if (state.liveLighting && connected() && !isFnLightingTab() && !state.fnLightingBusy) startLightingLive();
     bindFnLightingPage();
   }
   if (state.page === "settings") {

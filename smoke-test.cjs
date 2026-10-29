@@ -9,6 +9,7 @@ const root = __dirname;
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const APP_FILES = [
   "js/gamepad/model.js",
+  "js/gamepad/icons.js",
   "js/gamepad/protocol.js",
   "js/gamepad/template.js",
   "js/gamepad/studio.js",
@@ -28,6 +29,7 @@ const APP_FILES = [
   "js/app/macro.js",
   "js/app/lighting-color.js",
   "js/app/gamepad-page.js",
+  "js/app/gamepad-overview.js",
   "js/app/firmware-page.js",
   "js/app/fn-lighting.js",
   "js/app/pages.js",

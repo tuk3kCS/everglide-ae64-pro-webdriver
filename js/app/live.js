@@ -544,7 +544,7 @@ function stopLightingPolling() {
 }
 function startLightingLive() {
   stopLightingPolling();
-  if (!connected() || state.page !== "lighting" || !state.liveLighting || state.fnLightingBusy || state.lightingTab === "fn") return;
+  if (!connected() || state.page !== "lighting" || !state.liveLighting || state.fnLightingBusy || isFnLightingTab()) return;
   const generation = state.timers.lightingGeneration;
   const read = async () => {
     if (
@@ -593,6 +593,7 @@ function startLightingLive() {
   read();
 }
 function stopPolling() {
+  if (state.selectionDrag?.kind === "fn") cancelLightingSelection();
   stopTravelPolling();
   stopLightingPolling();
 }
