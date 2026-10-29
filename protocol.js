@@ -57,9 +57,9 @@
   }
 
   function decodeSerial(bytes) {
-    const values = Array.from(bytes).filter((value) => value !== 0 && value !== 0xff);
-    if (values.length && values.every((value) => value <= 9)) return values.join("");
-    return new TextDecoder().decode(Uint8Array.from(values)).replace(/\0+$/g, "");
+    // The factory driver formats the 12 UID bytes as concatenated decimal
+    // values (P12 DeviceInfo), not UTF-8. Zero and 0xff are identity bytes too.
+    return Array.from(bytes).join("");
   }
 
   function decodeColors(bytes, start = 4) {

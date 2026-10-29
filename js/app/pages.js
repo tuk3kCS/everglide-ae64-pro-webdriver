@@ -97,8 +97,10 @@ function spacebarLightingDots(key, live, light, paletteIndex, baseColor) {
   if (key?.n !== "Space") return "";
   const custom = Boolean(light.customEnabled?.[key.id]), staged = state.dirty.customLighting.has(key.id);
   return `<span class="spacebar-lighting-leds" aria-hidden="true">${lightingMatrixIndexes(key).map((matrixIndex, led) => {
-    const record = live && !staged ? state.hardware.liveMatrix[matrixIndex] : null, color = record ? rgbToHex(record) : custom ? light.perKey[key.id] : paletteIndex === 0 ? RAINBOW_PREVIEW[led % RAINBOW_PREVIEW.length] : baseColor;
-    return `<i data-spacebar-led-index="${matrixIndex}" style="--space-led-color:${esc(color)}"></i>`;
+    const preview = lightingEffectKeyPreview(key, custom, led),
+      record = live && !staged ? state.hardware.liveMatrix[matrixIndex] : null,
+      color = record ? rgbToHex(record) : custom ? light.perKey[key.id] : preview?.color || (paletteIndex === 0 ? RAINBOW_PREVIEW[led % RAINBOW_PREVIEW.length] : baseColor);
+    return `<i data-spacebar-led-index="${matrixIndex}" ${preview ? 'data-effect-preview="approximate"' : ""} style="--space-led-color:${esc(color)};${preview?.style || ""}"></i>`;
   }).join("")}</span>`;
 }
 function keyboardHtml({ hero = false, lighting = false } = {}) {
@@ -110,6 +112,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
       lighting &&
       state.liveLighting &&
       connected() &&
+      !lightingEffectPreviewSource().approximate &&
       Array.isArray(state.hardware.liveMatrix),
     showCalibration = !hero && state.page === "performance" && state.calibrationActive,
     showSwitchProfiles =
@@ -145,6 +148,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
             const mapped = keycodeLabel(code), compactMapped = virtualKeycodeLabel(code, combinationTokenKnown(combinationBaseToken(layer, key.id)));
             const custom = Boolean(light.customEnabled?.[key.id]),
               stagedLighting = state.dirty.customLighting.has(key.id),
+              effectPreview = lighting ? lightingEffectKeyPreview(key, custom) : null,
               liveIndex = lightingMatrixIndex(key),
               liveColor = live && !stagedLighting
                 ? state.hardware.liveMatrix[liveIndex]
@@ -154,7 +158,9 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
                 : lighting
                   ? custom
                     ? light.perKey[key.id]
-                    : paletteIndex === 0
+                    : effectPreview
+                      ? effectPreview.color
+                      : paletteIndex === 0
                       ? RAINBOW_PREVIEW[key.id % RAINBOW_PREVIEW.length]
                       : baseColor
                   : light.perKey[key.id],
@@ -216,7 +222,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
             const advancedTitle = advanced
               ? `${advanced.feature.title} ${advanced.removing ? "removal staged" : advanced.staged ? "staged" : "enabled"}${advanced.partner ? ` with ${advanced.partner}` : ""}`
               : "";
-            return `<button class="key ${controllerBadge ? "overview-gamepad-key" : ""} ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%" type="button" title="${esc(`${key.n} · ${mapped}`)}" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
+            return `<button class="key ${controllerBadge ? "overview-gamepad-key" : ""} ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%;${effectPreview?.style || ""}" ${effectPreview ? 'data-effect-preview="approximate"' : ""} type="button" title="${esc(`${key.n} · ${mapped}`)}" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
               ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(3)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(compactMapped)}</span>`}${controllerBadge}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
           })
           .join("")}</div>`,
@@ -304,7 +310,7 @@ function overviewPage() {
     rtCount = Object.values(state.profile.performance).filter(
       (item) => item.mode === 1,
     ).length;
-  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${esc(info?.serial || "AE64 Pro")} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${gamepadOverviewPanel()}${layerBar("Choose a layer to inspect its assignments on the keyboard.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(3)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
+  return `<div class="page-grid"><section class="panel full-span"><div class="summary-grid"><article class="summary-card"><span>Connection</span><strong>${connected() ? "Connected" : "Offline"}</strong><small>${connected() ? `${info?.serial ? `S/N ${esc(info.serial)}` : "AE64 Pro"} · FW ${esc(info?.firmware || "?")}` : "Demo data; no writes possible"}</small></article><article class="summary-card"><span>Current profile</span><strong>${esc(state.hardware.configNames[state.profile.profileIndex] || `Profile ${state.profile.profileIndex + 1}`)}</strong><small>Hardware configuration ${state.profile.profileIndex + 1}</small></article><article class="summary-card"><span>Rapid Trigger</span><strong>${rtCount} keys</strong><small>Selected: ${perf.mode ? "enabled" : "normal"}</small></article><article class="summary-card"><span>Pending changes</span><strong>${dirtyCount()}</strong><small>${state.autoApply ? "Auto apply writes completed edits" : "Written only when you apply"}</small></article></div></section>${gamepadOverviewPanel()}${layerBar("Choose a layer to inspect its assignments on the keyboard.")}${boardPanel()}<section class="panel"><div class="panel-head"><div><h2>Selected key</h2><p>The current working copy for this key.</p></div></div>${selectedCard()}<ul class="fact-list"><li><span>Actuation</span><strong>${activeActuationDistance(perf).toFixed(3)} mm</strong></li><li><span>Rapid Trigger</span><strong>${perf.mode ? `${perf.rtPress.toFixed(2)} / ${perf.rtRelease.toFixed(2)} mm` : "Off"}</strong></li><li><span>Dead zones</span><strong>${perf.pressDeadStroke.toFixed(2)} / ${perf.releaseDeadStroke.toFixed(2)} mm</strong></li><li><span>Hardware address</span><strong>${selectedKey().row}:${selectedKey().col}</strong></li></ul><div class="apply-row"><button class="button primary" data-goto="performance" type="button">Tune this key</button></div></section></div>`;
 }
 function numberField(id, label, value, min, max, step, hint = "", disabled = false) {
   const inactive = disabled ? " disabled" : "";
@@ -495,7 +501,7 @@ function lightingRange(id, label, value, hint) {
 function lightingTabs() {
   return `<div class="lighting-tabs" role="tablist" aria-label="Lighting sections"><button type="button" role="tab" data-lighting-tab="main" aria-selected="${state.lightingTab === "main"}" class="${state.lightingTab === "main" ? "active" : ""}"><span>01</span>${t("lightingMainKeyboard")}</button><button type="button" role="tab" data-lighting-tab="perKey" aria-selected="${state.lightingTab === "perKey"}" class="${state.lightingTab === "perKey" ? "active" : ""}"><span>02</span>${t("lightingPerKey")}</button><button type="button" role="tab" data-lighting-tab="strip" aria-selected="${state.lightingTab === "strip"}" class="${state.lightingTab === "strip" ? "active" : ""}"><span>03</span>${t("lightingDecorative")}</button>${fnLightingTabButton()}</div>`;
 }
-function lightingPowerPanel(base, title, description, includeLedBanks = false) {
+function lightingPowerControls(base, includeLedBanks = false) {
   const upper = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER),
     lower = base.open && Boolean(Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER),
     ledBanks = includeLedBanks
@@ -515,7 +521,10 @@ function lightingPowerPanel(base, title, description, includeLedBanks = false) {
     <input id="lowerLighting" class="toggle" type="checkbox" ${lower ? "checked" : "" }>
 </label>`
       : "";
-  return `<section class="panel full-span area-power-panel"><div class="area-power-summary"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div><label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label>${ledBanks}</div></section>`;
+  return `<label class="lighting-power"><span><b>${t("lightingPower")}</b><small>${base.open ? "On" : "Off"} · firmware value ${base.open ? base.openMode || 1 : 0}</small></span><input id="lightingOpen" class="toggle" type="checkbox" ${base.open ? "checked" : ""}></label>${ledBanks}`;
+}
+function lightingPowerPanel(base, title, description) {
+  return `<section class="panel full-span area-power-panel"><div class="area-power-summary"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div>${lightingPowerControls(base)}</div></section>`;
 }
 function lightingModePanel(base, count, target, area, reportedCount = count) {
   const modes = LIGHTING_MODE_OPTIONS.slice(0, count),
@@ -558,7 +567,7 @@ function mainLightingPage() {
     base = lighting.base,
     reportedCount = lightingModeCount(0, AE64_MAIN_MODE_COUNT),
     count = LIGHTING_MODE_OPTIONS.length;
-  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingMainKeyboard"), "Controls the main keyboard LED area.", true)}${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
+  return `<div class="lighting-layout">${lightingModePanel(base, count, "main", 0, reportedCount)}${lightingTunePanel(base, "main", 0)}${lightingPalettePanel(base, lighting.palette, "main")}</div>`;
 }
 function perKeyLightingPage() {
   const lighting = state.profile.lighting,
@@ -613,13 +622,13 @@ function unifiedLightingPreview() {
   const keyCount = lightingKeyIds().length,
     stripCount = stripLedIds().length,
     hints = {
-      main: "Live preview only. Choose the keyboard effect in the controls below.",
+      main: "Choose an effect below. Apply sends your staged choice to the keyboard.",
       perKey:
         "Drag a rectangle over keyboard keys. Ctrl+drag or Ctrl+click toggles keys.",
       strip:
         "Drag a rectangle over the four light-strip sides. Ctrl toggles LEDs.",
     };
-  return `<section class="panel unified-lighting-preview"><div class="panel-head"><div><h2>Unified live lighting</h2><p>The keyboard and all 38 perimeter LEDs stay visible while the settings below change.</p></div><span class="badge ${state.liveLighting && connected() ? "ready" : ""}">KEYBOARD + 38 LEDS</span></div><div class="unified-preview-scroll"><i class="lighting-selection-marquee" aria-hidden="true"></i>${stripHtml()}</div><div class="board-footer"><span>${hints[state.lightingTab]}</span><span id="lightingSelectionSummary">${state.lightingTab === "perKey" ? `Selected: <b>${keyCount} key${keyCount === 1 ? "" : "s"}</b>` : state.lightingTab === "strip" ? `Selected: <b>${stripCount} LED${stripCount === 1 ? "" : "s"}</b>` : "Preview mode"}</span></div></section>`;
+  return `<section class="panel unified-lighting-preview"><div class="panel-head"><div><h2>Unified live lighting</h2><p>The keyboard and all 38 perimeter LEDs stay visible while the settings below change.</p></div><span id="lightingEffectPreviewStatus" class="badge ${lightingEffectPreviewSource().kind === "live" ? "ready" : ""}">${lightingEffectPreviewLabel()}</span></div><div class="unified-preview-scroll"><i class="lighting-selection-marquee" aria-hidden="true"></i>${stripHtml()}</div><p id="lightingEffectPreviewNote" class="effect-preview-note"></p><div class="board-footer"><span>${hints[state.lightingTab]}</span><span id="lightingSelectionSummary">${state.lightingTab === "perKey" ? `Selected: <b>${keyCount} key${keyCount === 1 ? "" : "s"}</b>` : state.lightingTab === "strip" ? `Selected: <b>${stripCount} LED${stripCount === 1 ? "" : "s"}</b>` : "Preview mode"}</span></div></section>`;
 }
 function decorativeLightingPage() {
   const lighting = state.profile.lighting.decorative,
@@ -647,7 +656,7 @@ function lightingPage() {
   const lighting = state.profile.lighting,
     keyboardOff = !lighting.base.open,
     stripOff = !lighting.decorative.base.open;
-  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() && !isFnLightingTab() ? "ready" : ""}">${state.liveLighting && connected() && !isFnLightingTab() ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
+  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() && !isFnLightingTab() ? "ready" : ""}">${state.liveLighting && connected() && !isFnLightingTab() ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><div class="lighting-command-controls"><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label>${state.lightingTab === "main" ? lightingPowerControls(lighting.base, true) : ""}</div></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
 }
 function mappedOptions(options, current, supportedValues, labelFor) {
   const supported = new Set(supportedValues.map(Number)),
@@ -919,6 +928,7 @@ function render() {
   renderStatus();
   translateRenderedContent(document.querySelector("#pageContent"));
   bindPage();
+  if (state.page === "lighting" && !isFnLightingTab()) syncLightingEffectPreviewStatus();
   if (state.page === "gamepad") bindGamepadPage();
   if (state.page === "firmware") bindFirmwarePage();
 }

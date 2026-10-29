@@ -22,6 +22,7 @@ const run = (code) => vm.runInContext(code, c);
 async function main() {
   assert.equal(run("gamepadOverviewSnapshot().source"), "draft");
   assert.match(run("gamepadOverviewPanel()"), /LOCAL DRAFT/);
+  assert.match(run("gamepadOverviewPanel()"), /gamepad-overview hidden/);
   c.physicalQ = { uiRow: 1, col: 1 };assert.match(run("overviewGamepadKeyBadge(physicalQ)"), /23_left_trigger/);
   run("rememberGamepadProfile(gamepadDraft(),state.transport)");assert.equal(run("gamepadOverviewSnapshot().source"), "active");
   saved.name = "Local name only";assert.equal(run("gamepadOverviewSnapshot().source"), "active");
@@ -31,8 +32,10 @@ async function main() {
   saved = null;c.state.transport = null;assert.equal(run("gamepadOverviewSnapshot().source"), "none");
   const f = fixture();await f.component.ready;
   assert.equal((f.nodes.get("controlPicker").innerHTML.match(/class="controller-icon"/g) || []).length, 24);
-  assert.equal((f.nodes.get("keyboard").innerHTML.match(/class="controller-icon"/g) || []).length, 6);
+  assert.equal((f.nodes.get("keyboard").innerHTML.match(/class="controller-icon"/g) || []).length, 0);
   assert.equal((f.nodes.get("previewButtons").innerHTML.match(/class="controller-icon"/g) || []).length, 14);f.component.dispose();
+  const restored = fixture({ savedProfile: M.defaults() });await restored.component.ready;
+  assert.equal((restored.nodes.get("keyboard").innerHTML.match(/class="controller-icon"/g) || []).length, 6);restored.component.dispose();
   console.log("PASS: all 24 icon files/directions, picker/key/preview artwork, Overview draft/active/off states, stale connections and sidebar order.");
 }
 main().catch((error) => { console.error(error);process.exitCode = 1; });

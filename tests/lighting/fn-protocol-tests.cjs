@@ -15,7 +15,9 @@ async function main() {
   await assert.rejects(wrongProfile.write(0, 1, { enabled: true, colors, revision: 0 }), /Switch the onboard/);assert.equal(sends, 0);
   const harness = process.argv[process.argv.indexOf("--harness") + 1];
   if (!process.argv.includes("--harness")) { console.log("PASS: Fn RGB client validation and factory/forged capability rejection. C cross-protocol harness runs in firmware verify.py.");return; }
-  const child = spawn(harness, [], { stdio: ["pipe", "pipe", "pipe"] });let pending, buffer = Buffer.alloc(0), activeProfile = 0, sent = [];
+  const wasi = harness.endsWith(".wasm");
+  const runner = require("node:path").resolve(__dirname, "../../firmware/custom/ae64-xinput/source/run-wasi.cjs");
+  const child = spawn(wasi ? process.execPath : harness, wasi ? [runner, harness] : [], { stdio: ["pipe", "pipe", "pipe"] });let pending, buffer = Buffer.alloc(0), activeProfile = 0, sent = [];
   child.stderr.on("data", (b) => process.stderr.write(b));
   child.on("error", (error) => pending?.reject(error));
   child.on("exit", (code) => { if (pending) pending.reject(new Error(`Firmware harness exited ${code}`)); });

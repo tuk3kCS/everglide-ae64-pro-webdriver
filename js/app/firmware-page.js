@@ -28,7 +28,7 @@ function firmwarePage() {
         <div class="firmware-device"><span class="badge ${state.transport?.connected ? "ready" : ""}">${state.bootloaderConnected ? state.transport?.connected ? "RECOVERY MODE" : "RECOVERY · DISCONNECTED" : state.transport?.connected ? "KEYBOARD CONNECTED" : "CONNECT A KEYBOARD"}</span><p>${state.bootloaderConnected ? "Choose firmware to finish recovery. Normal keyboard settings are unavailable in recovery mode." : state.hardware.info ? `Current firmware: ${esc(state.hardware.info.firmware)}` : "Connect the keyboard you intend to update. Mode changes reconnect automatically."}</p><button class="button ghost" type="button" id="firmwareConnect" ${state.firmwareBusy ? "disabled" : ""}>${state.transport?.connected ? "Choose another keyboard" : "Reconnect keyboard"}</button></div>
         ${dirtyCount() && !state.bootloaderConnected ? '<p class="firmware-note">Keyboard edits are still staged. Apply or revert them before flashing. <button class="text-button" data-goto="settings" type="button">Review device settings →</button></p>' : ""}
         <button class="button primary firmware-start" type="button" id="reviewFirmware" ${!p || !state.transport?.connected || v.loading || toolOperationBusy() || (dirtyCount() && !state.bootloaderConnected) ? "disabled" : ""}>Review and flash firmware →</button>
-        <div class="firmware-progress" aria-live="polite"><strong id="firmwarePhase"></strong><progress id="firmwareProgress" max="100" value="${v.percent}" aria-label="Firmware update progress"></progress><p id="firmwareDetail"></p><button class="button ghost hidden" type="button" id="reconnectFirmware">Reconnect keyboard</button></div>
+        <div class="firmware-progress" aria-live="polite"><strong id="firmwarePhase"></strong><progress id="firmwareProgress" max="100" value="${v.percent}" aria-label="Firmware update progress"></progress><p id="firmwareDetail"></p><button class="button primary hidden" type="button" id="authorizeFirmware">Allow recovery keyboard</button><button class="button ghost hidden" type="button" id="reconnectFirmware">Reconnect keyboard</button></div>
         <p class="form-hint">A failed validation leaves the keyboard in bootloader mode. Select an intact image and start a fresh update. USB recovery is not guaranteed if the bootloader is unavailable.</p>
       </section>
     </div>
@@ -46,6 +46,13 @@ function firmwareProgress(update) {
   detail.textContent = firmwareView.detail || (firmwareView.phase === "writing" ? `${firmwareView.written.toLocaleString()} / ${firmwareView.total.toLocaleString()} bytes · ${firmwareView.percent}%` : firmwareView.phase === "complete" ? "Reconnects and file validation passed. Recalibrate if the keyboard requests it." : firmwareView.phase === "idle" ? "No firmware commands are sent until you confirm Start." : "Keep USB connected. The keyboard reconnects automatically between modes.");
   choose?.classList.toggle("hidden", firmwareView.phase !== "error" || state.firmwareBusy);
   if (choose) choose.disabled = state.firmwareBusy;
+  const allow = document.querySelector("#authorizeFirmware"), waiting = firmwareView.waiting,
+    handoff = Boolean(waiting && state.firmwareBusy && ["awaitingBoot", "awaitingApp"].includes(firmwareView.phase));
+  allow?.classList.toggle("hidden", !handoff);
+  if (allow) {
+    allow.disabled = !handoff || Boolean(waiting?.selecting || waiting?.manualDevice);
+    allow.textContent = waiting?.selecting ? "Waiting for browser permission…" : waiting?.manualDevice ? "Checking selected keyboard…" : waiting?.mode === 0 ? "Allow restarted keyboard" : "Allow recovery keyboard";
+  }
 }
 async function loadFirmwareCatalog() {
   if (firmwareView.catalogLoading) return;
@@ -98,7 +105,36 @@ function noteFirmwareRecoveryDisconnect() {
 }
 async function connectFirmwareDevice() {
   if (toolOperationBusy()) return;
-  await connectKeyboard(null, { choose: true });
+  const prepared = firmwareView.prepared, selectedId = firmwareView.selectedId;
+  const connected = await connectKeyboard(null, { choose: true });
+  if (connected && state.bootloaderConnected && prepared && !firmwareView.prepared) {
+    firmwareView.prepared = prepared; firmwareView.selectedId = selectedId;
+    firmwareView.recoveryMessage = "Your selected firmware is retained. Review and start it to write a complete fresh image.";
+    firmwareProgress({ phase: "recovery", detail: firmwareView.recoveryMessage });
+    render();
+  }
+}
+async function authorizeFirmwareHandoff() {
+  const waiting = firmwareView.waiting;
+  if (!state.firmwareBusy || !waiting || waiting.selecting || waiting.manualDevice) return;
+  waiting.selecting = true;
+  try {
+    // requestDevice must originate in this button's user gesture. The running
+    // updater retains the reviewed image and owns all probing and writing.
+    const request = navigator.hid.requestDevice({ filters: FIRMWARE_FILTERS });
+    firmwareProgress({});
+    const devices = await request;
+    if (firmwareView.waiting !== waiting) return;
+    const device = devices[0];
+    if (!device) { firmwareProgress({ detail: "No keyboard selected. Automatic reconnection is still waiting; allow the recovery keyboard to continue." }); return; }
+    waiting.manualDevice = device;
+    firmwareProgress({ detail: "Checking the selected keyboard. The reviewed firmware will continue automatically when its mode and board are confirmed." });
+  } catch (error) {
+    if (firmwareView.waiting === waiting) { firmwareProgress({ detail: `Browser permission was not granted: ${error.message}. Your selected firmware is still retained.` }); log("Firmware handoff permission unavailable", error.message); }
+  } finally {
+    waiting.selecting = false;
+    if (firmwareView.waiting === waiting) firmwareProgress({});
+  }
 }
 async function detectFirmwareRecovery(device) {
   if (toolOperationBusy() || state.connecting || state.transport?.connected || firmwareView.detecting) return;
@@ -113,12 +149,20 @@ async function detectFirmwareRecovery(device) {
   finally { if (found) await found.transport.close().catch(() => {}); firmwareView.detecting = false; finish(); }
 }
 async function reconnectFirmwareDevice(expected) {
-  firmwareView.waiting = { mode: expected.mode };
-  firmwareProgress({ phase: expected.mode === 255 ? "awaitingBoot" : "awaitingApp" });
+  const waiting = { mode: expected.mode, manualDevice: null, selecting: false };
+  firmwareView.waiting = waiting;
+  firmwareProgress({ phase: expected.mode === 255 ? "awaitingBoot" : "awaitingApp", detail: "Waiting for the same keyboard to reconnect automatically. If the browser needs permission for its new USB mode, use the Allow button below. Your selected firmware is retained." });
   try {
     const reconnect = new window.AE64FirmwareReconnect.Reconnector({
       getDevices: () => navigator.hid.getDevices(), inspect: inspectFirmwareDevice,
       checkIdentity: window.AE64Firmware.checkIdentity,
+      manualDevice: () => waiting.manualDevice,
+      onManualError: (error, device, identityRejected) => {
+        const retry = !identityRejected && window.AE64FirmwareReconnect.eligible(device) && !["NotAllowedError", "SecurityError"].includes(error.name);
+        if (!retry && waiting.manualDevice === device) waiting.manualDevice = null;
+        firmwareProgress({ detail: retry ? "The selected keyboard is still reconnecting. Retrying automatically; your reviewed firmware is retained." : `${error.message} Choose the intended keyboard in ${expected.mode === 255 ? "recovery" : "application"} mode; the reviewed image is still retained.` });
+        log("Firmware handoff selection rejected", error.message);
+      },
     });
     const found = await reconnect.wait(expected);
     state.transport = found.transport; state.bootloaderConnected = expected.mode === 255;
@@ -156,6 +200,7 @@ function bindFirmwarePage() {
   document.querySelector("#reloadFirmwareCatalog")?.addEventListener("click", () => { firmwareView.catalog = null; loadFirmwareCatalog(); });
   document.querySelector("#firmwareConnect")?.addEventListener("click", connectFirmwareDevice);
   document.querySelector("#reconnectFirmware")?.addEventListener("click", connectFirmwareDevice);
+  document.querySelector("#authorizeFirmware")?.addEventListener("click", authorizeFirmwareHandoff);
   document.querySelector("#firmwareFileInput")?.addEventListener("change", async (event) => {
     const [file] = event.target.files; if (!file || state.firmwareBusy) return;
     if (!file.name.toLowerCase().endsWith(".bin")) return showToast("Choose a .bin firmware file.", true);

@@ -7,8 +7,9 @@
   const M = window.AE64GamepadModel, $ = (id) => root.querySelector(`#${id}`), STORAGE = "ae64-gamepad-studio-v1";
   const icon = (control) => window.AE64ControllerIcons.html(control);
   const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-  let config = M.defaults(), selectedKey = 15, selectedControl = "LT", transport = getTransport(), capabilities = null, live = false, generation = 0, busy = false, toastTimer, profileLoaded = false;
+  let config = M.emptyProfile(), selectedKey = 15, selectedControl = "LT", transport = getTransport(), capabilities = null, live = false, generation = 0, busy = false, toastTimer, profileLoaded = false;
   let travels = Array(64).fill(0), pressed = Array(64).fill(false), source = "simulator", lastRead = 0, deviceLimits = [];
+  let usbState = null, usbSwitchPending = false, usbSwitchError = "";
   const rangeFields = ["startMm", "endMm", "maxTravelMm"], signature = (b) => [b.key, ...rangeFields.map((field) => b[field])];
   const legacyDefault = (b) => b.startMm === 0.5 && b.endMm === 3.5 && b.maxTravelMm === 4;
   let automaticTravel = new Set(M.CONTROLS.map((c) => c.id));
@@ -61,8 +62,20 @@
     if (!disposed) { useAutomaticTravel(); persist(); render(); }
   }
   const binding = () => config.bindings.find((b) => b.control === selectedControl);
-  function compatible() { return Boolean(transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000A && (config.mode === "off" || capabilities.transports?.[config.transport] === true)); }
+  function compatible() { return Boolean(!usbSwitchPending && transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000A && (config.mode === "off" || capabilities.transports?.[config.transport] === true)); }
+  function usbSwitchSupported() { return Boolean(transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000a && capabilities.usbDeviceSwitch === true); }
+  function updateUsbSwitch() {
+    const supported = usbSwitchSupported(), toggle = $("usbDeviceEnabled");
+    toggle.checked = Boolean(usbState && (usbSwitchPending ? usbState.targetEnabled : usbState.enabled));
+    toggle.disabled = busy || usbSwitchPending || !supported || !usbState || usbState.phase !== 0;
+    $("usbDeviceStatus").textContent = usbSwitchPending ? "USB reconnecting… Xbox device change is not confirmed yet."
+      : usbSwitchError ? `Xbox device state unavailable: ${usbSwitchError}`
+      : !supported ? transport?.connected ? "Requires custom firmware with Xbox USB device switching support." : "Connect compatible custom firmware to change Xbox device visibility."
+      : !usbState ? "Reading Xbox USB device state…"
+      : usbState.enabled ? "Enabled · Xbox controller device is exposed over USB." : "Disabled · Xbox controller device is absent from the active USB connection.";
+  }
   function updateCompatibility() {
+    updateUsbSwitch();
     $("connect").textContent = transport?.connected ? "Read keyboard profile" : "Connect keyboard";
     $("deviceStatus").classList.toggle("connected", Boolean(transport?.connected));
     $("liveTravel").disabled = !transport?.connected || busy;
@@ -131,7 +144,7 @@
   }
   function stopLive(clear = false) { live = false; generation += 1; if (clear) { travels.fill(0); pressed.fill(false); } source = "simulator"; renderEditor(); updateCompatibility(); updatePreview(); }
   async function refreshCapabilities() {
-    transport = getTransport(); capabilities = null; profileLoaded = false;
+    transport = getTransport(); capabilities = null; profileLoaded = false; usbState = null; usbSwitchPending = false; usbSwitchError = "";
     if (!transport?.connected) { options.onCapabilities?.(null); updateCompatibility(); return; }
     const connection = transport;
     try {
@@ -140,14 +153,55 @@
       capabilities = found?.verified ? found : null;
     } catch (_) { if (disposed || connection !== getTransport()) return; capabilities = null; }
     if (!disposed) {
+      if (usbSwitchSupported() && typeof window.AE64GamepadProtocol.readUsbState === "function") {
+        try {
+          const found = await window.AE64GamepadProtocol.readUsbState(connection);
+          if (disposed || connection !== getTransport()) return;
+          usbState = found; usbSwitchPending = found.phase !== 0;
+        } catch (error) { if (disposed || connection !== getTransport()) return; usbSwitchError = error.message; }
+      }
       options.onCapabilities?.(capabilities); $("deviceStatus").textContent = "Shared AE64 Pro connection"; updateCompatibility();
-      if (capabilities?.verified && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000a && capabilities.transports?.xinput) await readKeyboardProfile(true);
+      if (!usbSwitchPending && capabilities?.verified && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000a && capabilities.transports?.xinput) await readKeyboardProfile(true);
     }
   }
   async function connect() {
     if (busy || disposed) return;
     if (!getTransport()?.connected) { await options.onConnect?.(); if (!disposed) { await refreshCapabilities(); if (!profileLoaded) await refreshTravelDefaults(); } return; }
     await readKeyboardProfile();
+  }
+  async function changeUsbDevice() {
+    if (disposed || busy || usbSwitchPending || !usbSwitchSupported() || !usbState || usbState.phase !== 0) { updateCompatibility(); return; }
+    const enabled = Boolean($("usbDeviceEnabled").checked), connection = transport, previousCaps = capabilities, revision = usbState.revision;
+    usbState = { ...usbState, targetEnabled: enabled }; usbSwitchPending = true; usbSwitchError = "";
+    stopLive(true); setBusy(true); updateCompatibility();
+    try {
+      if (typeof options.onUsbDeviceChange === "function") {
+        const result = await options.onUsbDeviceChange(enabled);
+        if (disposed) return;
+        if (result?.verified !== true || result.enabled !== enabled || !getTransport()?.connected) throw new Error("USB reconnect did not confirm the requested Xbox device state. Reconnect and read it again.");
+        transport = getTransport(); capabilities = previousCaps;
+        usbState = { enabled, targetEnabled: enabled, phase: 0, revision: Number.isInteger(result.revision) ? result.revision : revision };
+        usbSwitchPending = false;
+        notify(`Xbox controller device ${enabled ? "enabled" : "disabled"} and verified after USB reconnect. This setting lasts until power is disconnected.`);
+      } else {
+        const result = await window.AE64GamepadProtocol.setUsbEnabled(connection, enabled, revision);
+        if (disposed) return;
+        usbState = result;
+        if (result.phase === 0 && result.enabled === enabled && connection === getTransport() && connection.connected) {
+          const verified = await window.AE64GamepadProtocol.readUsbState(connection);
+          if (disposed) return;
+          if (connection !== getTransport() || !connection.connected || verified.phase !== 0 || verified.enabled !== enabled) throw new Error("Xbox device state could not be verified.");
+          usbState = verified; usbSwitchPending = false;
+          notify(`Xbox controller device is already ${enabled ? "enabled" : "disabled"}.`);
+        } else notify("Xbox device change accepted. Waiting for USB reconnect; the new state has not been verified.");
+      }
+    } catch (error) {
+      if (!disposed) {
+        usbState = null; usbSwitchPending = false; usbSwitchError = error.message;
+        transport = getTransport(); capabilities = transport?.connected ? previousCaps : null;
+        notify(`Xbox device change was not confirmed: ${error.message}`, true);
+      }
+    } finally { setBusy(false); if (!disposed) updateCompatibility(); }
   }
   async function readKeyboardProfile(automatic = false) {
     if (busy || disposed || !getTransport()?.connected) return;
@@ -160,6 +214,13 @@
       if (JSON.stringify(config) !== fingerprint) throw new Error("Your draft changed while reading. Read the keyboard profile again.");
       options.onRead?.(result.config, transport);
       config = M.validate(result.config); automaticTravel = new Set(config.bindings.filter(legacyDefault).map((b) => b.control)); automaticMaximum = new Set(config.bindings.filter((b) => b.maxTravelMm === 4).map((b) => b.control)); capabilities = result; deviceLimits = [];
+      if (usbSwitchSupported() && typeof window.AE64GamepadProtocol.readUsbState === "function" && (!automatic || !usbState)) {
+        try {
+          const found = await window.AE64GamepadProtocol.readUsbState(connection);
+          if (disposed || connection !== getTransport() || !connection.connected) return;
+          usbState = found; usbSwitchPending = found.phase !== 0; usbSwitchError = "";
+        } catch (error) { if (disposed || connection !== getTransport()) return; usbState = null; usbSwitchError = error.message; }
+      }
       const original = JSON.stringify(config); await refreshTravelDefaults(); if (disposed || connection !== getTransport() || !connection.connected) return;
       profileLoaded = true; $("deviceStatus").textContent = "Keyboard gamepad profile loaded";
       if (!automatic || original !== JSON.stringify(config)) notify(original === JSON.stringify(config) ? "Keyboard gamepad profile read. Your local draft now matches the keyboard." : "Keyboard profile read. Default travel windows now match your switches; Apply to activate the adjusted draft.");
@@ -199,6 +260,7 @@
   $("simulatePressed").addEventListener("change", () => { if (live) return; source = "simulator"; pressed[selectedKey] = $("simulatePressed").checked; updatePreview(); });
   $("resetPreview").addEventListener("click", () => { stopLive(true); });
   $("connect").addEventListener("click", connect);
+  $("usbDeviceEnabled").addEventListener("change", changeUsbDevice);
   $("matchTravel").addEventListener("click", async () => {
     if (!transport?.connected || busy) return;
     stopLive(true); setBusy(true); updateCompatibility();
@@ -228,8 +290,8 @@
   $("restoreDefaults").addEventListener("click", async () => { stopLive(true); config = M.defaults(); automaticTravel = new Set(M.CONTROLS.map((c) => c.id)); automaticMaximum = new Set(automaticTravel); useAutomaticTravel(); selectedKey = 15; selectedControl = "LT"; persist(); render(); await refreshTravelDefaults(); notify("Example profile restored using your switches' travel limits. Nothing was written to the keyboard."); });
   const onDisconnect = (event) => {
     if (disposed || event.device !== transport?.device) return;
-    stopLive(true); transport = null; capabilities = null; profileLoaded = false; deviceLimits = []; options.onCapabilities?.(null); updateCompatibility();
-    notify("Keyboard disconnected. Preview released.");
+    stopLive(true); transport = null; capabilities = null; profileLoaded = false; deviceLimits = []; usbState = null; options.onCapabilities?.(null); updateCompatibility();
+    if (!usbSwitchPending) notify("Keyboard disconnected. Preview released.");
   };
   const onPageHide = () => { generation += 1; live = false; };
   const onVisibility = () => { if (!disposed && document.hidden && live) stopLive(true); };

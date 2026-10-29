@@ -110,6 +110,7 @@ document
   });
 if (navigator.hid) {
   navigator.hid.addEventListener("disconnect", (event) => {
+    if (state.usbSwitchBusy) { log("USB reconnect during Xbox device change"); return; }
     if (event.device === state.knownDevice) state.knownDevice = null;
     if (event.device === state.transport?.device) {
       const disconnected = state.transport;
@@ -129,6 +130,7 @@ if (navigator.hid) {
     }
   });
   navigator.hid.addEventListener("connect", (event) => {
+    if (state.usbSwitchBusy) return;
     if (window.AE64FirmwareReconnect.eligible(event.device)) {
       state.knownDevice = event.device;
       log("Authorized keyboard detected");

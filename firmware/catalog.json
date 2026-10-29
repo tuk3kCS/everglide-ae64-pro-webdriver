@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin",
+      "name": "Experimental XInput + Fn RGB v0.3 · USB device switch",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-10-29",
+      "bytes": 136192,
+      "sha256": "c14109b2911a52fd4f8a12bf0a89d295bdf4b8c4ebb76d13083bc03f3c087b71",
+      "boardId": "0030000A",
+      "payloadCrc32": "25582f3c",
+      "description": "XInput + persistent Fn colors with a guarded Xbox USB device switch. Disabling removes the controller interface after USB reconnect; choice and mappings last until power loss. Offline verified; hardware testing remains required.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin",
       "name": "Experimental XInput + Fn RGB v0.2",

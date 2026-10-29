@@ -45,6 +45,17 @@
 .gamepad-studio .profile-name{flex:1;min-width:145px}
 .gamepad-studio .profile-name input{font-weight:550;border:0;border-radius:0;padding:0;background:none;font-size:14px}
 .gamepad-studio .profile-actions{display:flex;gap:8px}
+.gamepad-studio .usb-device-control{display:grid;gap:10px;margin-top:16px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--control-bg)}
+.gamepad-studio .usb-device-label{display:flex;align-items:center;justify-content:space-between;gap:20px;cursor:pointer}
+.gamepad-studio .usb-device-label>span{display:grid;gap:5px;min-width:0}
+.gamepad-studio .usb-device-label strong{font-size:14px;color:var(--text)}
+.gamepad-studio .usb-device-label small,.gamepad-studio .usb-device-control p{margin:0;color:var(--muted);font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.gamepad-studio .usb-device-label input[type=checkbox]{position:relative;appearance:none;flex:none;width:44px;height:24px;margin:0;padding:0;border:0;border-radius:99px;background:#2a4153;cursor:pointer}
+.gamepad-studio .usb-device-label input[type=checkbox]::before{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .2s}
+.gamepad-studio .usb-device-label input[type=checkbox]:checked{background:var(--mint)}
+.gamepad-studio .usb-device-label input[type=checkbox]:checked::before{transform:translateX(20px)}
+.gamepad-studio .usb-device-label input[type=checkbox]:disabled{opacity:.5;cursor:not-allowed}
+.gamepad-studio #usbDeviceStatus{color:var(--text)}
 .gamepad-studio .compatibility{display:flex;align-items:center;gap:14px;padding:20px 5px 24px;color:var(--muted)}
 .gamepad-studio .compat-icon{font-size:24px;color:var(--mint2)}
 .gamepad-studio .compatibility strong{font-size:12px;color:var(--text);font-weight:550}

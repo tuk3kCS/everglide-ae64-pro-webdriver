@@ -34,6 +34,12 @@
       bindings: CONTROLS.map(({ id }) => ({ control: id, key: initial[id] ?? null, ...defaultTravel(initial[id] === undefined ? undefined : travelForKey(initial[id])), curve: "linear" })),
       sticks: [0, 1].map(() => ({ opposition: "difference", circular: true, deadzone: 0.05 })) };
   }
+  function emptyProfile() {
+    const config = defaults();
+    config.name = "Custom gamepad";
+    config.bindings.forEach((binding) => { binding.key = null; });
+    return config;
+  }
   function validate(config) {
     if (!config || config.schema !== "ae64-gamepad" || config.version !== 1) throw new Error("Choose an AE64 Gamepad profile, version 1.");
     if (typeof config.name !== "string" || config.name.length < 1 || config.name.length > 64) throw new Error("Profile name must contain 1–64 characters.");
@@ -101,7 +107,7 @@
     if (out.dpad.includes("DPAD_LEFT") && out.dpad.includes("DPAD_RIGHT")) out.dpad = out.dpad.filter((d) => !["DPAD_LEFT", "DPAD_RIGHT"].includes(d));
     return out;
   }
-  const api = Object.freeze({ ROWS, KEYS, CONTROLS, CONTROL, defaultTravel, defaults, validate, level, evaluate, um, clamp });
+  const api = Object.freeze({ ROWS, KEYS, CONTROLS, CONTROL, defaultTravel, defaults, emptyProfile, validate, level, evaluate, um, clamp });
   root.AE64GamepadModel = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

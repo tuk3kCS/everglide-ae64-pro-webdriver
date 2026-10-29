@@ -7,9 +7,11 @@
   }
   class Reconnector {
     constructor({ getDevices, inspect, checkIdentity, now = Date.now,
-      delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), timeout = 90000, interval = 250 }) {
+      delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms)), timeout = 90000, interval = 250,
+      manualDevice = () => null, onManualError = () => {} }) {
       this.getDevices = getDevices; this.inspect = inspect; this.checkIdentity = checkIdentity;
       this.now = now; this.delay = delay; this.timeout = timeout; this.interval = interval;
+      this.manualDevice = manualDevice; this.onManualError = onManualError;
     }
     async wait({ mode, original, preferred }) {
       const deadline = this.now() + this.timeout;
@@ -18,20 +20,27 @@
         let candidates = [];
         try { candidates = (await this.getDevices()).filter(eligible); }
         catch (error) { lastError = error; }
-        candidates.sort((a, b) => Number(b === preferred) - Number(a === preferred));
+        const selected = this.manualDevice();
+        if (selected && !candidates.includes(selected)) candidates.push(selected);
+        candidates.sort((a, b) => Number(b === selected) - Number(a === selected) || Number(b === preferred) - Number(a === preferred));
         const matches = [];
         for (const device of candidates) {
           let found;
           try {
+            if (!eligible(device)) throw new Error("The selected device does not expose a supported AE64 configuration interface.");
             found = await this.inspect(device);
+            const explicit = device === selected;
             const sameSerial = Boolean(original.serial && found.info.serial === original.serial);
             // USB mode changes can replace the HIDDevice object. A stable serial
             // identifies it; an unrelated same-model device is never a fallback.
-            if (device !== preferred && !sameSerial) continue;
-            this.checkIdentity(found.info, mode, original);
-            if (device === preferred) { const accepted = found; found = null; return { ...accepted, explicit: false }; }
+            if (!explicit && device !== preferred && !sameSerial) continue;
+            this.checkIdentity(found.info, mode, original, explicit);
+            if (explicit || device === preferred) {
+              for (const earlier of matches) await earlier.transport.close().catch(() => {});
+              const accepted = found; found = null; return { ...accepted, explicit };
+            }
             matches.push(found); found = null;
-          } catch (error) { lastError = error; }
+          } catch (error) { lastError = error; if (device === selected) this.onManualError(error, device, Boolean(found)); }
           finally { if (found?.transport) await found.transport.close().catch(() => {}); }
         }
         if (matches.length === 1) return { ...matches[0], explicit: false };

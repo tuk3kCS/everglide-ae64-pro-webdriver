@@ -1,0 +1,27 @@
+/* Eight sampled browser frames illustrate each effect without timers or USB writes. */
+.lighting-preview [data-effect-preview] { animation: ae64-effect-key var(--effect-duration, 6s) linear infinite; }
+.lighting-preview .spacebar-lighting-leds [data-effect-preview] { animation-name: ae64-effect-dot; }
+.effect-preview-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+@keyframes ae64-effect-key {
+  0%,100% { background-color: color-mix(in srgb, var(--effect-0) 58%, #102230); }
+  12.5% { background-color: color-mix(in srgb, var(--effect-1) 58%, #102230); }
+  25% { background-color: color-mix(in srgb, var(--effect-2) 58%, #102230); }
+  37.5% { background-color: color-mix(in srgb, var(--effect-3) 58%, #102230); }
+  50% { background-color: color-mix(in srgb, var(--effect-4) 58%, #102230); }
+  62.5% { background-color: color-mix(in srgb, var(--effect-5) 58%, #102230); }
+  75% { background-color: color-mix(in srgb, var(--effect-6) 58%, #102230); }
+  87.5% { background-color: color-mix(in srgb, var(--effect-7) 58%, #102230); }
+}
+@keyframes ae64-effect-dot {
+  0%,100% { background-color: var(--effect-0); }
+  12.5% { background-color: var(--effect-1); }
+  25% { background-color: var(--effect-2); }
+  37.5% { background-color: var(--effect-3); }
+  50% { background-color: var(--effect-4); }
+  62.5% { background-color: var(--effect-5); }
+  75% { background-color: var(--effect-6); }
+  87.5% { background-color: var(--effect-7); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lighting-preview [data-effect-preview] { animation: none; }
+}

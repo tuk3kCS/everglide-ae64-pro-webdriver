@@ -47,7 +47,7 @@ bool gp_wire_decode(const uint8_t wire[GP_WIRE_BYTES],uint32_t revision,
 }
 bool gp_vendor_init(struct gp_vendor_context *ctx,const uint8_t initial[GP_WIRE_BYTES],uint32_t revision,
                     uint8_t caps,const uint16_t max_um[GP_KEY_COUNT],gp_install_fn install,void *user) {
-    if(!ctx||!initial||!max_um||(caps&~7u))return false;
+    if(!ctx||!initial||!max_um||(caps&~15u))return false;
     struct gp_physical_config config;uint8_t transport;
     if(!gp_wire_decode(initial,revision,max_um,&config,&transport))return false;
     if(config.mode!=GP_OFF&&!(caps&transport))return false;

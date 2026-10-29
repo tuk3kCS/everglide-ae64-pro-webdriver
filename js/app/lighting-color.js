@@ -93,10 +93,11 @@ function stagePerKeyPreviewColor(value) {
   if (enabled) enabled.checked = true;
   document.querySelectorAll(".unified-lighting-preview [data-key]").forEach((node) => {
     if (!state.lightingSelectedKeys.has(Number(node.dataset.key))) return;
+    node.removeAttribute?.("data-effect-preview");
     node.style.setProperty("--key-color", color);
     node.classList.add("custom-light", "dirty");
     node.querySelector(".color-dot")?.classList.add("custom");
-    node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => dot.style.setProperty("--space-led-color", color));
+    node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => { dot.removeAttribute?.("data-effect-preview"); dot.style.setProperty("--space-led-color", color); });
   });
   updatePerKeyColorPicker(color);
   renderStatus();

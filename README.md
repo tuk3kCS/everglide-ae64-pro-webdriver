@@ -48,11 +48,11 @@ Advanced-feature dialogs include configuration guidance and local tutorial video
 
 ## Lighting
 
-The Lighting page uses one shared keyboard and light-strip preview. Its standard sections are **Keyboard**, **Per-key**, and **Light strip**. Drag a rectangle to select keys or strip LEDs in the corresponding editor; Ctrl/⌘ toggles selection. Selecting Space colors its five physical LEDs together.
+The Lighting page uses one shared keyboard and light-strip preview. Offline, paused and staged main effects use 20 distinct animated approximations, labeled as such. A clean live preview uses actual RGB frames from the keyboard. Per-key overrides remain visible. Its standard sections are **Keyboard**, **Per-key**, and **Light strip**. Drag a rectangle to select keys or strip LEDs in the corresponding editor; Ctrl/⌘ toggles selection. Selecting Space colors its five physical LEDs together.
 
 ### Custom Fn colors
 
-The experimental **XInput + Fn RGB v0.2** firmware adds independent static per-key colors for **four onboard profiles × three Fn layers**. The driver shows **Fn 1**, **Fn 2**, and **Fn 3** buttons beside the standard lighting buttons only after the keyboard confirms support for the FNR1 extension. Factory firmware retains the standard interface.
+The experimental **XInput + Fn RGB v0.2/v0.3** firmware adds independent static per-key colors for **four onboard profiles × three Fn layers**. The driver shows **Fn 1**, **Fn 2**, and **Fn 3** buttons beside the standard lighting buttons only after the keyboard confirms support for the FNR1 extension. Factory firmware retains the standard interface.
 
 - Choose the active profile in the sidebar, then select a Fn lighting button. There is no additional profile or layer dropdown inside the editor.
 - The shared keyboard switches to that Fn layer’s color draft. Drag on it to select keys, then choose a color; black turns a selected key off.
@@ -85,6 +85,8 @@ Controller icons appear in the assignment picker, mapped keys, preview, and Over
 
 Use **Apply to keyboard** after changing modes or mappings. Gamepad off does not remove the controller device from Windows.
 
+With **v0.3**, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. This choice lasts until power loss; boot defaults remain enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [v0.3 firmware report](docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
+
 #### Switch-aware travel defaults
 
 Defaults use each physical key’s selected switch profile and catalog range, capped by its known keyboard-reported limit. Mixed-switch keyboards are supported. For **UR Ice Magnetic**, the default switch travel and full-output point are **3.31 mm**, with a **0.50 mm** start.
@@ -103,7 +105,7 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and the current experimental **XInput + Fn RGB v0.2** image. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases, retained **XInput + Fn RGB v0.2**, and the new experimental **v0.3** image. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.
@@ -112,9 +114,9 @@ The [firmware directory](firmware/README.md) contains five unchanged factory rel
 
 The driver checks the container header, board ID, payload length, CRC-32, and catalog size/SHA-256 where available. It sends the complete image, requires the keyboard’s validation response before restarting, and excludes ordinary configuration traffic during the update.
 
-Bootloader and application transitions reconnect automatically without a normal device-reselection prompt. Identity checks prevent silently switching to another same-model keyboard. Browser permissions still apply: a permission, identity, or reconnection failure stops the update and offers **Reconnect keyboard**.
+Bootloader and application transitions reconnect automatically when the browser already permits access to those USB modes. The reviewed firmware stays selected through the handoff. If a mode needs browser permission, use **Allow recovery keyboard** or **Allow restarted keyboard** on the progress panel; the same update continues after selection without refreshing or reselecting its image. Automatic matching retains identity checks, and an explicit selection is still checked for board and run mode. Unresolved reconnection failures stop the update and offer **Reconnect keyboard**.
 
-The normal **Connect keyboard** flow also accepts recovery mode. A recovery keyboard opens Firmware, clears the previous image selection, and requires a fresh firmware choice and explicit Start. Ordinary configuration pages remain unavailable in recovery mode. An authorized recovery replug is detected when no other keyboard session is active. Interrupted partial transfers are not silently resumed; start a new complete transfer after review.
+The normal **Connect keyboard** flow also accepts recovery mode. A recovery keyboard opens Firmware, clears the previous image selection, and requires a fresh firmware choice and explicit Start. Ordinary configuration pages remain unavailable in recovery mode. An authorized recovery replug is detected when no other keyboard session is active. Reconnecting through the Firmware panel after a failed update retains the selected image for review and a complete fresh transfer. Interrupted partial transfers are not silently resumed.
 
 To add or replace an image, put the .bin under firmware/ and regenerate the catalog:
 
@@ -128,7 +130,7 @@ GitHub Pages regenerates the catalog and packages the actual binaries during dep
 
 - The driver’s packet codecs, editors, read-back workflows, image streams, reconnect/recovery logic, and UI behavior have offline regression coverage. Recent browser UI checks use simulated devices.
 - The earlier experimental XInput v0.1 image was flashed separately by the user. Follow-up read-only checks observed Windows Xbox 360 controller enumeration, custom protocol replies, and a connected XInput device. This does not validate every analog behavior or later firmware changes.
-- The current **XInput + Fn RGB v0.2** image was compiled and checked offline. Its Fn LED output, physical persistence, and the integrated flashing workflow still need hardware validation.
+- The current **XInput + Fn RGB v0.3** image was compiled and checked offline. USB controller removal/reappearance also needs physical validation. Its Fn LED output, physical persistence, and the integrated flashing workflow still need hardware validation.
 - Gamepad mappings remain volatile. Fn colors are designed to persist; factory resets or later factory keymap saves can erase them. Export backups before changing firmware. Native flash saving inherits an erase/rewrite power-loss risk.
 - Factory restore is visible but disabled pending physical-device verification. Additional catalog-only lighting effects and extended right-side modifier combinations remain experimental.
 
@@ -141,19 +143,24 @@ Run the same offline checks used by GitHub Pages:
 ~~~powershell
 node scripts/build-firmware-catalog.cjs
 node smoke-test.cjs
+node tests/device-serial-tests.cjs
 node tests/firmware/flasher-tests.cjs
 node tests/firmware/ui-tests.cjs
 node tests/firmware/reconnect-tests.cjs
 node tests/firmware/recovery-tests.cjs
+node tests/firmware/handoff-tests.cjs
 node tests/gamepad/tests.cjs
 node tests/gamepad/protocol-tests.cjs
 node tests/gamepad/travel-limits-tests.cjs
 node tests/gamepad/switch-defaults-tests.cjs
 node tests/gamepad/icons-overview-tests.cjs
 node tests/gamepad/auto-load-tests.cjs
+node tests/gamepad/usb-switch-tests.cjs
+node tests/gamepad/usb-reconnect-tests.cjs
 node tests/lighting/fn-ui-tests.cjs
 node tests/lighting/fn-selection-tests.cjs
 node tests/lighting/fn-protocol-tests.cjs
+node tests/lighting/effect-preview-tests.cjs
 ~~~
 
 These checks use simulated transports and do not open a real keyboard. Optional compiled-C harnesses provide additional protocol verification. Firmware build requirements, commands, symbols, and image audits are documented in the [custom firmware guide](firmware/custom/ae64-xinput/README.md).

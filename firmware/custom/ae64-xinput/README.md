@@ -1,12 +1,14 @@
 # AE64 Pro experimental native XInput and Fn RGB firmware
 
-Current build: `../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin` (134,960 bytes), SHA256 `0a10429b593fec1b70648f2379ec0f9ac01f71238c4c179c1e7d77b18951469c`. Adds persistent static per-key Fn colors for all four onboard profiles × three Fn layers while retaining the gamepad extension. **This new build is not hardware-tested.** Read the [Fn RGB findings, storage and usage guide](../../../docs/firmware-research/fn-rgb/README.md).
+Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin), **136,192 bytes**, SHA-256 `c14109b2911a52fd4f8a12bf0a89d295bdf4b8c4ebb76d13083bc03f3c087b71`.
 
-`source/` now builds v0.2; its build evidence is in `v0.2/`. The original v0.1 source is retained in `history/v0.1-source.zip`. Top-level ELF/manifests below this folder remain historical v0.1 records.
+v0.3 retains the v0.2 mapper and persistent Fn colors, adding a guarded **Xbox controller device** switch. Disabled mode exposes only the three original HID interfaces; enabled mode adds Xbox/XInput. The web driver waits for a USB reconnect and same-keyboard state verification. This USB choice and gamepad mappings last until power loss; boot defaults remain enabled. The output-mode option **Gamepad off** continues to mute input independently of device visibility.
 
-The flashable image is [`../../AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin`](../../AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin), SHA-256 `fa97bcfef4cffe1fb8f2309ba537d2491dbc0fe7162eaec1db2c3d1ea220d69a` (131,464 bytes). It is an append-only extension of stock v0.1.0.0 for AE64 Pro board `0030000A`, retaining the stock application and initialization.
+**Offline verified; not hardware-tested or flashed during this work.** Active Windows device removal, PHY timing and recovery still require physical validation. Windows can retain non-present device history. Full folder/source analysis, protocol, guards and validation are in the [v0.3 report](../../../docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
 
-The user flashed this image through the factory driver. Read-only follow-up diagnostics confirmed custom AGP1 replies and native Windows Xbox 360 driver enumeration; XInputGetState returned a connected controller. Complete analog behavior, advanced factory modes, sustained timing, heap headroom and physical recovery remain open hardware tests.
+`source/` builds v0.3; retained ELF/manifests are in `v0.3/`. The v0.2 image and `v0.2/` evidence remain unchanged. Its pre-change source is archived with repository-relative paths in `history/v0.2-source.zip`. v0.1 source/components remain historical in `history/` and `portable-reference/`; top-level older ELF/manifests are also historical. They do not describe the current image.
+
+The pinned base is untouched factory v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`. The extension preserves stock initialization and original offsets. A prior v0.1 experiment had read-only Windows XInput enumeration evidence; that does not validate v0.3.
 
 ## Configure and flash
 
@@ -22,11 +24,13 @@ From the repository root, using Python 3 and Zig 0.17.0:
 
 ```powershell
 python firmware/custom/ae64-xinput/source/build.py --zig C:\path\to\zig.exe --stock firmware/XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin --out build/ae64-xinput
-python firmware/custom/ae64-xinput/source/verify.py --zig C:\path\to\zig.exe --stock firmware/XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin --image-dir build/ae64-xinput --work build/verification
+python firmware/custom/ae64-xinput/source/verify.py --wasi --zig C:\path\to\zig.exe --stock firmware/XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin --image-dir build/ae64-xinput --work build/verification
 ```
 
-The source builder requires the exact stock SHA-256, links RV32IMAC code at `8003D000`, patches eight integration calls and descriptor pointers, reserves 4,100 bytes from the stock heap (4,096 usable), preserves original offsets/flash helpers, and updates container size/CRC. Compiled v0.2 state uses 3,792 bytes. New build manifests record every patch and symbol; verification records byte-preservation, container/ABI/link audits, host board/storage/protocol tests and real browser-client/C-firmware packet exchanges.
+The source builder requires the exact stock SHA-256, links RV32IMAC code at `8003D000`, patches eight integration calls and three descriptor callbacks, reserves 4,100 bytes from the stock heap (4,096 usable), preserves original offsets/flash helpers, and updates container size/CRC. The linker checks the total state against the same 4,096-byte reservation. New build manifests record every patch and symbol; verification records byte-preservation, container/ABI/link audits, host board/storage/protocol tests and real browser-client/C-firmware packet exchanges.
 
 `source/` contains the integrated port and builders. `portable-reference/` preserves the original mapper/protocol/XUSB component tests. `component-test-results.json` and the build manifests describe the historical build environment; their original absolute command paths are retained as provenance. `check_xinput.py` is a read-only Windows controller-state diagnostic. The `.elf` is the extension with symbols, not a full keyboard flashing image.
 
 After copying a newly built `.bin` into the repository's `firmware/` directory, run `node scripts/build-firmware-catalog.cjs`. It will appear in the web driver's firmware selector. Keep experimental builds explicitly labeled and retain their build metadata.
+
+`--wasi` runs portable C tests as WebAssembly under Node instead of executing newly compiled native test programs. RV32 firmware compilation is unchanged. Omit it for the original native host-test path when execution is permitted. This run used WASI because Windows Application Control blocked new native executables; no policy or security setting was changed.

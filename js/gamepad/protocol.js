@@ -4,7 +4,7 @@
   const Model = root.AE64GamepadModel || (typeof require === "function" ? require("./model.js") : null);
   const MAGIC = [65, 71, 80, 49], CONFIG_MAGIC = [65, 71, 67, 49];
   const FAMILY = 0x10, VERSION = 1, BOARD = 0x0030000a, CONFIG_BYTES = 208;
-  const CMD = Object.freeze({ INFO: 0x20, BEGIN: 0x21, WRITE: 0x22, COMMIT: 0x23, ABORT: 0x24, READ: 0x25 });
+  const CMD = Object.freeze({ INFO: 0x20, BEGIN: 0x21, WRITE: 0x22, COMMIT: 0x23, ABORT: 0x24, READ: 0x25, USB_STATUS: 0x26, USB_SET: 0x27 });
   const MODES = ["off", "controller", "mixed"], OPPOSITION = ["difference", "neutral", "deeper"];
   const STATUS = ["ok", "unsupported operation", "invalid packet", "configuration conflict", "invalid configuration", "transfer incomplete", "checksum mismatch", "backend unavailable", "storage failure"];
   let sequence = 0;
@@ -54,9 +54,38 @@
     const bytes = await request(transport, CMD.INFO);
     if (bytes.length !== 20 || view(bytes).getUint32(0, true) !== BOARD || bytes[5] !== 24 || bytes[6] !== VERSION || bytes[7] !== 0 || view(bytes).getUint16(14, true) !== CONFIG_BYTES) throw new UnsupportedFirmwareError("The keyboard did not identify the supported AE64 gamepad firmware.");
     const data = view(bytes);
-    return { verified: true, protocolVersion: VERSION, boardId: BOARD, transports: { hid: Boolean(bytes[4] & 1), xinput: Boolean(bytes[4] & 2) }, persistent: Boolean(bytes[4] & 4), revision: data.getUint32(8, true), maxTravelUm: data.getUint16(12, true), configBytes: CONFIG_BYTES, crc32: data.getUint32(16, true) };
+    return { verified: true, protocolVersion: VERSION, boardId: BOARD, transports: { hid: Boolean(bytes[4] & 1), xinput: Boolean(bytes[4] & 2) }, persistent: Boolean(bytes[4] & 4), usbDeviceSwitch: Boolean(bytes[4] & 8), revision: data.getUint32(8, true), maxTravelUm: data.getUint16(12, true), configBytes: CONFIG_BYTES, crc32: data.getUint32(16, true) };
   }
   const locks = new WeakSet();
+  function decodeUsbState(bytes) {
+    if (bytes.length !== 12 || view(bytes).getUint32(0, true) !== BOARD || bytes[4] !== VERSION || bytes[5] > 1 || bytes[6] > 1 || bytes[7] > 2 || (bytes[7] === 0 && bytes[5] !== bytes[6])) throw new Error("Invalid Xbox USB device state reply.");
+    return { boardId: BOARD, protocolVersion: VERSION, enabled: Boolean(bytes[5]), targetEnabled: Boolean(bytes[6]), phase: bytes[7], revision: view(bytes).getUint32(8, true) };
+  }
+  async function requireUsbSwitch(transport) {
+    if (!transport?.raw || transport.connected === false) throw new Error("A connected AE64 transport is required.");
+    const caps = await probe(transport);
+    if (!caps.usbDeviceSwitch) throw new UnsupportedFirmwareError("This firmware cannot show or hide the Xbox USB device. Install firmware with USB device switching support.");
+    return caps;
+  }
+  async function readUsbState(transport) {
+    await requireUsbSwitch(transport);
+    return decodeUsbState(await request(transport, CMD.USB_STATUS));
+  }
+  async function setUsbEnabled(transport, enabled, expectedRevision) {
+    if (typeof enabled !== "boolean") throw new TypeError("Choose whether the Xbox USB device is enabled.");
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0 || expectedRevision > 0xffffffff) throw new RangeError("Read the Xbox USB device state before changing it.");
+    if (locks.has(transport)) throw new Error("A gamepad transfer or USB device change is already running.");
+    locks.add(transport);
+    try {
+      await requireUsbSwitch(transport);
+      const payload = new Uint8Array(10), data = view(payload);
+      data.setUint32(0, BOARD, true); payload[4] = Number(enabled); data.setUint32(6, expectedRevision, true);
+      const result = decodeUsbState(await request(transport, CMD.USB_SET, payload));
+      const noChange = result.phase === 0 && result.enabled === enabled && result.revision === expectedRevision;
+      if (result.targetEnabled !== enabled || (!noChange && (result.phase !== 1 || result.revision !== ((expectedRevision + 1) >>> 0)))) throw new Error("Xbox USB device change was not confirmed. Re-read its state before retrying.");
+      return { ...result, accepted: true };
+    } finally { locks.delete(transport); }
+  }
   async function readTravelLimits(transport, input) {
     const config = Model.validate(input);
     if (typeof transport?.getPerformance !== "function") throw new Error("This connection cannot read switch travel limits.");
@@ -133,7 +162,7 @@
       throw error;
     } finally { locks.delete(transport); }
   }
-  const api = Object.freeze({ probe, upload, read, encode, decode, crc32, packet, CMD, CONFIG_BYTES, UnsupportedFirmwareError, KeyboardRejectedError, readTravelLimits, validateTravelLimits, fitTravelLimits });
+  const api = Object.freeze({ probe, upload, read, readUsbState, setUsbEnabled, encode, decode, crc32, packet, CMD, CONFIG_BYTES, UnsupportedFirmwareError, KeyboardRejectedError, readTravelLimits, validateTravelLimits, fitTravelLimits });
   root.AE64GamepadProtocol = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

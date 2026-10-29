@@ -13,6 +13,15 @@
 #define XUSB_OUT 0x05u
 #define MS_VENDOR 0x20u
 #define CONFIG_LENGTH 131u
+#define USB_COMMAND 0x140u
+#define USB_STATUS 0x144u
+#define USB_INTERRUPTS 0x148u
+#define USB_PRIME 0x1b0u
+#define USB_FLUSH 0x1b4u
+#define USB_ENDPOINT_STATUS 0x1b8u
+#define USB_SOF (1u<<7)
+#define USB_VENDOR_IN (1u<<19)
+#define NATIVE_USB_STATE UINT32_C(0x80584)
 static const uint8_t row_lengths[5]={14,14,13,14,9};
 static const struct ae64_xusb_config usb_config={3,XUSB_IN,XUSB_OUT,1,1,MS_VENDOR};
 
@@ -27,10 +36,16 @@ struct board_state {
     struct stock_endpoint endpoint_in,endpoint_out;
     uint8_t configuration[CONFIG_LENGTH], other[CONFIG_LENGTH];
     uint8_t os_string[18],compatible[40];
+    uint8_t device_descriptor[18];
     uint8_t reply[64];
     /* HPM endpoint storage remains live through asynchronous completion. */
     _Alignas(64) uint8_t out[64];
     uint32_t last_submit;
+    uintptr_t usb_base;
+    uint32_t usb_revision,usb_requested_at,usb_phase_at,usb_interrupt_mask;
+    uint8_t usb_phase;
+    uint8_t usb_native_status;
+    bool usb_enabled,usb_target;
     bool initialized,suspended,out_armed;
     void (*original_event)(uint8_t,uint8_t);
 };
@@ -53,6 +68,83 @@ static void copy(void *dst,const void *src,size_t n) {
     uint8_t *d=dst;const uint8_t *s=src;while(n--)*d++=*s++;
 }
 static void clear(void *dst,size_t n) { uint8_t *d=dst;while(n--)*d++=0; }
+static bool xbox_active(void) { return state.usb_enabled && state.usb_phase==0; }
+static void usb_persona(bool enabled) {
+    state.usb_enabled=enabled;
+    /* Keep stock VID/PID/strings and distinguish Windows OS-descriptor caches. */
+    copy(state.device_descriptor,RAM(0x80374),18);
+    state.device_descriptor[12]=enabled?3:4;state.device_descriptor[13]=1;
+    ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
+    if(!enabled) { clear(state.compatible,40);state.compatible[0]=16;state.compatible[5]=1;state.compatible[6]=4; }
+}
+static void usb_switch_tick(uint32_t now) {
+    if(state.usb_phase==1) {
+        /* Replies are queued by stock_vendor_reply, then submitted asynchronously
+         * on EP3. Never unplug the ACK while it is queued or owned by USB DMA. */
+        if((uint32_t)(now-state.usb_requested_at)>1500) {
+            state.usb_target=state.usb_enabled;state.usb_phase=0;return;
+        }
+        if((uint32_t)(now-state.usb_requested_at)<30 ||
+           load8(0x8d2b0)!=load8(0x8d2b1) ||
+           ((load32(state.usb_base+USB_PRIME)|load32(state.usb_base+USB_ENDPOINT_STATUS))&USB_VENDOR_IN))return;
+        /* HPM DCD disconnect sequence: first bring the PHY to full speed.
+         * SOF is checked on later scheduler passes, with a bounded fallback. */
+        store32(state.usb_base+USB_COMMAND,load32(state.usb_base+USB_COMMAND)&~1u);
+        store32(state.usb_base+USB_COMMAND,load32(state.usb_base+USB_COMMAND)|1u);
+        store32(state.usb_base+USB_STATUS,USB_SOF);
+        state.usb_phase=3;state.usb_phase_at=now;
+    } else if(state.usb_phase==3) {
+        if(!(load32(state.usb_base+USB_STATUS)&USB_SOF) && (uint32_t)(now-state.usb_phase_at)<20)return;
+        state.usb_interrupt_mask=load32(state.usb_base+USB_INTERRUPTS);
+        /* Native keyboard/vendor writers require state 3. Stop new priming
+         * while all endpoints are being flushed, without invoking reset twice. */
+        state.usb_native_status=load8(NATIVE_USB_STATE);store8(NATIVE_USB_STATE,1);
+        store32(state.usb_base+USB_INTERRUPTS,0);
+        store32(state.usb_base+USB_COMMAND,load32(state.usb_base+USB_COMMAND)&~1u);
+        state.suspended=true;
+        store32(state.usb_base+USB_FLUSH,UINT32_MAX);
+        state.usb_phase=2;state.usb_phase_at=now;
+        /* Do not clear/reuse asynchronous transfer buffers here. Native host
+         * bus-reset cleanup quiesces endpoints before event() releases them. */
+    } else if(state.usb_phase==2 && (uint32_t)(now-state.usb_phase_at)>=250) {
+        /* EP0 can own the descriptor buffers too. Only mutate them after all
+         * endpoint DMA is quiescent. Failed flushes retain the old persona. */
+        uint32_t active=load32(state.usb_base+USB_FLUSH)|load32(state.usb_base+USB_PRIME)|load32(state.usb_base+USB_ENDPOINT_STATUS);
+        if(active && (uint32_t)(now-state.usb_phase_at)<1000)return;
+        if(active) { state.usb_target=state.usb_enabled;store8(NATIVE_USB_STATE,state.usb_native_status); }
+        else usb_persona(state.usb_target);
+        state.usb_phase=0;
+        store32(state.usb_base+USB_INTERRUPTS,state.usb_interrupt_mask);
+        store32(state.usb_base+USB_COMMAND,load32(state.usb_base+USB_COMMAND)|1u);
+    }
+}
+static void usb_put32(uint8_t *p,uint32_t v) { for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v>>(8*i)); }
+static uint32_t get32(const uint8_t *p) { return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24; }
+static bool usb_switch_request(const uint8_t *q,uint8_t *r,uint32_t now) {
+    if(q[0]!=0x10 || (q[1]!=0x26 && q[1]!=0x27) ||
+       q[4]!='A'||q[5]!='G'||q[6]!='P'||q[7]!='1')return false;
+    clear(r,64);copy(r,q,8);uint8_t status=GP_VENDOR_OK;
+    if(q[2]!=1||q[8]||q[9]!=(q[1]==0x26?0:10))status=GP_VENDOR_FORMAT;
+    else if(q[1]==0x27) {
+        if(get32(q+10)!=0x0030000au||q[14]>1||q[15])status=GP_VENDOR_FORMAT;
+        else if(get32(q+16)!=state.usb_revision||state.usb_phase)status=GP_VENDOR_CONFLICT;
+        else {
+            if(state.vendor.staging_active && (uint32_t)(now-state.vendor.last_activity_ms)>GP_TRANSACTION_TIMEOUT_MS)state.vendor.staging_active=false;
+            if(fn_protocol.active && (uint32_t)(now-fn_protocol.last_activity)>GP_TRANSACTION_TIMEOUT_MS)fn_protocol.active=false;
+            if(state.vendor.staging_active||fn_protocol.active)status=GP_VENDOR_CONFLICT;
+            else if(state.usb_enabled!=(bool)q[14]) {
+                state.usb_target=(bool)q[14];state.usb_revision++;state.usb_requested_at=now;state.usb_phase=1;
+                gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+            }
+        }
+    }
+    r[8]=status;
+    if(!status) {
+        r[9]=12;usb_put32(r+10,0x0030000au);r[14]=1;r[15]=state.usb_enabled;
+        r[16]=state.usb_target;r[17]=state.usb_phase==3?1:state.usb_phase;usb_put32(r+18,state.usb_revision);
+    }
+    return true;
+}
 static const uint8_t *fn_image(uint8_t profile) { return RAM(fn_storage_address(profile)); }
 static void fn_load_current(void) {
     uint8_t profile=load8(0x82ba8);
@@ -124,7 +216,7 @@ static bool install(void *user,const struct gp_physical_config *mapping,uint8_t 
     return true;
 }
 static void arm_out(void) {
-    if(state.xusb.configured && !state.suspended && !state.out_armed) {
+    if(xbox_active() && state.xusb.configured && !state.suspended && !state.out_armed) {
         state.out_armed=true;
         if(stock_read(0,XUSB_OUT,state.out,32)!=0)state.out_armed=false;
     }
@@ -149,7 +241,7 @@ static void event(uint8_t bus,uint8_t value) {
     } else if(value==6) {
         state.suspended=false;arm_out();
     } else if(value==7) {
-        state.suspended=false;state.out_armed=false;ae64_xusb_configured(&state.xusb,true);
+        state.suspended=false;state.out_armed=false;ae64_xusb_configured(&state.xusb,state.usb_enabled);
         gp_physical_reset(&state.physical);state.report=(struct gp_report){0};arm_out();
     }
     if(state.original_event)state.original_event(bus,value);
@@ -157,9 +249,11 @@ static void event(uint8_t bus,uint8_t value) {
 static void make_configuration(uint8_t *bytes,uint8_t type) {
     /* Preserve the stock interval bytes adjusted by its settings callback. */
     copy(bytes,RAM(0x80318),91);
-    bytes[1]=type;bytes[2]=CONFIG_LENGTH;bytes[3]=0;bytes[4]=4;
-    ae64_xusb_interface_descriptor(&usb_config,bytes+91);
+    bytes[1]=type;bytes[2]=state.usb_enabled?CONFIG_LENGTH:91;bytes[3]=0;bytes[4]=state.usb_enabled?4:3;
+    if(state.usb_enabled)ae64_xusb_interface_descriptor(&usb_config,bytes+91);
+    else clear(bytes+91,CONFIG_LENGTH-91);
 }
+const uint8_t *board_device_descriptor(uint8_t speed) { (void)speed;return state.device_descriptor; }
 const uint8_t *board_configuration(uint8_t speed) {
     (void)speed;make_configuration(state.configuration,2);return state.configuration;
 }
@@ -167,7 +261,8 @@ const uint8_t *board_other_speed(uint8_t speed) {
     (void)speed;make_configuration(state.other,7);return state.other;
 }
 int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8_t,uint8_t)) {
-    clear(&state,sizeof(state));state.original_event=original_event;
+    clear(&state,sizeof(state));state.original_event=original_event;state.usb_base=base;
+    state.usb_target=true;usb_persona(true);
     /* 10000 is a temporary protocol-validation ceiling, not sensor calibration.
      * Scan frames use each native calibrated maximum; missing calibration is neutral.
      */
@@ -175,7 +270,7 @@ int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8
     uint8_t transport=0;
     gp_wire_decode(default_profile,1,state.maximum,&state.mapping,&transport);
     gp_physical_reset(&state.physical);
-    gp_vendor_init(&state.vendor,default_profile,1,GP_CAP_XINPUT,state.maximum,install,0);
+    gp_vendor_init(&state.vendor,default_profile,1,GP_CAP_XINPUT|GP_CAP_USB_SWITCH,state.maximum,install,0);
     fn_rgb_init(&fn_protocol,fn_read,fn_install,0,true);
     fn_ensure_current();
     const struct ae64_xusb_io io={usb_start,0,0,0};
@@ -197,7 +292,8 @@ bool board_ep0_hook(uint8_t bus,const struct ae64_usb_setup *setup,uint8_t **dat
         }
         if((setup->request_type & 0x60u)==0x40u && setup->request==MS_VENDOR) {
             if(setup->request_type==0xc0 && setup->value==0 && setup->index==4) {
-                *data=state.compatible;*length=setup->length<40?setup->length:40;return true;
+                uint32_t size=state.usb_enabled?40:16;
+                *data=state.compatible;*length=setup->length<size?setup->length:size;return true;
             }
             /* No unchecked indexing through the stock MS properties handler. */
             return false;
@@ -210,7 +306,7 @@ void board_scan_hook(void) {
     if(!state.initialized)return;
     uint64_t valid=0,pressed=0;
     unsigned key=0;refresh_maxima();
-    uint64_t suppress=gp_physical_keyboard_suppression(&state.mapping,state.maximum);
+    uint64_t suppress=xbox_active()?gp_physical_keyboard_suppression(&state.mapping,state.maximum):0;
     for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++) {
         uintptr_t r=record(row,col),p=performance(row,col);
         uint16_t flags=load16(r);uint64_t bit=UINT64_C(1)<<key;
@@ -228,16 +324,18 @@ void board_scan_hook(void) {
     }
     struct gp_physical_frame frame={state.travel,state.maximum,valid,pressed,true,stock_tick()};
     uint32_t saved=irq_lock();
-    gp_physical_update(&state.physical,&state.mapping,&frame,&state.report);
+    if(xbox_active())gp_physical_update(&state.physical,&state.mapping,&frame,&state.report);
+    else { gp_physical_reset(&state.physical);state.report=(struct gp_report){0}; }
     irq_unlock(saved);
 }
 void board_schedule_hook(void) {
     stock_schedule();
     if(!state.initialized)return;
     uint32_t now=stock_tick();
+    usb_switch_tick(now);
     uint32_t saved=irq_lock();
     gp_physical_watchdog(&state.physical,now,50,&state.report);
-    if(!state.suspended && (uint32_t)(now-state.last_submit)>=1)
+    if(xbox_active() && !state.suspended && (uint32_t)(now-state.last_submit)>=1)
         if(ae64_xusb_submit(&state.xusb,&state.report))state.last_submit=now;
     irq_unlock(saved);
 }
@@ -246,6 +344,11 @@ void board_dispatch_hook(void) {
         refresh_maxima();
         for(unsigned i=0;i<64;i++)state.vendor.max_travel_um[i]=state.maximum[i];
         const uint8_t *request=RAM(GP+0x65c);
+        if(usb_switch_request(request,state.reply,stock_tick())) { stock_vendor_reply(state.reply);return; }
+        if(state.usb_phase && request[0]==0x10 && (request[1]>=0x21 && request[1]<=0x35)) {
+            clear(state.reply,64);copy(state.reply,request,8);state.reply[8]=GP_VENDOR_CONFLICT;
+            stock_vendor_reply(state.reply);return;
+        }
         if(fn_rgb_handle(&fn_protocol,request,state.reply,stock_tick())) {
             stock_vendor_reply(state.reply);return;
         }

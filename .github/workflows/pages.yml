@@ -31,19 +31,24 @@ jobs:
         run: |
           node scripts/build-firmware-catalog.cjs
           node smoke-test.cjs
+          node tests/device-serial-tests.cjs
           node tests/firmware/flasher-tests.cjs
           node tests/firmware/ui-tests.cjs
           node tests/firmware/reconnect-tests.cjs
           node tests/firmware/recovery-tests.cjs
+          node tests/firmware/handoff-tests.cjs
           node tests/gamepad/tests.cjs
           node tests/gamepad/protocol-tests.cjs
           node tests/gamepad/travel-limits-tests.cjs
           node tests/gamepad/switch-defaults-tests.cjs
           node tests/gamepad/icons-overview-tests.cjs
           node tests/gamepad/auto-load-tests.cjs
+          node tests/gamepad/usb-switch-tests.cjs
+          node tests/gamepad/usb-reconnect-tests.cjs
           node tests/lighting/fn-ui-tests.cjs
           node tests/lighting/fn-selection-tests.cjs
           node tests/lighting/fn-protocol-tests.cjs
+          node tests/lighting/effect-preview-tests.cjs
 
       - name: Package public site
         shell: bash

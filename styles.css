@@ -222,7 +222,7 @@ button { color: inherit; }
 .summary-card span, .summary-card strong, .summary-card small { display: block; }
 .summary-card span { color: var(--muted); font-size: 11px; }
 .summary-card strong { margin-top: 7px; color: var(--mint); font-size: 17px; }
-.summary-card small { margin-top: 5px; color: #7790a2; font-size: 10px; }
+.summary-card small { margin-top: 5px; color: #7790a2; font-size: 10px; overflow-wrap: anywhere; }
 .activity-list, .fact-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .activity-list li, .fact-list li { display: flex; justify-content: space-between; gap: 15px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
 .activity-list li:last-child, .fact-list li:last-child { border-bottom: 0; }
@@ -237,7 +237,7 @@ button { color: inherit; }
 .performance-board { min-width: 0; }
 .performance-tuning > .panel-head { align-items: center; }
 .performance-tuning > .panel-head > div { max-width: 44rem; }
-.live-press-toggle { min-width: 16rem; padding: 11px 13px; border: 1px solid rgb(112 165 255 / 24%); border-radius: 11px; background: rgb(112 165 255 / 6%); }
+.performance-tuning .live-press-toggle { min-width: 16rem; padding: 11px 13px; border: 1px solid rgb(112 165 255 / 24%); border-radius: 11px; background: rgb(112 165 255 / 6%); }
 .live-press-toggle span { display: grid; gap: 5px; }
 .live-press-toggle small { color: var(--muted); font-size: 11px; line-height: 1.45; }
 .live-press-panel { overflow: hidden; background: radial-gradient(circle at 24% 25%, rgb(112 165 255 / 13%), transparent 35%), linear-gradient(145deg, var(--panel), #0b1825); }
@@ -287,7 +287,7 @@ button { color: inherit; }
 .performance-workspace-tabs button { min-height: 42px; padding: 10px 13px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 850; cursor: pointer; }
 .performance-workspace-tabs button:hover { color: var(--text); }
 .performance-workspace-tabs button.active { border-color: color-mix(in srgb, var(--mint) 42%, var(--line)); background: color-mix(in srgb, var(--mint) 10%, var(--control-bg)); color: var(--mint); box-shadow: inset 0 -2px color-mix(in srgb, var(--mint) 28%, transparent); }
-.experimental-performance-toggle { padding-inline: 11px; border: 1px solid rgb(255 195 109 / 24%); border-radius: 9px; background: rgb(255 195 109 / 5%); }
+.performance-tuning .experimental-performance-toggle { padding-inline: 11px; border: 1px solid rgb(255 195 109 / 24%); border-radius: 9px; background: rgb(255 195 109 / 5%); }
 .experimental-performance-toggle b { color: var(--amber); }
 .experimental-performance-toggle small, .dead-zone-toggle-row small { color: var(--muted); font-size: 11px; line-height: 1.45; }
 .experimental-performance-field { grid-template-columns: 1fr; }
@@ -348,6 +348,9 @@ button { color: inherit; }
 .field input[type="range"] { width: 100%; accent-color: var(--mint); }
 .range-pair { display: grid; grid-template-columns: 1fr clamp(3.75rem, 8vw, 4.375rem); align-items: center; gap: .5625rem; }
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
+.performance-tuning .switch-row > span { display: grid; gap: 5px; min-width: 0; }
+.performance-tuning .switch-row > span > b { font-size: .9375rem; line-height: 1.4; }
+.performance-tuning .switch-row > span > small { color: var(--muted); font-size: .75rem; line-height: 1.5; overflow-wrap: anywhere; }
 .switch-row:last-child { border-bottom: 0; }
 .switch-row p { margin: 4px 0 0; }
 .toggle { position: relative; width: 44px; height: 24px; flex: none; appearance: none; border-radius: 99px; background: #2a4153; cursor: pointer; transition: .2s; }
@@ -465,7 +468,10 @@ button { color: inherit; }
 .combination-key-grid button:hover, .combination-key-grid button.active { border-color: var(--mint); background: rgb(115 240 192 / 8%); color: var(--mint); }
 
 .lighting-page { display: grid; gap: 16px; }
-.lighting-command { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(225px, auto); align-items: center; gap: 20px 14px; overflow: hidden; background: radial-gradient(circle at 82% -35%, rgb(112 165 255 / 20%), transparent 46%), linear-gradient(135deg, #102638, #0a1825 64%); }
+.lighting-command { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 20px 14px; overflow: hidden; background: radial-gradient(circle at 82% -35%, rgb(112 165 255 / 20%), transparent 46%), linear-gradient(135deg, #102638, #0a1825 64%); }
+.lighting-command-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.lighting-command-controls > .lighting-power { min-width: 0; gap: 10px; padding: 14px 12px; }
+.lighting-command-controls > .lighting-power:only-child { grid-column: 1 / -1; justify-self: end; max-width: 24rem; }
 .lighting-command::after { content: ""; position: absolute; right: -70px; bottom: -115px; width: 250px; height: 250px; border: 1px solid rgb(115 240 192 / 12%); border-radius: 50%; box-shadow: 0 0 0 35px rgb(115 240 192 / 3%), 0 0 0 75px rgb(112 165 255 / 3%); pointer-events: none; }
 .lighting-command-copy { position: relative; z-index: 1; }
 .lighting-command-copy .eyebrow { display: block; margin-bottom: 9px; }
@@ -676,15 +682,15 @@ button { color: inherit; }
 .advanced-card.feature-card { min-height: 208px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 12px; overflow: hidden; padding: 13px; background: linear-gradient(150deg, color-mix(in srgb, var(--advanced-color) 7%, var(--control-bg)), var(--control-bg) 58%); }
 .advanced-card.feature-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--advanced-color); box-shadow: 0 0 15px var(--advanced-color); opacity: .85; }
 .advanced-card.feature-card header { align-items: center; }
-.advanced-card-index, .advanced-card-status { font: 850 7px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
+.advanced-card-index, .advanced-card-status { font: 850 10px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
 .advanced-card-index { color: var(--advanced-color); }
 .advanced-card-status { margin-left: auto; color: var(--muted); }
 .advanced-card.feature-card .advanced-info-button { width: 23px; height: 23px; color: var(--advanced-color); font-size: 11px; }
-.advanced-card-symbol { display: grid; place-items: center; width: fit-content; min-width: 47px; min-height: 38px; padding: 7px 9px; border: 1px solid color-mix(in srgb, var(--advanced-color) 48%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--advanced-color) 10%, transparent); color: var(--advanced-color); font: 950 10px/1 ui-monospace, SFMono-Regular, Consolas, monospace; box-shadow: inset 0 0 18px color-mix(in srgb, var(--advanced-color) 6%, transparent); }
-.advanced-card.feature-card .advanced-card-copy h3 { margin: 0; color: var(--text); font-size: 14px; }
-.advanced-card.feature-card .advanced-card-copy p { min-height: 0; margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.advanced-card-symbol { display: grid; place-items: center; width: fit-content; min-width: 47px; min-height: 38px; padding: 7px 9px; border: 1px solid color-mix(in srgb, var(--advanced-color) 48%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--advanced-color) 10%, transparent); color: var(--advanced-color); font: 950 13px/1 ui-monospace, SFMono-Regular, Consolas, monospace; box-shadow: inset 0 0 18px color-mix(in srgb, var(--advanced-color) 6%, transparent); }
+.advanced-card.feature-card .advanced-card-copy h3 { margin: 0; color: var(--text); font-size: 18px; line-height: 1.35; }
+.advanced-card.feature-card .advanced-card-copy p { min-height: 0; margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .advanced-card.feature-card footer { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
-.advanced-card.feature-card footer span, .advanced-card.feature-card footer b { font: 850 8px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.advanced-card.feature-card footer span, .advanced-card.feature-card footer b { font: 850 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .advanced-card.feature-card footer span { color: var(--muted); }
 .advanced-card.feature-card footer b { color: var(--advanced-color); }
 .advanced-card.feature-card footer i { margin-left: 5px; font-style: normal; transition: transform .16s; }
@@ -1173,7 +1179,8 @@ body { background: radial-gradient(circle at 88% 2%, var(--body-glow) 0, transpa
   .socd-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .performance-primary.with-live-monitor { grid-template-columns: 1fr; }
   .live-press-panel.compact .live-press-layout { grid-template-columns: minmax(12rem, .65fr) minmax(18rem, 1.35fr); align-items: center; }
-  .lighting-command { grid-template-columns: 1fr 1fr; }
+  .lighting-command { grid-template-columns: minmax(0, 1fr); }
+  .lighting-command-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lighting-command-copy { grid-column: 1 / -1; }
   .lighting-layout { grid-template-columns: 1fr; }
   .lighting-layout > .full-span { grid-column: auto; }
@@ -1214,7 +1221,7 @@ body { background: radial-gradient(circle at 88% 2%, var(--body-glow) 0, transpa
   .live-press-layout { grid-template-columns: 1fr; }
   .actuation-tuning-columns, .tuning-fields { grid-template-columns: 1fr; }
   .performance-tuning > .panel-head, .layer-bar, .calibration-board-guide { align-items: stretch; flex-direction: column; }
-  .live-press-toggle { width: 100%; min-width: 0; }
+  .performance-tuning .live-press-toggle { width: 100%; min-width: 0; }
   .layer-tabs { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .layer-bar > span { padding: 0 4px 3px; }
   .mapping-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1291,6 +1298,7 @@ body { background: radial-gradient(circle at 88% 2%, var(--body-glow) 0, transpa
   .combination-report-diagram { grid-template-columns: 1fr; text-align: center; }
   .combination-report-diagram i { width: 1px; height: 14px; margin: 0 auto; }
   .lighting-command { grid-template-columns: 1fr; }
+  .lighting-command-controls { grid-template-columns: minmax(0, 1fr); }
   .lighting-command-copy { grid-column: auto; }
   .lighting-power { width: 100%; }
   .lighting-tabs { display: grid; grid-template-columns: 1fr; }

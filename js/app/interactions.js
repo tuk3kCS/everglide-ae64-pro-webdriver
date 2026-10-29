@@ -749,6 +749,7 @@ function bindPage() {
         document.querySelector(`#${id}Value`).textContent = String(base[field]);
         if (target === "strip") state.dirty.decorativeBase = true;
         else state.dirty.lightingBase = true;
+        if (target === "main") refreshLightingEffectPreview();
         renderStatus();
       }),
     );

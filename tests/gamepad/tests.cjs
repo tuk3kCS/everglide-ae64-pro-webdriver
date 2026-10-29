@@ -42,9 +42,24 @@ for (const opposition of ["difference", "neutral", "deeper"]) { c.sticks[0].oppo
 const { fixture } = require("./fixture.cjs");
 const f = fixture();
 check(f.nodes.get("keyboard").innerHTML.match(/data-key=/g).length === 64, "Integrated hardware editor renders all 64 keys");
+check(!f.nodes.get("keyboard").innerHTML.includes(" bound"), "Fresh previews have no controller assignments");
+check(f.nodes.get("mappedCount").textContent === "0 assigned", "Fresh previews report zero assignments");
+const empty = M.validate(M.emptyProfile());
+check(empty.bindings.every((binding) => binding.key === null), "All 24 fresh controller slots are unassigned");
+check(M.evaluate(empty, Array(64).fill(4), Array(64).fill(true)).lt === 0, "Unassigned keys cannot drive the controller");
 check(f.nodes.get("apply").disabled === true, "No custom capability means no Apply");
 check(!f.html.includes("https://"), "Hardware controls have no factory dependency");
 f.component.dispose();
 check(f.intervals.size === 0, "Leaving the tab stops its watchdog");
 check([...f.events.hid.values()].every((set) => set.size === 0), "Leaving the tab removes HID listeners");
-console.log(`PASS: ${checks} model and integrated-UI checks.`);
+const fresh = fixture();
+(async () => {
+  await fresh.component.ready;
+  check(fresh.saved().bindings.every((binding) => binding.key === null), "Initial draft persists empty assignments");
+  fresh.nodes.get("controlPicker").listeners.click({ target: { closest: () => ({ dataset: { control: "LT" } }) } });
+  check(fresh.saved().bindings.find((binding) => binding.control === "LT").key === 15, "A fresh profile still accepts manual assignments");
+  await fresh.nodes.get("restoreDefaults").listeners.click();
+  check(fresh.saved().bindings.filter((binding) => binding.key !== null).length === 6, "Explicit example restore retains the six sample assignments");
+  fresh.component.dispose();
+  console.log(`PASS: ${checks} model and integrated-UI checks.`);
+})().catch((error) => { console.error(error); process.exitCode = 1; });

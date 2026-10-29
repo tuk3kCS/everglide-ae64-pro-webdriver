@@ -31,7 +31,7 @@ const context = {
   },
 };
 context.window = context;vm.createContext(context);
-for (const file of ["js/app/gamepad-page.js", "js/app/firmware-page.js"]) vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context);
+for (const file of ["js/app/gamepad-usb.js", "js/app/gamepad-page.js", "js/app/firmware-page.js"]) vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context);
 async function main() {
   await vm.runInContext("loadFirmwareCatalog()", context);
   assert.equal(starts.length, 0);assert.equal(fetches[0], "https://example.test/keyboard-driver/firmware/catalog.json");

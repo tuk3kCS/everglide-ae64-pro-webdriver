@@ -447,14 +447,19 @@ function stopTravelPolling(clear = false) {
 function updateLiveKeyboard(matrix) {
   state.hardware.liveMatrix = matrix;
   state.hardware.liveUpdatedAt = Date.now();
+  syncLightingEffectPreviewStatus();
+  // Keep received frames for later use, but never paint over a staged effect.
+  if (lightingEffectPreviewSource().approximate) return;
   document.querySelectorAll(".lighting-preview [data-key]").forEach((node) => {
     const key = keys[Number(node.dataset.key)],
       matrixIndex = key ? lightingMatrixIndex(key) : null,
       record = matrixIndex === null ? null : matrix[matrixIndex];
     if (key && state.dirty.customLighting.has(key.id)) return;
+    node.removeAttribute?.("data-effect-preview");
     if (record) node.style.setProperty("--key-color", rgbToHex(record));
     node.querySelectorAll("[data-spacebar-led-index]").forEach((dot) => {
       const ledRecord = matrix[Number(dot.dataset.spacebarLedIndex)];
+      dot.removeAttribute?.("data-effect-preview");
       if (ledRecord) dot.style.setProperty("--space-led-color", rgbToHex(ledRecord));
     });
   });
@@ -524,16 +529,18 @@ function updateFnLightingState(status, targetLayer = 0, triggerId = null) {
     if (key && label)
       label.textContent = keycodeLabel(meta ? meta.resolved : displayedKeycode(key, 0));
   });
-  const badge = document.querySelector(".unified-lighting-preview .badge");
+  const badge = document.querySelector(".unified-lighting-preview .badge:not(#lightingEffectPreviewStatus)");
   if (badge)
     badge.textContent = pressed
       ? `KEYBOARD + 38 LEDS · FN${activeLayer}`
       : "KEYBOARD + 38 LEDS";
+  syncLightingEffectPreviewStatus();
 }
 function updateLiveStatus(message, error = false) {
   const node = document.querySelector("#liveRgbStatus");
   if (!node) return;
-  node.textContent = message;
+  node.textContent = !error && lightingEffectPreviewSource().draft ? "DRAFT · APPROXIMATE" : message;
+  node.title = message;
   node.classList.toggle("ready", !error);
   node.classList.toggle("experimental", error);
 }

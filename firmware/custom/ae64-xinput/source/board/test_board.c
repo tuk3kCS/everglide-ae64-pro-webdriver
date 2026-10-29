@@ -7,6 +7,7 @@
 static unsigned checks;
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"FAIL %s:%d: %s\n",__FILE__,__LINE__,#x);exit(1);} }while(0)
 static uint8_t ram[0x100000],last_packet[20],last_reply[64];
+static uint32_t usb_registers[0x400/4];
 static uint32_t now;
 static unsigned scan_count,schedule_count,dispatch_count,ep0_count,writes,reads,events;
 static const struct stock_endpoint *ep_in,*ep_out;
@@ -17,6 +18,7 @@ static uint8_t profile_flash[4][0x2000];
 static unsigned fn_renders,fn_saves;
 static bool fail_flash;
 void *test_stock_ram(uintptr_t a) {
+    if(a>=0xf300c000u && a<0xf300c400u)return (uint8_t *)usb_registers+(a-0xf300c000u);
     if(a>=0x800b2000u&&a<0x800c0000u) {
         unsigned profile=(unsigned)(a-0x800b2000u)/0x4000u,offset=(unsigned)(a-0x800b2000u)%0x4000u;
         CHECK(profile<4&&offset<0x2000u);return profile_flash[profile]+offset;
@@ -50,7 +52,7 @@ void stock_add_endpoint(uint8_t b,const struct stock_endpoint *e) {
 int stock_usb_initialize(uint8_t b,uintptr_t base,void (*cb)(uint8_t,uint8_t)) {
     CHECK(b==0 && base==0xf300c000);event_callback=cb;return 0;
 }
-void stock_usb_event(uint8_t b,uint8_t e) { CHECK(b==0);(void)e;events++; }
+void stock_usb_event(uint8_t b,uint8_t e) { CHECK(b==0);if(e==1)ram[0x80584]=1;else if(e==7||e==6)ram[0x80584]=3;events++; }
 int stock_write(uint8_t bus,uint8_t ep,const uint8_t *bytes,uint32_t n) {
     CHECK(bus==0 && ep==0x85 && n==20);if(fail_write)return -2;
     CHECK(owned==NULL);owned=bytes;memcpy(last_packet,bytes,20);writes++;return 0;
@@ -77,6 +79,7 @@ static void key(unsigned k,unsigned travel,bool down) {
 }
 static void fixture(void) {
     memset(ram,0,sizeof(ram));owned=NULL;now=0;
+    memset(usb_registers,0,sizeof(usb_registers));usb_registers[0x140/4]=1;usb_registers[0x148/4]=0x157;
     const uint8_t configuration[91]={
       9,2,91,0,3,1,0,0xa0,100,9,4,0,0,1,3,1,1,0,
       9,0x21,0x10,1,0,1,0x22,62,0,7,5,0x81,3,8,0,1,
@@ -84,6 +87,7 @@ static void fixture(void) {
       9,4,2,0,2,3,0,0,0,9,0x21,0x10,1,0,1,0x22,34,0,7,5,0x83,3,64,0,1,7,5,4,3,64,0,1
     };
     memcpy(ram+0x80318,configuration,91);
+    ram[0x80584]=3;
     for(unsigned k=0;k<64;k++){p16(rec(k),1);p16(perf(k)+2,4000);ram[perf(k)+8]=1;}
     CHECK(board_usb_initialize(0,0xf300c000,stock_usb_event)==0);
     CHECK(ep_in && ep_out && event_callback);
@@ -157,7 +161,7 @@ static void digital(void) {
 static void protocol(void) {
     uint8_t *req=ram+0x80b00+0x65c;memset(req,0,64);req[0]=0x10;req[1]=0x20;req[2]=1;req[3]=42;memcpy(req+4,"AGP1",4);
     board_dispatch_hook();CHECK(last_reply[0]==0x10 && last_reply[1]==0x20 && last_reply[3]==42 && last_reply[8]==0);
-    CHECK(last_reply[10]==0x0a && last_reply[14]==GP_CAP_XINPUT && !(last_reply[14]&GP_CAP_PERSISTENT));
+    CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH) && !(last_reply[14]&GP_CAP_PERSISTENT));
     unsigned old=dispatch_count;req[0]=1;board_dispatch_hook();CHECK(dispatch_count==old+1);
 }
 int main(void) {

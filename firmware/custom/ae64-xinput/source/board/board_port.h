@@ -58,4 +58,5 @@ int board_usb_initialize(uint8_t,uintptr_t,void (*)(uint8_t,uint8_t));
 bool board_ep0_hook(uint8_t,const struct ae64_usb_setup *,uint8_t **,uint32_t *);
 const uint8_t *board_configuration(uint8_t);
 const uint8_t *board_other_speed(uint8_t);
+const uint8_t *board_device_descriptor(uint8_t);
 #endif

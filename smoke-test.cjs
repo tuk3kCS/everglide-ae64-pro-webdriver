@@ -28,10 +28,12 @@ const APP_FILES = [
   "js/app/mt-end-toggle.js",
   "js/app/macro.js",
   "js/app/lighting-color.js",
+  "js/app/gamepad-usb.js",
   "js/app/gamepad-page.js",
   "js/app/gamepad-overview.js",
   "js/app/firmware-page.js",
   "js/app/fn-lighting.js",
+  "js/app/lighting-preview.js",
   "js/app/pages.js",
   "js/app/interactions.js",
   "js/app/device.js",
@@ -1063,7 +1065,10 @@ async function main() {
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting palette beautification omitted ${required}.`);
   if ((lightingMarkup.match(/data-keyboard-input="allow"/g) || []).length < 4) throw new Error("Palette HEX/RGB fields must remain typable while keyboard-test suppression is active.");
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
-  if ((lightingMarkup.match(/class="panel full-span area-power-panel"/g) || []).length !== 1) throw new Error("Keyboard power and both physical LED-bank switches must share one panel.");
+  const lightingCommand = lightingMarkup.match(/<section class="panel lighting-command">[\s\S]*?<\/section>/)?.[0] || "";
+  const powerControls = ['id="lightingLive"', 'id="lightingOpen"', 'id="upperLighting"', 'id="lowerLighting"'];
+  if (!powerControls.every((id, index) => lightingCommand.includes(id) && (index === 0 || lightingCommand.indexOf(id) > lightingCommand.indexOf(powerControls[index - 1])))) throw new Error("Live RGB, keyboard power and both LED-bank switches must appear in order in the Lighting command panel.");
+  if (lightingMarkup.includes('class="panel full-span area-power-panel"')) throw new Error("Keyboard lighting must not retain an empty power panel after moving the switches.");
   for (const removedLightingPanel of ['dual-lighting-card', 'fn-lighting-card', 'fnLightingStatus', 'class="panel full-span capture-note experimental-note"'])
     if (lightingMarkup.includes(removedLightingPanel)) throw new Error(`Removed Lighting panel remains: ${removedLightingPanel}.`);
   if (!lightingMarkup.includes("UNADVERTISED") || lightingMarkup.includes("L21–L23 are experimental")) throw new Error("Unadvertised modes must remain labeled without an always-visible warning.");

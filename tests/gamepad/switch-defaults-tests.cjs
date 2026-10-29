@@ -9,7 +9,7 @@ assert.deepEqual(M.defaultTravel(0.01), { startMm: 0, endMm: 0.01, maxTravelMm: 
 assert.throws(() => M.defaultTravel(0.005));
 const provider = (key) => ({ key: key.id, maxTravelUm: key.id === 17 ? 3600 : Number(ur.axis_range_max), switchName: key.id === 17 ? "Other switch" : "UR Ice Magnetic" });
 async function main() {
-  const f = fixture({ getKeyTravel: provider });await f.component.ready;
+  const f = fixture({ savedProfile: M.defaults(), getKeyTravel: provider });await f.component.ready;
   assert.equal(f.nodes.get("maxTravelMm").value, "3.31");assert.equal(f.nodes.get("endMm").value, "3.31");assert.match(f.nodes.get("deviceTravel").textContent, /UR Ice Magnetic/);
   const rt = f.saved().bindings.find((b) => b.control === "RT");assert.equal(rt.maxTravelMm, 3.6);assert.equal(rt.endMm, 3.5);
   // Newly assigned controls use the physical key's switch, not an unassigned 4mm default.
