@@ -10,6 +10,7 @@
   let config = M.emptyProfile(), selectedKey = 15, selectedControl = "LT", transport = getTransport(), capabilities = null, live = false, generation = 0, busy = false, toastTimer, profileLoaded = false;
   let travels = Array(64).fill(0), pressed = Array(64).fill(false), source = "simulator", lastRead = 0, deviceLimits = [];
   let usbState = null, usbSwitchPending = false, usbSwitchError = "";
+  let hasLocalDraft = false, hardwareProfile = null;
   const rangeFields = ["startMm", "endMm", "maxTravelMm"], signature = (b) => [b.key, ...rangeFields.map((field) => b[field])];
   const legacyDefault = (b) => b.startMm === 0.5 && b.endMm === 3.5 && b.maxTravelMm === 4;
   let automaticTravel = new Set(M.CONTROLS.map((c) => c.id));
@@ -17,7 +18,7 @@
   try {
     const saved = localStorage.getItem(STORAGE);
     if (saved) {
-      const value = JSON.parse(saved); config = M.validate(value);
+      const value = JSON.parse(saved); config = M.validate(value); hasLocalDraft = true;
       automaticTravel = new Set(config.bindings.filter((b) => Array.isArray(value.automaticTravel)
         ? value.automaticTravel.some((item) => item?.control === b.control && JSON.stringify(item.values) === JSON.stringify(signature(b)))
         : legacyDefault(b)).map((b) => b.control));
@@ -64,6 +65,8 @@
   const binding = () => config.bindings.find((b) => b.control === selectedControl);
   function compatible() { return Boolean(!usbSwitchPending && transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000A && (config.mode === "off" || capabilities.transports?.[config.transport] === true)); }
   function usbSwitchSupported() { return Boolean(transport?.connected && capabilities?.verified === true && capabilities.protocolVersion === 1 && capabilities.boardId === 0x0030000a && capabilities.usbDeviceSwitch === true); }
+  const profileFingerprint = (value) => JSON.stringify([value.mode, value.transport, value.bindings, value.sticks]);
+  function draftDiffersFromKeyboard() { return Boolean(hardwareProfile && profileFingerprint(config) !== profileFingerprint(hardwareProfile)); }
   function updateUsbSwitch() {
     const supported = usbSwitchSupported(), toggle = $("usbDeviceEnabled");
     toggle.checked = Boolean(usbState && (usbSwitchPending ? usbState.targetEnabled : usbState.enabled));
@@ -86,7 +89,15 @@
     let title = "Ready to design your profile", text = "Connect for real key-travel previews. Applying a profile becomes available when compatible firmware is detected.";
     if (transport?.connected && !capabilities?.verified) { title = "Keyboard connected · preview available"; text = "This firmware does not provide the custom gamepad interface. You can read travel, design mappings and export a profile; controller output and Apply are unavailable."; banner.classList.add("warning"); }
     else if (capabilities?.verified && !compatible()) { title = "This controller type is unavailable on the connected firmware"; text = config.transport === "xinput" ? "Native Xbox / XInput support is required for this profile. A USB HID gamepad is a separate fallback." : "The connected firmware does not advertise a USB HID gamepad output."; banner.classList.add("warning"); }
-    else if (compatible()) { title = "Compatible custom gamepad firmware detected"; text = capabilities.persistent ? "Apply writes your mappings to the keyboard. The profile is retained after reconnecting." : "Apply activates mappings for this session. Export a file to retain them; this firmware does not advertise persistent storage."; }
+    else if (compatible()) {
+      title = "Compatible custom gamepad firmware detected";
+      text = capabilities.persistent ? "Apply writes your mappings to the keyboard. The profile is retained after reconnecting." : "Apply activates mappings for this session. Export a file to retain them; this firmware does not advertise persistent storage.";
+      if (draftDiffersFromKeyboard()) {
+        title = "Local draft differs from keyboard";
+        text = "Your local assignments are preserved. Apply to keyboard to activate this draft, or choose Read keyboard profile to replace it with the keyboard's settings. " + text;
+        banner.classList.add("warning");
+      }
+    }
     banner.querySelector("strong").textContent = title; banner.querySelector("p").textContent = text;
   }
   function renderKeyboard() {
@@ -139,12 +150,12 @@
   }
   function change(mutator, fullRender = false) {
     const next = JSON.parse(JSON.stringify(config)); mutator(next);
-    try { config = M.validate(next); persist(); if (fullRender) render(); else { renderKeyboard(); renderControls(); renderEditor(); updatePreview(); updateCompatibility(); } return true; }
+    try { config = M.validate(next); hasLocalDraft = true; persist(); if (fullRender) render(); else { renderKeyboard(); renderControls(); renderEditor(); updatePreview(); updateCompatibility(); } return true; }
     catch (error) { $("editorError").textContent = error.message; return false; }
   }
   function stopLive(clear = false) { live = false; generation += 1; if (clear) { travels.fill(0); pressed.fill(false); } source = "simulator"; renderEditor(); updateCompatibility(); updatePreview(); }
   async function refreshCapabilities() {
-    transport = getTransport(); capabilities = null; profileLoaded = false; usbState = null; usbSwitchPending = false; usbSwitchError = "";
+    transport = getTransport(); capabilities = null; profileLoaded = false; usbState = null; usbSwitchPending = false; usbSwitchError = ""; hardwareProfile = null;
     if (!transport?.connected) { options.onCapabilities?.(null); updateCompatibility(); return; }
     const connection = transport;
     try {
@@ -211,9 +222,16 @@
       transport = getTransport();
       const result = await window.AE64GamepadProtocol.read(transport);
       if (disposed || connection !== getTransport() || !connection.connected) return;
-      if (JSON.stringify(config) !== fingerprint) throw new Error("Your draft changed while reading. Read the keyboard profile again.");
-      options.onRead?.(result.config, transport);
-      config = M.validate(result.config); automaticTravel = new Set(config.bindings.filter(legacyDefault).map((b) => b.control)); automaticMaximum = new Set(config.bindings.filter((b) => b.maxTravelMm === 4).map((b) => b.control)); capabilities = result; deviceLimits = [];
+      const changedWhileReading = JSON.stringify(config) !== fingerprint;
+      if (!automatic && changedWhileReading) throw new Error("Your draft changed while reading. Read the keyboard profile again.");
+      const observed = M.validate(result.config), preserveDraft = automatic && (hasLocalDraft || changedWhileReading);
+      options.onRead?.(observed, transport);
+      hardwareProfile = observed; capabilities = result; deviceLimits = [];
+      options.onCapabilities?.(capabilities);
+      if (!preserveDraft) {
+        config = M.validate(observed); automaticTravel = new Set(config.bindings.filter(legacyDefault).map((b) => b.control)); automaticMaximum = new Set(config.bindings.filter((b) => b.maxTravelMm === 4).map((b) => b.control));
+      }
+      hasLocalDraft = true;
       if (usbSwitchSupported() && typeof window.AE64GamepadProtocol.readUsbState === "function" && (!automatic || !usbState)) {
         try {
           const found = await window.AE64GamepadProtocol.readUsbState(connection);
@@ -222,8 +240,9 @@
         } catch (error) { if (disposed || connection !== getTransport()) return; usbState = null; usbSwitchError = error.message; }
       }
       const original = JSON.stringify(config); await refreshTravelDefaults(); if (disposed || connection !== getTransport() || !connection.connected) return;
-      profileLoaded = true; $("deviceStatus").textContent = "Keyboard gamepad profile loaded";
-      if (!automatic || original !== JSON.stringify(config)) notify(original === JSON.stringify(config) ? "Keyboard gamepad profile read. Your local draft now matches the keyboard." : "Keyboard profile read. Default travel windows now match your switches; Apply to activate the adjusted draft.");
+      profileLoaded = true; $("deviceStatus").textContent = preserveDraft ? "Keyboard profile read · local draft preserved" : "Keyboard gamepad profile loaded";
+      if (preserveDraft && draftDiffersFromKeyboard()) notify("Keyboard profile read. Your local draft differs and was preserved. Apply to keyboard to activate it, or Read keyboard profile to replace it.");
+      else if (!automatic || original !== JSON.stringify(config)) notify(original === JSON.stringify(config) ? "Keyboard gamepad profile read. Your local draft now matches the keyboard." : "Keyboard profile read. Default travel windows now match your switches; Apply to activate the adjusted draft.");
     } catch (error) { if (!disposed && connection === getTransport()) notify(automatic ? `Could not read the gamepad profile automatically. Use Read keyboard profile to retry. ${error.message}` : error.message, true); }
     finally { setBusy(false); if (!disposed) updateCompatibility(); }
   }
@@ -280,14 +299,14 @@
     if (!compatible() || busy || !window.AE64GamepadProtocol?.upload) return;
     stopLive(true); setBusy(true); updateCompatibility();
     const snapshot = M.validate(config), fingerprint = JSON.stringify(snapshot);
-    try { const result = await window.AE64GamepadProtocol.upload(transport, snapshot); if (result?.verified === true) options.onApplied?.(snapshot, transport); notify(JSON.stringify(config) !== fingerprint ? "The earlier profile was applied. Your newer edits remain a local draft." : (result?.persistent === true ? "Profile applied and saved to the keyboard." : "Profile applied for this session. Keep an exported copy.")); }
+    try { const result = await window.AE64GamepadProtocol.upload(transport, snapshot); if (result?.verified === true) { hardwareProfile = M.validate(snapshot); options.onApplied?.(snapshot, transport); } notify(JSON.stringify(config) !== fingerprint ? "The earlier profile was applied. Your newer edits remain a local draft." : (result?.persistent === true ? "Profile applied and saved to the keyboard." : "Profile applied for this session. Keep an exported copy.")); }
     catch (error) { $("editorError").textContent = error.message; notify(error.rejected ? error.message : `Profile not applied or confirmed: ${error.message}`, true); }
     finally { setBusy(false); if (!disposed) updateCompatibility(); }
   });
   $("export").addEventListener("click", () => { const blob = new Blob([JSON.stringify(M.validate(config), null, 2) + "\n"], { type: "application/json" }), url = URL.createObjectURL(blob), link = document.createElement("a"); link.href = url; link.download = `${config.name.replace(/[^a-z0-9_-]+/gi, "-").slice(0, 50) || "ae64-gamepad"}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); });
   $("import").addEventListener("click", () => $("importFile").click());
-  $("importFile").addEventListener("change", async () => { const file = $("importFile").files[0]; try { if (!file) return; if (file.size > 65536) throw new Error("Choose a profile file smaller than 64 KB."); const next = M.validate(JSON.parse(await file.text())); stopLive(true); config = next; automaticTravel.clear(); automaticMaximum.clear(); persist(); render(); notify("Profile imported. Nothing was written to the keyboard."); } catch (error) { notify(error.message, true); } finally { $("importFile").value = ""; } });
-  $("restoreDefaults").addEventListener("click", async () => { stopLive(true); config = M.defaults(); automaticTravel = new Set(M.CONTROLS.map((c) => c.id)); automaticMaximum = new Set(automaticTravel); useAutomaticTravel(); selectedKey = 15; selectedControl = "LT"; persist(); render(); await refreshTravelDefaults(); notify("Example profile restored using your switches' travel limits. Nothing was written to the keyboard."); });
+  $("importFile").addEventListener("change", async () => { const file = $("importFile").files[0]; try { if (!file) return; if (file.size > 65536) throw new Error("Choose a profile file smaller than 64 KB."); const next = M.validate(JSON.parse(await file.text())); stopLive(true); config = next; hasLocalDraft = true; automaticTravel.clear(); automaticMaximum.clear(); persist(); render(); notify("Profile imported. Nothing was written to the keyboard."); } catch (error) { notify(error.message, true); } finally { $("importFile").value = ""; } });
+  $("restoreDefaults").addEventListener("click", async () => { stopLive(true); config = M.defaults(); hasLocalDraft = true; automaticTravel = new Set(M.CONTROLS.map((c) => c.id)); automaticMaximum = new Set(automaticTravel); useAutomaticTravel(); selectedKey = 15; selectedControl = "LT"; persist(); render(); await refreshTravelDefaults(); notify("Example profile restored using your switches' travel limits. Nothing was written to the keyboard."); });
   const onDisconnect = (event) => {
     if (disposed || event.device !== transport?.device) return;
     stopLive(true); transport = null; capabilities = null; profileLoaded = false; deviceLimits = []; usbState = null; options.onCapabilities?.(null); updateCompatibility();

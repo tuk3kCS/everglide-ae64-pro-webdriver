@@ -4,6 +4,7 @@
 #include "board_port.h"
 #include "default_profile.h"
 #include "fn_storage.h"
+#include "gp_storage.h"
 
 #define RECORD_BASE UINT32_C(0x82bb8)
 #define PERFORMANCE_BASE UINT32_C(0x865cc)
@@ -32,6 +33,8 @@ struct board_state {
     struct ae64_xusb xusb;
     struct gp_report report;
     uint16_t travel[64], maximum[64];
+    uint64_t suppressed_events;
+    uint8_t scanner_event[64];
     struct stock_interface interface;
     struct stock_endpoint endpoint_in,endpoint_out;
     uint8_t configuration[CONFIG_LENGTH], other[CONFIG_LENGTH];
@@ -45,6 +48,8 @@ struct board_state {
     uint32_t usb_revision,usb_requested_at,usb_phase_at,usb_interrupt_mask;
     uint8_t usb_phase;
     uint8_t usb_native_status;
+    uint8_t profile;
+    bool profile_valid;
     bool usb_enabled,usb_target;
     bool initialized,suspended,out_armed;
     void (*original_event)(uint8_t,uint8_t);
@@ -53,6 +58,9 @@ static struct board_state state;
 static struct fn_rgb_context fn_protocol;
 static struct fn_storage fn_colors;
 static bool fn_save_ok;
+static void gp_load_current(void);
+static void restore_scanner_events(void);
+static bool install(void *,const struct gp_physical_config *,uint8_t,const uint8_t[208]);
 #ifndef AE64_HOST_TEST
 _Static_assert(sizeof(struct stock_interface)==28,"Stock RV32 interface ABI");
 _Static_assert(sizeof(struct stock_endpoint)==8,"Stock RV32 endpoint ABI");
@@ -73,7 +81,7 @@ static void usb_persona(bool enabled) {
     state.usb_enabled=enabled;
     /* Keep stock VID/PID/strings and distinguish Windows OS-descriptor caches. */
     copy(state.device_descriptor,RAM(0x80374),18);
-    state.device_descriptor[12]=enabled?3:4;state.device_descriptor[13]=1;
+    state.device_descriptor[12]=enabled?7:8;state.device_descriptor[13]=1;
     ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
     if(!enabled) { clear(state.compatible,40);state.compatible[0]=16;state.compatible[5]=1;state.compatible[6]=4; }
 }
@@ -155,12 +163,37 @@ static void fn_ensure_current(void) {
     if(!fn_colors.loaded||fn_colors.profile!=load8(0x82ba8))fn_load_current();
 }
 void board_fn_load_hook(void) {
+    restore_scanner_events();
     stock_fn_load_original();fn_load_current();
+    if(state.initialized)gp_load_current();
 }
 void board_fn_save_hook(void) {
+    if(state.initialized && state.profile!=load8(0x82ba8))gp_load_current();
     fn_ensure_current();stock_fn_save_original();fn_save_ok=false;
     if(fn_colors.loaded&&fn_colors.profile==load8(0x82ba8))
         fn_save_ok=fn_storage_append(&fn_colors,stock_flash_program,fn_image(fn_colors.profile));
+    if(state.initialized && state.profile_valid && state.profile==load8(0x82ba8))
+        fn_save_ok=fn_save_ok&&gp_storage_append(state.profile,state.vendor.active,true,state.vendor.revision,
+            stock_flash_program,RAM(gp_storage_address(state.profile)));
+}
+static void gp_load_current(void) {
+    const uint8_t profile=load8(0x82ba8);
+    _Alignas(4) uint8_t wire[GP_WIRE_BYTES];
+    uint32_t disk_revision=1;bool reserved_usb_default;
+    bool restored=profile<4 && gp_storage_read(RAM(gp_storage_address(profile)),profile,wire,&reserved_usb_default,&disk_revision);
+    if(!restored)copy(wire,default_profile,GP_WIRE_BYTES);
+    uint16_t ceiling[GP_KEY_COUNT];for(unsigned i=0;i<GP_KEY_COUNT;i++)ceiling[i]=10000;
+    uint32_t revision=state.vendor.initialized?state.vendor.revision+1u:disk_revision;
+    struct gp_physical_config mapping;uint8_t transport;
+    if(!gp_wire_decode(wire,revision,ceiling,&mapping,&transport) || (transport!=GP_CAP_XINPUT&&mapping.mode!=GP_OFF)) {
+        copy(wire,default_profile,GP_WIRE_BYTES);
+        gp_wire_decode(wire,revision,ceiling,&mapping,&transport);
+    }
+    uint32_t saved=irq_lock();
+    state.mapping=mapping;state.profile=profile;state.profile_valid=profile<4;
+    gp_vendor_init(&state.vendor,wire,revision,GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_PERSISTENT,ceiling,install,0);
+    gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+    irq_unlock(saved);
 }
 static bool fn_read(void *user,uint8_t profile,uint8_t layer,uint8_t *colors,bool *enabled,uint32_t *revision) {
     (void)user;
@@ -197,6 +230,21 @@ void board_fn_render_hook(void) {
 }
 static uintptr_t record(unsigned row,unsigned column) { return RECORD_BASE+row*0x5e8u+column*0x48u; }
 static uintptr_t performance(unsigned row,unsigned column) { return PERFORMANCE_BASE+row*0xd2u+column*10u; }
+static void restore_scanner_events(void) {
+    /* Native scan 0x5ece..0x6cd2 returns after the first changed event byte
+     * (0x6bb6..0x6c0a). Leaving our keyboard-only zero in r+9 makes a held
+     * key look changed on every pass, starving all later matrix positions.
+     * Restore scan history only around stock_scan; stock_schedule still sees
+     * the suppressed keyboard events. Never overwrite a newer native event
+     * or import an old profile's event history into a newly loaded profile. */
+    if(state.initialized && state.profile==load8(0x82ba8)) {
+        unsigned key=0;
+        for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++)
+            if((state.suppressed_events&(UINT64_C(1)<<key)) && !load8(record(row,col)+9))
+                store8(record(row,col)+9,state.scanner_event[key]);
+    }
+    state.suppressed_events=0;
+}
 static bool usb_start(void *user,uint8_t endpoint,const uint8_t *data,size_t length) {
     (void)user;return stock_write(0,endpoint,data,(uint32_t)length)==0;
 }
@@ -208,8 +256,16 @@ static void refresh_maxima(void) {
     }
 }
 static bool install(void *user,const struct gp_physical_config *mapping,uint8_t transport,const uint8_t wire[208]) {
-    (void)user;(void)wire;
+    (void)user;
     if(transport!=GP_CAP_XINPUT && mapping->mode!=GP_OFF)return false;
+    if(!state.profile_valid||state.profile!=load8(0x82ba8)||state.usb_phase)return false;
+    /* Save the native keymap once, preserving both independent trailers.
+     * Install only after mapped flash readback confirms the complete record. */
+    fn_ensure_current();
+    if(!fn_colors.loaded||fn_colors.profile!=state.profile)return false;
+    stock_fn_save_original();
+    if(!fn_storage_append(&fn_colors,stock_flash_program,fn_image(state.profile)) ||
+       !gp_storage_append(state.profile,wire,true,mapping->revision,stock_flash_program,RAM(gp_storage_address(state.profile))))return false;
     uint32_t saved=irq_lock();state.mapping=*mapping;
     gp_physical_reset(&state.physical);
     state.report=(struct gp_report){0};irq_unlock(saved);
@@ -241,8 +297,13 @@ static void event(uint8_t bus,uint8_t value) {
     } else if(value==6) {
         state.suspended=false;arm_out();
     } else if(value==7) {
-        state.suspended=false;state.out_armed=false;ae64_xusb_configured(&state.xusb,state.usb_enabled);
-        gp_physical_reset(&state.physical);state.report=(struct gp_report){0};arm_out();
+        state.suspended=false;
+        /* Replayed SET_CONFIGURATION does not prove old DMA was cancelled. */
+        if(!state.xusb.configured && state.usb_enabled) {
+            ae64_xusb_configured(&state.xusb,true);
+            gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+        }
+        arm_out();
     }
     if(state.original_event)state.original_event(bus,value);
 }
@@ -267,12 +328,9 @@ int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8
      * Scan frames use each native calibrated maximum; missing calibration is neutral.
      */
     for(unsigned i=0;i<64;i++)state.maximum[i]=10000;
-    uint8_t transport=0;
-    gp_wire_decode(default_profile,1,state.maximum,&state.mapping,&transport);
-    gp_physical_reset(&state.physical);
-    gp_vendor_init(&state.vendor,default_profile,1,GP_CAP_XINPUT|GP_CAP_USB_SWITCH,state.maximum,install,0);
+    gp_load_current();
     fn_rgb_init(&fn_protocol,fn_read,fn_install,0,true);
-    fn_ensure_current();
+    fn_load_current();
     const struct ae64_xusb_io io={usb_start,0,0,0};
     ae64_xusb_init(&state.xusb,&usb_config,&io);
     ae64_xusb_ms_string(&usb_config,state.os_string);
@@ -302,8 +360,10 @@ bool board_ep0_hook(uint8_t bus,const struct ae64_usb_setup *setup,uint8_t **dat
     return stock_ep0_original(bus,setup,data,length);
 }
 void board_scan_hook(void) {
+    restore_scanner_events();
     stock_scan();
     if(!state.initialized)return;
+    if(state.profile!=load8(0x82ba8))gp_load_current();
     uint64_t valid=0,pressed=0;
     unsigned key=0;refresh_maxima();
     uint64_t suppress=xbox_active()?gp_physical_keyboard_suppression(&state.mapping,state.maximum):0;
@@ -317,6 +377,7 @@ void board_scan_hook(void) {
          */
         if(load8(r+8)&1u)pressed|=bit;
         if((suppress&bit) && load8(r+9)) {
+            state.scanner_event[key]=load8(r+9);state.suppressed_events|=bit;
             store8(r+9,0);
             /* Request stock event processing, including releases already held. */
             store32(STOCK_FLAGS,load32(STOCK_FLAGS)|1u);
@@ -363,6 +424,7 @@ void board_dispatch_hook(void) {
 const struct gp_report *board_test_report(void) { return &state.report; }
 bool board_test_install(const uint8_t *wire) {
     struct gp_physical_config c;uint8_t t;refresh_maxima();
-    return gp_wire_decode(wire,state.mapping.revision+1,state.maximum,&c,&t) && install(0,&c,t,wire);
+    if(!gp_wire_decode(wire,state.mapping.revision+1,state.maximum,&c,&t) || (t!=GP_CAP_XINPUT&&c.mode!=GP_OFF))return false;
+    state.mapping=c;gp_physical_reset(&state.physical);state.report=(struct gp_report){0};return true;
 }
 #endif

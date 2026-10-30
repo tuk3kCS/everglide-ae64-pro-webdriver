@@ -6,7 +6,7 @@ function fixture({ transport = null, connectTarget = transport, savedProfile = n
   const html = templates.window.AE64GamepadTemplate, ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
   const events = { document: new Map(), window: new Map(), hid: new Map() }, intervals = new Set(), notices = [];
   let current = transport, nextInterval = 0, busy = false;
-  function node(id = "") { return { id, listeners: {}, value: "", hidden: false, disabled: false, textContent: "", innerHTML: "", dataset: {}, className: "", files: [], style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, addEventListener(name, fn) { this.listeners[name] = fn; }, setAttribute() {}, querySelector() { return node(); } }; }
+  function node(id = "") { const children = new Map(); return { id, listeners: {}, value: "", hidden: false, disabled: false, textContent: "", innerHTML: "", dataset: {}, className: "", files: [], style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} }, addEventListener(name, fn) { this.listeners[name] = fn; }, setAttribute() {}, querySelector(selector) { if (!children.has(selector)) children.set(selector, node()); return children.get(selector); } }; }
   const nodes = new Map(ids.map((id) => [id, node(id)]));
   const root = { querySelector(selector) { const id = selector.slice(1); assert.ok(nodes.has(id), `Template supplies ${selector}`); return nodes.get(id); }, querySelectorAll() { return []; } };
   const add = (target) => (name, fn) => { if (!events[target].has(name)) events[target].set(name, new Set()); events[target].get(name).add(fn); };

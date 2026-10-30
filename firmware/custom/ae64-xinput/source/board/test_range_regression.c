@@ -23,8 +23,8 @@ static unsigned upload(const uint8_t wire[208]) {
 }
 int main(void) {
     base_board_tests();fixture();for(unsigned key=0;key<64;key++)p16(perf(key)+2,3310);
-    CHECK(upload(default_profile)==GP_VENDOR_CONFIG);
-    uint8_t wire[208];memcpy(wire,default_profile,208);
+    CHECK(upload(example_profile)==GP_VENDOR_CONFIG);
+    uint8_t wire[208];memcpy(wire,example_profile,208);
     for(unsigned i=0;i<24;i++)if(wire[16+i*8]!=255) {
         unsigned o=16+i*8;wire[o+4]=0xb8;wire[o+5]=0x0b;wire[o+6]=0xee;wire[o+7]=0x0c;
     }

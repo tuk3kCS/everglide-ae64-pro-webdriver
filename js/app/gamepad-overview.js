@@ -1,6 +1,6 @@
 "use strict";
 
-const gamepadOverview = { transport: null, config: null, pending: false, generation: 0, error: "" };
+const gamepadOverview = { transport: null, profileIndex: null, config: null, pending: false, generation: 0, error: "" };
 function gamepadDraft() {
   try { const value = localStorage.getItem("ae64-gamepad-studio-v1");return value ? window.AE64GamepadModel.validate(JSON.parse(value)) : null; }
   catch (_) { return null; }
@@ -11,7 +11,7 @@ function gamepadConfigurationEqual(a, b) {
   return JSON.stringify(fields(a)) === JSON.stringify(fields(b));
 }
 function gamepadOverviewSnapshot() {
-  const active = connected() && gamepadOverview.transport === state.transport ? gamepadOverview.config : null,
+  const active = connected() && gamepadOverview.transport === state.transport && gamepadOverview.profileIndex === Number(state.profile?.profileIndex || 0) ? gamepadOverview.config : null,
     draft = gamepadDraft(), config = draft || active,
     source = active && (!draft || gamepadConfigurationEqual(draft, active)) ? "active" : draft ? "draft" : "none";
   return { config, source, disabled: config?.mode === "off" };
@@ -19,16 +19,18 @@ function gamepadOverviewSnapshot() {
 function rememberGamepadProfile(config, transport) {
   if (transport !== state.transport || !transport?.connected) return;
   gamepadOverview.generation++;gamepadOverview.pending = false;gamepadOverview.transport = transport;
+  gamepadOverview.profileIndex = Number(state.profile?.profileIndex || 0);
   gamepadOverview.config = window.AE64GamepadModel.validate(config);gamepadOverview.error = "";
 }
 async function refreshGamepadOverview(force = false) {
-  const transport = state.transport;
-  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight || gamepadOverview.pending || !force && gamepadOverview.transport === transport) return;
+  const transport = state.transport, profileIndex = Number(state.profile?.profileIndex || 0);
+  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight || gamepadOverview.pending || !force && gamepadOverview.transport === transport && gamepadOverview.profileIndex === profileIndex) return;
   const generation = ++gamepadOverview.generation;
   gamepadOverview.pending = true;gamepadOverview.transport = transport;gamepadOverview.config = null;gamepadOverview.error = "";
+  gamepadOverview.profileIndex = profileIndex;
   try {
     const result = await window.AE64GamepadProtocol.read(transport);
-    if (generation === gamepadOverview.generation && transport === state.transport && transport.connected)
+    if (generation === gamepadOverview.generation && transport === state.transport && transport.connected && profileIndex === Number(state.profile?.profileIndex || 0))
       gamepadOverview.config = window.AE64GamepadModel.validate(result.config);
   } catch (error) { if (generation === gamepadOverview.generation) gamepadOverview.error = error.message; }
   finally {
@@ -57,5 +59,5 @@ function gamepadOverviewPanel() {
 function bindGamepadOverview() {
   if (state.page !== "overview") return;
   document.querySelector("[data-gamepad-overview-refresh]")?.addEventListener("click", () => refreshGamepadOverview(true));
-  if (connected() && gamepadOverview.transport !== state.transport) refreshGamepadOverview();
+  if (connected() && (gamepadOverview.transport !== state.transport || gamepadOverview.profileIndex !== Number(state.profile?.profileIndex || 0))) refreshGamepadOverview();
 }

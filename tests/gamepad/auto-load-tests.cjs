@@ -20,6 +20,51 @@ async function main() {
   const retry = fixture({ transport, savedProfile: draft, getKeyTravel: limits, protocol: { probe: async () => caps, read: async () => { if (fail) throw new Error("Read timeout");return { ...caps, config: profile }; } } });
   await retry.component.ready;assert.equal(retry.nodes.get("profileName").value, draft.name);assert.match(retry.notices.at(-1).text, /automatically.*retry/i);
   fail = false;await retry.nodes.get("connect").listeners.click();assert.equal(retry.nodes.get("profileName").value, profile.name);retry.component.dispose();
+  // Automatic discovery observes the keyboard without replacing a saved draft.
+  // v0.3's session profile can reset after power loss while this local draft is
+  // still the user's only copy of their intended controller assignments.
+  const local = M.defaults(); local.name = "My custom controller"; local.mode = "controller";
+  local.bindings[0].key = 1; Object.assign(local.bindings[0], { startMm: 0.7, endMm: 2.8, maxTravelMm: 3.31 });
+  const resetHardware = M.emptyProfile(); resetHardware.name = "Reset onboard profile"; resetHardware.mode = "off";
+  for (const persistent of [false, true]) {
+    let uploads = 0;const observed = [], capabilities = [];
+    const preserved = fixture({ transport, savedProfile: local, getKeyTravel: limits, onRead: (config) => observed.push(config), onCapabilities: (value) => capabilities.push(value),
+      protocol: { probe: async () => ({ ...caps, persistent }), read: async () => ({ ...caps, persistent, config: resetHardware }), upload: async () => { uploads++; return { verified: true, persistent }; } } });
+    await preserved.component.ready;
+    assert.equal(preserved.nodes.get("profileName").value, local.name);assert.equal(preserved.nodes.get("outputMode").value, local.mode);
+    assert.equal(preserved.saved().bindings[0].key, 1);assert.equal(preserved.saved().bindings[0].startMm, 0.7);assert.equal(preserved.saved().bindings[0].endMm, 2.8);
+    assert.equal(observed.length, 1);assert.equal(observed[0].mode, "off");assert.ok(observed[0].bindings.every((b) => b.key === null));
+    assert.equal(capabilities.at(-1).persistent, persistent);assert.equal(uploads, 0, "Automatic reads never upload the preserved draft");
+    assert.match(preserved.nodes.get("deviceStatus").textContent, /local draft preserved/);
+    assert.equal(preserved.nodes.get("compatibility").querySelector("strong").textContent, "Local draft differs from keyboard");
+    assert.match(preserved.nodes.get("compatibility").querySelector("p").textContent, /Apply to keyboard.*Read keyboard profile/);
+    // Only the user's explicit Apply or Read resolves the draft/hardware split.
+    await preserved.nodes.get("apply").listeners.click();assert.equal(uploads, 1);
+    assert.equal(preserved.nodes.get("compatibility").querySelector("strong").textContent, "Compatible custom gamepad firmware detected");
+    await preserved.nodes.get("connect").listeners.click();assert.equal(preserved.nodes.get("profileName").value, resetHardware.name);
+    assert.equal(preserved.nodes.get("outputMode").value, "off");assert.ok(preserved.saved().bindings.every((b) => b.key === null));assert.equal(uploads, 1);
+    preserved.component.dispose();
+  }
+  const sameMappings = M.validate(profile);sameMappings.name = "Local name is retained";
+  const matching = fixture({ transport, savedProfile: sameMappings, getKeyTravel: limits, protocol: api });await matching.component.ready;
+  assert.equal(matching.nodes.get("profileName").value, sameMappings.name);
+  assert.equal(matching.nodes.get("compatibility").querySelector("strong").textContent, "Compatible custom gamepad firmware detected");matching.component.dispose();
+  const invalidSaved = fixture({ transport, savedProfile: { schema: "old-invalid-format" }, getKeyTravel: limits, protocol: api });await invalidSaved.component.ready;
+  assert.equal(invalidSaved.nodes.get("profileName").value, profile.name, "An invalid saved profile cannot block discovery");invalidSaved.component.dispose();
+  const offline = fixture({ connectTarget: transport, getKeyTravel: limits, protocol: api });await offline.component.ready;
+  offline.nodes.get("profileName").value = "Draft made before connecting";offline.nodes.get("profileName").listeners.change();
+  offline.nodes.get("outputMode").value = "off";offline.nodes.get("outputMode").listeners.change();
+  offline.nodes.get("controlPicker").listeners.click({ target: { closest: () => ({ dataset: { control: "A" } }) } });
+  await offline.nodes.get("connect").listeners.click();assert.equal(offline.nodes.get("profileName").value, "Draft made before connecting");
+  assert.equal(offline.saved().mode, "off");assert.equal(offline.saved().bindings.find((b) => b.control === "A").key, 15);offline.component.dispose();
+  let finishDiscovery, discovered = 0;const concurrentObserved = [];
+  const concurrent = fixture({ transport, getKeyTravel: limits, onRead: (config) => concurrentObserved.push(config), protocol: { ...api, read: () => { discovered++;return new Promise((resolve) => { finishDiscovery = resolve; }); } } });
+  for (let i = 0; i < 10 && !discovered; i++) await Promise.resolve();
+  concurrent.nodes.get("profileName").value = "Edited during discovery";concurrent.nodes.get("profileName").listeners.change();
+  concurrent.nodes.get("outputMode").value = "off";concurrent.nodes.get("outputMode").listeners.change();
+  finishDiscovery({ ...caps, config: profile });await concurrent.component.ready;
+  assert.equal(concurrent.nodes.get("profileName").value, "Edited during discovery");assert.equal(concurrent.saved().mode, "off");
+  assert.equal(concurrentObserved.length, 1, "Hardware is still remembered when the draft changes during an automatic read");concurrent.component.dispose();
   let release, pendingReads = 0, lateCallbacks = 0;
   const pending = fixture({ transport, getKeyTravel: limits, onRead: () => { lateCallbacks++; }, protocol: { probe: async () => caps, read: () => { pendingReads++;return new Promise((resolve) => { release = resolve; }); } } });
   for (let i = 0; i < 10 && !pendingReads; i++) await Promise.resolve();assert.equal(pending.busy(), true);
@@ -30,6 +75,6 @@ async function main() {
   for (const value of [null, { ...caps, verified: false }, { ...caps, boardId: 123 }, { ...caps, transports: { hid: true } }]) {
     context.caps = value;vm.runInContext("updateHardwareSolutionInfo(caps)", context);assert.equal(panel.hidden, false);
   }
-  console.log("PASS: automatic profile loading on mount/connect, capability-gated setup-panel hiding, stock firmware, disconnect, retry and disposal. Read-only.");
+  console.log("PASS: read-only discovery preserves valid saved/concurrent local drafts, remembers hardware separately, supports explicit Read/Apply, handles session/persistent firmware, and retains capability/disconnect/retry/disposal guards.");
 }
 main().catch((error) => { console.error(error);process.exitCode = 1; });

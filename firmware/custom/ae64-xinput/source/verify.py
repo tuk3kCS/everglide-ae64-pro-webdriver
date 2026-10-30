@@ -56,17 +56,17 @@ def main():
     check(payload[0x10670:0x10674]==bytes.fromhex('37850800') and payload[0x10678:0x1067c]==bytes.fromhex('13054596'),'Heap begin instructions moved')
     check(payload[0x1066c:0x10670]+payload[0x10674:0x10678]==m.lui_addi(11,0x8a960),'Heap end reservation')
     check(payload[0x1be98:0x1bff8]==stock[0x1ce98:0x1cff8],'Copied native flash helper changed')
-    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/test_board.c'];exe=work/('board-tests'+suffix)
+    sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_board.c'];exe=work/('board-tests'+suffix)
     compile_command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in sources],'-o',str(exe)]
     subprocess.run(compile_command,check=True);test=subprocess.run(run_test(exe),check=True,text=True,capture_output=True);print(test.stdout.strip())
     range_source=root/'board/test_range_regression.c';range_stdout=None
     if range_source.exists():
         range_file=work/('range-tests'+suffix)
-        range_command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',range_source]],'-o',str(range_file)]
+        range_command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',range_source]],'-o',str(range_file)]
         subprocess.run(range_command,check=True)
         range_stdout=subprocess.check_output(run_test(range_file),text=True);print(range_stdout.strip())
     fn_tests={}
-    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/test_fn_storage.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/test_usb_switch.c'])]:
+    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_storage.c']),('gp-storage',[root/'board/gp_storage.c',root/'board/test_gp_storage.c']),('gp-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_gp_board.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_usb_switch.c']),('rollover',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_rollover.c'])]:
         command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),*extra]],'-o',str(work/(name+suffix))]
         subprocess.run(command,check=True)
         result=subprocess.check_output(run_test(work/(name+suffix)),text=True).strip();print(result);fn_tests[name]=result

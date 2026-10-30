@@ -1,6 +1,7 @@
 /* Synthetic board/USB integration tests. No hardware access. SPDX-License-Identifier: MIT */
 #include "board_port.h"
 #include "default_profile.h"
+#include "example_profile.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,7 @@ static const uint8_t *owned;
 static uint8_t profile_flash[4][0x2000];
 static unsigned fn_renders,fn_saves;
 static bool fail_flash;
+static void (*scan_model)(void);
 void *test_stock_ram(uintptr_t a) {
     if(a>=0xf300c000u && a<0xf300c400u)return (uint8_t *)usb_registers+(a-0xf300c000u);
     if(a>=0x800b2000u&&a<0x800c0000u) {
@@ -39,7 +41,7 @@ void stock_flash_program(uintptr_t address,uint32_t length,const uint8_t *data) 
     if(fail_flash)return;
     uint8_t *destination=test_stock_ram(address);for(unsigned i=0;i<length;i++)destination[i]&=data[i];
 }
-void stock_scan(void) { scan_count++; }
+void stock_scan(void) { scan_count++;if(scan_model)scan_model(); }
 void stock_schedule(void) { schedule_count++; }
 void stock_dispatch_original(void) { dispatch_count++; }
 bool stock_ep0_original(uint8_t bus,const struct ae64_usb_setup *s,uint8_t **d,uint32_t *n) {
@@ -78,6 +80,7 @@ static void key(unsigned k,unsigned travel,bool down) {
     p16(rec(k)+0x1a,travel);ram[rec(k)+8]=down?1:0;ram[rec(k)+9]=down?1:0;
 }
 static void fixture(void) {
+    scan_model=NULL;
     memset(ram,0,sizeof(ram));owned=NULL;now=0;
     memset(usb_registers,0,sizeof(usb_registers));usb_registers[0x140/4]=1;usb_registers[0x148/4]=0x157;
     const uint8_t configuration[91]={
@@ -91,6 +94,7 @@ static void fixture(void) {
     for(unsigned k=0;k<64;k++){p16(rec(k),1);p16(perf(k)+2,4000);ram[perf(k)+8]=1;}
     CHECK(board_usb_initialize(0,0xf300c000,stock_usb_event)==0);
     CHECK(ep_in && ep_out && event_callback);
+    CHECK(board_test_install(example_profile));
 }
 static void descriptors(void) {
     const uint8_t *c=board_configuration(1);CHECK(c[1]==2 && c[2]==131 && c[3]==0 && c[4]==4);
@@ -126,7 +130,7 @@ static void analog(void) {
     uint8_t saved[20];memcpy(saved,owned,20);unsigned count=writes;
     key(15,500,false);board_scan_hook();now=2;board_schedule_hook();
     CHECK(writes==count && memcmp(owned,saved,20)==0);complete();board_schedule_hook();CHECK(writes==count+1);complete();
-    uint8_t wire[208];memcpy(wire,default_profile,208);
+    uint8_t wire[208];memcpy(wire,example_profile,208);
     // Q trigger full output at 3mm, zero at 1mm.
     wire[18]=0xe8;wire[19]=3;wire[20]=0xb8;wire[21]=0xb;
     CHECK(board_test_install(wire));for(unsigned k=0;k<64;k++)key(k,0,false);
@@ -142,7 +146,7 @@ static void analog(void) {
     CHECK(scan_count>0 && schedule_count>0);
 }
 static void digital(void) {
-    uint8_t wire[208];memcpy(wire,default_profile,208);
+    uint8_t wire[208];memcpy(wire,example_profile,208);
     for(unsigned slot=0;slot<24;slot++)wire[16+slot*8]=255;
     wire[16+10*8]=0; // Esc -> controller A.
     CHECK(board_test_install(wire));for(unsigned k=0;k<64;k++)key(k,0,false);
@@ -161,7 +165,7 @@ static void digital(void) {
 static void protocol(void) {
     uint8_t *req=ram+0x80b00+0x65c;memset(req,0,64);req[0]=0x10;req[1]=0x20;req[2]=1;req[3]=42;memcpy(req+4,"AGP1",4);
     board_dispatch_hook();CHECK(last_reply[0]==0x10 && last_reply[1]==0x20 && last_reply[3]==42 && last_reply[8]==0);
-    CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH) && !(last_reply[14]&GP_CAP_PERSISTENT));
+    CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_PERSISTENT));
     unsigned old=dispatch_count;req[0]=1;board_dispatch_hook();CHECK(dispatch_count==old+1);
 }
 int main(void) {

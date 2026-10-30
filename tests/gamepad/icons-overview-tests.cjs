@@ -25,6 +25,8 @@ async function main() {
   assert.match(run("gamepadOverviewPanel()"), /gamepad-overview hidden/);
   c.physicalQ = { uiRow: 1, col: 1 };assert.match(run("overviewGamepadKeyBadge(physicalQ)"), /23_left_trigger/);
   run("rememberGamepadProfile(gamepadDraft(),state.transport)");assert.equal(run("gamepadOverviewSnapshot().source"), "active");
+  c.state.profile = { profileIndex: 1 };assert.equal(run("gamepadOverviewSnapshot().source"), "draft", "Another onboard profile cannot inherit a confirmed mapping badge");
+  c.state.profile.profileIndex = 0;assert.equal(run("gamepadOverviewSnapshot().source"), "active");
   saved.name = "Local name only";assert.equal(run("gamepadOverviewSnapshot().source"), "active");
   saved.mode = "off";assert.equal(run("gamepadOverviewSnapshot().source"), "draft");assert.match(run("gamepadOverviewPanel()"), /output disabled/);assert.match(run("overviewGamepadKeyBadge(physicalQ)"), /inactive/);
   const read = run("refreshGamepadOverview(true)");c.state.transport = { connected: true };resolveRead({ config: M.defaults() });await read;

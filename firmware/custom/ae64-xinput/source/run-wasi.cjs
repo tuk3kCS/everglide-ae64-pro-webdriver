@@ -4,7 +4,7 @@ const fs = require("node:fs"), { WASI } = require("node:wasi");
 (async () => {
   const file = process.argv[2];
   if (!file) throw new Error("Supply a compiled wasm32-wasi test module.");
-  const wasi = new WASI({ version: "preview1", args: [file], env: {}, preopens: {} });
+  const wasi = new WASI({ version: "preview1", args: [file], env: {}, preopens: {}, returnOnExit: true });
   const { instance } = await WebAssembly.instantiate(fs.readFileSync(file), { wasi_snapshot_preview1: wasi.wasiImport });
-  wasi.start(instance);
+  process.exitCode = wasi.start(instance);
 })().catch((error) => { console.error(error); process.exitCode = 1; });

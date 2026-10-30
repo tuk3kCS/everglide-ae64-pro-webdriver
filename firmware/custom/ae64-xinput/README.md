@@ -1,22 +1,20 @@
 # AE64 Pro experimental native XInput and Fn RGB firmware
 
-Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin), **136,192 bytes**, SHA-256 `c14109b2911a52fd4f8a12bf0a89d295bdf4b8c4ebb76d13083bc03f3c087b71`.
+Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin), **138,040 bytes**, SHA-256 `78cd833f4af6d57e37eaf5d5e7f66449fe4ba5cd2ed59d359ba15407a419c206`.
 
-v0.3 retains the v0.2 mapper and persistent Fn colors, adding a guarded **Xbox controller device** switch. Disabled mode exposes only the three original HID interfaces; enabled mode adds Xbox/XInput. The web driver waits for a USB reconnect and same-keyboard state verification. This USB choice and gamepad mappings last until power loss; boot defaults remain enabled. The output-mode option **Gamepad off** continues to mute input independently of device visibility.
+v0.5 fixes controller-only scan starvation: simultaneous directions, later keys' analog travel and releases continue to update while earlier matrix keys are held. It retains v0.4 saved per-profile mappings and safe empty startup, Fn RGB, and the Xbox USB visibility switch. See the [v0.5 investigation and validation](../../../docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md) and [v0.4 persistence guide](../../../docs/firmware-research/gamepad/RECONNECT_FIX_V04.md).
 
-**Offline verified; not hardware-tested or flashed during this work.** Active Windows device removal, PHY timing and recovery still require physical validation. Windows can retain non-present device history. Full folder/source analysis, protocol, guards and validation are in the [v0.3 report](../../../docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
+**v0.5 is offline-verified, not flashed or hardware-tested in this work.** The faulty running firmware was observed with read-only native travel/XInput captures. A scanner model reproduces the failure with archived v0.4 source and passes every WASD press/release order with the fix.
 
-`source/` builds v0.3; retained ELF/manifests are in `v0.3/`. The v0.2 image and `v0.2/` evidence remain unchanged. Its pre-change source is archived with repository-relative paths in `history/v0.2-source.zip`. v0.1 source/components remain historical in `history/` and `portable-reference/`; top-level older ELF/manifests are also historical. They do not describe the current image.
-
-The pinned base is untouched factory v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`. The extension preserves stock initialization and original offsets. A prior v0.1 experiment had read-only Windows XInput enumeration evidence; that does not validate v0.3.
+`source/` builds v0.5; its ELF/manifests are in `v0.5/`. The v0.4 image/evidence and source archive remain unchanged. Older source/evidence is retained in `history/` and version directories. Top-level older ELF/manifests and `portable-reference/` are historical records. The pinned factory base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
 
 ## Configure and flash
 
-Use the main web driver's **Gamepad mode → Hardware Solution** to edit assignments. It shares the driver's keyboard connection. Use **Firmware** to select this custom image or any bundled factory release. The standalone `/gamepad` page no longer exists.
+Use the main web driver's **Gamepad mode â†’ Hardware Solution** to edit assignments. It shares the driver's keyboard connection. Use **Firmware** to select this custom image or any bundled factory release. The standalone `/gamepad` page no longer exists.
 
-The compiled defaults map Q/E to LT/RT and WASD to the left stick, with 0.5–3.5 mm windows. The measured board's configured switch range is 3.31 mm, so the original default window exceeds it. Click **Use keyboard travel limits** and review the resulting local draft before Apply; a smaller window such as 1–3 mm also works within that limit. No replacement firmware is required for this range correction.
+v0.4 and newer start with no controller assignments unless a valid mapping was saved for the active onboard profile. Valid v0.4 saved mappings remain readable in v0.5. Read and verify the active mapping after upgrading; configure/import and **Apply to keyboard** if needed. The mapping then survives power loss and native keymap/Fn saves. Export a backup before firmware changes or factory reset. The Xbox USB visibility switch remains session-only; boot defaults remain enabled.
 
-Assignments are stored in RAM and reset on power loss. Export a JSON profile and reapply it after reconnecting. Digital buttons use the stock normal/RT latch; trigger and stick values use calibrated travel. The custom USB interface is XUSB `FF/5D/01`, with a Microsoft OS `XUSB10` compatible ID and separate 20-byte IN reports. The keyboard/configuration interfaces and VID/PID `1CA6:300A` are retained.
+Digital controls follow the native normal/RT latch, and analog controls use calibrated travel. Saved custom windows are not silently changed when a switchâ€™s available range changes; invalid calibration/ranges remain neutral until corrected. A repeated USB configuration notification preserves existing transfer-buffer ownership.
 
 ## Rebuild
 

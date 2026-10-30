@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The newest experimental custom build is **XInput + Fn RGB v0.3**, retaining persistent Fn colors and adding a guarded Xbox USB device switch. The setting lasts until power loss and is verified by the driver after USB reconnect. The image is compiled and offline-verified; hardware behavior remains untested. See the [v0.3 report](../docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md). The v0.2 image and its evidence remain available. The [Fn RGB guide](../docs/firmware-research/fn-rgb/README.md) documents the retained color storage and rendering behavior.
+The newest experimental custom build is **XInput + Fn RGB v0.5**. It fixes controller-only scan starvation that prevented diagonals and left later keys stale while an earlier key was held. It retains saved per-profile mappings, Fn colors and the session-only Xbox USB switch. The new image is compiled and offline-verified; it has not been flashed or hardware-tested during this work. See the [v0.5 report](../docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md), [v0.4 persistence report](../docs/firmware-research/gamepad/RECONNECT_FIX_V04.md), and [Fn RGB guide](../docs/firmware-research/fn-rgb/README.md). v0.4 remains available; older release evidence is retained under the custom firmware directory.
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 
