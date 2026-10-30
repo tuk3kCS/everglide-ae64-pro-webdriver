@@ -95,7 +95,7 @@ New assignments and restored examples use those per-key limits. Legacy 4.00 mm d
 
 If switch metadata is unavailable, the driver attempts to read the keyboardâ€™s limits automatically. **Use keyboard travel limits** remains available for manual refresh. Apply still checks the actual keyboard limits before uploading.
 
-**v0.4 and newer save applied gamepad mappings in the active onboard profile.** Apply once after upgrading, then the saved assignments, output mode, ranges and stick settings are restored after power loss. A profile without a valid saved mapping starts empty. v0.2/v0.3 remain session-only. Browser drafts are kept separately and automatic connection reads no longer overwrite them; Apply activates/saves the draft, while an explicit Read replaces it with the keyboardâ€™s settings. See the [v0.4 reconnect fix](docs/firmware-research/gamepad/RECONNECT_FIX_V04.md). **v0.5 fixes simultaneous controller keys and release updates** by preserving the native scanner’s event history around keyboard suppression; see the [rollover investigation](docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md).
+**v0.4 and newer save applied gamepad mappings in the active onboard profile.** Apply once after upgrading, then the saved assignments, output mode, ranges and stick settings are restored after power loss. A profile without a valid saved mapping starts empty. v0.2/v0.3 remain session-only. Browser drafts are kept separately and automatic connection reads no longer overwrite them; Apply activates/saves the draft, while an explicit Read replaces it with the keyboardâ€™s settings. See the [v0.4 reconnect fix](docs/firmware-research/gamepad/RECONNECT_FIX_V04.md). **v0.5 fixes simultaneous controller keys and release updates** by preserving the native scanner’s event history around keyboard suppression; see the [rollover investigation](docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md). **v0.6 adds explicit normal-key releases** and keeps suppression active through sensor faults and pending USB changes; see the [keyboard-release fix](docs/firmware-research/gamepad/KEYBOARD_RELEASE_FIX_V06.md).
 
 ### Software Solution
 
@@ -105,7 +105,7 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.4/v0.5** images. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.4/v0.5/v0.6** images. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.
@@ -130,7 +130,7 @@ GitHub Pages regenerates the catalog and packages the actual binaries during dep
 
 - The driverâ€™s packet codecs, editors, read-back workflows, image streams, reconnect/recovery logic, and UI behavior have offline regression coverage. Recent browser UI checks use simulated devices.
 - The earlier experimental XInput v0.1 image was flashed separately by the user. Follow-up read-only checks observed Windows Xbox 360 controller enumeration, custom protocol replies, and a connected XInput device. This does not validate every analog behavior or later firmware changes.
-- The current **XInput + Fn RGB v0.5** image was compiled and checked offline. USB controller removal/reappearance also needs physical validation. Its Fn LED output, physical persistence, and the integrated flashing workflow still need hardware validation.
+- The current **XInput + Fn RGB v0.6** image was compiled and checked offline. USB controller removal/reappearance also needs physical validation. Its Fn LED output, physical persistence, and the integrated flashing workflow still need hardware validation.
 - Gamepad mappings persist in v0.4 and newer; v0.2/v0.3 mappings remain volatile. Fn colors are designed to persist; factory resets or later factory keymap saves can erase them. Export backups before changing firmware. Native flash saving inherits an erase/rewrite power-loss risk.
 - Factory restore is visible but disabled pending physical-device verification. Additional catalog-only lighting effects and extended right-side modifier combinations remain experimental.
 

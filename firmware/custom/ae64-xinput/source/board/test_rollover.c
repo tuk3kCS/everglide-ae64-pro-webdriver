@@ -43,7 +43,7 @@ static void expected(unsigned first,unsigned second,bool hold_first,bool hold_se
     }
     CHECK(r->buttons==0 && r->lt==0 && r->rt==0);
     for(unsigned k=0;k<64;k++)CHECK(*(uint16_t *)(ram+rec(k)+0x1a)==physical[k]);
-    CHECK(ram[rec(16)+9]==0 && ram[rec(29)+9]==0 && ram[rec(30)+9]==0 && ram[rec(31)+9]==0);
+    CHECK(ram[rec(16)+9]==11 && ram[rec(29)+9]==11 && ram[rec(30)+9]==11 && ram[rec(31)+9]==11);
 }
 static void ordered_pairs(void) {
     const unsigned keys[4]={16,29,30,31};
@@ -63,7 +63,7 @@ static void keyboard_modes(void) {
     wasd_wire[5]=GP_MIXED;CHECK(board_test_install(wasd_wire));settle();
     CHECK(ram[rec(16)+9]==2 && ram[rec(31)+9]==2);
     wasd_wire[5]=GP_CONTROLLER_ONLY;CHECK(board_test_install(wasd_wire));settle();
-    CHECK(ram[rec(16)+9]==0 && ram[rec(31)+9]==0);
+    CHECK(ram[rec(16)+9]==11 && ram[rec(31)+9]==11);
     physical[0]=3000;settle();CHECK(ram[rec(0)+9]==2);
     physical[31]=0;settle();CHECK(*(uint16_t *)(ram+rec(31)+0x1a)==0);
 }
@@ -78,7 +78,10 @@ static void history_guards(void) {
     board_fn_load_hook();CHECK(ram[rec(16)+9]==2);
     ram[rec(16)+9]=0;scan_model=other_profile_probe;board_scan_hook();
 }
-int main(void) {
+#ifndef AE64_ROLLOVER_ENTRY
+#define AE64_ROLLOVER_ENTRY main
+#endif
+int AE64_ROLLOVER_ENTRY(void) {
     ordered_pairs();keyboard_modes();history_guards();
     printf("PASS: scanner event history; all WASD press/release orders, diagonals, opposites, depth updates, keyboard modes and profile guards; %u checks.\n",checks);
     return 0;

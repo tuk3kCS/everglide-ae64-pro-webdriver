@@ -9,6 +9,8 @@
 #define RECORD_BASE UINT32_C(0x82bb8)
 #define PERFORMANCE_BASE UINT32_C(0x865cc)
 #define STOCK_FLAGS UINT32_C(0x8d2d0)
+#define KEYBOARD_RELEASE_EVENT 11u
+#define KEYBOARD_REPORT_FLAGS UINT32_C(0x8081c)
 #define GP UINT32_C(0x80b00)
 #define XUSB_IN 0x85u
 #define XUSB_OUT 0x05u
@@ -43,7 +45,7 @@ struct board_state {
     uint8_t reply[64];
     /* HPM endpoint storage remains live through asynchronous completion. */
     _Alignas(64) uint8_t out[64];
-    uint32_t last_submit;
+    uint32_t last_submit,last_keyboard_refresh;
     uintptr_t usb_base;
     uint32_t usb_revision,usb_requested_at,usb_phase_at,usb_interrupt_mask;
     uint8_t usb_phase;
@@ -71,6 +73,7 @@ static uint8_t load8(uintptr_t a) { return *(volatile uint8_t *)RAM(a); }
 static uint16_t load16(uintptr_t a) { return *(volatile uint16_t *)RAM(a); }
 static uint32_t load32(uintptr_t a) { return *(volatile uint32_t *)RAM(a); }
 static void store8(uintptr_t a,uint8_t v) { *(volatile uint8_t *)RAM(a)=v; }
+static void store16(uintptr_t a,uint16_t v) { *(volatile uint16_t *)RAM(a)=v; }
 static void store32(uintptr_t a,uint32_t v) { *(volatile uint32_t *)RAM(a)=v; }
 static void copy(void *dst,const void *src,size_t n) {
     uint8_t *d=dst;const uint8_t *s=src;while(n--)*d++=*s++;
@@ -81,7 +84,7 @@ static void usb_persona(bool enabled) {
     state.usb_enabled=enabled;
     /* Keep stock VID/PID/strings and distinguish Windows OS-descriptor caches. */
     copy(state.device_descriptor,RAM(0x80374),18);
-    state.device_descriptor[12]=enabled?7:8;state.device_descriptor[13]=1;
+    state.device_descriptor[12]=enabled?9:10;state.device_descriptor[13]=1;
     ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
     if(!enabled) { clear(state.compatible,40);state.compatible[0]=16;state.compatible[5]=1;state.compatible[6]=4; }
 }
@@ -230,9 +233,27 @@ void board_fn_render_hook(void) {
 }
 static uintptr_t record(unsigned row,unsigned column) { return RECORD_BASE+row*0x5e8u+column*0x48u; }
 static uintptr_t performance(unsigned row,unsigned column) { return PERFORMANCE_BASE+row*0xd2u+column*10u; }
+static uint64_t keyboard_suppression(void) {
+    /* Keyboard policy must not disappear during sensor faults or the USB ACK/
+     * detach handshake. The mapping was validated at install/load time. */
+    if(!state.usb_enabled || state.mapping.mode!=GP_CONTROLLER_ONLY)return 0;
+    uint64_t mask=0;
+    for(unsigned s=0;s<2;s++) {
+        const struct gp_physical_axis *axes[2]={&state.mapping.stick[s].x,&state.mapping.stick[s].y};
+        for(unsigned a=0;a<2;a++) {
+            uint8_t n=axes[a]->negative.key,p=axes[a]->positive.key;
+            if(n<64)mask|=UINT64_C(1)<<n;
+            if(p<64)mask|=UINT64_C(1)<<p;
+        }
+        uint8_t key=state.mapping.trigger[s].key;if(key<64)mask|=UINT64_C(1)<<key;
+    }
+    for(unsigned i=0;i<GP_BUTTON_COUNT;i++)if(state.mapping.button[i]<64)mask|=UINT64_C(1)<<state.mapping.button[i];
+    for(unsigned i=0;i<4;i++)if(state.mapping.dpad[i]<64)mask|=UINT64_C(1)<<state.mapping.dpad[i];
+    return mask;
+}
 static void restore_scanner_events(void) {
     /* Native scan 0x5ece..0x6cd2 returns after the first changed event byte
-     * (0x6bb6..0x6c0a). Leaving our keyboard-only zero in r+9 makes a held
+     * (0x6bb6..0x6c0a). Leaving our keyboard release in r+9 makes a held
      * key look changed on every pass, starving all later matrix positions.
      * Restore scan history only around stock_scan; stock_schedule still sees
      * the suppressed keyboard events. Never overwrite a newer native event
@@ -240,7 +261,7 @@ static void restore_scanner_events(void) {
     if(state.initialized && state.profile==load8(0x82ba8)) {
         unsigned key=0;
         for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++)
-            if((state.suppressed_events&(UINT64_C(1)<<key)) && !load8(record(row,col)+9))
+            if((state.suppressed_events&(UINT64_C(1)<<key)) && load8(record(row,col)+9)==KEYBOARD_RELEASE_EVENT)
                 store8(record(row,col)+9,state.scanner_event[key]);
     }
     state.suppressed_events=0;
@@ -366,7 +387,7 @@ void board_scan_hook(void) {
     if(state.profile!=load8(0x82ba8))gp_load_current();
     uint64_t valid=0,pressed=0;
     unsigned key=0;refresh_maxima();
-    uint64_t suppress=xbox_active()?gp_physical_keyboard_suppression(&state.mapping,state.maximum):0;
+    uint64_t suppress=keyboard_suppression();
     for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++) {
         uintptr_t r=record(row,col),p=performance(row,col);
         uint16_t flags=load16(r);uint64_t bit=UINT64_C(1)<<key;
@@ -376,10 +397,13 @@ void board_scan_hook(void) {
          * Its low bits are shifted to previous-state bits by native 0x64e0..0x6572.
          */
         if(load8(r+8)&1u)pressed|=bit;
-        if((suppress&bit) && load8(r+9)) {
+        if(suppress&bit) {
             state.scanner_event[key]=load8(r+9);state.suppressed_events|=bit;
-            store8(r+9,0);
-            /* Request stock event processing, including releases already held. */
+            /* Zero means no event, not key-up: native generic-key handling
+             * only removes a held key on event 11 (0x59b4..0x5a54). Force a
+             * pending release even if the scanner's own event is already idle,
+             * so applying a mapping while held drains the old keyboard ledger. */
+            store8(r+9,KEYBOARD_RELEASE_EVENT);store16(r,load16(r)|0x80u);
             store32(STOCK_FLAGS,load32(STOCK_FLAGS)|1u);
         }
     }
@@ -390,9 +414,25 @@ void board_scan_hook(void) {
     irq_unlock(saved);
 }
 void board_schedule_hook(void) {
+    /* Native ring push 0x12962..0x129a8 has no full-queue rejection. Re-send
+     * the active keyboard format at most every 50ms so a lost release can
+     * recover without another keypress. Keep all cached unbound keys,
+     * and leave consumer/mouse bits and DMA-owned packet storage untouched. */
+    uint32_t now=stock_tick();
+    if(state.initialized && !state.suspended && !state.usb_phase &&
+       load8(NATIVE_USB_STATE)==3 && keyboard_suppression() &&
+       (uint32_t)(now-state.last_keyboard_refresh)>=50) {
+        bool boot=(load32(0x8d2d4)&0x100u)!=0;
+        /* Only the selected format has current held keys. Native 0x54f8..
+         * 0x5514 otherwise suppresses an identical NKRO retry against its
+         * last queued image, even if that image never reached the host. */
+        if(!boot)store8(0x8d200,0);
+        store8(KEYBOARD_REPORT_FLAGS,load8(KEYBOARD_REPORT_FLAGS)|(boot?1u:2u));
+        state.last_keyboard_refresh=now;
+    }
     stock_schedule();
     if(!state.initialized)return;
-    uint32_t now=stock_tick();
+    now=stock_tick();
     usb_switch_tick(now);
     uint32_t saved=irq_lock();
     gp_physical_watchdog(&state.physical,now,50,&state.report);

@@ -1,0 +1,14 @@
+[
+  {
+    "source": "v05",
+    "exit": 1,
+    "stdout": "",
+    "stderr": "(node:15020) ExperimentalWarning: WASI is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nFAIL C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\test_keyboard_release.c:39: !keyboard_held[k] && repeat_key==-1\n"
+  },
+  {
+    "source": "fixed",
+    "exit": 0,
+    "stdout": "PASS: keyboard held-list releases, consumed/idle events, unbound keys, digital latches, sensor faults, mode passthrough, lost-packet reconciliation, cadence and suspend/USB guards; 197333 checks.\n",
+    "stderr": "(node:15080) ExperimentalWarning: WASI is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+  }
+]

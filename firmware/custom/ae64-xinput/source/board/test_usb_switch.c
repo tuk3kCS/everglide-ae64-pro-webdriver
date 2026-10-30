@@ -65,10 +65,12 @@ int main(void) {
     staging_request(true,0x31);CHECK(last_reply[8]==GP_VENDOR_CONFLICT);
     /* Pending ACK ring and EP3 DMA independently block disconnect. */
     ram[0x8d2b0]=1;tick(40);CHECK((usb_registers[0x140/4]&1)!=0);
+    /* A pending ACK/detach does not temporarily turn mapped keys into typing. */
+    key(15,3500,true);board_scan_hook();CHECK(ram[rec(15)+9]==11 && board_test_report()->lt==0);
     ram[0x8d2b1]=1;usb_registers[0x1b0/4]=1u<<19;tick(1);CHECK((usb_registers[0x140/4]&1)!=0);
     usb_registers[0x1b0/4]=0;usb_registers[0x1b8/4]=1u<<19;tick(1);CHECK((usb_registers[0x140/4]&1)!=0);
     usb_registers[0x1b8/4]=0;finish(false);
-    CHECK(board_configuration(1)[4]==3 && board_other_speed(0)[2]==91 && board_device_descriptor(0)[12]==8);
+    CHECK(board_configuration(1)[4]==3 && board_other_speed(0)[2]==91 && board_device_descriptor(0)[12]==10);
     /* Only the stock descriptor prefix is visible. The appended tail is cleared. */
     CHECK(memcmp(board_configuration(1)+4,ram+0x80318+4,87)==0);
     for(unsigned i=91;i<131;i++)CHECK(board_configuration(1)[i]==0);
@@ -77,7 +79,7 @@ int main(void) {
     key(15,3500,true);board_scan_hook();CHECK(ram[rec(15)+9]==1 && board_test_report()->lt==0);
     unsigned before=writes;tick(1);CHECK(writes==before);
     request(0x27,true,1);CHECK(last_reply[8]==0 && revision()==2);finish(true);
-    CHECK(board_configuration(1)[4]==4 && board_device_descriptor(0)[12]==7);
+    CHECK(board_configuration(1)[4]==4 && board_device_descriptor(0)[12]==9);
     CHECK(board_ep0_hook(0,&s,&data,&length)&&length==40&&memcmp(data+18,"XUSB10",6)==0);
     for(unsigned k=0;k<64;k++)key(k,0,false);board_scan_hook();board_scan_hook();key(15,3500,true);board_scan_hook();CHECK(board_test_report()->lt==255);
     /* Missing SOF cannot hang the scheduler; fall back after 20ms. */

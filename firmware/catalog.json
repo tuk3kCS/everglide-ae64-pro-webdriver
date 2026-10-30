@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin",
+      "name": "Experimental XInput + Fn RGB v0.6 · saved mappings",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-10-30",
+      "bytes": 138480,
+      "sha256": "ea90ac6b1613915fbd87edebd85b7be4631fb3c7e4bb06bff5e190315de6863b",
+      "boardId": "0030000A",
+      "payloadCrc32": "ffb2869d",
+      "description": "Explicit keyboard releases prevent mapped keys remaining held in normal keyboard output. Suppression stays active through sensor faults and USB switching; limited keyboard-state resends recover missed releases. Retains the simultaneous-input fix, saved mappings and Fn colors. Offline verified; not hardware-flashed in this work.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin",
       "name": "Experimental XInput + Fn RGB v0.5 · saved mappings",

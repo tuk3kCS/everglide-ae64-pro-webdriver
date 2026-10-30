@@ -44,7 +44,7 @@ function updateHardwareSolutionInfo(capabilities) {
 function bindGamepadPage() {
   document.querySelector("[data-gamepad-hardware]")?.addEventListener("click", () => document.querySelector("#gamepadHardware")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   document.querySelector("#openHardwareFirmware")?.addEventListener("click", () => {
-    firmwareView.selectedId = "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin";
+    firmwareView.selectedId = "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin";
     firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null; firmwareView.selectionError = "";
     state.page = "firmware"; render();
   });
