@@ -2,6 +2,8 @@
 
 This build adds configurable static Fn lighting to the existing experimental native Xbox/XInput firmware. The pinned base is factory v0.1.0.0, SHA256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`. Analysis, compilation and tests did not write to a keyboard. This new image has not been tested on hardware.
 
+v0.7 additionally retains each physical Fn press action until release, stages Transparent above newly assigned Fn triggers, and requests an immediate next-task composition on layer changes. See the [v0.7 Fn/input/timing report](../gamepad/INPUT_FN_TIMING_FIX_V07.md). These changes address Fn2/Fn3 release resolution; physical LED latency still needs retesting.
+
 ## What the factory firmware actually does
 
 The action processor recognizes mapped Fn actions `F100..F103` anywhere in the matrix, rather than requiring a fixed physical Fn key. It maintains held layers and selects an active Fn layer. The RGB compositor then reads the raw action assigned in that layer and chooses these fixed colors:

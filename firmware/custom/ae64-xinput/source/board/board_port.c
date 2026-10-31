@@ -51,6 +51,9 @@ struct board_state {
     uint8_t usb_phase;
     uint8_t usb_native_status;
     uint8_t profile;
+    uint8_t key_context,fn_display_layer;
+    uint8_t fn_origin[64];
+    bool fn_tracking;
     bool profile_valid;
     bool usb_enabled,usb_target;
     bool initialized,suspended,out_armed;
@@ -63,6 +66,9 @@ static bool fn_save_ok;
 static void gp_load_current(void);
 static void restore_scanner_events(void);
 static bool install(void *,const struct gp_physical_config *,uint8_t,const uint8_t[208]);
+static uint64_t keyboard_suppression(void);
+static void fn_transition(void);
+static void fn_reconcile(void);
 #ifndef AE64_HOST_TEST
 _Static_assert(sizeof(struct stock_interface)==28,"Stock RV32 interface ABI");
 _Static_assert(sizeof(struct stock_endpoint)==8,"Stock RV32 endpoint ABI");
@@ -84,7 +90,7 @@ static void usb_persona(bool enabled) {
     state.usb_enabled=enabled;
     /* Keep stock VID/PID/strings and distinguish Windows OS-descriptor caches. */
     copy(state.device_descriptor,RAM(0x80374),18);
-    state.device_descriptor[12]=enabled?9:10;state.device_descriptor[13]=1;
+    state.device_descriptor[12]=enabled?11:12;state.device_descriptor[13]=1;
     ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
     if(!enabled) { clear(state.compatible,40);state.compatible[0]=16;state.compatible[5]=1;state.compatible[6]=4; }
 }
@@ -168,6 +174,10 @@ static void fn_ensure_current(void) {
 void board_fn_load_hook(void) {
     restore_scanner_events();
     stock_fn_load_original();fn_load_current();
+    /* A profile switch while Fn is held must still release its original
+     * physical press, even if the newly loaded layer maps that key differently. */
+    fn_reconcile();fn_transition();
+    store32(0x8d260,0);
     if(state.initialized)gp_load_current();
 }
 void board_fn_save_hook(void) {
@@ -218,6 +228,7 @@ static bool fn_install(void *user,uint8_t profile,uint8_t layer,const uint8_t *c
      * irq_lock: one native helper unconditionally reenables interrupts. */
     board_fn_save_hook();
     if(!fn_save_ok)fn_load_current();
+    store32(0x8d260,0);
     return fn_save_ok;
 }
 void board_fn_render_hook(void) {
@@ -233,6 +244,92 @@ void board_fn_render_hook(void) {
 }
 static uintptr_t record(unsigned row,unsigned column) { return RECORD_BASE+row*0x5e8u+column*0x48u; }
 static uintptr_t performance(unsigned row,unsigned column) { return PERFORMANCE_BASE+row*0xd2u+column*10u; }
+static uint8_t record_key(uintptr_t address) {
+    if(address<RECORD_BASE || address>=RECORD_BASE+6u*0x5e8u)return GP_NONE;
+    unsigned delta=(unsigned)(address-RECORD_BASE),row=delta/0x5e8u,col=(delta%0x5e8u)/0x48u;
+    if(row<1 || row>5 || col>=row_lengths[row-1] || delta%0x48u)return GP_NONE;
+    unsigned key=col;for(unsigned i=1;i<row;i++)key+=row_lengths[i-1];
+    return (uint8_t)key;
+}
+static uintptr_t key_record(unsigned key) {
+    unsigned row=1;while(key>=row_lengths[row-1])key-=row_lengths[row++-1];
+    return record(row,key);
+}
+void board_key_context(uintptr_t address) { state.key_context=record_key(address); }
+void board_keyboard_press_hook(uint32_t usage,uint32_t owner) {
+    /* Native owner bytes collide between physical positions. Only the exact
+     * record context can distinguish a mapped A from an unbound A alias. */
+    if(state.initialized && state.key_context<64 &&
+       (keyboard_suppression()&(UINT64_C(1)<<state.key_context)))return;
+    if(state.initialized && state.key_context<64)owner=state.key_context+1u;
+    stock_keyboard_press_original(usage,owner);
+}
+void board_keyboard_release_hook(uint32_t usage,uint32_t owner) {
+    /* Give each physical source its own ledger identity on both edges.
+     * Suppressed releases then cannot remove an unbound alias with the same
+     * usage and a colliding native row/column product token. */
+    if(state.initialized && state.key_context<64)owner=state.key_context+1u;
+    stock_keyboard_release_original(usage,owner);
+}
+void board_advanced_key_hook(uintptr_t address,uintptr_t settings,uint32_t owner) {
+    uint8_t previous=state.key_context;board_key_context(address);
+    if(!state.initialized || state.key_context>=64 ||
+       !(keyboard_suppression()&(UINT64_C(1)<<state.key_context)))
+        stock_advanced_key_original(address,settings,owner);
+    state.key_context=previous;
+}
+uint32_t board_key_action(uintptr_t address,uint32_t action) {
+    if(!state.initialized || (!state.fn_tracking && (action<0xf100u || action>0xf103u)))return action;
+    uint8_t key=record_key(address);if(!state.initialized || key>=64)return action;
+    uint8_t event=load8(address+9),origin=state.fn_origin[key];
+    if(origin) {
+        /* Resolve release against the Fn action that was actually pressed,
+         * even if the active layer now assigns this same key another action.
+         * Native Fn release consumes idle 0, unlike ordinary key-up 11. */
+        if(!(load8(address+8)&1u) || event==11 || event==0) {
+            store8(address+9,0);state.fn_origin[key]=0;
+        }
+        return 0xf100u+origin;
+    }
+    if(action>=0xf100u && action<=0xf103u) {
+        if(keyboard_suppression()&(UINT64_C(1)<<key))return 0;
+        if(event==1) {
+            state.fn_tracking=true;
+            if(action==0xf100u)clear(state.fn_origin,sizeof(state.fn_origin));
+            else state.fn_origin[key]=(uint8_t)(action&3u);
+        }
+    }
+    return action;
+}
+static void fn_reconcile(void) {
+    if(!state.fn_tracking)return;
+    uint8_t held=0;uint64_t blocked=keyboard_suppression();
+    for(unsigned key=0;key<64;key++)if(state.fn_origin[key]) {
+        if(!(load8(key_record(key)+8)&1u) || (blocked&(UINT64_C(1)<<key)))state.fn_origin[key]=0;
+        else held|=(uint8_t)(1u<<state.fn_origin[key]);
+    }
+    uint8_t layer=load8(0x82b9d);
+    if(layer<1 || layer>3 || !(held&(1u<<layer))) {
+        layer=0;for(unsigned i=1;i<=3;i++)if(held&(1u<<i)){layer=(uint8_t)i;break;}
+    }
+    for(unsigned i=0;i<=3;i++)store8(0x82b9e + i,(held&(1u<<i))?1:0);
+    store8(0x82b9d,layer);
+    uint32_t flags=load32(STOCK_FLAGS);
+    store32(STOCK_FLAGS,held?(flags|0x20u):(flags&~0x20u));
+    state.fn_tracking=held!=0;
+}
+static void fn_transition(void) {
+    uint8_t layer=(load32(STOCK_FLAGS)&0x20u)?load8(0x82b9d):0;
+    if(layer!=state.fn_display_layer) {
+        state.fn_display_layer=layer;
+        /* Let the existing RGB task compose/send in its own DMA context. */
+        store32(0x8d260,0);
+    }
+}
+void board_key_process_hook(void) {
+    state.key_context=GP_NONE;stock_key_process();state.key_context=GP_NONE;
+    if(state.initialized){fn_reconcile();fn_transition();}
+}
 static uint64_t keyboard_suppression(void) {
     /* Keyboard policy must not disappear during sensor faults or the USB ACK/
      * detach handshake. The mapping was validated at install/load time. */
@@ -344,6 +441,7 @@ const uint8_t *board_other_speed(uint8_t speed) {
 }
 int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8_t,uint8_t)) {
     clear(&state,sizeof(state));state.original_event=original_event;state.usb_base=base;
+    state.key_context=GP_NONE;
     state.usb_target=true;usb_persona(true);
     /* 10000 is a temporary protocol-validation ceiling, not sensor calibration.
      * Scan frames use each native calibrated maximum; missing calibration is neutral.
@@ -419,6 +517,7 @@ void board_schedule_hook(void) {
      * recover without another keypress. Keep all cached unbound keys,
      * and leave consumer/mouse bits and DMA-owned packet storage untouched. */
     uint32_t now=stock_tick();
+    if(state.initialized)fn_transition();
     if(state.initialized && !state.suspended && !state.usb_phase &&
        load8(NATIVE_USB_STATE)==3 && keyboard_suppression() &&
        (uint32_t)(now-state.last_keyboard_refresh)>=50) {

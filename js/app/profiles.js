@@ -194,6 +194,7 @@ function closeDialog(dialog) {
   else dialog?.removeAttribute?.("open");
 }
 function requestApplyChanges() {
+  stageFnReleaseMappings();
   if (!dirtyCount()) return;
   if (!connected())
     return showToast(
@@ -210,6 +211,7 @@ function requestApplyChanges() {
 
 async function applyChanges({ automatic = false } = {}) {
   if (state.fnLightingBusy) return false;
+  stageFnReleaseMappings();
   if (!dirtyCount()) return false;
   if (!connected()) {
     showToast(
@@ -847,6 +849,7 @@ async function importProfile(file) {
       for (let layer = 0; layer < 4; layer += 1)
         state.dirty.mapping.add(`${layer}:${key.id}`);
     });
+    stageFnReleaseMappings();
     for (let index = 0; index < DECORATIVE_COLS; index += 1)
       state.dirty.decorativeLighting.add(index);
     state.dirty.lightingBase = true;

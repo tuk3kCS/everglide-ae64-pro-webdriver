@@ -69,6 +69,13 @@ def main():
     hook(0xae5e,'ef827fd9','board_fn_load_hook',0)
     hook(0xaf9a,'ef825fc7','board_fn_save_hook',0)
     hook(0x6e08,'eff06f8c','board_scan_hook')
+    hook(0x6e20,'efe02ff9','board_key_process_hook')
+    hook(0x46ee,'9307c5ff','board_keyboard_press_hook',0)
+    hook(0x484a,'eff24fbc','board_keyboard_release_hook',0)
+    hook(0x5b28,'efe26f8e','board_advanced_key_hook',0)
+    hook(0x56bc,'93f72708','board_key_context_trampoline')
+    hook(0x573a,'03c51c01','board_timed_context_trampoline')
+    hook(0x57f4,'83d90700','board_key_action_trampoline')
     hook(0x6e60,'efe04fd9','board_schedule_hook')
     hook(0xea70,'ef10f036','board_usb_initialize')
     hook(0xd776,'ef628fc9','board_dispatch_hook',0)
@@ -80,12 +87,12 @@ def main():
     replacement=lui_addi(11,0x8a960)
     patch(0x1066c,bytes.fromhex('b7c50800'),replacement[:4],'reserve patch state: heap end upper immediate')
     patch(0x10674,bytes.fromhex('93854596'),replacement[4:],'reserve patch state: heap end lower immediate')
-    patch(0x1bc80,bytes.fromhex('0200'),bytes.fromhex('0901'),'custom bcdDevice 0x0109; keyboard-only persona uses 0x010A')
+    patch(0x1bc80,bytes.fromhex('0200'),bytes.fromhex('0b01'),'custom bcdDevice 0x010B; keyboard-only persona uses 0x010C')
     # Original startup copies/helpers and all original offsets are retained.
     if payload[0x1be98:0x1bff8]!=stock[0x1ce98:0x1cff8]:raise ValueError('Startup flash helpers changed')
     payload.extend(b'\xff'*(-len(payload)%8))
     header=bytearray(stock[:4096]);struct.pack_into('<II',header,12,len(payload),zlib.crc32(payload))
-    binary=out/'AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin';binary.write_bytes(header+payload)
+    binary=out/'AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin';binary.write_bytes(header+payload)
     result={'status':'EXPERIMENTAL_UNTESTED_ON_HARDWARE','stock_sha256':STOCK_SHA,'image':binary.name,'image_bytes':binary.stat().st_size,'image_sha256':sha(binary.read_bytes()),'payload_bytes':len(payload),'payload_crc32':f'{zlib.crc32(payload):08x}','original_payload_bytes':original_length,'append_vma':hex(APPEND),'reserved_ram':[hex(0x8a960),hex(0x8b960)],'sections':sections,'symbols':symbols,'patches':patches,'build_command':command,'compiler_version':subprocess.check_output([zig,'version'],text=True).strip(),'verified':{'host_tests':False,'hardware_boot':False,'windows_xinput':False,'bootloader_acceptance':False,'flashed':False}}
     result['build_commands']=commands
     result['heap']={'original_begin':'0x87964','original_end':'0x8b964','new_end':'0x8a960','remaining_bytes':0x8a960-0x87964,'reserved_bytes':0x8b964-0x8a960}

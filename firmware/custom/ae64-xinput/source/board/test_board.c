@@ -20,6 +20,10 @@ static unsigned fn_renders,fn_saves;
 static bool fail_flash;
 static void (*scan_model)(void);
 static void (*schedule_model)(void);
+static void (*process_model)(void);
+static void (*press_model)(uint32_t,uint32_t);
+static void (*release_model)(uint32_t,uint32_t);
+static void (*advanced_model)(uintptr_t,uintptr_t,uint32_t);
 void *test_stock_ram(uintptr_t a) {
     if(a>=0xf300c000u && a<0xf300c400u)return (uint8_t *)usb_registers+(a-0xf300c000u);
     if(a>=0x800b2000u&&a<0x800c0000u) {
@@ -44,6 +48,10 @@ void stock_flash_program(uintptr_t address,uint32_t length,const uint8_t *data) 
 }
 void stock_scan(void) { scan_count++;if(scan_model)scan_model(); }
 void stock_schedule(void) { schedule_count++;if(schedule_model)schedule_model(); }
+void stock_key_process(void) { if(process_model)process_model(); }
+void stock_keyboard_press_original(uint32_t usage,uint32_t owner) { if(press_model)press_model(usage,owner); }
+void stock_keyboard_release_original(uint32_t usage,uint32_t owner) { if(release_model)release_model(usage,owner); }
+void stock_advanced_key_original(uintptr_t address,uintptr_t settings,uint32_t owner) { if(advanced_model)advanced_model(address,settings,owner); }
 void stock_dispatch_original(void) { dispatch_count++; }
 bool stock_ep0_original(uint8_t bus,const struct ae64_usb_setup *s,uint8_t **d,uint32_t *n) {
     (void)bus;(void)s;(void)d;(void)n;ep0_count++;return false;
@@ -83,6 +91,7 @@ static void key(unsigned k,unsigned travel,bool down) {
 static void fixture(void) {
     scan_model=NULL;
     schedule_model=NULL;
+    process_model=NULL;press_model=NULL;release_model=NULL;advanced_model=NULL;
     memset(ram,0,sizeof(ram));owned=NULL;now=0;
     memset(usb_registers,0,sizeof(usb_registers));usb_registers[0x140/4]=1;usb_registers[0x148/4]=0x157;
     const uint8_t configuration[91]={

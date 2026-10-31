@@ -92,9 +92,37 @@ function applyMappingPickerKeycode(code) {
     state.profile.keycodes[state.profile.layer][id] = Number(code);
     state.dirty.mapping.add(`${state.profile.layer}:${id}`);
   });
+  const guarded = stageFnReleaseMappings();
   state.mappingGroup = state.mappingPickerGroup;
   closeDialog(document.querySelector("#mappingPickerDialog"));
   render();
+  if (guarded) showToast("Fn trigger staged. Its higher layers use Transparent so releasing it returns to the previous layer.");
+}
+
+// The native action processor resolves a release through the active layer's
+// mapping again. Match the vendor driver: a layer trigger must inherit through
+// higher layers rather than turning into an ordinary key after its own press.
+// Only staged mappings participate; unrelated onboard keys are never rewritten.
+function stageFnReleaseMappings(tokens = state.dirty.mapping) {
+  let changed = 0;
+  const entries = [...tokens].map((token) => String(token).split(":").map(Number))
+    .filter(([layer, id]) => Number.isInteger(layer) && layer >= 0 && layer < 4 && keys[id])
+    .sort(([layerA, idA], [layerB, idB]) => layerA - layerB || idA - idB);
+  for (const [layer, id] of entries) {
+    const code = Number(state.profile.keycodes[layer]?.[id]);
+    if (!Number.isInteger(code) || code < 0xf100 || code > 0xf103) continue;
+    for (let higher = layer + 1; higher < 4; higher++) {
+      if (Number(state.profile.keycodes[higher]?.[id]) === 1) continue;
+      state.profile.keycodes[higher] ||= {};
+      state.profile.keycodes[higher][id] = 1;
+      state.dirty.mapping.add(`${higher}:${id}`);
+      const token = combinationBaseToken(higher, id);
+      delete state.profile.combinationBases?.[token];
+      delete state.profile.macroBases?.[token];
+      changed++;
+    }
+  }
+  return changed;
 }
 
 function bindMappingPicker() {

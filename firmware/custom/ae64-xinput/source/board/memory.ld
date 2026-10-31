@@ -15,6 +15,10 @@ SECTIONS {
 ASSERT(SIZEOF(.data)==0, "Writable initializers require explicit startup copying")
 ASSERT(__state_end<=0x8B960, "Patch state exceeds reserved stock heap memory")
 stock_scan = 0x80026ECE;
+stock_key_process = 0x800265B2;
+stock_keyboard_press_continue = 0x800256F2;
+stock_keyboard_release_continue = 0x8002584E;
+stock_advanced_key_continue = 0x80026B2C;
 stock_schedule = 0x800263F4;
 stock_save3 = 0x80024C0E;
 stock_save12 = 0x80024BDE;
@@ -27,7 +31,8 @@ stock_usb_event = 0x8002F888;
 stock_write = 0x800302E4;
 stock_read = 0x8003033E;
 stock_vendor_reply = 0x8002E4D8;
-stock_tick = 0x80031706;
+/* GPTMR1: reload is clock_frequency/1000, ISR increments 0x8D2F4. */
+stock_tick = 0x80033B92;
 stock_fn_render = 0x8003556A;
 stock_save8 = 0x80024BF4;
 stock_fn_load_continue = 0x8002BE62;

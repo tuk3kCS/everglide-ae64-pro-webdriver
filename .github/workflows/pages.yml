@@ -47,6 +47,7 @@ jobs:
           node tests/gamepad/usb-reconnect-tests.cjs
           node tests/lighting/fn-ui-tests.cjs
           node tests/lighting/fn-selection-tests.cjs
+          node tests/lighting/fn-mapping-tests.cjs
           node tests/lighting/fn-protocol-tests.cjs
           node tests/lighting/effect-preview-tests.cjs
 

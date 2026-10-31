@@ -37,7 +37,7 @@ def main():
         delta=((word>>31)&1)<<20|((word>>21)&1023)<<1|((word>>20)&1)<<11|((word>>12)&255)<<12
         if delta&(1<<20):delta-=1<<21
         return m.BASE+at+delta,(word>>7)&31
-    hooks=[(0xa594,'board_fn_render_hook',1),(0xae5e,'board_fn_load_hook',0),(0xaf9a,'board_fn_save_hook',0),(0x6e08,'board_scan_hook',1),(0x6e60,'board_schedule_hook',1),(0xea70,'board_usb_initialize',1),(0xd776,'board_dispatch_hook',0),(0xf752,'board_ep0_hook',0)]
+    hooks=[(0xa594,'board_fn_render_hook',1),(0xae5e,'board_fn_load_hook',0),(0xaf9a,'board_fn_save_hook',0),(0x6e08,'board_scan_hook',1),(0x6e20,'board_key_process_hook',1),(0x46ee,'board_keyboard_press_hook',0),(0x484a,'board_keyboard_release_hook',0),(0x5b28,'board_advanced_key_hook',0),(0x56bc,'board_key_context_trampoline',1),(0x573a,'board_timed_context_trampoline',1),(0x57f4,'board_key_action_trampoline',1),(0x6e60,'board_schedule_hook',1),(0xea70,'board_usb_initialize',1),(0xd776,'board_dispatch_hook',0),(0xf752,'board_ep0_hook',0)]
     for at,name,rd in hooks:check(decode_jal(at)==(symbols[name]['address'],rd),'Hook destination '+name)
     for at,name in [(0x19f84,'board_device_descriptor'),(0x19f88,'board_configuration'),(0x19f90,'board_other_speed')]:
         check(struct.unpack_from('<I',payload,at)[0]==symbols[name]['address'],'USB descriptor callback '+name)
@@ -46,7 +46,7 @@ def main():
     stock_payload=stock[4096:]
     for begin,end,label in [(0x6e6e,0xa536,'RGB effect engine'),(0xc442,0xc544,'lighting mode handler'),(0xa9c0,0xaa36,'RGB timing loop'),(0x1456a,0x14906,'native Fn renderer'),(0x1b0b0,0x1b150,'twenty RGB callback pairs')]:
         check(payload[begin:end]==stock_payload[begin:end],label+' changed')
-    for name,save,cont in [('stock_dispatch_original',0x80024c0e,0x8002e77a),('stock_ep0_original',0x80024bde,0x80030756),('stock_fn_load_original',0x80024bf4,0x8002be62),('stock_fn_save_original',0x80024c0e,0x8002bf9e)]:
+    for name,save,cont in [('stock_dispatch_original',0x80024c0e,0x8002e77a),('stock_ep0_original',0x80024bde,0x80030756),('stock_fn_load_original',0x80024bf4,0x8002be62),('stock_fn_save_original',0x80024c0e,0x8002bf9e),('stock_keyboard_release_original',0x80024c0e,0x8002584e),('stock_advanced_key_original',0x80024c0e,0x80026b2c)]:
         at=symbols[name]['address']-m.BASE
         check(decode_jal(at)==(save,5),'Trampoline save helper '+name)
         # Assembler may use a 32-bit JAL x0 or compressed C.J for the continuation.
@@ -56,6 +56,16 @@ def main():
     check(payload[0x10670:0x10674]==bytes.fromhex('37850800') and payload[0x10678:0x1067c]==bytes.fromhex('13054596'),'Heap begin instructions moved')
     check(payload[0x1066c:0x10670]+payload[0x10674:0x10678]==m.lui_addi(11,0x8a960),'Heap end reservation')
     check(payload[0x1be98:0x1bff8]==stock[0x1ce98:0x1cff8],'Copied native flash helper changed')
+    check(symbols['stock_tick']['address']==0x80033b92,'Hardware millisecond accessor')
+    check(payload[0x12b92:0x12b9c]==bytes.fromhex('b7d7080003a5472f8280'),'Millisecond reads GPTMR counter')
+    check(payload[0xe6d0:0xe6d8]==bytes.fromhex('9307803e3355f502'),'GPTMR clock divided by 1000')
+    at=symbols['stock_keyboard_press_original']['address']-m.BASE
+    check(payload[at:at+4]==bytes.fromhex('9307c5ff'),'Keyboard append trampoline instruction')
+    check(decode_jal(at+4)==(0x800256f2,0),'Keyboard append trampoline continuation')
+    spec=importlib.util.spec_from_file_location('trampoline_check',root/'check_input_trampolines.py')
+    t=importlib.util.module_from_spec(spec);spec.loader.exec_module(t)
+    trampoline_evidence=t.check_trampolines(out/'ae64-xinput-experimental.elf')
+    (out/'input-trampoline-verification.json').write_text(json.dumps(trampoline_evidence,indent=2)+'\n')
     sources=[*(root/'src').glob('*.c'),root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_board.c'];exe=work/('board-tests'+suffix)
     compile_command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in sources],'-o',str(exe)]
     subprocess.run(compile_command,check=True);test=subprocess.run(run_test(exe),check=True,text=True,capture_output=True);print(test.stdout.strip())
@@ -66,7 +76,7 @@ def main():
         subprocess.run(range_command,check=True)
         range_stdout=subprocess.check_output(run_test(range_file),text=True);print(range_stdout.strip())
     fn_tests={}
-    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_storage.c']),('gp-storage',[root/'board/gp_storage.c',root/'board/test_gp_storage.c']),('gp-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_gp_board.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_usb_switch.c']),('rollover',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_rollover.c']),('keyboard-release',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_keyboard_release.c'])]:
+    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_storage.c']),('gp-storage',[root/'board/gp_storage.c',root/'board/test_gp_storage.c']),('gp-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_gp_board.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_usb_switch.c']),('rollover',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_rollover.c']),('keyboard-release',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_keyboard_release.c']),('native-input',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_native_input.c']),('real-timing',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_real_timing.c'])]:
         command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),*extra]],'-o',str(work/(name+suffix))]
         subprocess.run(command,check=True)
         result=subprocess.check_output(run_test(work/(name+suffix)),text=True).strip();print(result);fn_tests[name]=result

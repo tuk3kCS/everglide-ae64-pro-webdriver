@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin",
+      "name": "Experimental XInput + Fn RGB v0.7 · saved mappings",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-10-31",
+      "bytes": 140104,
+      "sha256": "8c3df91f94c376a403c100f18108efccf16c5b397c0101a9e3427f46314b3524",
+      "boardId": "0030000A",
+      "payloadCrc32": "2a6c8d93",
+      "description": "Blocks mapped physical keys at native keyboard append, retains momentary Fn press origins, requests prompt Fn lighting frames, and uses the hardware millisecond clock. Saves mappings and Fn colors; new build verified offline only.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin",
       "name": "Experimental XInput + Fn RGB v0.6 · saved mappings",
@@ -17,38 +33,6 @@
       "boardId": "0030000A",
       "payloadCrc32": "ffb2869d",
       "description": "Explicit keyboard releases prevent mapped keys remaining held in normal keyboard output. Suppression stays active through sensor faults and USB switching; limited keyboard-state resends recover missed releases. Retains the simultaneous-input fix, saved mappings and Fn colors. Offline verified; not hardware-flashed in this work.",
-      "changelog": []
-    },
-    {
-      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin",
-      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin",
-      "name": "Experimental XInput + Fn RGB v0.5 · saved mappings",
-      "kind": "custom",
-      "experimental": true,
-      "version": "Custom",
-      "appVersion": "0.1.0.0",
-      "date": "2026-10-29",
-      "bytes": 138040,
-      "sha256": "78cd833f4af6d57e37eaf5d5e7f66449fe4ba5cd2ed59d359ba15407a419c206",
-      "boardId": "0030000A",
-      "payloadCrc32": "551c48f1",
-      "description": "Fixes controller-only scanner starvation so simultaneous keys, diagonals and releases keep updating. Retains saved per-profile mappings, Fn colors and the USB visibility switch. Offline verified; this new build has not been hardware-flashed.",
-      "changelog": []
-    },
-    {
-      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.4.bin",
-      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.4.bin",
-      "name": "Experimental XInput + Fn RGB v0.4 · saved mappings",
-      "kind": "custom",
-      "experimental": true,
-      "version": "Custom",
-      "appVersion": "0.1.0.0",
-      "date": "2026-10-29",
-      "bytes": 137768,
-      "sha256": "ac7b7b460aeb878969ec1a4b5c286b57c8e562da077f48bfa5db68e2f1e585fe",
-      "boardId": "0030000A",
-      "payloadCrc32": "f23a1000",
-      "description": "Persistent per-profile gamepad mappings, empty safe startup, and USB configuration replay guards. Fn colors retained; Xbox device visibility stays session-only. Offline verified; not hardware-flashed in this work.",
       "changelog": []
     },
     {

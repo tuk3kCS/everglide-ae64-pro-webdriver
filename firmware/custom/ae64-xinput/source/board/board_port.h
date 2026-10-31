@@ -16,6 +16,10 @@ struct stock_interface {
 struct stock_endpoint { uint8_t address; void (*callback)(uint8_t, uint8_t, uint32_t); };
 void stock_scan(void);
 void stock_schedule(void);
+void stock_key_process(void);
+void stock_keyboard_press_original(uint32_t,uint32_t);
+void stock_keyboard_release_original(uint32_t,uint32_t);
+void stock_advanced_key_original(uintptr_t,uintptr_t,uint32_t);
 void stock_fn_render(void);
 void stock_fn_load_original(void);
 void stock_fn_save_original(void);
@@ -49,6 +53,12 @@ static inline void irq_unlock(uint32_t saved) {
 }
 #endif
 void board_scan_hook(void);
+void board_key_process_hook(void);
+void board_key_context(uintptr_t);
+uint32_t board_key_action(uintptr_t,uint32_t);
+void board_keyboard_press_hook(uint32_t,uint32_t);
+void board_keyboard_release_hook(uint32_t,uint32_t);
+void board_advanced_key_hook(uintptr_t,uintptr_t,uint32_t);
 void board_schedule_hook(void);
 void board_fn_render_hook(void);
 void board_fn_load_hook(void);
