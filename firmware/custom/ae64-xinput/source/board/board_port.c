@@ -5,11 +5,11 @@
 #include "default_profile.h"
 #include "fn_storage.h"
 #include "gp_storage.h"
+#include "keyboard_policy.h"
 
 #define RECORD_BASE UINT32_C(0x82bb8)
 #define PERFORMANCE_BASE UINT32_C(0x865cc)
 #define STOCK_FLAGS UINT32_C(0x8d2d0)
-#define KEYBOARD_RELEASE_EVENT 11u
 #define KEYBOARD_REPORT_FLAGS UINT32_C(0x8081c)
 #define GP UINT32_C(0x80b00)
 #define XUSB_IN 0x85u
@@ -26,6 +26,15 @@
 #define USB_VENDOR_IN (1u<<19)
 #define NATIVE_USB_STATE UINT32_C(0x80584)
 static const uint8_t row_lengths[5]={14,14,13,14,9};
+/* Physical-key order from pinned 03:05 layout table at payload 0x1A734.
+ * The bottom three sensor rows contain holes; logical indices remain 0..63. */
+static const uint8_t matrix_columns[5][14]={
+    {0,1,2,3,4,5,6,7,8,9,10,11,12,13},
+    {0,1,2,3,4,5,6,7,8,9,10,11,12,13},
+    {0,1,2,3,4,5,6,7,8,9,10,11,13},
+    {0,2,3,4,5,6,7,8,9,10,11,12,13,14},
+    {0,1,2,6,9,10,12,13,14}
+};
 static const struct ae64_xusb_config usb_config={3,XUSB_IN,XUSB_OUT,1,1,MS_VENDOR};
 
 struct board_state {
@@ -35,8 +44,7 @@ struct board_state {
     struct ae64_xusb xusb;
     struct gp_report report;
     uint16_t travel[64], maximum[64];
-    uint64_t suppressed_events;
-    uint8_t scanner_event[64];
+    uint64_t bound_keys,previous_suppression;
     struct stock_interface interface;
     struct stock_endpoint endpoint_in,endpoint_out;
     uint8_t configuration[CONFIG_LENGTH], other[CONFIG_LENGTH];
@@ -45,7 +53,7 @@ struct board_state {
     uint8_t reply[64];
     /* HPM endpoint storage remains live through asynchronous completion. */
     _Alignas(64) uint8_t out[64];
-    uint32_t last_submit,last_keyboard_refresh;
+    uint32_t last_submit,last_keyboard_refresh,physical_generation;
     uintptr_t usb_base;
     uint32_t usb_revision,usb_requested_at,usb_phase_at,usb_interrupt_mask;
     uint8_t usb_phase;
@@ -64,7 +72,8 @@ static struct fn_rgb_context fn_protocol;
 static struct fn_storage fn_colors;
 static bool fn_save_ok;
 static void gp_load_current(void);
-static void restore_scanner_events(void);
+static void mapping_changed(void);
+static void keyboard_policy_update(void);
 static bool install(void *,const struct gp_physical_config *,uint8_t,const uint8_t[208]);
 static uint64_t keyboard_suppression(void);
 static void fn_transition(void);
@@ -79,18 +88,22 @@ static uint8_t load8(uintptr_t a) { return *(volatile uint8_t *)RAM(a); }
 static uint16_t load16(uintptr_t a) { return *(volatile uint16_t *)RAM(a); }
 static uint32_t load32(uintptr_t a) { return *(volatile uint32_t *)RAM(a); }
 static void store8(uintptr_t a,uint8_t v) { *(volatile uint8_t *)RAM(a)=v; }
-static void store16(uintptr_t a,uint16_t v) { *(volatile uint16_t *)RAM(a)=v; }
 static void store32(uintptr_t a,uint32_t v) { *(volatile uint32_t *)RAM(a)=v; }
 static void copy(void *dst,const void *src,size_t n) {
     uint8_t *d=dst;const uint8_t *s=src;while(n--)*d++=*s++;
 }
 static void clear(void *dst,size_t n) { uint8_t *d=dst;while(n--)*d++=0; }
+static void reset_physical(void) {
+    state.physical_generation++;
+    gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+}
 static bool xbox_active(void) { return state.usb_enabled && state.usb_phase==0; }
 static void usb_persona(bool enabled) {
     state.usb_enabled=enabled;
+    state.previous_suppression=0;
     /* Keep stock VID/PID/strings and distinguish Windows OS-descriptor caches. */
     copy(state.device_descriptor,RAM(0x80374),18);
-    state.device_descriptor[12]=enabled?11:12;state.device_descriptor[13]=1;
+    state.device_descriptor[12]=enabled?13:14;state.device_descriptor[13]=1;
     ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
     if(!enabled) { clear(state.compatible,40);state.compatible[0]=16;state.compatible[5]=1;state.compatible[6]=4; }
 }
@@ -151,7 +164,7 @@ static bool usb_switch_request(const uint8_t *q,uint8_t *r,uint32_t now) {
             if(state.vendor.staging_active||fn_protocol.active)status=GP_VENDOR_CONFLICT;
             else if(state.usb_enabled!=(bool)q[14]) {
                 state.usb_target=(bool)q[14];state.usb_revision++;state.usb_requested_at=now;state.usb_phase=1;
-                gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+                reset_physical();
             }
         }
     }
@@ -172,7 +185,6 @@ static void fn_ensure_current(void) {
     if(!fn_colors.loaded||fn_colors.profile!=load8(0x82ba8))fn_load_current();
 }
 void board_fn_load_hook(void) {
-    restore_scanner_events();
     stock_fn_load_original();fn_load_current();
     /* A profile switch while Fn is held must still release its original
      * physical press, even if the newly loaded layer maps that key differently. */
@@ -203,9 +215,9 @@ static void gp_load_current(void) {
         gp_wire_decode(wire,revision,ceiling,&mapping,&transport);
     }
     uint32_t saved=irq_lock();
-    state.mapping=mapping;state.profile=profile;state.profile_valid=profile<4;
+    state.mapping=mapping;mapping_changed();state.profile=profile;state.profile_valid=profile<4;
     gp_vendor_init(&state.vendor,wire,revision,GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_PERSISTENT,ceiling,install,0);
-    gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+    reset_physical();
     irq_unlock(saved);
 }
 static bool fn_read(void *user,uint8_t profile,uint8_t layer,uint8_t *colors,bool *enabled,uint32_t *revision) {
@@ -247,13 +259,15 @@ static uintptr_t performance(unsigned row,unsigned column) { return PERFORMANCE_
 static uint8_t record_key(uintptr_t address) {
     if(address<RECORD_BASE || address>=RECORD_BASE+6u*0x5e8u)return GP_NONE;
     unsigned delta=(unsigned)(address-RECORD_BASE),row=delta/0x5e8u,col=(delta%0x5e8u)/0x48u;
-    if(row<1 || row>5 || col>=row_lengths[row-1] || delta%0x48u)return GP_NONE;
-    unsigned key=col;for(unsigned i=1;i<row;i++)key+=row_lengths[i-1];
-    return (uint8_t)key;
+    if(row<1 || row>5 || delta%0x48u)return GP_NONE;
+    unsigned key=0;for(unsigned i=1;i<row;i++)key+=row_lengths[i-1];
+    for(unsigned slot=0;slot<row_lengths[row-1];slot++)
+        if(matrix_columns[row-1][slot]==col)return (uint8_t)(key+slot);
+    return GP_NONE;
 }
 static uintptr_t key_record(unsigned key) {
     unsigned row=1;while(key>=row_lengths[row-1])key-=row_lengths[row++-1];
-    return record(row,key);
+    return record(row,matrix_columns[row-1][key]);
 }
 void board_key_context(uintptr_t address) { state.key_context=record_key(address); }
 void board_keyboard_press_hook(uint32_t usage,uint32_t owner) {
@@ -279,8 +293,13 @@ void board_advanced_key_hook(uintptr_t address,uintptr_t settings,uint32_t owner
     state.key_context=previous;
 }
 uint32_t board_key_action(uintptr_t address,uint32_t action) {
-    if(!state.initialized || (!state.fn_tracking && (action<0xf100u || action>0xf103u)))return action;
-    uint8_t key=record_key(address);if(!state.initialized || key>=64)return action;
+    if(!state.initialized)return action;
+    uint64_t blocked=keyboard_suppression();
+    if(!blocked && !state.fn_tracking && (action<0xf100u || action>0xf103u))return action;
+    uint8_t key=record_key(address);if(key>=64)return action;
+    /* Leave scanner history intact, but do not dispatch a controller-only
+     * source's packed Fn/media/mouse/macro action through the generic path. */
+    if(blocked&(UINT64_C(1)<<key)) { state.fn_origin[key]=0;return 0; }
     uint8_t event=load8(address+9),origin=state.fn_origin[key];
     if(origin) {
         /* Resolve release against the Fn action that was actually pressed,
@@ -330,10 +349,10 @@ void board_key_process_hook(void) {
     state.key_context=GP_NONE;stock_key_process();state.key_context=GP_NONE;
     if(state.initialized){fn_reconcile();fn_transition();}
 }
-static uint64_t keyboard_suppression(void) {
-    /* Keyboard policy must not disappear during sensor faults or the USB ACK/
-     * detach handshake. The mapping was validated at install/load time. */
-    if(!state.usb_enabled || state.mapping.mode!=GP_CONTROLLER_ONLY)return 0;
+static void mapping_changed(void) {
+    /* Reconcile once after every install, including a round trip through mixed
+     * mode between scans. A normal press may have reached the ledger meanwhile. */
+    state.previous_suppression=0;
     uint64_t mask=0;
     for(unsigned s=0;s<2;s++) {
         const struct gp_physical_axis *axes[2]={&state.mapping.stick[s].x,&state.mapping.stick[s].y};
@@ -346,31 +365,41 @@ static uint64_t keyboard_suppression(void) {
     }
     for(unsigned i=0;i<GP_BUTTON_COUNT;i++)if(state.mapping.button[i]<64)mask|=UINT64_C(1)<<state.mapping.button[i];
     for(unsigned i=0;i<4;i++)if(state.mapping.dpad[i]<64)mask|=UINT64_C(1)<<state.mapping.dpad[i];
-    return mask;
+    state.bound_keys=mask;
 }
-static void restore_scanner_events(void) {
-    /* Native scan 0x5ece..0x6cd2 returns after the first changed event byte
-     * (0x6bb6..0x6c0a). Leaving our keyboard release in r+9 makes a held
-     * key look changed on every pass, starving all later matrix positions.
-     * Restore scan history only around stock_scan; stock_schedule still sees
-     * the suppressed keyboard events. Never overwrite a newer native event
-     * or import an old profile's event history into a newly loaded profile. */
-    if(state.initialized && state.profile==load8(0x82ba8)) {
-        unsigned key=0;
-        for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++)
-            if((state.suppressed_events&(UINT64_C(1)<<key)) && load8(record(row,col)+9)==KEYBOARD_RELEASE_EVENT)
-                store8(record(row,col)+9,state.scanner_event[key]);
+static uint64_t keyboard_suppression(void) {
+    /* Policy uses the installed mapping, even during sensor faults/USB ACK. */
+    uint32_t saved=irq_lock();
+    uint64_t blocked=state.usb_enabled && state.mapping.mode==GP_CONTROLLER_ONLY ? state.bound_keys : 0;
+    irq_unlock(saved);return blocked;
+}
+static void keyboard_policy_update(void) {
+    const uint64_t blocked=keyboard_suppression();
+    if(blocked==state.previous_suppression)return;
+    const uint64_t added=blocked&~state.previous_suppression;
+    state.previous_suppression=blocked;
+    if(!added)return;
+    /* Native working ledger is usage/owner pairs; cached HID images, rings
+     * and DMA-owned buffers are separate. Drain a newly suppressed source
+     * once, regardless of its current layer/usage/event byte. */
+    uint32_t saved=irq_lock();
+    uint32_t count=load32(0x8d1fc);
+    uint32_t remaining=keyboard_policy_compact(RAM(0x80608),count,added);
+    if(remaining!=count) {
+        store32(0x8d1fc,remaining);store8(0x8d1f4,1);
     }
-    state.suppressed_events=0;
+    irq_unlock(saved);
+    fn_reconcile();fn_transition();
 }
 static bool usb_start(void *user,uint8_t endpoint,const uint8_t *data,size_t length) {
     (void)user;return stock_write(0,endpoint,data,(uint32_t)length)==0;
 }
-static void refresh_maxima(void) {
+static void read_maxima(uint16_t *maximums) {
     unsigned key=0;
-    for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++) {
+    for(unsigned row=1;row<=5;row++)for(unsigned slot=0;slot<row_lengths[row-1];slot++,key++) {
+        unsigned col=matrix_columns[row-1][slot];
         uint16_t maximum=load16(performance(row,col)+2u);
-        state.maximum[key]=(maximum>=10 && maximum<=10000)?maximum:0;
+        maximums[key]=(maximum>=10 && maximum<=10000)?maximum:0;
     }
 }
 static bool install(void *user,const struct gp_physical_config *mapping,uint8_t transport,const uint8_t wire[208]) {
@@ -384,9 +413,8 @@ static bool install(void *user,const struct gp_physical_config *mapping,uint8_t 
     stock_fn_save_original();
     if(!fn_storage_append(&fn_colors,stock_flash_program,fn_image(state.profile)) ||
        !gp_storage_append(state.profile,wire,true,mapping->revision,stock_flash_program,RAM(gp_storage_address(state.profile))))return false;
-    uint32_t saved=irq_lock();state.mapping=*mapping;
-    gp_physical_reset(&state.physical);
-    state.report=(struct gp_report){0};irq_unlock(saved);
+    uint32_t saved=irq_lock();state.mapping=*mapping;mapping_changed();
+    reset_physical();irq_unlock(saved);
     return true;
 }
 static void arm_out(void) {
@@ -409,9 +437,9 @@ static void event(uint8_t bus,uint8_t value) {
      */
     if(value==1 || value==4 || value==12) {
         state.suspended=false;state.out_armed=false;ae64_xusb_configured(&state.xusb,false);
-        gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+        reset_physical();
     } else if(value==5) {
-        state.suspended=true;gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+        state.suspended=true;reset_physical();
     } else if(value==6) {
         state.suspended=false;arm_out();
     } else if(value==7) {
@@ -419,7 +447,7 @@ static void event(uint8_t bus,uint8_t value) {
         /* Replayed SET_CONFIGURATION does not prove old DMA was cancelled. */
         if(!state.xusb.configured && state.usb_enabled) {
             ae64_xusb_configured(&state.xusb,true);
-            gp_physical_reset(&state.physical);state.report=(struct gp_report){0};
+            reset_physical();
         }
         arm_out();
     }
@@ -479,36 +507,41 @@ bool board_ep0_hook(uint8_t bus,const struct ae64_usb_setup *setup,uint8_t **dat
     return stock_ep0_original(bus,setup,data,length);
 }
 void board_scan_hook(void) {
-    restore_scanner_events();
     stock_scan();
     if(!state.initialized)return;
     if(state.profile!=load8(0x82ba8))gp_load_current();
+    keyboard_policy_update();
+    /* Empty/off/hidden controller mappings do not need a second sensor sweep. */
+    uint32_t saved=irq_lock(),generation=state.physical_generation;
+    if(!xbox_active() || state.mapping.mode==GP_OFF || !state.bound_keys) { irq_unlock(saved);return; }
+    const uint64_t bound=state.bound_keys;
+    struct gp_physical_config mapping=state.mapping;
+    struct gp_physical_context next=state.physical;
+    irq_unlock(saved);
     uint64_t valid=0,pressed=0;
-    unsigned key=0;refresh_maxima();
-    uint64_t suppress=keyboard_suppression();
-    for(unsigned row=1;row<=5;row++)for(unsigned col=0;col<row_lengths[row-1];col++,key++) {
+    unsigned key=0;
+    for(unsigned row=1;row<=5;row++)for(unsigned slot=0;slot<row_lengths[row-1];slot++,key++) {
+        uint64_t bit=UINT64_C(1)<<key;
+        if(!(bound&bit))continue;
+        unsigned col=matrix_columns[row-1][slot];
         uintptr_t r=record(row,col),p=performance(row,col);
-        uint16_t flags=load16(r);uint64_t bit=UINT64_C(1)<<key;
+        uint16_t flags=load16(r),maximum=load16(p+2u);
+        state.maximum[key]=(maximum>=10 && maximum<=10000)?maximum:0;
         state.travel[key]=load16(r+0x1a);
-        if((flags & 1u) && !(flags & 8u) && load8(p+8)==1 && state.maximum[key])valid|=bit;
-        /* Stock scanner's current normal/RT latch, before keyboard suppression.
-         * Its low bits are shifted to previous-state bits by native 0x64e0..0x6572.
-         */
+        if((flags&1u) && !(flags&8u) && load8(p+8)==1 && state.maximum[key])valid|=bit;
         if(load8(r+8)&1u)pressed|=bit;
-        if(suppress&bit) {
-            state.scanner_event[key]=load8(r+9);state.suppressed_events|=bit;
-            /* Zero means no event, not key-up: native generic-key handling
-             * only removes a held key on event 11 (0x59b4..0x5a54). Force a
-             * pending release even if the scanner's own event is already idle,
-             * so applying a mapping while held drains the old keyboard ledger. */
-            store8(r+9,KEYBOARD_RELEASE_EVENT);store16(r,load16(r)|0x80u);
-            store32(STOCK_FLAGS,load32(STOCK_FLAGS)|1u);
-        }
     }
     struct gp_physical_frame frame={state.travel,state.maximum,valid,pressed,true,stock_tick()};
-    uint32_t saved=irq_lock();
-    if(xbox_active())gp_physical_update(&state.physical,&state.mapping,&frame,&state.report);
-    else { gp_physical_reset(&state.physical);state.report=(struct gp_report){0}; }
+    /* USB interrupts may neutralize/reset the shared state. Evaluate a local
+     * snapshot with interrupts enabled, then publish only if no reset occurred.
+     * The mapping snapshot also isolates a concurrent vendor settings commit. */
+    struct gp_report report;
+    gp_physical_update_cached(&next,&mapping,&frame,&report);
+#ifdef AE64_HOST_TEST
+    board_test_evaluation_hook();
+#endif
+    saved=irq_lock();
+    if(generation==state.physical_generation) { state.physical=next;state.report=report; }
     irq_unlock(saved);
 }
 void board_schedule_hook(void) {
@@ -541,8 +574,9 @@ void board_schedule_hook(void) {
 }
 void board_dispatch_hook(void) {
     if(state.initialized) {
-        refresh_maxima();
-        for(unsigned i=0;i<64;i++)state.vendor.max_travel_um[i]=state.maximum[i];
+        /* Vendor validation must not overwrite an input frame's maxima while
+         * that frame is being evaluated with interrupts enabled. */
+        read_maxima(state.vendor.max_travel_um);
         const uint8_t *request=RAM(GP+0x65c);
         if(usb_switch_request(request,state.reply,stock_tick())) { stock_vendor_reply(state.reply);return; }
         if(state.usb_phase && request[0]==0x10 && (request[1]>=0x21 && request[1]<=0x35)) {
@@ -562,8 +596,8 @@ void board_dispatch_hook(void) {
 #ifdef AE64_HOST_TEST
 const struct gp_report *board_test_report(void) { return &state.report; }
 bool board_test_install(const uint8_t *wire) {
-    struct gp_physical_config c;uint8_t t;refresh_maxima();
+    struct gp_physical_config c;uint8_t t;read_maxima(state.maximum);
     if(!gp_wire_decode(wire,state.mapping.revision+1,state.maximum,&c,&t) || (t!=GP_CAP_XINPUT&&c.mode!=GP_OFF))return false;
-    state.mapping=c;gp_physical_reset(&state.physical);state.report=(struct gp_report){0};return true;
+    state.mapping=c;mapping_changed();reset_physical();return true;
 }
 #endif

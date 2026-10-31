@@ -5,6 +5,7 @@
 
 #define GP_PHYSICAL_MIN_STROKE_UM 10u
 #define GP_PHYSICAL_MAX_STROKE_UM 10000u
+#define GP_PHYSICAL_ANALOG_COUNT 10u
 
 struct gp_physical_analog_key {
     uint8_t key;
@@ -44,6 +45,10 @@ struct gp_physical_context {
     uint64_t bound_mask;
     uint16_t max_travel_um[GP_KEY_COUNT];
     struct gp_report report;
+    /* Cached evaluator only: 56 bytes on RV32, no duplicated core/curves. */
+    uintptr_t validated_config_identity;
+    uint64_t digital_mask;
+    uint16_t analog_start[GP_PHYSICAL_ANALOG_COUNT], analog_end[GP_PHYSICAL_ANALOG_COUNT];
 };
 
 void gp_physical_config_empty(struct gp_physical_config *config);
@@ -64,6 +69,20 @@ bool gp_physical_update(struct gp_physical_context *context,
                         const struct gp_physical_config *config,
                         const struct gp_physical_frame *frame,
                         struct gp_report *output);
+/* Optimized counterpart for a config which is immutable while its revision is
+ * unchanged. The caller must increment revision for EVERY mapping/curve/setting
+ * edit and prevent concurrent mutation throughout this call. Address, revision,
+ * mode and bound-key maximum changes rebuild and validate the cache before use.
+ * Never use this API for unversioned/arbitrarily mutable input: use the fully
+ * validating gp_physical_update above instead. The cached address is numeric
+ * identity only and is never dereferenced after the call, so a per-call snapshot
+ * may be passed safely. Fault/release/watchdog behavior
+ * and the two-stage integer distance quantization are otherwise identical.
+ */
+bool gp_physical_update_cached(struct gp_physical_context *context,
+                               const struct gp_physical_config *config,
+                               const struct gp_physical_frame *frame,
+                               struct gp_report *output);
 bool gp_physical_watchdog(struct gp_physical_context *context, uint32_t now_ms,
                           uint32_t max_age_ms, struct gp_report *output);
 #endif

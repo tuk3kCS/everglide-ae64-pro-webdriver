@@ -24,6 +24,8 @@ static void (*process_model)(void);
 static void (*press_model)(uint32_t,uint32_t);
 static void (*release_model)(uint32_t,uint32_t);
 static void (*advanced_model)(uintptr_t,uintptr_t,uint32_t);
+static void (*evaluation_model)(void);
+void board_test_evaluation_hook(void) { if(evaluation_model)evaluation_model(); }
 void *test_stock_ram(uintptr_t a) {
     if(a>=0xf300c000u && a<0xf300c400u)return (uint8_t *)usb_registers+(a-0xf300c000u);
     if(a>=0x800b2000u&&a<0x800c0000u) {
@@ -75,23 +77,34 @@ int stock_vendor_reply(const uint8_t *bytes) { memcpy(last_reply,bytes,64);retur
 uint32_t stock_tick(void) { return now; }
 static void complete(void) { CHECK(ep_in!=NULL);owned=NULL;ep_in->callback(0,0x85,20); }
 static void p16(unsigned address,unsigned v) { ram[address]=(uint8_t)v;ram[address+1]=(uint8_t)(v>>8); }
+/* Independent literal physical positions from factory layout payload 0x1A734.
+ * Do not derive this fixture from the board's packed row-count assumption. */
+static const uint8_t fixture_positions[64][2]={
+    {1,0},{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{1,7},{1,8},{1,9},{1,10},{1,11},{1,12},{1,13},
+    {2,0},{2,1},{2,2},{2,3},{2,4},{2,5},{2,6},{2,7},{2,8},{2,9},{2,10},{2,11},{2,12},{2,13},
+    {3,0},{3,1},{3,2},{3,3},{3,4},{3,5},{3,6},{3,7},{3,8},{3,9},{3,10},{3,11},{3,13},
+    {4,0},{4,2},{4,3},{4,4},{4,5},{4,6},{4,7},{4,8},{4,9},{4,10},{4,11},{4,12},{4,13},{4,14},
+    {5,0},{5,1},{5,2},{5,6},{5,9},{5,10},{5,12},{5,13},{5,14}
+};
 static unsigned rec(unsigned key) {
-    const unsigned sizes[5]={14,14,13,14,9};unsigned row=1;
-    while(key>=sizes[row-1])key-=sizes[row++-1];
-    return 0x82bb8+row*0x5e8+key*0x48;
+    CHECK(key<64);return 0x82bb8+fixture_positions[key][0]*0x5e8+fixture_positions[key][1]*0x48;
 }
 static unsigned perf(unsigned key) {
-    const unsigned sizes[5]={14,14,13,14,9};unsigned row=1;
-    while(key>=sizes[row-1])key-=sizes[row++-1];
-    return 0x865cc+row*0xd2+key*10;
+    CHECK(key<64);return 0x865cc+fixture_positions[key][0]*0xd2+fixture_positions[key][1]*10;
 }
 static void key(unsigned k,unsigned travel,bool down) {
     p16(rec(k)+0x1a,travel);ram[rec(k)+8]=down?1:0;ram[rec(k)+9]=down?1:0;
 }
 static void fixture(void) {
+    CHECK(rec(40)==0x82bb8+3*0x5e8+13*0x48); /* Enter follows a hole. */
+    CHECK(rec(42)==0x82bb8+4*0x5e8+2*0x48);  /* Z follows wide Shift. */
+    CHECK(rec(58)==0x82bb8+5*0x5e8+6*0x48);  /* Space is sensor col6. */
+    CHECK(rec(60)==0x82bb8+5*0x5e8+10*0x48); /* Physical Fn. */
+    CHECK(rec(63)==0x82bb8+5*0x5e8+14*0x48); /* Right arrow. */
+    CHECK(perf(60)==0x865cc+5*0xd2+10*10);
     scan_model=NULL;
     schedule_model=NULL;
-    process_model=NULL;press_model=NULL;release_model=NULL;advanced_model=NULL;
+    process_model=NULL;press_model=NULL;release_model=NULL;advanced_model=NULL;evaluation_model=NULL;
     memset(ram,0,sizeof(ram));owned=NULL;now=0;
     memset(usb_registers,0,sizeof(usb_registers));usb_registers[0x140/4]=1;usb_registers[0x148/4]=0x157;
     const uint8_t configuration[91]={
@@ -135,8 +148,8 @@ static void analog(void) {
     key(15,3500,true);key(17,2000,true);key(29,3500,true);
     board_scan_hook();const struct gp_report *r=board_test_report();
     CHECK(r->lt==255 && r->rt==127 && r->lx==-32768 && r->ly==0);
-    CHECK(ram[rec(15)+9]==11 && ram[rec(17)+9]==11 && ram[rec(29)+9]==11);
-    CHECK((ram[0x8d2d0]&1)!=0);
+    CHECK(ram[rec(15)+9]==1 && ram[rec(17)+9]==1 && ram[rec(29)+9]==1);
+    CHECK((ram[0x8d2d0]&1)==0);
     now=1;board_schedule_hook();CHECK(last_packet[1]==20 && last_packet[4]==255 && last_packet[5]==127);
     uint8_t saved[20];memcpy(saved,owned,20);unsigned count=writes;
     key(15,500,false);board_scan_hook();now=2;board_schedule_hook();
@@ -162,7 +175,7 @@ static void digital(void) {
     wire[16+10*8]=0; // Esc -> controller A.
     CHECK(board_test_install(wire));for(unsigned k=0;k<64;k++)key(k,0,false);
     board_scan_hook();board_scan_hook();
-    key(0,100,true);board_scan_hook();CHECK(board_test_report()->buttons==1 && ram[rec(0)+9]==11);
+    key(0,100,true);board_scan_hook();CHECK(board_test_report()->buttons==1 && ram[rec(0)+9]==1);
     // Travel alone does not act as a separate digital actuation threshold.
     key(0,3500,false);board_scan_hook();CHECK(board_test_report()->buttons==0);
     wire[5]=2;CHECK(board_test_install(wire));key(0,0,false);board_scan_hook();board_scan_hook();

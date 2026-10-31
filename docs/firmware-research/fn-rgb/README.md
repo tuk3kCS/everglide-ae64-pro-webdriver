@@ -62,3 +62,6 @@ Offline validation includes 40,084 storage checks (including every single-bit co
 The rebuilt image, manifest, ELF and verification record are under `firmware/custom/ae64-xinput/v0.2/` and `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin`. Rebuild with `source/build.py`, then run `source/verify.py`; commands are in the custom firmware README. Native evidence is pinned to this stock release and does not establish layouts in future vendor builds.
 
 The Fn editor uses the sidebar’s active profile only. Its three layer buttons sit beside Keyboard, Per-key and Light strip. It reuses the single unified keyboard preview and rectangle selection; there is no second keyboard or profile dropdown inside the Fn editor. This UI revision does not change the firmware image or FNR1 protocol.
+
+
+v0.8 removes repeated input processing and controller configuration validation from steady-state scans, evaluates controller math with interrupts enabled, and corrects physical Fn detection. See the [v0.8 optimization report](../gamepad/SCAN_FN_OPTIMIZATION_V08.md). The native RGB engine remains byte-for-byte unchanged; physical latency is not yet measured.

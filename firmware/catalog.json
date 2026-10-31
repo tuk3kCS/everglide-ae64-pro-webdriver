@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin",
+      "name": "Experimental XInput + Fn RGB v0.8 · saved mappings",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-10-31",
+      "bytes": 142888,
+      "sha256": "753feeafd003de913c394a7b7c0e74a8e33dfa2ab633b8ef572bddb5ad43935b",
+      "boardId": "0030000A",
+      "payloadCrc32": "497b6355",
+      "description": "Reduces repeated scan work, caches validated controller math, keeps interrupts enabled during evaluation, and corrects sparse physical matrix/Fn detection. Retains exact-source normal-key blocking, saved mappings and Fn colors. Offline verified; physical latency remains to be tested.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin",
       "name": "Experimental XInput + Fn RGB v0.7 · saved mappings",

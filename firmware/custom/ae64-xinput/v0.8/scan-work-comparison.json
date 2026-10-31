@@ -1,0 +1,15 @@
+{
+  "v0.7": {
+    "scans": 10000,
+    "native_ram_accesses": 3630000,
+    "forced_input_frames": 10000,
+    "forced_records": 60000
+  },
+  "v0.8": {
+    "scans": 10000,
+    "native_ram_accesses": 310000,
+    "forced_input_frames": 0,
+    "forced_records": 0
+  },
+  "limitations": "Synthetic native-RAM access and forced-work counts only; same six-bound-key fixture, native scanner stubbed; not CPU cycles, wall-clock latency or hardware measurement."
+}

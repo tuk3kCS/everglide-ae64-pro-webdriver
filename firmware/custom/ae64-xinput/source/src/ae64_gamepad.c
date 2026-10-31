@@ -73,16 +73,19 @@ static uint16_t depth(const uint16_t *travel, uint8_t key) {
     if (key==GP_NONE) return 0;
     return travel[key]>GP_TRAVEL_MAX ? GP_TRAVEL_MAX : travel[key];
 }
+uint16_t gp_curve_level_validated(uint16_t d,uint16_t start,uint16_t end,
+                                  const struct gp_curve *curve) {
+    if (d<=start) return 0;
+    if (d>=end) return GP_TRAVEL_MAX;
+    uint32_t x=(uint32_t)(d-start)*GP_TRAVEL_MAX/(end-start);
+    for (unsigned i=1; i<4; ++i) if (x<=curve->x[i])
+        return (uint16_t)(curve->y[i-1]+(x-curve->x[i-1])*
+            (curve->y[i]-curve->y[i-1])/(curve->x[i]-curve->x[i-1]));
+    return GP_TRAVEL_MAX;
+}
 static uint16_t analog(const struct gp_analog_key *k,const uint16_t *travel) {
     if (k->key==GP_NONE) return 0;
-    uint16_t d=depth(travel,k->key);
-    if (d<=k->start) return 0;
-    if (d>=k->end) return GP_TRAVEL_MAX;
-    uint32_t x=(uint32_t)(d-k->start)*GP_TRAVEL_MAX/(k->end-k->start);
-    for (unsigned i=1; i<4; ++i) if (x<=k->curve.x[i])
-        return (uint16_t)(k->curve.y[i-1]+(x-k->curve.x[i-1])*
-            (k->curve.y[i]-k->curve.y[i-1])/(k->curve.x[i]-k->curve.x[i-1]));
-    return GP_TRAVEL_MAX;
+    return gp_curve_level_validated(depth(travel,k->key),k->start,k->end,&k->curve);
 }
 static int32_t axis_value(const struct gp_axis *axis,const uint16_t *travel) {
     int32_t n=analog(&axis->negative,travel),p=analog(&axis->positive,travel);
@@ -103,18 +106,21 @@ static uint32_t sqrt_floor(uint32_t n) {
 static int16_t signed_axis(int32_t value) {
     return (int16_t)(value>=0 ? value*32767/10000 : value*32768/10000);
 }
-static void stick(const struct gp_stick *config,const uint16_t *travel,int16_t *ox,int16_t *oy) {
-    int32_t x=axis_value(&config->x,travel),y=axis_value(&config->y,travel);
-    if (config->circular) {
+void gp_stick_axes_validated(int32_t x,int32_t y,uint16_t deadzone,bool circular,
+                            int16_t *ox,int16_t *oy) {
+    if (circular) {
         uint32_t squared=(uint32_t)(x*x)+(uint32_t)(y*y),r=sqrt_floor(squared);
         if (r*r<squared) ++r;
-        if (r<=config->radial_deadzone) { *ox=0;*oy=0;return; }
+        if (r<=deadzone) { *ox=0;*oy=0;return; }
         uint32_t clamped=r>GP_TRAVEL_MAX ? GP_TRAVEL_MAX : r;
-        uint32_t scaled=(clamped-config->radial_deadzone)*GP_TRAVEL_MAX/
-                        (GP_TRAVEL_MAX-config->radial_deadzone);
+        uint32_t scaled=(clamped-deadzone)*GP_TRAVEL_MAX/(GP_TRAVEL_MAX-deadzone);
         x=x*(int32_t)scaled/(int32_t)r; y=y*(int32_t)scaled/(int32_t)r;
     }
     *ox=signed_axis(x); *oy=signed_axis(y);
+}
+static void stick(const struct gp_stick *config,const uint16_t *travel,int16_t *ox,int16_t *oy) {
+    gp_stick_axes_validated(axis_value(&config->x,travel),axis_value(&config->y,travel),
+                           config->radial_deadzone,config->circular,ox,oy);
 }
 static bool ready_to_arm(const struct gp_config *c,const uint16_t *travel) {
     for (unsigned s=0; s<2; ++s) {

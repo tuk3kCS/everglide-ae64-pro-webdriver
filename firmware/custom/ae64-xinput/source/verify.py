@@ -46,6 +46,13 @@ def main():
     stock_payload=stock[4096:]
     for begin,end,label in [(0x6e6e,0xa536,'RGB effect engine'),(0xc442,0xc544,'lighting mode handler'),(0xa9c0,0xaa36,'RGB timing loop'),(0x1456a,0x14906,'native Fn renderer'),(0x1b0b0,0x1b150,'twenty RGB callback pairs')]:
         check(payload[begin:end]==stock_payload[begin:end],label+' changed')
+    expected_columns=[list(range(14)),list(range(14)),list(range(12))+[13],[0]+list(range(2,15)),[0,1,2,6,9,10,12,13,14]]
+    for row,columns in enumerate(expected_columns,1):
+        table=stock_payload[0x1a734+row*42:0x1a734+(row+1)*42]
+        actual=[col for col in range(21) if table[col*2+1]]
+        check(actual==columns,'Pinned physical matrix row '+str(row))
+    matrix_at=symbols['matrix_columns']['address']-m.BASE
+    check(payload[matrix_at:matrix_at+70]==b''.join(bytes(row+[0]*(14-len(row))) for row in expected_columns),'Linked sparse matrix columns')
     for name,save,cont in [('stock_dispatch_original',0x80024c0e,0x8002e77a),('stock_ep0_original',0x80024bde,0x80030756),('stock_fn_load_original',0x80024bf4,0x8002be62),('stock_fn_save_original',0x80024c0e,0x8002bf9e),('stock_keyboard_release_original',0x80024c0e,0x8002584e),('stock_advanced_key_original',0x80024c0e,0x80026b2c)]:
         at=symbols[name]['address']-m.BASE
         check(decode_jal(at)==(save,5),'Trampoline save helper '+name)
@@ -76,7 +83,7 @@ def main():
         subprocess.run(range_command,check=True)
         range_stdout=subprocess.check_output(run_test(range_file),text=True);print(range_stdout.strip())
     fn_tests={}
-    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_storage.c']),('gp-storage',[root/'board/gp_storage.c',root/'board/test_gp_storage.c']),('gp-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_gp_board.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_usb_switch.c']),('rollover',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_rollover.c']),('keyboard-release',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_keyboard_release.c']),('native-input',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_native_input.c']),('real-timing',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_real_timing.c'])]:
+    for name,extra in [('fn-protocol',[root/'board/test_fn_rgb.c']),('fn-storage',[root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_storage.c']),('gp-storage',[root/'board/gp_storage.c',root/'board/test_gp_storage.c']),('gp-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_gp_board.c']),('fn-board',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_fn_board.c']),('usb-switch',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_usb_switch.c']),('rollover',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_rollover.c']),('keyboard-release',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_keyboard_release.c']),('native-input',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_native_input.c']),('scan-performance',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_scan_performance.c']),('ledger-policy',[root/'board/test_ledger_policy.c']),('physical-cache',[root/'tests/test_physical_cached.c']),('real-timing',[root/'board/board_port.c',root/'board/fn_storage.c',root/'board/gp_storage.c',root/'board/test_real_timing.c'])]:
         command=[str(a.zig.resolve()),'cc',*host_target,'-DAE64_HOST_TEST','-std=c11','-O2','-Wall','-Wextra','-Werror','-I',str(root/'include'),*[str(x) for x in [*(root/'src').glob('*.c'),*extra]],'-o',str(work/(name+suffix))]
         subprocess.run(command,check=True)
         result=subprocess.check_output(run_test(work/(name+suffix)),text=True).strip();print(result);fn_tests[name]=result

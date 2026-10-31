@@ -41,6 +41,7 @@ static inline uint32_t irq_lock(void) { return 0; }
 static inline void irq_unlock(uint32_t saved) { (void)saved; }
 const struct gp_report *board_test_report(void);
 bool board_test_install(const uint8_t *wire);
+void board_test_evaluation_hook(void);
 #else
 #define RAM(a) ((void *)(uintptr_t)(a))
 static inline uint32_t irq_lock(void) {

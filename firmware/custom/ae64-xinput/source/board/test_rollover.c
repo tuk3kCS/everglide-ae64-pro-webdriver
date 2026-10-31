@@ -43,7 +43,7 @@ static void expected(unsigned first,unsigned second,bool hold_first,bool hold_se
     }
     CHECK(r->buttons==0 && r->lt==0 && r->rt==0);
     for(unsigned k=0;k<64;k++)CHECK(*(uint16_t *)(ram+rec(k)+0x1a)==physical[k]);
-    CHECK(ram[rec(16)+9]==11 && ram[rec(29)+9]==11 && ram[rec(30)+9]==11 && ram[rec(31)+9]==11);
+    for(unsigned k=0;k<64;k++)CHECK(ram[rec(k)+9]==(physical[k]>=2000?2:0));
 }
 static void ordered_pairs(void) {
     const unsigned keys[4]={16,29,30,31};
@@ -63,7 +63,7 @@ static void keyboard_modes(void) {
     wasd_wire[5]=GP_MIXED;CHECK(board_test_install(wasd_wire));settle();
     CHECK(ram[rec(16)+9]==2 && ram[rec(31)+9]==2);
     wasd_wire[5]=GP_CONTROLLER_ONLY;CHECK(board_test_install(wasd_wire));settle();
-    CHECK(ram[rec(16)+9]==11 && ram[rec(31)+9]==11);
+    CHECK(ram[rec(16)+9]==2 && ram[rec(31)+9]==2);
     physical[0]=3000;settle();CHECK(ram[rec(0)+9]==2);
     physical[31]=0;settle();CHECK(*(uint16_t *)(ram+rec(31)+0x1a)==0);
 }

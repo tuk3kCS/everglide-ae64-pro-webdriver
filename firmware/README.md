@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The newest experimental custom build is **XInput + Fn RGB v0.7**. It gates normal keyboard appends by their exact physical source, retains Fn1–Fn3 press actions until release, requests a fresh Fn LED frame and uses verified hardware milliseconds. It retains saved gamepad/Fn formats and the USB switch. The local driver adds the factory-compatible Transparent guard above new Fn triggers. The image is verified offline and has not been flashed during this work; see the [v0.7 report](../docs/firmware-research/gamepad/INPUT_FN_TIMING_FIX_V07.md). The retained v0.6 image/evidence is unchanged.
+The newest experimental custom build is **XInput + Fn RGB v0.8**. It removes repeated scan/release work, caches controller calculations, shortens interrupt masking and corrects physical matrix/Fn detection. Saved mappings/Fn colors and the USB switch remain compatible. It is verified offline; physical LED response still needs testing. See the [v0.8 report](../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md). Earlier v0.6/v0.7 images are retained.
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 

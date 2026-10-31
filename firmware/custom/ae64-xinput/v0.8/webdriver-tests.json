@@ -1,0 +1,122 @@
+[
+  {
+    "test": "smoke-test.cjs",
+    "exit": 0,
+    "stdout": "Smoke test passed: WebHID packets, RGB mappings, Pages packaging, languages, integrated tools, and update isolation verified.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/device-serial-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: device S/N matches the factory decimal-byte format; zero, 0xff and non-UTF-8 UID bytes are preserved. No hardware accessed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/firmware/flasher-tests.cjs",
+    "exit": 0,
+    "stdout": "Firmware catalog: 8 verified images.\nPASS: 36102 firmware checks; simulated lifecycle, isolation, failure handling, all 8 binary streams and deployment. No hardware accessed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/firmware/ui-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: firmware UI selection/review/start isolation, image-switch race, hardware shortcut, subpath URLs and integrated solutions. No hardware accessed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/firmware/reconnect-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: automatic app/boot reconnect, changed HID objects, transient errors, two-keyboard identity isolation, duplicate identities and permission failure. No chooser or hardware accessed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/firmware/recovery-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: recovery connects through normal chooser, unplug/replug/startup recovery, fresh image requirement, identity-only preflight and error-only reconnect prompt. No hardware accessed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/firmware/handoff-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: real updater handoff without refresh/reselection; automatic boot/app reconnect, lost entry ACK, browser authorization, transient opens, rejected choices, cancel/denial, and retained image after errors. Simulated USB only.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: 8045 model and integrated-UI checks.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/protocol-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: 26 codec/identity/atomic-transfer checks (C harness not selected).",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/travel-limits-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: connected UI automatically uses 3.31mm limits and supports manual refresh without writing a configuration.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/switch-defaults-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: UR Ice database defaults, mixed switches, new assignments, legacy migration, manual windows, reload/restore and actual keyboard limits. No hardware writes.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/icons-overview-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: all 24 icon files/directions, picker/key/preview artwork, Overview draft/active/off states, stale connections and sidebar order.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/auto-load-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: read-only discovery preserves valid saved/concurrent local drafts, remembers hardware separately, supports explicit Read/Apply, handles session/persistent firmware, and retains capability/disconnect/retry/disposal guards.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/usb-switch-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: Xbox USB switch capability gating, packet validation, stale revisions, no-op/wraparound, upload mutual exclusion, reconnect verification, uncertain/disconnected results and draft preservation. Simulated devices only.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/gamepad/usb-reconnect-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: same-identity Xbox USB reconnect, idle no-op, ACK-only rejection, target/phase/identity/duplicate failures with closed probes, draft/client preservation, preflight guards, mutual exclusion and busy cleanup. Simulated devices only.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/lighting/fn-ui-tests.cjs",
+    "exit": 0,
+    "stdout": "Fn lighting UI: capability gating, stale probes, per-profile/layer isolation and five Space LEDs passed.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/lighting/fn-selection-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: Fn drag/click/Ctrl/Meta selection, cancel/cleanup, single preview, Space LEDs, active profile isolation and cross-layer save revisions; normal per-key selection retained.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/lighting/fn-mapping-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: Fn1/2/3 release inheritance, multi-key/nested assignment, import, apply review/write verification, idempotence and unrelated-key preservation. No hardware.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/lighting/fn-protocol-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: Fn RGB client validation and factory/forged capability rejection. C cross-protocol harness runs in firmware verify.py.",
+    "stderr": ""
+  },
+  {
+    "test": "tests/lighting/effect-preview-tests.cjs",
+    "exit": 0,
+    "stdout": "PASS: all 20 distinct browser effects, brightness/palette/direction/speed, live-vs-draft priority, overrides, unsupported modes and live-painter isolation. No hardware.",
+    "stderr": ""
+  }
+]

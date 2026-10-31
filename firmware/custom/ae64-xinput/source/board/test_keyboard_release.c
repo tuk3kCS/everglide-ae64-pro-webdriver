@@ -4,20 +4,43 @@
 static bool keyboard_held[64];
 static int repeat_key;
 static unsigned keyboard_frames;
-/* The pinned generic-key path accepts press event 1 and release 11. Idle 0
- * does not drain the independent held-key list. A different pressed key can
- * take Windows' repeat selection without releasing the older held key. */
-static void keyboard_process(void) {
-    if(!(ram[0x8d2d0]&1))return;
-    ram[0x8d2d0]&=(uint8_t)~1u;
-    for(unsigned k=0;k<64;k++) {
-        unsigned r=rec(k);uint16_t flags=(uint16_t)(ram[r]|ram[r+1]<<8);
-        if(!(flags&0x82))continue;
-        ram[r]&=(uint8_t)~0x80u;
-        unsigned event=ram[r+9];
-        if(event==1) {if(!keyboard_held[k])repeat_key=(int)k;keyboard_held[k]=true;ram[r]|=2;keyboard_frames++;}
-        else if(event==11) {keyboard_held[k]=false;if(repeat_key==(int)k)repeat_key=-1;ram[r]&=(uint8_t)~2u;keyboard_frames++;}
+/* Model the separate native usage/owner ledger and the common append gates.
+ * Policy compaction is independent of the current event or active layer. */
+static unsigned ledger_count(void){uint32_t n;memcpy(&n,ram+0x8d1fc,4);return n;}
+static void ledger_count_set(unsigned n){memcpy(ram+0x8d1fc,&n,4);}
+static void sync_keyboard(void) {
+    memset(keyboard_held,0,sizeof(keyboard_held));
+    for(unsigned i=0;i<ledger_count();i++) {
+        unsigned owner=ram[0x80608+i*2+1];if(owner>=1&&owner<=64)keyboard_held[owner-1]=true;
     }
+    if(repeat_key>=0&&!keyboard_held[repeat_key])repeat_key=-1;
+}
+static void ledger_append(uint32_t usage,uint32_t owner) {
+    unsigned n=ledger_count();
+    for(unsigned i=0;i<n;i++)if(ram[0x80608+2*i]==usage&&ram[0x80609+2*i]==owner)return;
+    CHECK(n<128);ram[0x80608+2*n]=(uint8_t)usage;ram[0x80609+2*n]=(uint8_t)owner;ledger_count_set(n+1);
+    if(owner>=1&&owner<=64)repeat_key=(int)owner-1;
+}
+static void ledger_remove(uint32_t usage,uint32_t owner) {
+    unsigned n=ledger_count();
+    for(unsigned i=0;i<n;i++)if(ram[0x80608+2*i]==usage&&ram[0x80609+2*i]==owner) {
+        memmove(ram+0x80608+2*i,ram+0x80608+2*(i+1),2*(n-i-1));ledger_count_set(n-1);break;
+    }
+}
+static void keyboard_process(void) {
+    if(ram[0x8d2d0]&1) {
+        ram[0x8d2d0]&=(uint8_t)~1u;
+        for(unsigned k=0;k<64;k++) {
+            unsigned r=rec(k);uint16_t flags=(uint16_t)(ram[r]|ram[r+1]<<8);
+            if(!(flags&0x82))continue;
+            ram[r]&=(uint8_t)~0x80u;board_key_context(r);
+            unsigned event=ram[r+9];
+            if(event==1) {board_keyboard_press_hook(k+4,k+1);ram[r]|=2;keyboard_frames++;}
+            else if(event==11) {board_keyboard_release_hook(k+4,k+1);ram[r]&=(uint8_t)~2u;keyboard_frames++;}
+        }
+        board_key_context(0);
+    }
+    sync_keyboard();
 }
 static void step(void) { now++;board_scan_hook();keyboard_process(); }
 static void clear_keyboard(void) { memset(keyboard_held,0,sizeof(keyboard_held));repeat_key=-1;keyboard_frames=0; }
@@ -25,7 +48,7 @@ static void normal_event(unsigned k,unsigned event,bool down) {
     key(k,down?3200:0,down);ram[rec(k)+9]=(uint8_t)event;
     ram[rec(k)]|=0x80;ram[0x8d2d0]|=1;
 }
-static void setup_keyboard(void) {setup_wasd();scan_model=NULL;clear_keyboard();}
+static void setup_keyboard(void) {setup_wasd();scan_model=NULL;clear_keyboard();press_model=ledger_append;release_model=ledger_remove;}
 static void existing_hold(void) {
     const unsigned wasd[4]={16,29,30,31};
     for(unsigned i=0;i<4;i++)for(unsigned already_idle=0;already_idle<2;already_idle++) {

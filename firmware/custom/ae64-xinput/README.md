@@ -1,18 +1,18 @@
 # AE64 Pro experimental native XInput and Fn RGB firmware
 
-Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin), **140,104 bytes**, SHA-256 `8c3df91f94c376a403c100f18108efccf16c5b397c0101a9e3427f46314b3524`.
+Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin), **142,888 bytes**, SHA-256 `753feeafd003de913c394a7b7c0e74a8e33dfa2ab633b8ef572bddb5ad43935b`.
 
-v0.7 gates ordinary keyboard presses/modifiers by exact physical source, retains Fn1–Fn3 press origins through release, requests a new Fn lighting frame and uses the hardware millisecond counter. The driver stages Transparent in higher layers above newly assigned Fn triggers. Saved gamepad mappings, Fn colors and the Xbox USB switch remain compatible. See the [v0.7 investigation, tests and limits](../../../docs/firmware-research/gamepad/INPUT_FN_TIMING_FIX_V07.md).
+v0.8 removes repeated synthetic releases and scanner-history rewrites, caches validated controller calculations, evaluates controller frames with interrupts enabled, and corrects the sparse physical matrix including the default Fn key. It retains exact physical output gates, momentary Fn origins, saved mappings/Fn colors, the real millisecond clock and the Xbox USB switch. See the [v0.8 optimization report](../../../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md).
 
-**v0.7 is verified offline, not flashed or physically tested during this work.** Tests cover rapid WASD/T output phases, alias ownership, momentary Fn, linked assembly register preservation and real millisecond scheduling. The exact physical LED delay and sustained report rate still require hardware measurements.
+**v0.8 is verified offline and has not been flashed during this work.** The user reported slower physical Fn lighting on v0.6/v0.7 than stock. The repeated-work regression is removed in source and synthetic tests; stock-equivalent LED latency still needs a physical comparison. No measured millisecond improvement is claimed.
 
-`source/` builds v0.7; its ELF/manifests are in `v0.7/`. The v0.6 image/evidence and archived source are unchanged. Historical evidence is retained in version directories and `history/`. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
+`source/` builds v0.8; its ELF/manifests and test evidence are in `v0.8/`. Earlier images/evidence are retained. `history/v0.7-source.zip` preserves the prior source tree; some historical line endings were normalized during archiving. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
 
 ## Configure and flash
 
 Use the main web driver's **Gamepad mode â†’ Hardware Solution** to edit assignments. It shares the driver's keyboard connection. Use **Firmware** to select this custom image or any bundled factory release. The standalone `/gamepad` page no longer exists.
 
-v0.4 and newer start with no controller assignments unless a valid mapping was saved for the active onboard profile. Valid v0.4–v0.6 saved mappings remain readable in v0.7. Read and verify the active mapping after upgrading; configure/import and **Apply to keyboard** if needed. The mapping then survives power loss and native keymap/Fn saves. Export a backup before firmware changes or factory reset. The Xbox USB visibility switch remains session-only; boot defaults remain enabled.
+v0.4 and newer start with no controller assignments unless a valid mapping was saved for the active onboard profile. Valid v0.4–v0.7 saved mappings remain readable in v0.8. Read and verify the active mapping after upgrading; configure/import and **Apply to keyboard** if needed. The mapping then survives power loss and native keymap/Fn saves. Export a backup before firmware changes or factory reset. The Xbox USB visibility switch remains session-only; boot defaults remain enabled.
 
 Digital controls follow the native normal/RT latch, and analog controls use calibrated travel. Saved custom windows are not silently changed when a switchâ€™s available range changes; invalid calibration/ranges remain neutral until corrected. A repeated USB configuration notification preserves existing transfer-buffer ownership.
 

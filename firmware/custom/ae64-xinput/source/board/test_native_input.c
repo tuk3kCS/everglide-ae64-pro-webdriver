@@ -81,6 +81,29 @@ static void fn_edge(unsigned key_id,unsigned action,unsigned event,bool down) {
     fn_key=key_id;fn_action=action;fn_event=event;key(key_id,down?3200:0,down);
     board_key_process_hook();
 }
+static void sparse_matrix(void) {
+    input_setup();
+    /* A trigger assigned to physical Fn must read row5,col10, not phantom5. */
+    wasd_wire[16]=60;CHECK(board_test_install(wasd_wire));
+    board_scan_hook();board_scan_hook();key(60,3200,true);board_scan_hook();
+    CHECK(board_test_report()->lt>0);
+    CHECK(ram[0x82bb8+5*0x5e8+10*0x48+9]==1);
+    CHECK(ram[0x82bb8+5*0x5e8+5*0x48+9]==0);
+    key(60,0,false);board_scan_hook();CHECK(board_test_report()->lt==0);
+    /* Every lower-row hole must leave context-free source owners unchanged. */
+    const uint8_t holes[][2]={{3,12},{4,1},{5,3},{5,4},{5,5},{5,7},{5,8},{5,11}};
+    for(unsigned i=0;i<sizeof(holes)/sizeof(holes[0]);i++) {
+        unsigned address=0x82bb8+holes[i][0]*0x5e8+holes[i][1]*0x48;
+        board_key_context(address);board_keyboard_press_hook(4,240);CHECK(ledger[4][240]);
+        board_keyboard_release_hook(4,240);CHECK(!ledger[4][240]);
+    }
+    input_setup();process_model=native_fn_event;
+    const unsigned lower_keys[]={40,42,54,57,58,59,60,61,62,63};
+    for(unsigned i=0;i<sizeof(lower_keys)/sizeof(lower_keys[0]);i++)for(unsigned layer=1;layer<=3;layer++) {
+        fn_edge(lower_keys[i],0xf100+layer,1,true);CHECK(ram[0x82b9d]==layer);
+        fn_edge(lower_keys[i],4,11,false);CHECK(resolved==0xf100+layer&&!ram[0x82b9d]&&!(ram[0x8d2d0]&0x20));
+    }
+}
 static void fn_momentary(void) {
     input_setup();process_model=native_fn_event;
     for(unsigned layer=1;layer<=3;layer++)for(unsigned key_id=0;key_id<64;key_id++) {
@@ -106,9 +129,9 @@ static void fn_momentary(void) {
 }
 int main(void) {
 #ifdef AE64_FN_ONLY
-    (void)&spam;(void)&aliases_and_context;fn_momentary();
+    (void)&spam;(void)&aliases_and_context;sparse_matrix();fn_momentary();
 #else
-    spam();aliases_and_context();fn_momentary();
+    spam();aliases_and_context();sparse_matrix();fn_momentary();
 #endif
     printf("PASS: exact physical append/release gates, 6000 spam cycles, colliding-owner aliases, scoped timed/direct contexts, Fn1-3 origins and immediate RGB deadline; %u checks.\n",checks);return 0;
 }

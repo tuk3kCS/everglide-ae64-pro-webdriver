@@ -163,6 +163,150 @@ bool gp_physical_update(struct gp_physical_context *context,
     }
     digital_report(config,frame->stock_pressed,output);context->report=*output;return true;
 }
+/* Iterate only the mapped keys without a target-specific bit-scan intrinsic. */
+static uint8_t take_key(uint64_t *mask) {
+    uint32_t low=(uint32_t)*mask;uint8_t key=0;
+    if (!low) { low=(uint32_t)(*mask>>32);key=32; }
+    if (!(low&0xffffu)) { low>>=16;key+=16; }
+    if (!(low&0xffu)) { low>>=8;key+=8; }
+    if (!(low&0xfu)) { low>>=4;key+=4; }
+    if (!(low&3u)) { low>>=2;key+=2; }
+    if (!(low&1u))key++;
+    *mask &= *mask-UINT64_C(1);return key;
+}
+static bool cached_maximum_changed(const struct gp_physical_context *context,
+                                    const uint16_t *maximum) {
+    uint64_t pending=context->bound_mask;
+    if (!maximum)return pending!=0;
+    while (pending) {
+        uint8_t key=take_key(&pending);
+        if (context->max_travel_um[key]!=maximum[key])return true;
+    }
+    return false;
+}
+static bool prepare_cache(struct gp_physical_context *context,
+                           const struct gp_physical_config *config,
+                           const uint16_t *maximum) {
+    if (context->configured && context->validated_config_identity==(uintptr_t)config &&
+        context->revision==config->revision && context->mode==config->mode &&
+        !cached_maximum_changed(context,maximum))return true;
+    struct gp_config core;uint64_t bound,digital;
+    if (!make_core(config,maximum,&core,&bound,&digital))return false;
+    if (!context->configured || context->revision!=config->revision ||
+        context->mode!=config->mode || calibration_changed(context,bound,maximum)) {
+        gp_physical_reset(context);context->configured=true;
+        context->revision=config->revision;context->mode=config->mode;context->bound_mask=bound;
+        uint64_t pending=bound;
+        while (pending) { uint8_t key=take_key(&pending);context->max_travel_um[key]=maximum[key]; }
+    }
+    for (unsigned s=0;s<2;++s) {
+        const struct gp_axis *axis[2]={&core.stick[s].x,&core.stick[s].y};
+        for (unsigned a=0;a<2;++a) {
+            unsigned i=s*5u+a*2u;
+            context->analog_start[i]=axis[a]->negative.start;context->analog_end[i]=axis[a]->negative.end;
+            context->analog_start[i+1]=axis[a]->positive.start;context->analog_end[i+1]=axis[a]->positive.end;
+        }
+        context->analog_start[s*5u+4]=core.trigger[s].start;
+        context->analog_end[s*5u+4]=core.trigger[s].end;
+    }
+    context->digital_mask=digital;context->validated_config_identity=(uintptr_t)config;return true;
+}
+static uint16_t cached_level(const struct gp_physical_context *context,
+                              const struct gp_physical_analog_key *binding,
+                              unsigned index,const uint16_t *normalized) {
+    if (binding->key==GP_NONE)return 0;
+    return gp_curve_level_validated(normalized[binding->key],context->analog_start[index],
+                                     context->analog_end[index],&binding->curve);
+}
+static int32_t cached_axis(const struct gp_physical_context *context,
+                            const struct gp_physical_axis *axis,unsigned index,
+                            const uint16_t *normalized) {
+    int32_t n=cached_level(context,&axis->negative,index,normalized),
+            p=cached_level(context,&axis->positive,index+1,normalized);
+    if (axis->opposition==GP_NEUTRAL_ON_BOTH && n && p)return 0;
+    if (axis->opposition==GP_DEEPER_WINS)return p==n ? 0 : (p>n ? p : -n);
+    return p-n;
+}
+static bool cached_ready(const struct gp_physical_context *context,
+                           const struct gp_physical_config *config,
+                           const uint16_t *normalized) {
+    for (unsigned s=0;s<2;++s) {
+        const struct gp_physical_axis *axis[2]={&config->stick[s].x,&config->stick[s].y};
+        for (unsigned a=0;a<2;++a) {
+            unsigned i=s*5u+a*2u;uint8_t n=axis[a]->negative.key,p=axis[a]->positive.key;
+            if ((n!=GP_NONE && normalized[n]>context->analog_start[i]) ||
+                (p!=GP_NONE && normalized[p]>context->analog_start[i+1]))return false;
+        }
+        uint8_t key=config->trigger[s].key;
+        if (key!=GP_NONE && normalized[key]>context->analog_start[s*5u+4])return false;
+    }
+    return true;
+}
+/* The physical validator has covered every core analog key and its valid bit.
+ * Core digital bindings are always GP_NONE; stock events are merged afterwards.
+ */
+static void cached_analog_update(struct gp_physical_context *context,
+                                  const struct gp_physical_config *config,
+                                  const uint16_t *normalized,uint32_t now,
+                                  struct gp_report *output) {
+    struct gp_context *analog=&context->analog;neutral(output);
+    if (!analog->configured || analog->revision!=config->revision || analog->mode!=config->mode) {
+        gp_reset(analog);analog->configured=true;analog->revision=config->revision;analog->mode=config->mode;
+    }
+    analog->last_frame_ms=now;analog->has_frame=true;
+    if (analog->needs_release) {
+        if (cached_ready(context,config,normalized))analog->needs_release=false;
+        neutral(&analog->report);return;
+    }
+    int16_t *ox[2]={&output->lx,&output->rx},*oy[2]={&output->ly,&output->ry};
+    uint8_t *trigger[2]={&output->lt,&output->rt};
+    for (unsigned s=0;s<2;++s) {
+        gp_stick_axes_validated(cached_axis(context,&config->stick[s].x,s*5u,normalized),
+                                cached_axis(context,&config->stick[s].y,s*5u+2,normalized),
+                                config->stick[s].radial_deadzone,config->stick[s].circular,ox[s],oy[s]);
+        *trigger[s]=(uint8_t)((uint32_t)cached_level(context,&config->trigger[s],s*5u+4,normalized)*255/10000);
+    }
+    analog->button_latches=0;analog->dpad_latches=0;analog->report=*output;
+}
+bool gp_physical_update_cached(struct gp_physical_context *context,
+                               const struct gp_physical_config *config,
+                               const struct gp_physical_frame *frame,
+                               struct gp_report *output) {
+    if (!output)return false;
+    neutral(output);
+    if (!context)return false;
+    if (!frame || !config || !prepare_cache(context,config,frame->max_travel_um)) {
+        gp_physical_reset(context);return false;
+    }
+    if (config->mode==GP_OFF) {
+        context->last_frame_ms=frame->now_ms;context->has_frame=true;
+        context->needs_release=true;neutral(&context->report);gp_reset(&context->analog);return true;
+    }
+    uint64_t bound=context->bound_mask,digital=context->digital_mask;
+    if ((bound && !frame->travel_um) || (bound&~frame->valid_mask) ||
+        (digital && !frame->stock_pressed_valid)) {
+        gp_physical_reset(context);return false;
+    }
+    /* Only mapped entries can be read by the validated evaluator. */
+    uint16_t normalized[GP_KEY_COUNT];uint64_t pending=bound;
+    while (pending) {
+        uint8_t key=take_key(&pending);
+        if (frame->travel_um[key]>frame->max_travel_um[key]) {
+            gp_physical_reset(context);return false;
+        }
+        normalized[key]=normalize(frame->travel_um[key],frame->max_travel_um[key]);
+    }
+    context->last_frame_ms=frame->now_ms;context->has_frame=true;
+    if (context->needs_release) {
+        if (released(config,frame->travel_um,digital,frame->stock_pressed)) {
+            struct gp_report ignored;cached_analog_update(context,config,normalized,frame->now_ms,&ignored);
+            context->needs_release=false;
+        }
+        neutral(&context->report);return true;
+    }
+    cached_analog_update(context,config,normalized,frame->now_ms,output);
+    digital_report(config,frame->stock_pressed,output);context->report=*output;return true;
+}
 bool gp_physical_watchdog(struct gp_physical_context *context,uint32_t now,uint32_t age,
                           struct gp_report *output) {
     if (!context || !output || !context->has_frame || (uint32_t)(now-context->last_frame_ms)<=age)return false;

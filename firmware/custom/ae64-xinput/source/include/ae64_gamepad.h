@@ -56,6 +56,15 @@ struct gp_context {
 void gp_linear_curve(struct gp_curve *curve);
 void gp_config_empty(struct gp_config *config);
 bool gp_config_valid(const struct gp_config *config);
+/* Shared integer math for adapters which already validated their config.
+ * Requires start < end <= GP_TRAVEL_MAX, a valid monotone curve, bounded axes
+ * [-GP_TRAVEL_MAX,GP_TRAVEL_MAX], and valid circular/dead-zone settings.
+ * These helpers neither validate configuration nor change release state.
+ */
+uint16_t gp_curve_level_validated(uint16_t depth, uint16_t start, uint16_t end,
+                                  const struct gp_curve *curve);
+void gp_stick_axes_validated(int32_t x, int32_t y, uint16_t radial_deadzone,
+                            bool circular, int16_t *output_x, int16_t *output_y);
 void gp_reset(struct gp_context *context);
 uint64_t gp_bound_keys(const struct gp_config *config);
 uint64_t gp_keyboard_suppression(const struct gp_config *config);
