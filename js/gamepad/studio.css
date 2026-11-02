@@ -236,7 +236,8 @@
 .gamepad-studio .gp-device-bar{display:flex;gap:16px;align-items:center;justify-content:space-between;margin:0 0 20px;color:var(--muted);font-size:12px}
 .gamepad-studio .card{background:var(--panel);border-color:var(--line)}
 .gamepad-studio .profilebar{flex-wrap:wrap;background:var(--panel-2)}
-.gamepad-studio .workspace-grid{grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr)}
+.gamepad-studio .workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gamepad-studio .mapping-card{grid-column:1/-1}
 .gamepad-studio input,.gamepad-studio select{background:var(--control-bg);color:var(--text)}
 .gamepad-studio .key{background:linear-gradient(var(--key-start),var(--key-end));color:var(--key-text);border-color:var(--key-border)}
 .gamepad-studio .key.selected{background:var(--mint);color:var(--bg)}

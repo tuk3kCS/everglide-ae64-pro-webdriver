@@ -43,6 +43,8 @@ jobs:
           node tests/gamepad/switch-defaults-tests.cjs
           node tests/gamepad/icons-overview-tests.cjs
           node tests/gamepad/auto-load-tests.cjs
+          node tests/gamepad/automatic-sync-tests.cjs
+          node tests/gamepad/overview-selection-tests.cjs
           node tests/gamepad/usb-switch-tests.cjs
           node tests/gamepad/usb-reconnect-tests.cjs
           node tests/lighting/fn-ui-tests.cjs

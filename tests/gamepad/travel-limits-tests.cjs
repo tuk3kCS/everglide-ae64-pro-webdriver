@@ -23,14 +23,14 @@ async function main() {
   assert.equal(nodes.get("matchTravel").disabled, false);
   assert.equal(nodes.get("endMm").value, "3.31");
   assert.equal(nodes.get("maxTravelMm").value, "3.31");
-  assert.equal(reads.length, 6, "Default ranges adapt automatically on connect.");
+  assert.equal(reads.length, 64, "Default ranges adapt automatically on connect.");
   await nodes.get("matchTravel").listeners.click();
-  assert.equal(reads.length, 12);
+  assert.equal(reads.length, 128);
   assert.equal(nodes.get("endMm").value, "3.31");
   assert.equal(nodes.get("maxTravelMm").value, "3.31");
   assert.equal(nodes.get("startMm").value, "0.50");
   assert.match(nodes.get("deviceTravel").textContent, /3\.31 mm for Q/);
-  assert.match(f.notices.at(-1).text, /Nothing was written/);
+  assert.match(nodes.get("travelSyncStatus").textContent, /read automatically.*64 keys/);
   assert.ok(f.saved().bindings.filter((b) => b.key !== null).every((b) => b.endMm === 3.31));
   assert.equal(rawCommands.filter((command) => command === P.CMD.READ).length, 5);
   assert.ok(rawCommands.every((command) => [P.CMD.INFO, P.CMD.READ].includes(command)), "Automatic load is read-only.");

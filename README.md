@@ -32,7 +32,7 @@ Optional **Auto apply** writes completed ordinary keyboard edits after a short d
 
 | Area | Available controls |
 | --- | --- |
-| Overview | Keyboard mappings, active profile, performance summary, and controller icons with local-draft versus keyboard-confirmed status. |
+| Overview | Select any virtual key to inspect its mapping, performance and controller assignment, including local-draft versus keyboard-confirmed status. |
 | Key mapping | Four layers per profile; keyboard, media, mouse, firmware/function values, and key combinations. |
 | Performance | Per-key actuation, Rapid Trigger first touch, synchronized or independent RT press/release sensitivity, top/bottom dead zones, and an experimental fixed-release editor. |
 | Switches and calibration | An 82-entry switch catalog, per-key switch assignments, multi-key editing, Hall calibration, and live travel/ADC inspection. |
@@ -69,7 +69,7 @@ See the [Fn RGB guide](docs/firmware-research/fn-rgb/README.md) for firmware evi
 
 ### Hardware Solution
 
-Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboardâ€™s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboardâ€™s gamepad profile**. The read button remains available for refresh or retry. Automatic loading does not upload a configuration; a failed read retains the local draft.
+Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboardâ€™s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboardâ€™s gamepad profile**. All 64 physical keys’ travel limits are read automatically, including when cached switch settings already exist. The read button remains available for refresh or retry. A previously confirmed local copy follows the active keyboard profile; unsaved edits stay a separate local draft. The Assign workspace uses the full page width, with tuning and stick behavior below it. Automatic loading does not upload a configuration; a failed read retains the local draft.
 
 Assign physical keys to LT/RT triggers, all four directions of both sticks, A/B/X/Y, bumpers, Back/Start, stick presses, and D-pad buttons. Analog controls support adjustable travel windows, linear/smooth response, circular stick gates, radial dead zones, and opposing-direction policies. Digital buttons follow the keyâ€™s normal actuation and Rapid Trigger state.
 

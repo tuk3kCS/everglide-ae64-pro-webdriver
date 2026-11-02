@@ -10,10 +10,17 @@ function gamepadConfigurationEqual(a, b) {
   const fields = (c) => [c.mode, c.transport, c.bindings, c.sticks];
   return JSON.stringify(fields(a)) === JSON.stringify(fields(b));
 }
+function gamepadDraftHasChanges(draft) {
+  if (!draft) return false;
+  try {
+    const saved = JSON.parse(localStorage.getItem("ae64-gamepad-studio-v1"));
+    return saved.keyboardFingerprint !== JSON.stringify([draft.mode, draft.transport, draft.bindings, draft.sticks]);
+  } catch (_) { return true; }
+}
 function gamepadOverviewSnapshot() {
   const active = connected() && gamepadOverview.transport === state.transport && gamepadOverview.profileIndex === Number(state.profile?.profileIndex || 0) ? gamepadOverview.config : null,
-    draft = gamepadDraft(), config = draft || active,
-    source = active && (!draft || gamepadConfigurationEqual(draft, active)) ? "active" : draft ? "draft" : "none";
+    draft = gamepadDraft(), config = active && !gamepadDraftHasChanges(draft) ? active : draft || active,
+    source = active && gamepadConfigurationEqual(config, active) ? "active" : draft ? "draft" : "none";
   return { config, source, disabled: config?.mode === "off" };
 }
 function rememberGamepadProfile(config, transport) {
@@ -47,6 +54,20 @@ function overviewGamepadKeyBadge(key) {
   if (!binding) return "";
   const label = `${model.CONTROL.get(binding.control).label} · ${snapshot.disabled ? "gamepad off" : snapshot.source === "active" ? "active controller assignment" : "local controller draft"}`;
   return `<span class="overview-controller-badge ${snapshot.disabled ? "inactive" : ""}" title="${esc(label)}">${window.AE64ControllerIcons.html(binding.control)}<span class="sr-only">${esc(label)}</span></span>`;
+}
+function overviewGamepadSelectedKey(key) {
+  const snapshot = gamepadOverviewSnapshot(), model = window.AE64GamepadModel,
+    physical = model.KEYS.find((item) => item.uiRow === key.uiRow && item.col === key.col),
+    bindings = snapshot.config?.bindings.filter((item) => item.key === physical?.id) || [];
+  if (!bindings.length) return "";
+  const mode = { controller: "Controller assignments only", mixed: "Keyboard + controller", off: "Gamepad off" }[snapshot.config.mode],
+    source = snapshot.source === "active" ? "Read from keyboard" : "Local draft · Apply to activate";
+  return `<div class="selected-controller-info ${snapshot.disabled ? "inactive" : ""}"><span class="eyebrow">CONTROLLER ASSIGNMENT</span>${bindings.map((binding) => {
+    const control = model.CONTROL.get(binding.control), details = control.kind === "button"
+      ? "Follows keyboard actuation and Rapid Trigger"
+      : `${binding.startMm.toFixed(2)}–${binding.endMm.toFixed(2)} mm · ${binding.curve === "smooth" ? "Smooth" : "Linear"} response · ${binding.maxTravelMm.toFixed(2)} mm switch travel`;
+    return `<div class="selected-controller-action">${window.AE64ControllerIcons.html(binding.control)}<div><strong>${esc(control.label)}</strong><small>${esc(details)}</small></div></div>`;
+  }).join("")}<p>${esc(mode)} · ${esc(source)}${snapshot.disabled ? " · output disabled" : ""}</p></div>`;
 }
 function gamepadOverviewPanel() {
   const snapshot = gamepadOverviewSnapshot(), config = snapshot.config,

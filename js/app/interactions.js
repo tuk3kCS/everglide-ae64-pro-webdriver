@@ -346,7 +346,7 @@ function bindKeySelection() {
 }
 function selectMappingKey(event) {
   const key = event.target.closest("[data-key]"), id = Number(key?.dataset.key);
-  if (!Number.isInteger(id)) return;
+  if (!key || !Number.isInteger(id) || !keys[id]) return;
   state.selectedKeys = new Set([id]);
   state.profile.selected = id;
   render();
@@ -497,7 +497,7 @@ function bindLightingSelection() {
 }
 
 function bindPage() {
-  if (state.page === "overview") bindGamepadOverview();
+  if (state.page === "overview") { bindGamepadOverview(); bindMappingKeySelection(); }
   if (state.page === "performance") bindKeySelection();
   if (state.page === "keymap") bindMappingKeySelection();
   if (state.page === "advanced") bindMappingKeySelection();
