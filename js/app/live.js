@@ -8,6 +8,105 @@
  * Handles RGB matrices, advanced reads, calibration, travel telemetry, and polling.
  */
 
+const lightingReadState = { transport: null, profile: null, fnGeneration: -1, loaded: false, pending: null, errors: [] };
+function lightingReadStatus() {
+  const current = lightingReadState.transport === state.transport && lightingReadState.profile === Number(state.profile.profileIndex) && lightingReadState.fnGeneration === fnLightingView.generation;
+  const message = !connected() ? "Lighting is read automatically when the keyboard connects."
+    : current && lightingReadState.pending ? "Reading keyboard, strip and Fn lighting…"
+    : current && lightingReadState.errors.length ? `Lighting read needs attention: ${lightingReadState.errors.join(" ")}`
+    : current && lightingReadState.loaded ? `Lighting read automatically${fnLightingAvailable() ? " · Fn 1, Fn 2 and Fn 3 ready" : ""}.`
+    : "Lighting will be read automatically.";
+  return `<div class="lighting-read-status"><span id="lightingReadStatus" role="status">${esc(message)}</span><button id="refreshLightingProfiles" class="button ghost small" type="button" ${!connected() || state.fnLightingBusy ? "disabled" : ""}>Refresh lighting</button></div>`;
+}
+async function readLightingProfiles({ force = false, renderAfter = true } = {}) {
+  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.writeInFlight) return;
+  const transport = state.transport, profile = Number(state.profile.profileIndex);
+  if (lightingReadState.pending && lightingReadState.transport === transport && lightingReadState.profile === profile) return lightingReadState.pending.promise;
+  if (state.fnLightingBusy) return;
+  if (!force && lightingReadState.transport === transport && lightingReadState.profile === profile && lightingReadState.fnGeneration === fnLightingView.generation && lightingReadState.loaded) return;
+  let finish;
+  const job = { promise: new Promise((resolve) => { finish = resolve; }) }, fnGeneration = fnLightingView.generation;
+  Object.assign(lightingReadState, { transport, profile, fnGeneration, loaded: false, errors: [], pending: job });
+  const current = () => lightingReadState.pending === job && state.transport === transport && transport.connected && Number(state.profile.profileIndex) === profile && fnGeneration === fnLightingView.generation;
+  state.fnLightingBusy = true; fnLightingView.busy = true;
+  stopPolling(); stopProfilePolling(); clearTimeout(state.timers.autoApply);
+  document.querySelectorAll(".lighting-page input,.lighting-page select,.lighting-page button").forEach((node) => { node.disabled = true; });
+  const status = document.querySelector("#lightingReadStatus"); if (status) status.textContent = "Reading keyboard, strip and Fn lighting…";
+  renderStatus();
+  const attempt = async (label, operation) => {
+    if (!current()) return;
+    try { await operation(); }
+    catch (error) { if (current()) lightingReadState.errors.push(`${label}: ${error.message || error}`); }
+  };
+  try {
+    for (const area of [0, 1]) await attempt(area ? "Strip settings" : "Keyboard settings", async () => {
+      const [base, palette] = await Promise.all([transport.getLightingBase(area), transport.getLightingPalette(area)]);
+      if (!current()) return;
+      const target = area ? state.profile.lighting.decorative : state.profile.lighting,
+        original = area ? state.original?.lighting?.decorative : state.original?.lighting;
+      if (!state.dirty[area ? "decorativeBase" : "lightingBase"]) {
+        target.base = { ...target.base, ...base }; if (original) original.base = { ...target.base };
+      }
+      if (!state.dirty[area ? "decorativePalette" : "lightingPalette"]) {
+        target.palette = palette.map(rgbToHex); if (original) original.palette = [...target.palette];
+      }
+    });
+    await attempt("Keyboard colors", async () => {
+      const matrix = await transport.readCustomLighting(MATRIX_ROWS, MATRIX_COLS, 0);
+      if (!current()) return;
+      state.hardware.customMatrix = matrix;
+      for (const key of keys) {
+        if (state.dirty.customLighting.has(key.id)) continue;
+        const records = lightingMatrixIndexes(key).map((index) => matrix[index]).filter(Boolean), record = records[Math.floor(records.length / 2)] || records[0];
+        if (!record) continue;
+        state.profile.lighting.perKey[key.id] = rgbToHex(record);
+        state.profile.lighting.customEnabled[key.id] = key.n === "Space" ? records.some((item) => Boolean(item.custom)) : Boolean(record.custom);
+        if (state.original?.lighting) {
+          state.original.lighting.perKey[key.id] = state.profile.lighting.perKey[key.id];
+          state.original.lighting.customEnabled[key.id] = state.profile.lighting.customEnabled[key.id];
+        }
+      }
+    });
+    await attempt("Strip colors", async () => {
+      const matrix = await transport.readCustomLighting(DECORATIVE_ROWS, DECORATIVE_COLS, 1);
+      if (!current()) return;
+      state.hardware.decorativeMatrix = matrix;
+      matrix.forEach((record, index) => {
+        if (state.dirty.decorativeLighting.has(index)) return;
+        state.profile.lighting.decorative.perLed[index] = rgbToHex(record);
+        state.profile.lighting.decorative.customEnabled[index] = Boolean(record.custom);
+        if (state.original?.lighting?.decorative) {
+          state.original.lighting.decorative.perLed[index] = state.profile.lighting.decorative.perLed[index];
+          state.original.lighting.decorative.customEnabled[index] = Boolean(record.custom);
+        }
+      });
+    });
+    if (fnLightingAvailable()) {
+      for (let layer = 0; layer <= 3; layer++) await attempt(`Fn keymap ${layer}`, async () => {
+        if (!hardwareLayerReady(layer)) await readKeymapLayer(layer);
+      });
+      const client = fnLightingView.client;
+      for (let layer = 1; layer <= 3; layer++) await attempt(`Fn ${layer}`, async () => {
+        const key = `${profile}:${layer}`;
+        if (fnLightingView.drafts.get(key)?.dirty) return;
+        try {
+          const value = await client.read(profile, layer);
+          if (!current() || fnLightingView.drafts.get(key)?.dirty) return;
+          fnLightingView.drafts.set(key, fnLightingNormalizeProfile(value)); fnLightingView.errors.delete(key);
+        } catch (error) { if (current()) fnLightingView.errors.set(key, error.message); throw error; }
+      });
+    }
+    if (current()) lightingReadState.loaded = true;
+  } finally {
+    if (lightingReadState.pending === job) {
+      lightingReadState.pending = null; state.fnLightingBusy = false; fnLightingView.busy = false;
+      if (connected() && !state.connecting && !state.profileSyncInFlight) startProfilePolling();
+      if (renderAfter && state.page === "lighting") render(); else renderStatus();
+    }
+    finish();
+  }
+}
+
 async function loadCustomLighting() {
   if (!connected()) return showToast("Connect to read custom RGB.", true);
   stopPolling();

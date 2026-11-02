@@ -98,7 +98,7 @@ function fnLightingUnifiedPreview() {
 }
 function fnLightingLayout() {
   if (fnLightingView.selectionScope !== fnLightingDraftKey()) { fnLightingView.selectionScope = fnLightingDraftKey(); commitFnLightingSelection(fnLightingView.selected, [...fnLightingView.selected].at(-1)); }
-  return `<div class="lighting-page lighting-context-${state.lightingTab} fn-lighting-context ${state.profile.lighting?.decorative?.base?.open === false ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">FN LAYER COLORS</span><h2>Fn ${fnLightingLayer()} · static key lighting</h2><p>Editing ${esc(state.hardware.configNames[fnLightingProfile()] || `Profile ${fnLightingProfile() + 1}`)}, the active onboard profile.</p></div><span class="badge ready">CUSTOM FIRMWARE</span></section>${fnLightingUnifiedPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${fnLightingPage()}</div>`;
+  return `<div class="lighting-page lighting-context-${state.lightingTab} fn-lighting-context ${state.profile.lighting?.decorative?.base?.open === false ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">FN LAYER COLORS</span><h2>Fn ${fnLightingLayer()} · static key lighting</h2><p>Editing ${esc(state.hardware.configNames[fnLightingProfile()] || `Profile ${fnLightingProfile() + 1}`)}, the active onboard profile.</p></div><span class="badge ready">CUSTOM FIRMWARE</span></section>${fnLightingUnifiedPreview()}<section class="panel lighting-section-nav">${lightingTabs()}${lightingReadStatus()}</section>${fnLightingPage()}</div>`;
 }
 function commitFnLightingSelection(selection, primary) {
   fnLightingView.selected = new Set([...selection].filter((id) => keys.some((key) => key.id === id)));
@@ -214,5 +214,4 @@ function bindFnLightingPage() {
       fnLightingView.drafts.set(key, draft); fnLightingView.errors.delete(key); render();
     } catch (error) { showToast(error.message || String(error), true); }
   });
-  if (!fnLightingDraft() && !fnLightingView.errors.has(fnLightingDraftKey())) fnLightingRead();
 }

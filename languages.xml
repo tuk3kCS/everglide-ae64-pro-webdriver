@@ -12,7 +12,7 @@
     <string key="language">Language</string>
     <string key="openDemo">Open demo</string>
     <string key="connectKeyboard">Connect keyboard</string>
-    <string key="heroEyebrow">LOCAL-FIRST · NO CHINA ROUND TRIP</string>
+    <string key="heroEyebrow">Alternative WebHID configurator</string>
     <string key="heroLine1">Your AE64.</string>
     <string key="heroLine2">Fully visible.</string>
     <string key="heroLead">Configure actuation, Rapid Trigger, remaps, RGB, profiles and the keyboard's hidden diagnostic controls directly through WebHID.</string>

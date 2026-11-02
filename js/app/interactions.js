@@ -640,6 +640,10 @@ function bindPage() {
         if (!state.livePressDistance) stopTravelPolling(true);
         render();
       });
+    document.querySelector("#livePressSelectionOnly")?.addEventListener("change", (event) => {
+      state.livePressSelectionOnly = event.target.checked;
+      render();
+    });
     if (state.livePressDistance) startTravel();
     if (
       state.performanceWorkspace === "switches" &&
@@ -896,6 +900,8 @@ function bindPage() {
       });
     if (state.liveLighting && connected() && !isFnLightingTab() && !state.fnLightingBusy) startLightingLive();
     bindFnLightingPage();
+    document.querySelector("#refreshLightingProfiles")?.addEventListener("click", () => readLightingProfiles({ force: true }));
+    readLightingProfiles();
   }
   if (state.page === "settings") {
     document.querySelectorAll("[data-profile-slot]").forEach((button) =>

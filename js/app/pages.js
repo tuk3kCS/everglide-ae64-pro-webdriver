@@ -409,13 +409,14 @@ function travelGaugeTicks(maxTravel = 4) {
   }).join("");
 }
 function liveTravelTarget() {
-  const selectedIds = selectedKeyIds(),
+  const selectedIds = state.livePressSelectionOnly ? selectedKeyIds() : [],
     candidates = selectedIds.length ? selectedIds.map((id) => keys[id]) : keys,
+    restingKey = candidates.find((candidate) => candidate.id === Number(state.profile.selected)) || candidates[0] || keys[0],
     key = candidates.reduce((furthest, candidate) => {
       const value = Number(state.hardware.travelValues.get(candidate.id) || 0),
         furthestValue = Number(state.hardware.travelValues.get(furthest.id) || 0);
       return value > furthestValue ? candidate : furthest;
-    }, candidates[0] || keys[0]),
+    }, restingKey),
     raw = Number(state.hardware.travelValues.get(key.id) || 0),
     travelMax = keySwitchTravel(key),
     mm = Math.min(travelMax, Math.max(0, raw / 1000)),
@@ -439,6 +440,7 @@ function livePressDistancePanel() {
       .sort((a, b) => b.mm - a.mm);
   return `<section class="panel live-press-panel compact" id="livePressPanel" style="--press-distance:${percent.toFixed(2)}%;--actuation-distance:${actuationPercent.toFixed(2)}%">
     <div class="panel-head"><div><h2>Live press distance</h2><p>The gauge follows the furthest pressed key ${selectedCount ? "inside the current selection" : "across the whole keyboard"}.</p></div><span id="livePressStatus" class="badge ${connected() ? "ready" : "experimental"}">${connected() ? "LIVE" : "CONNECT"}</span></div>
+    <label class="live-press-scope"><input id="livePressSelectionOnly" type="checkbox" data-keyboard-input="allow" ${state.livePressSelectionOnly ? "checked" : ""}>Track selected keys only</label>
     <div class="live-press-layout">
       <div class="axis-visual" aria-label="Focused switch travel and actuation point from zero to ${travelRangeLabel(travelMax)} millimeters">
         <img src="assets/images/axis.png" alt="Magnetic switch axis outline">
@@ -656,7 +658,7 @@ function lightingPage() {
   const lighting = state.profile.lighting,
     keyboardOff = !lighting.base.open,
     stripOff = !lighting.decorative.base.open;
-  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() && !isFnLightingTab() ? "ready" : ""}">${state.liveLighting && connected() && !isFnLightingTab() ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><div class="lighting-command-controls"><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label>${state.lightingTab === "main" ? lightingPowerControls(lighting.base, true) : ""}</div></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}</section>${state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
+  return `<div class="lighting-page lighting-context-${state.lightingTab} ${keyboardOff ? "keyboard-off" : ""} ${stripOff ? "strip-off" : ""}"><section class="panel lighting-command"><div class="lighting-command-copy"><span class="eyebrow">RGB / LIVE FRAMEBUFFER</span><h2>Keyboard + light strip</h2><p>One permanent preview for both firmware lighting areas.</p><span id="liveRgbStatus" class="badge ${state.liveLighting && connected() && !isFnLightingTab() ? "ready" : ""}">${state.liveLighting && connected() && !isFnLightingTab() ? "LIVE · READING" : "LIVE · PAUSED"}</span></div><div class="lighting-command-controls"><label class="lighting-power live-rgb-toggle"><span><b>${t("lightingLive")}</b><small>${t("lightingLiveHint")}</small></span><input id="lightingLive" class="toggle" type="checkbox" ${state.liveLighting ? "checked" : ""}></label>${state.lightingTab === "main" ? lightingPowerControls(lighting.base, true) : ""}</div></section>${unifiedLightingPreview()}<section class="panel lighting-section-nav">${lightingTabs()}${lightingReadStatus()}</section>${state.lightingTab === "main" ? mainLightingPage() : state.lightingTab === "perKey" ? perKeyLightingPage() : decorativeLightingPage()}</div>`;
 }
 function mappedOptions(options, current, supportedValues, labelFor) {
   const supported = new Set(supportedValues.map(Number)),
@@ -833,7 +835,7 @@ function advancedAssignmentEntries() {
 }
 function advancedAssignmentsPanel() {
   const entries = advancedAssignmentEntries();
-  return `<section class="panel full-span advanced-assignments"><div class="panel-head"><div><h2>Assigned advanced features</h2><p>Detected onboard assignments are grouped by action. Removals stay staged until Apply changes.</p></div><span class="badge ${entries.length ? "ready" : ""}">${entries.length} ASSIGNED</span></div><div class="advanced-assignment-list">${entries.length ? entries.map((entry) => {
+  return `<section class="panel advanced-assignments"><div class="panel-head"><div><h2>Assigned advanced features</h2><p>Detected onboard assignments are grouped by action. Removals stay staged until Apply changes.</p></div><span class="badge ${entries.length ? "ready" : ""}">${entries.length} ASSIGNED</span></div><div class="advanced-assignment-list">${entries.length ? entries.map((entry) => {
     const removeAttribute = entry.macro
       ? `data-remove-macro="${entry.layer}:${entry.ids[0]}"`
       : entry.combination
@@ -843,7 +845,7 @@ function advancedAssignmentsPanel() {
   }).join("") : `<div class="advanced-assignment-empty"><b>No advanced assignments detected</b><p>${connected() ? "Configure MPT, SOCD, Rappy Snappy, or Key Combination from the feature selector, or reconnect to refresh onboard records." : "Connect the keyboard to read its onboard advanced records."}</p></div>`}</div></section>`;
 }
 function advancedPage() {
-  return `<div class="page-grid advanced-page">${layerBar("Choose which layer to inspect or use for a key combination.")}${boardPanel({ full: true, title: "Advanced key map", description: "Every assigned feature receives its own color marker on the virtual keyboard." })}<section class="panel full-span advanced-feature-panel"><div class="advanced-feature-heading"><div><span class="eyebrow">ONBOARD BEHAVIOR LAB</span><h2>Advanced features</h2><p>Nine firmware behaviors, one consistent configuration workflow. Choose a card to configure it; use the information button for its captured tutorial.</p></div><div class="advanced-feature-count"><strong>09</strong><span>FEATURES</span></div></div><div class="advanced-grid advanced-dashboard">${ADVANCED_FEATURES.map((feature, index) => {
+  return `<div class="page-grid advanced-page">${layerBar("Choose which layer to inspect or use for a key combination.")}${boardPanel({ full: true, title: "Advanced key map", description: "Every assigned feature receives its own color marker on the virtual keyboard." })}<section class="panel advanced-feature-panel"><div class="advanced-feature-heading"><div><span class="eyebrow">ONBOARD BEHAVIOR LAB</span><h2>Advanced features</h2><p>Choose a feature to configure it, or use its information button for the tutorial.</p></div><div class="advanced-feature-count"><strong>09</strong><span>FEATURES</span></div></div><div class="advanced-grid advanced-dashboard">${ADVANCED_FEATURES.map((feature, index) => {
     const status = feature.ready ? "READY" : feature.placeholder ? "PLACEHOLDER" : "READ ONLY", mode = feature.mode === undefined ? feature.code === "COMBO" ? "LAYER MAP" : "FAMILY 07" : `MODE ${feature.mode}`;
     return `<article class="advanced-card feature-card ${feature.ready ? "ready" : ""}" style="--advanced-color:${feature.color}" ${feature.ready ? `data-advanced-config="${feature.code}"` : ""}><header><span class="advanced-card-index">${String(index + 1).padStart(2, "0")}</span><span class="advanced-card-status">${status}</span><button class="advanced-info-button" type="button" data-feature-info="${feature.code}" aria-label="About ${esc(feature.title)}" title="How ${esc(feature.title)} works">i</button></header><div class="advanced-card-symbol">${feature.code}</div><div class="advanced-card-copy"><h3>${esc(feature.title)}</h3><p>${esc(feature.body)}</p></div><footer><span>${mode}</span><b>${feature.ready ? "Configure" : "Inspect"}<i aria-hidden="true">→</i></b></footer></article>`;
   }).join("")}</div></section>${advancedAssignmentsPanel()}</div>`;

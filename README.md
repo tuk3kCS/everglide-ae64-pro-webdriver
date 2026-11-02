@@ -36,13 +36,15 @@ Optional **Auto apply** writes completed ordinary keyboard edits after a short d
 | Key mapping | Four layers per profile; keyboard, media, mouse, firmware/function values, and key combinations. |
 | Performance | Per-key actuation, Rapid Trigger first touch, synchronized or independent RT press/release sensitivity, top/bottom dead zones, and an experimental fixed-release editor. |
 | Switches and calibration | An 82-entry switch catalog, per-key switch assignments, multi-key editing, Hall calibration, and live travel/ADC inspection. |
-| Advanced | DKS, Multi-Point Trigger, SOCD, Rappy Snappy, Mod-Tap (MT), Toggle (TGL), and End Key (END) editors, write/read-back workflows, and removable assignments. |
+| Advanced | Compact feature cards beside a column of assigned actions; DKS, Multi-Point Trigger, SOCD, Rappy Snappy, Mod-Tap (MT), Toggle (TGL), and End Key (END) editors with verified writes and removable assignments. |
 | Macros | A 16-slot editor and keyboard-event recorder; manual Down/Up events, delays, drag reordering, click/hold playback modes, repeat settings, and verified write-back. |
 | Lighting | Keyboard effects and palettes, per-key static overrides, north/south LED controls, and independent effects, palettes, and colors for the 38 perimeter LEDs. |
 | Device settings | Profile switching/renaming, Windows/macOS mode, firmware-supported polling rates, RGB sleep timer, and shake optimization. |
 | Gamepad mode | Native-controller configuration with compatible custom firmware, plus a link to a separate software-mapper solution. |
 | Firmware | Bundled or local binary selection, integrity checks, explicit review/start, automatic mode reconnection, and recovery-mode connections. |
 | Workspace | Separate JSON import/export controls, English/Vietnamese languages, Mint/Dark/Light themes, diagnostics, and an editable About page. |
+
+The Performance live-distance gauge tracks the furthest pressed key across the keyboard by default. Enable **Track selected keys only** to restrict it to the current selection. Stock and custom firmware use the same native travel-reading command.
 
 Advanced-feature dialogs include configuration guidance and local tutorial videos where available. An implemented editor and offline protocol tests do not establish physical validation of every feature; see [Validation and limitations](#validation-and-limitations).
 
@@ -54,6 +56,7 @@ The Lighting page uses one shared keyboard and light-strip preview. Offline, pau
 
 The experimental **XInput + Fn RGB v0.2/v0.3** firmware adds independent static per-key colors for **four onboard profiles Ã— three Fn layers**. The driver shows **Fn 1**, **Fn 2**, and **Fn 3** buttons beside the standard lighting buttons only after the keyboard confirms support for the FNR1 extension. Factory firmware retains the standard interface.
 
+- Keyboard and light-strip settings, per-key colors, and all three supported Fn color profiles are read automatically on connection and profile changes. A Refresh lighting button retries failed reads without replacing staged colors.
 - Choose the active profile in the sidebar, then select a Fn lighting button. There is no additional profile or layer dropdown inside the editor.
 - The shared keyboard switches to that Fn layerâ€™s color draft. Drag on it to select keys, then choose a color; black turns a selected key off.
 - Enable the layerâ€™s custom colors and use its Apply button to save and read them back. There is no second keyboard preview below the main one.

@@ -939,9 +939,12 @@ async function main() {
     state.hardware.travelValues.set(1, 2400);
     state.hardware.travelValues.set(2, 1800);
     state.selectedKeys = new Set();
+    state.livePressSelectionOnly = false;
     const all = liveTravelTarget();
     state.selectedKeys = new Set([0, 2]);
+    state.livePressSelectionOnly = true;
     const selected = liveTravelTarget();
+    state.livePressSelectionOnly = false;
     return [[all.key.id, all.raw, all.travelMax, all.selectedCount], [selected.key.id, selected.raw, selected.travelMax, selected.selectedCount]];
   })()`, browser);
   equal(focusRules, [[1, 2400, 4, 0], [2, 1800, 4, 2]], "The live gauge must follow the furthest key globally or within a multi-key selection.");

@@ -705,6 +705,7 @@ async function reloadProfileFromDevice(index) {
     () => readAllAdvancedRecords({ renderDuringLoad: false }),
     0,
   );
+  if (typeof readLightingProfiles === "function") await readLightingProfiles({ force: true, renderAfter: false });
   state.original = clone(state.profile);
   clearDirty();
   maybeShowCalibrationRecommendation();

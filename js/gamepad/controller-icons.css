@@ -1,11 +1,19 @@
 .controller-icon { display: inline-block; width: 28px; height: 28px; object-fit: contain; vertical-align: middle; flex: 0 0 auto; }
 .gamepad-studio .control-action { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; min-width: 45px; }
 .gamepad-studio .control-action .controller-icon { width: 30px; height: 30px; }
-.gamepad-studio .key { height: 55px; }
-.gamepad-studio .keyboard { width: 100%; grid-template-columns: minmax(0,1fr); margin-inline: 0; }
 .gamepad-studio .keyboard-row { min-width: 0; }
 .gamepad-studio .key small { display: flex; align-items: center; justify-content: center; margin-top: 2px; }
 .gamepad-studio .key .controller-icon { width: 23px; height: 23px; }
+/* Keyboard width, key dimensions, gaps and centering share Overview rules. */
+@media (max-width: 1280px) {
+  .gamepad-studio .key { padding-block: 2px; }
+  .gamepad-studio .key .controller-icon { width: clamp(10px, calc(var(--unit) * .96 - 21px), 23px); height: clamp(10px, calc(var(--unit) * .96 - 21px), 23px); }
+}
+@media (max-width: 640px) {
+  .gamepad-studio .key { flex-direction: row; gap: 2px; padding-inline: 3px; }
+  .gamepad-studio .key small { margin-top: 0; }
+  .gamepad-studio .key .controller-icon { width: clamp(10px, 2vw, 16px); height: clamp(10px, 2vw, 16px); }
+}
 .gamepad-studio .preview-button { width: 37px; height: 37px; padding: 3px; border-radius: 8px; }
 .gamepad-studio .preview-button .controller-icon { width: 28px; height: 28px; }
 .overview-controller-badge { position: absolute; top: 3px; right: 3px; pointer-events: none; }

@@ -287,6 +287,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
       0,
     );
     await probeFnLighting(state.transport);
+    if (typeof readLightingProfiles === "function") await readLightingProfiles({ force: true, renderAfter: false });
     state.original = clone(state.profile);
     clearDirty();
     log("Connected", {

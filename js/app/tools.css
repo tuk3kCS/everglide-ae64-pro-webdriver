@@ -53,3 +53,4 @@
 .selected-controller-action strong,.selected-controller-action small{display:block}
 .selected-controller-action small,.selected-controller-info p{color:var(--muted);font-size:12px;line-height:1.6}
 .selected-controller-info.inactive{opacity:.65}
+.lighting-read-status{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--muted);font-size:12px;line-height:1.6}

@@ -22,6 +22,7 @@ const c = { state, keys, layout: [[{}, {}], [{}]], console, clearTimeout, esc: S
   lightingKeyIds: () => [...state.lightingSelectedKeys], stripLedIds: () => [],
   stripHtml: (keyboard) => keyboard,
   lightingTabs: () => "",
+  lightingReadStatus: () => "",
   window: { AE64FnRgb: { Client: class { async capabilities() { return { verified: true, profiles: 4, layers: 3, rows: 6, cols: 21, persistent: true }; } } } },
 };
 vm.createContext(c);

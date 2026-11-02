@@ -32,6 +32,7 @@ jobs:
           node scripts/build-firmware-catalog.cjs
           node smoke-test.cjs
           node tests/device-serial-tests.cjs
+          node tests/performance/live-gauge-tests.cjs
           node tests/firmware/flasher-tests.cjs
           node tests/firmware/ui-tests.cjs
           node tests/firmware/reconnect-tests.cjs
@@ -48,6 +49,7 @@ jobs:
           node tests/gamepad/usb-switch-tests.cjs
           node tests/gamepad/usb-reconnect-tests.cjs
           node tests/lighting/fn-ui-tests.cjs
+          node tests/lighting/automatic-read-tests.cjs
           node tests/lighting/fn-selection-tests.cjs
           node tests/lighting/fn-mapping-tests.cjs
           node tests/lighting/fn-protocol-tests.cjs

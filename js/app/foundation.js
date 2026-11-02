@@ -355,7 +355,7 @@ const FALLBACK_TRANSLATIONS = {
     language: "Language",
     openDemo: "Open demo",
     connectKeyboard: "Connect keyboard",
-    heroEyebrow: "LOCAL-FIRST · NO CHINA ROUND TRIP",
+    heroEyebrow: "Alternative WebHID configurator",
     heroLine1: "Your AE64.",
     heroLine2: "Fully visible.",
     heroLead:
@@ -829,7 +829,7 @@ const state = {
   lightingSelectedKeys: new Set(),
   stripSelection: new Set([0]),
   selectionDrag: null,
-  liveLighting: true, livePressDistance: false, calibrationActive: false, calibrationBusy: false, theme: "mint",
+  liveLighting: true, livePressDistance: false, livePressSelectionOnly: false, calibrationActive: false, calibrationBusy: false, theme: "mint",
   mappingGroup: "keyboard",
   mappingSearch: "",
   rtIndependentKeys: new Set(), advancedDraft: defaultSocdDraft(), socdPickerSlot: 0,
