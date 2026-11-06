@@ -348,6 +348,8 @@ async function main() {
   };
   documentListeners.get("keydown")[0](searchKeyboardEvent);
   equal([searchKeyboardEvent.prevented, searchKeyboardEvent.stopped], [false, false], "The mapping search field must remain keyboard-enabled.");
+  if (!/<input\b[^>]*id="quickProfileName"[^>]*data-keyboard-input="allow"/.test(html))
+    throw new Error("The quick profile rename dialog must allow typing.");
   const calibrationButtonPointer = {
     button: 0,
     target: { closest() { return null; } },
@@ -745,6 +747,8 @@ async function main() {
   equal(settingsEnums.shiftedLightingIndexes, [77, 89, 90, 93], "Custom RGB matrix writes must use firmware layout positions, not visual key columns.");
   equal(settingsEnums.spacebarLightingIndexes, [109, 110, 111, 112, 113], "Space must use the five RGB cells around the factory sensor column.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
+  if (!/<input\b[^>]*id="profileName"[^>]*data-keyboard-input="allow"/.test(settingsMarkup))
+    throw new Error("The Settings profile name field must allow typing.");
   if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
   for (const required of ['class="settings-page"', 'id="systemMode"', 'id="reportRate"', 'id="profileName"', 'data-theme-choice="mint"', 'data-theme-choice="dark"', 'data-theme-choice="light"'])
     if (!settingsMarkup.includes(required)) throw new Error(`Device settings overhaul omitted ${required}.`);
