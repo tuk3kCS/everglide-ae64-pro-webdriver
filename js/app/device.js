@@ -32,20 +32,23 @@ function stopProfilePolling() {
   state.timers.profileGeneration += 1;
 }
 async function syncPhysicalProfile() {
-  if (!connected() || state.fnLightingBusy || dirtyCount() || state.profileSyncInFlight) return false;
-  const index = await state.transport.getCurrentConfig();
-  if (Number(index) === Number(state.profile.profileIndex)) return false;
-  if (!state.hardware.configIndexes.includes(Number(index))) return false;
+  if (!connected() || toolOperationBusy() || dirtyCount()) return false;
+  const transport = state.transport, generation = state.timers.profileGeneration;
+  const index = Number(await transport.getCurrentConfig());
+  if (transport !== state.transport || generation !== state.timers.profileGeneration || toolOperationBusy() || dirtyCount()) return false;
+  if (index === Number(state.profile.profileIndex) && !state.profileNeedsReload) return false;
+  if (!state.hardware.configIndexes.includes(index)) return false;
   state.profileSyncInFlight = true;
   stopPolling();
+  renderStatus();
   try {
-    await reloadProfileFromDevice(Number(index));
+    await reloadProfileFromDevice(index);
     log("Physical profile switch detected", index);
-    render();
-    showToast(`Profile ${Number(index) + 1} loaded from keyboard.`);
+    showToast(`Profile ${index + 1} loaded from keyboard.`);
     return true;
   } finally {
     state.profileSyncInFlight = false;
+    render();
   }
 }
 function startProfilePolling() {
@@ -109,7 +112,7 @@ async function optional(label, operation, fallback = null) {
 
 async function connectKeyboard(device = null, { silent = false, choose = false } = {}) {
   if (firmwareView.detecting) await firmwareView.detectionDone;
-  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.connecting) return false;
+  if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.connecting || state.profileSyncInFlight) return false;
   if (!choose && state.bootloaderConnected && state.transport?.connected && (!device || state.transport.device === device)) return true;
   const recovering = state.bootloaderConnected || firmwareView.recoveryRequired;
   state.connecting = true;
@@ -155,10 +158,6 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
       axisLibrary,
       lightingAreas,
       doubleLighting,
-      lightingBase,
-      palette,
-      decorativeBase,
-      decorativePalette,
     ] = await Promise.all([
       state.transport.getProtocolVersion(),
       Promise.resolve(connectionInfo),
@@ -169,7 +168,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
         () => state.transport.getConfigList(),
         [0, 1, 2, 3],
       ),
-      optional("current config", () => state.transport.getCurrentConfig(), 0),
+      state.transport.getCurrentConfig(),
       optional("system modes", () => state.transport.getSystemModes(), []),
       optional("system mode", () => state.transport.getSystemMode(), 0),
       optional("report rates", () => state.transport.getReportRates(), []),
@@ -190,26 +189,6 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
         "double lighting",
         () => state.transport.getDoubleLighting(),
         false,
-      ),
-      optional(
-        "lighting base",
-        () => state.transport.getLightingBase(0),
-        state.profile.lighting.base,
-      ),
-      optional(
-        "lighting palette",
-        () => state.transport.getLightingPalette(0),
-        null,
-      ),
-      optional(
-        "Decorative1 base",
-        () => state.transport.getLightingBase(1),
-        state.profile.lighting.decorative.base,
-      ),
-      optional(
-        "Decorative1 palette",
-        () => state.transport.getLightingPalette(1),
-        null,
       ),
     ]);
     if (info.boardIdHex.toUpperCase() !== "0030000A")
@@ -246,24 +225,17 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
       layoutStyle,
       keyPositions: firmwareKeyPositions(layoutStyle),
     });
+    if (!state.hardware.configIndexes.includes(currentConfig))
+      throw new Error("The keyboard reported an invalid onboard profile.");
     state.profile.profileIndex = currentConfig;
+    state.profileNeedsReload = false;
+    keys.forEach((key) => { state.profile.lighting.customEnabled[key.id] = false; });
+    state.profile.lighting.decorative.customEnabled.fill(false);
     state.advancedDraft = defaultSocdDraft();
     state.hardware.performance.clear();
     state.switchAssignmentsStatus = "idle";
     state.switchAssignmentsError = "";
     state.profile.settings = { systemMode, reportRate, sleepTime, shake };
-    state.profile.lighting.base = {
-      ...state.profile.lighting.base,
-      ...lightingBase,
-    };
-    state.profile.lighting.decorative.base = {
-      ...state.profile.lighting.decorative.base,
-      ...decorativeBase,
-    };
-    if (palette) state.profile.lighting.palette = palette.map(rgbToHex);
-    if (decorativePalette)
-      state.profile.lighting.decorative.palette =
-        decorativePalette.map(rgbToHex);
     state.hardware.configNames = await Promise.all(
       state.hardware.configIndexes.map((index) =>
         optional(
@@ -273,7 +245,8 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
         ),
       ),
     );
-    await readKeymapLayer(state.profile.layer);
+    if (await readKeymapLayer(state.profile.layer) !== keys.length)
+      throw new Error("The full keymap could not be read. Reconnect to retry.");
     await optional("Fn layer target", readFnLayerTarget);
     await readSelectedKey();
     await optional(
@@ -288,6 +261,8 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
     );
     await probeFnLighting(state.transport);
     if (typeof readLightingProfiles === "function") await readLightingProfiles({ force: true, renderAfter: false });
+    if (await state.transport?.getCurrentConfig() !== currentConfig)
+      throw new Error("The onboard profile changed while connecting. Reconnect to load it.");
     state.original = clone(state.profile);
     clearDirty();
     log("Connected", {
@@ -338,34 +313,31 @@ async function detectKnownKeyboard() {
     log("Keyboard detection failed", error.message);
   }
 }
-async function reconnectAfterPollingRateChange() {
-  const attempts = 20;
+async function reconnectAfterPollingRateChange(original, preferred, expectedRate) {
   showProgress(
     "Reconnecting AE64 Pro",
     "Waiting for the keyboard to restart after the polling-rate change.",
   );
   try {
-    for (let attempt = 1; attempt <= attempts; attempt += 1) {
-      const devices =
-          typeof navigator.hid?.getDevices === "function"
-            ? await navigator.hid.getDevices()
-            : [],
-        device = devices.find(isAe64Device) || state.knownDevice;
-      if (device) {
-        state.knownDevice = device;
-        if (await connectKeyboard(device, { silent: true })) return true;
-      }
-      document.querySelector("#progressDetail").textContent =
-        `Waiting for the keyboard to restart (${attempt}/${attempts}).`;
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-    render();
-    showToast("Polling rate changed. Reconnect the keyboard to continue.", true);
-    return false;
+    const reconnector = new window.AE64FirmwareReconnect.Reconnector({
+      getDevices: async () => (await navigator.hid.getDevices()).filter(isAe64Device),
+      inspect: inspectFirmwareDevice,
+      checkIdentity: window.AE64Firmware.checkIdentity,
+      timeout: 10000,
+    });
+    const { transport } = await reconnector.wait({ mode: 0, original, preferred });
+    const device = transport.device;
+    await transport.close();
+    if (!await connectKeyboard(device, { silent: true }))
+      throw new Error("The original keyboard could not finish reconnecting.");
+    if (await state.transport.getReportRate() !== expectedRate)
+      throw new Error("The keyboard reconnected with a different polling rate than requested.");
+    showToast("Polling rate changed and verified on the keyboard.");
+    return true;
   } catch (error) {
     log("Automatic polling-rate reconnect failed", error.message);
     render();
-    showToast("Polling rate changed. Reconnect the keyboard to continue.", true);
+    showToast(connected() ? error.message : "Polling rate could not be verified. Reconnect the original keyboard to check its state.", true);
     return false;
   } finally {
     hideProgress();
@@ -373,27 +345,30 @@ async function reconnectAfterPollingRateChange() {
 }
 async function readSelectedKey() {
   if (!connected()) return;
-  const key = selectedKey(),
-    token = `${state.profile.layer}:${key.id}`;
+  const key = selectedKey(), transport = state.transport, profile = state.profile.profileIndex,
+    layer = state.profile.layer, token = `${layer}:${key.id}`;
   const [performance, keyRecord] = await Promise.all([
-    state.transport.getPerformance(position(key)),
-    state.transport.getKeyCode(position(key), state.profile.layer),
+    transport.getPerformance(position(key)),
+    transport.getKeyCode(position(key), layer),
   ]);
+  if (transport !== state.transport || profile !== state.profile.profileIndex) return;
   state.hardware.performance.set(key.id, performance);
   state.hardware.keycodes.set(token, keyRecord.keycode);
   if (!state.dirty.performance.has(key.id))
     state.profile.performance[key.id] = performance;
   if (!state.dirty.mapping.has(token))
-    state.profile.keycodes[state.profile.layer][key.id] = keyRecord.keycode;
+    state.profile.keycodes[layer][key.id] = keyRecord.keycode;
   log("Selected key read", {
     key: key.n,
     row: key.row,
     col: key.col,
-    layer: state.profile.layer,
+    layer,
   });
 }
 async function readAllPerformanceRecords({ renderDuringLoad = true } = {}) {
   if (!connected() || state.switchAssignmentsStatus === "loading") return 0;
+  const transport = state.transport, profile = state.profile.profileIndex;
+  const current = () => transport === state.transport && profile === state.profile.profileIndex;
   const targets = keys.filter(
     (key) =>
       !state.hardware.performance.has(key.id) &&
@@ -411,9 +386,10 @@ async function readAllPerformanceRecords({ renderDuringLoad = true } = {}) {
     const results = await Promise.allSettled(
       targets.map(async (key) => [
         key,
-        await state.transport.getPerformance(position(key)),
+        await transport.getPerformance(position(key)),
       ]),
     );
+    if (!current()) return 0;
     let loaded = 0;
     const failed = [];
     results.forEach((result, index) => {
@@ -439,16 +415,18 @@ async function readAllPerformanceRecords({ renderDuringLoad = true } = {}) {
     state.switchAssignmentsError = error.message;
     throw error;
   } finally {
-    if (renderDuringLoad) render();
+    if (renderDuringLoad && current()) render();
   }
 }
 async function readKeymapLayer(layer = state.profile.layer) {
   if (!connected()) return 0;
-  const resolvedLayer = Number(layer),
+  const transport = state.transport, profile = state.profile.profileIndex,
+    resolvedLayer = Number(layer),
     rows = [...new Set(keys.map((key) => position(key).row))];
   const records = await Promise.allSettled(
-    rows.map((row) => state.transport.getKeyLayout(resolvedLayer, row)),
+    rows.map((row) => transport.getKeyLayout(resolvedLayer, row)),
   );
+  if (transport !== state.transport || profile !== state.profile.profileIndex) return 0;
   let loaded = 0;
   records.forEach((record, rowIndex) => {
     if (record.status !== "fulfilled") return;

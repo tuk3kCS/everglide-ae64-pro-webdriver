@@ -64,7 +64,7 @@
       $("travelSyncStatus").textContent = "Reading keyboard travel limits automatically…";
       const missing = M.KEYS.filter((key) => force || !deviceLimits.some((item) => item.key === key.id));
       const results = await Promise.allSettled(missing.map(async (key) => {
-        const value = options.readKeyTravel ? await options.readKeyTravel(key) : { key: key.id, maxTravelUm: (await connection.getPerformance(key)).axisRangeMax };
+        const value = options.readKeyTravel ? await options.readKeyTravel(key, connection) : { key: key.id, maxTravelUm: (await connection.getPerformance(key)).axisRangeMax };
         if (!Number.isInteger(value?.maxTravelUm) || value.maxTravelUm < 10 || value.maxTravelUm > 10000) throw new Error(`${key.label}: switch travel is unavailable.`);
         return value;
       }));
@@ -280,7 +280,7 @@
     if (!compatible() || busy || !window.AE64GamepadProtocol?.upload) return;
     stopLive(true); setBusy(true); updateCompatibility();
     const snapshot = M.validate(config), fingerprint = JSON.stringify(snapshot);
-    try { const result = await window.AE64GamepadProtocol.upload(transport, snapshot); if (result?.verified === true) { hardwareProfile = M.validate(snapshot); hasLocalDraft = draftDiffersFromKeyboard(); persist(); options.onApplied?.(snapshot, transport); } notify(JSON.stringify(config) !== fingerprint ? "The earlier profile was applied. Your newer edits remain a local draft." : (result?.persistent === true ? "Profile applied and saved to the keyboard." : "Profile applied for this session. Keep an exported copy.")); }
+    try { const result = await window.AE64GamepadProtocol.upload(transport, snapshot, options.getUploadOptions?.()); if (result?.verified === true) { hardwareProfile = M.validate(snapshot); hasLocalDraft = draftDiffersFromKeyboard(); persist(); options.onApplied?.(snapshot, transport); } notify(JSON.stringify(config) !== fingerprint ? "The earlier profile was applied. Your newer edits remain a local draft." : (result?.persistent === true ? "Profile applied and saved to the keyboard." : "Profile applied for this session. Keep an exported copy.")); }
     catch (error) { $("editorError").textContent = error.message; notify(error.rejected ? error.message : `Profile not applied or confirmed: ${error.message}`, true); }
     finally { setBusy(false); if (!disposed) updateCompatibility(); }
   });

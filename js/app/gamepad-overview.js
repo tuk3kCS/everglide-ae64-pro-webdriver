@@ -31,7 +31,7 @@ function rememberGamepadProfile(config, transport) {
 }
 async function refreshGamepadOverview(force = false) {
   const transport = state.transport, profileIndex = Number(state.profile?.profileIndex || 0);
-  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight || gamepadOverview.pending || !force && gamepadOverview.transport === transport && gamepadOverview.profileIndex === profileIndex) return;
+  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy || state.writeInFlight || state.profileSyncInFlight || state.profileNeedsReload || gamepadOverview.pending || !force && gamepadOverview.transport === transport && gamepadOverview.profileIndex === profileIndex) return;
   const generation = ++gamepadOverview.generation;
   gamepadOverview.pending = true;gamepadOverview.transport = transport;gamepadOverview.config = null;gamepadOverview.error = "";
   gamepadOverview.profileIndex = profileIndex;

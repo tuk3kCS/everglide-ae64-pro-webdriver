@@ -48,6 +48,12 @@ async function main() {
   assert.equal(f.run("fnLightingView.drafts.has('2:1')"), false, "Discard stale profile replies");assert.equal(f.state.fnLightingBusy, false);
   const stock = fixture({ supported: false });await stock.run("probeFnLighting(state.transport)");await stock.run("readLightingProfiles()");assert.equal(stock.calls.filter((s) => s.startsWith("fn:")).length, 0);
   assert.equal(stock.calls.filter((s) => s.startsWith("matrix:")).length, 2);
+  stock.transport.getLightingPalette = async () => { throw Error("Palette unavailable"); };
+  stock.transport.getLightingBase = async (area) => ({ mode: 6 + area });
+  await stock.run("readLightingProfiles({ force: true })");
+  assert.equal(stock.state.profile.lighting.base.mode, 6, "A failed palette read must not discard the keyboard effect settings");
+  assert.equal(stock.state.profile.lighting.decorative.base.mode, 7);
+  assert.match(stock.run("lightingReadStatus()"), /Keyboard palette: Palette unavailable/);
   console.log("PASS: automatic keyboard/strip settings and matrices, all three Fn layers and keymaps, dirty-draft protection, original-state baseline, profile isolation, retry/deduplication/stale guards and stock-firmware gating. Reads only.");
 }
 main().catch((error) => { console.error(error);process.exitCode = 1; });

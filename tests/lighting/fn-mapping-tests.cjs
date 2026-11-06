@@ -24,7 +24,7 @@ function fixture() {
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(path.join(root, "js/app/mapping.js"), "utf8"), context);
   vm.runInContext(fs.readFileSync(path.join(root, "js/app/profiles.js"), "utf8"), context);
-  state.transport = { async setKeyCode(address, keycode, layer) { writes.push({ ...address, layer, keycode }); },
+  state.transport = { async getCurrentConfig() { return 0; }, async setKeyCode(address, keycode, layer) { writes.push({ ...address, layer, keycode }); },
     async getKeyCode(address, layer) { return { keycode: writes.findLast((item) => item.col === address.col && item.layer === layer).keycode }; }, async saveParameters() {} };
   return { state, writes, stored, notices, context, run: (code) => vm.runInContext(code, context), connect: () => { isConnected = true; } };
 }

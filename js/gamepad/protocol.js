@@ -86,12 +86,12 @@
       return { ...result, accepted: true };
     } finally { locks.delete(transport); }
   }
-  async function readTravelLimits(transport, input) {
+  async function readTravelLimits(transport, input, resolvePosition = (key) => key) {
     const config = Model.validate(input);
     if (typeof transport?.getPerformance !== "function") throw new Error("This connection cannot read switch travel limits.");
     const limits = [];
     for (const key of new Set(config.bindings.filter((b) => b.key !== null).map((b) => b.key))) {
-      const physical = Model.KEYS[key], info = await transport.getPerformance(physical);
+      const physical = Model.KEYS[key], info = await transport.getPerformance(resolvePosition(physical));
       const maximum = Number(info.axisRangeMax);
       if (!Number.isInteger(maximum) || maximum < 10 || maximum > 10000) throw new Error(`${physical.label}: the keyboard did not report a usable switch travel range. Check its switch settings and calibration.`);
       limits.push({ key, maxTravelUm: maximum, calibration: info.calibrate });
@@ -134,7 +134,7 @@
     if (crc32(bytes) !== caps.crc32) throw new Error("Gamepad configuration read-back checksum mismatch.");
     return { config: decode(bytes), ...caps, bytes };
   }
-  async function upload(transport, input) {
+  async function upload(transport, input, { resolvePosition, profileIndex } = {}) {
     const config = Model.validate(input), encoded = encode(config);
     if (locks.has(transport)) throw new Error("A gamepad transfer is already running.");
     locks.add(transport); let staging = false, committed = false, commitStarted = false;
@@ -146,7 +146,9 @@
       if (config.mode !== "off" && !caps.transports[config.transport]) throw new Error(`The connected firmware does not provide ${config.transport === "xinput" ? "native Xbox/XInput" : "USB HID gamepad"} output.`);
       // The native firmware validates against keyboard settings, not the draft's
       // editable switch-travel field. Check before staging any configuration.
-      if (config.mode !== "off" && typeof transport.getPerformance === "function") validateTravelLimits(config, await readTravelLimits(transport, config));
+      if (config.mode !== "off" && typeof transport.getPerformance === "function") validateTravelLimits(config, await readTravelLimits(transport, config, resolvePosition));
+      if (profileIndex !== undefined && await transport.getCurrentConfig() !== profileIndex)
+        throw new Error("The onboard profile changed. Read the current profile before applying mappings.");
       const begin = new Uint8Array(18); view(begin).setUint32(0, caps.revision, true); view(begin).setUint32(4, crc32(encoded), true); view(begin).setUint16(8, CONFIG_BYTES, true); begin.set(token, 10);
       await request(transport, CMD.BEGIN, begin); staging = true;
       for (let offset = 0; offset < CONFIG_BYTES; offset += 40) { const payload = new Uint8Array(10 + Math.min(40, CONFIG_BYTES - offset)); payload.set(token); view(payload).setUint16(8, offset, true); payload.set(encoded.slice(offset, offset + 40), 10); await request(transport, CMD.WRITE, payload); }

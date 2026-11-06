@@ -20,6 +20,18 @@ Open [localhost:4173](http://localhost:4173), then choose **Connect keyboard**. 
 
 The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firmware files and commands for other keyboards are not interchangeable.
 
+### Stock and custom firmware
+
+| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Bundled custom firmware (XInput + Fn RGB v0.8) |
+| --- | --- | --- |
+| Keymaps, Hall performance and live travel, advanced actions, macros, standard RGB | Native AE64 configuration interface | Same native configuration interface |
+| Gamepad workspace | Read switch travel and edit or export local drafts | Read and apply onboard mappings when AGP1 is verified |
+| Xbox controller device switch | Unavailable | Available when AGP1 advertises USB switching |
+| Custom Fn1–Fn3 colors | Unavailable | Available when FNR1 is verified |
+| Firmware update and recovery | Board-matched application and recovery workflow | Same board-matched workflow |
+
+The custom build also reports application version `0.1.0.0`. The driver checks the extension replies before enabling their controls. The six images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
+
 ### Editing workflow
 
 1. Connect and let the driver read the keyboardâ€™s settings.
@@ -54,7 +66,7 @@ The Lighting page uses one shared keyboard and light-strip preview. Offline, pau
 
 ### Custom Fn colors
 
-The experimental **XInput + Fn RGB v0.2/v0.3** firmware adds independent static per-key colors for **four onboard profiles Ã— three Fn layers**. The driver shows **Fn 1**, **Fn 2**, and **Fn 3** buttons beside the standard lighting buttons only after the keyboard confirms support for the FNR1 extension. Factory firmware retains the standard interface.
+The experimental **XInput + Fn RGB** firmware adds independent static per-key colors for **four onboard profiles × three Fn layers**. The driver shows **Fn 1**, **Fn 2**, and **Fn 3** buttons beside the standard lighting buttons after the keyboard confirms support for the FNR1 extension. Factory firmware retains the standard interface.
 
 - Keyboard and light-strip settings, per-key colors, and all three supported Fn color profiles are read automatically on connection and profile changes. A Refresh lighting button retries failed reads without replacing staged colors.
 - Choose the active profile in the sidebar, then select a Fn lighting button. There is no additional profile or layer dropdown inside the editor.
@@ -108,7 +120,7 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.6/v0.7/v0.8** images. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.8** image. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.

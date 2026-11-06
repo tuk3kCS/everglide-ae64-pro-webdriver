@@ -86,7 +86,15 @@ const layout = [
   ],
 ];
 
-// The five physical rows are addressed as 1–5 by the AE64 firmware.
+// Factory 03:05 layout for board 0030000A, used if layout discovery fails.
+// Keep the UI column separate from the sparse sensor column.
+const sensorColumns = [
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13],
+  [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+  [0, 1, 2, 6, 9, 10, 12, 13, 14],
+];
 const keys = layout
   .flatMap((row, uiRow) =>
     row.map((key, col) => ({
@@ -751,7 +759,7 @@ function firmwareKeyPositions(layoutStyle) {
   return positions;
 }
 function position(key = selectedKey()) {
-  return state.hardware.keyPositions.get(key.id) || { row: key.row, col: key.col };
+  return state.hardware.keyPositions.get(key.id) || { row: key.row, col: sensorColumns[key.uiRow][key.col] };
 }
 function lightingMatrixIndex(key = selectedKey()) {
   const address = position(key);
@@ -818,6 +826,7 @@ function loadSavedProfile() {
 const state = {
   page: "overview",
   firmwareBusy: false, gamepadBusy: false, fnLightingBusy: false, bootloaderConnected: false, connecting: false,
+  profileSyncInFlight: false, profileNeedsReload: false,
   performanceTab: "trigger",
   performanceWorkspace: "tuning", showNormalReleaseExperimental: false,
   deadZoneMemory: new Map(), switchAssignmentKeys: new Set(),

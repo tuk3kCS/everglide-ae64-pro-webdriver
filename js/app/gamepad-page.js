@@ -4,7 +4,7 @@ let activeGamepadStudio = null;
 function disposeGamepadPage() {
   activeGamepadStudio?.dispose(); activeGamepadStudio = null;
 }
-function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.usbSwitchBusy || state.fnLightingBusy || state.writeInFlight || state.connecting); }
+function toolOperationBusy() { return Boolean(state.firmwareBusy || state.gamepadBusy || state.usbSwitchBusy || state.fnLightingBusy || state.writeInFlight || state.connecting || state.profileSyncInFlight); }
 function updateToolShell() {
   const busy = toolOperationBusy();
   document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename,#backHomeButton,#sidebarThemeSelect,.language-select,#connectButton,#heroConnect").forEach((node) => { node.disabled = busy; });
@@ -49,12 +49,13 @@ function bindGamepadPage() {
     state.page = "firmware"; render();
   });
   activeGamepadStudio = window.AE64GamepadStudio.mount(document.querySelector("#gamepadHardware"), {
-    getTransport: () => state.firmwareBusy || state.bootloaderConnected ? null : state.transport,
+    getTransport: () => state.firmwareBusy || state.bootloaderConnected || state.profileNeedsReload || state.profileSyncInFlight ? null : state.transport,
     getKeyTravel: gamepadSwitchTravel,
     onRead: rememberGamepadProfile, onApplied: rememberGamepadProfile,
     onUsbDeviceChange: changeGamepadUsbDevice,
     onCapabilities: updateHardwareSolutionInfo,
-    readKeyTravel: async (key) => gamepadSwitchTravel(key, await state.transport.getPerformance(position(gamepadPhysicalKey(key)))),
+    readKeyTravel: async (key, transport) => gamepadSwitchTravel(key, await transport.getPerformance(position(gamepadPhysicalKey(key)))),
+    getUploadOptions: () => ({ resolvePosition: (key) => position(gamepadPhysicalKey(key)), profileIndex: Number(state.profile.profileIndex) }),
     onConnect: () => connectKeyboard(),
     onNavigate: (page) => { if (!toolOperationBusy()) { state.page = page; render(); } },
     notify: showToast,

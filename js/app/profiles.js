@@ -210,7 +210,8 @@ function requestApplyChanges() {
 }
 
 async function applyChanges({ automatic = false } = {}) {
-  if (state.fnLightingBusy) return false;
+  if (state.fnLightingBusy || state.profileSyncInFlight || state.profileNeedsReload || state.connecting ||
+      state.gamepadBusy || state.usbSwitchBusy || state.writeInFlight) return false;
   stageFnReleaseMappings();
   if (!dirtyCount()) return false;
   if (!connected()) {
@@ -228,6 +229,9 @@ async function applyChanges({ automatic = false } = {}) {
     "Reading existing records and preserving firmware-owned fields.",
   );
   try {
+    const transport = state.transport;
+    if (await transport.getCurrentConfig() !== Number(state.profile.profileIndex) || transport !== state.transport)
+      throw new Error("The onboard profile changed. Return to the staged profile on the keyboard or revert the edits.");
     const performanceIds = [...state.dirty.performance],
       performanceNormalizations = [];
     for (let index = 0; index < performanceIds.length; index += 1) {
@@ -562,7 +566,8 @@ async function applyChanges({ automatic = false } = {}) {
         throw new Error(`Decorative1 verification failed for LED ${index}.`);
     }
     const settingsToWrite = [...state.dirty.settings],
-      pollingRateChanged = settingsToWrite.includes("reportRate");
+      pollingRateChanged = settingsToWrite.includes("reportRate"),
+      requestedRate = Number(state.profile.settings.reportRate);
     for (const field of settingsToWrite.filter((field) => field !== "reportRate")) {
       if (field === "systemMode")
         await state.transport.setSystemMode(state.profile.settings[field]);
@@ -578,20 +583,22 @@ async function applyChanges({ automatic = false } = {}) {
     // The controller restarts its HID interface immediately after this write.
     // Keep it last, then close our old session instead of issuing any stale
     // commands while the keyboard re-enumerates.
-    if (pollingRateChanged)
-      await state.transport.setReportRate(state.profile.settings.reportRate);
+    let restartIdentity;
+    if (pollingRateChanged) {
+      restartIdentity = window.AE64Firmware.decodeInfo(await transport.raw([1, 2]));
+      window.AE64Firmware.checkIdentity(restartIdentity, 0);
+      await transport.setReportRate(requestedRate);
+    }
     state.original = clone(state.profile);
     clearDirty();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
     if (pollingRateChanged) {
-      const transport = state.transport;
-      state.transport = null;
+      if (state.transport === transport) state.transport = null;
       await transport.close().catch((error) =>
         log("Polling-rate session close failed", error.message),
       );
       log("Polling rate changed; reconnect required");
-      await reconnectAfterPollingRateChange();
-      return true;
+      return await reconnectAfterPollingRateChange(restartIdentity, transport.device, requestedRate);
     }
     log("Staged changes applied and verified");
     render();
@@ -662,6 +669,8 @@ function revertChanges() {
   showToast("Staged changes reverted.");
 }
 async function reloadProfileFromDevice(index) {
+  const transport = state.transport;
+  state.profileNeedsReload = true;
   state.profile.profileIndex = index;
   state.hardware.advanced = null;
   state.hardware.advancedByKey.clear();
@@ -673,26 +682,13 @@ async function reloadProfileFromDevice(index) {
   state.hardware.performance.clear();
   state.switchAssignmentsStatus = "idle";
   state.switchAssignmentsError = "";
-  const [lightingBase, palette, decorativeBase, decorativePalette] =
-    await Promise.all([
-      state.transport.getLightingBase(0),
-      state.transport.getLightingPalette(0),
-      state.transport.getLightingBase(1),
-      state.transport.getLightingPalette(1),
-    ]);
-  state.profile.lighting.base = { ...state.profile.lighting.base, ...lightingBase };
-  state.profile.lighting.palette = palette.map(rgbToHex);
-  state.profile.lighting.decorative.base = {
-    ...state.profile.lighting.decorative.base,
-    ...decorativeBase,
-  };
-  state.profile.lighting.decorative.palette = decorativePalette.map(rgbToHex);
   keys.forEach((key) => { state.profile.lighting.customEnabled[key.id] = false; });
   state.profile.lighting.decorative.customEnabled.fill(false);
   Object.assign(state.hardware, {
     customMatrix: null, decorativeMatrix: null, liveMatrix: null, liveStrip: null,
   });
-  await readKeymapLayer(state.profile.layer);
+  if (await readKeymapLayer(state.profile.layer) !== keys.length)
+    throw new Error("The full keymap could not be read. Retrying the onboard profile.");
   await optional("Fn layer target", readFnLayerTarget);
   await readSelectedKey();
   await optional(
@@ -706,7 +702,10 @@ async function reloadProfileFromDevice(index) {
     0,
   );
   if (typeof readLightingProfiles === "function") await readLightingProfiles({ force: true, renderAfter: false });
+  if (transport !== state.transport || await transport.getCurrentConfig() !== index || transport !== state.transport)
+    throw new Error("The onboard profile changed while it was being read.");
   state.original = clone(state.profile);
+  state.profileNeedsReload = false;
   clearDirty();
   maybeShowCalibrationRecommendation();
 }
@@ -719,12 +718,20 @@ async function switchProfile(index) {
     return;
   }
   if (connected()) {
+    if (toolOperationBusy()) return;
+    state.profileSyncInFlight = true;
     stopPolling();
     stopProfilePolling();
+    renderStatus();
     showProgress("Switching profile", `Loading profile ${index + 1}.`);
     try {
-      await state.transport.switchConfig(index);
-      await reloadProfileFromDevice(index);
+      const transport = state.transport;
+      await transport.switchConfig(index);
+      const activeIndex = await transport.getCurrentConfig();
+      if (transport !== state.transport) throw new Error("The keyboard disconnected while switching profiles.");
+      if (!state.hardware.configIndexes.includes(activeIndex)) throw new Error("The keyboard reported an invalid profile.");
+      if (activeIndex !== Number(state.profile.profileIndex) || state.profileNeedsReload) await reloadProfileFromDevice(activeIndex);
+      if (activeIndex !== index) throw new Error(`The keyboard stayed on profile ${activeIndex + 1}.`);
       log("Profile switched", index);
       showToast(
         `Profile ${index + 1} loaded. Live RGB readback has restarted.`,
@@ -732,6 +739,7 @@ async function switchProfile(index) {
     } catch (error) {
       showToast(error.message, true);
     } finally {
+      state.profileSyncInFlight = false;
       hideProgress();
       render();
       startProfilePolling();

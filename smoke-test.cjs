@@ -55,6 +55,8 @@ class FakeDevice {
     this.sent = [];
     this.pressedKey = { row: 5, col: 5, status: 3 };
     this.currentConfig = 0;
+    this.serialByte = 42;
+    this.reportRate = 0;
     this.advanced = new Map();
     this.macroModes = new Map();
     this.macroData = new Map();
@@ -77,6 +79,7 @@ class FakeDevice {
     if (packet[0] === 1 && packet[1] === 2) {
       reply.set([0x00, 0x30, 0x00, 0x0a], 4);
       reply.set([0, 0, 7, 0], 8);
+      reply[17] = this.serialByte;
     }
     if (packet[0] === 2 && packet[1] === 3) {
       if (packet[2] === 0) reply[3] = 4;
@@ -87,6 +90,10 @@ class FakeDevice {
       }
     }
     if (packet[0] === 2 && packet[1] === 14) reply.set([16, 0xc0, 0x03], 3);
+    if (packet[0] === 2 && packet[1] === 5) {
+      if (packet[2] === 2) this.reportRate = packet[3];
+      reply[3] = this.reportRate;
+    }
     if (packet[0] === 4 && packet[1] === 1) {
       const stored = this.performance.get(`${packet[2]}:${packet[3]}`);
       if (stored) {
@@ -736,7 +743,7 @@ async function main() {
     { row: 4, col: 9 },
   ], "Firmware layout metadata must correct leading blank slots without moving the visible keys.");
   equal(settingsEnums.shiftedLightingIndexes, [77, 89, 90, 93], "Custom RGB matrix writes must use firmware layout positions, not visual key columns.");
-  equal(settingsEnums.spacebarLightingIndexes, [106, 107, 108, 109, 110], "Space must fan one lighting target out to five adjacent RGB cells.");
+  equal(settingsEnums.spacebarLightingIndexes, [109, 110, 111, 112, 113], "Space must use the five RGB cells around the factory sensor column.");
   const settingsMarkup = vm.runInContext("settingsPage()", browser);
   if (!settingsMarkup.includes('id="reconnectKeyboard"')) throw new Error("Offline device settings must provide an in-workspace reconnect action.");
   for (const required of ['class="settings-page"', 'id="systemMode"', 'id="reportRate"', 'id="profileName"', 'data-theme-choice="mint"', 'data-theme-choice="dark"', 'data-theme-choice="light"'])
@@ -1250,11 +1257,26 @@ async function main() {
   device.currentConfig = 2;
   const physicalProfileSync = await vm.runInContext("syncPhysicalProfile().then((changed) => [changed, state.profile.profileIndex, state.original.profileIndex])", browser);
   equal(physicalProfileSync, [true, 2, 2], "A physical profile switch must reload the active profile without a key press.");
+  const nativeKeymapRead = transport.getKeyLayout.bind(transport);
+  transport.getKeyLayout = (layer, row) => row === 3 ? Promise.reject(new Error("Keymap row unavailable")) : nativeKeymapRead(layer, row);
+  device.currentConfig = 1;
+  const incompleteProfile = await vm.runInContext("syncPhysicalProfile().catch(() => [state.profileNeedsReload, state.original.profileIndex])", browser);
+  equal(incompleteProfile, [true, 2], "A partial keymap must leave the profile pending and preserve the confirmed baseline.");
+  transport.getKeyLayout = nativeKeymapRead;
+  const recoveredProfile = await vm.runInContext("syncPhysicalProfile().then((changed) => [changed, state.profileNeedsReload, state.original.profileIndex])", browser);
+  equal(recoveredProfile, [true, false, 1], "The poller must retry an incomplete read even when the profile index matches.");
+  vm.runInContext("state.profile.settings.sleepTime = 13; state.dirty.settings.add('sleepTime')", browser);
+  device.currentConfig = 2;
+  const pendingPacket = device.sent.length;
+  equal(await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount()])", browser), [false, 1], "Apply must preserve staged edits after a physical profile switch.");
+  equal(device.sent.slice(pendingPacket).map(({ packet }) => packet.slice(0, 3)), [[2, 3, 1]], "A profile mismatch must stop Apply before the first settings write.");
+  vm.runInContext("revertChanges()", browser);
+  await vm.runInContext("syncPhysicalProfile()", browser);
   vm.runInContext("state.transport = injectedTransport; state.profile.keycodes[2][0] = 0xbeef; state.dirty.mapping.add('2:0')", browser);
   const loadedLayerKeys = await vm.runInContext("readKeymapLayer(2)", browser);
   if (loadedLayerKeys !== 64) throw new Error(`Layer read loaded ${loadedLayerKeys} keys instead of 64.`);
   const layerReadback = vm.runInContext("[state.profile.keycodes[2][0], state.profile.keycodes[2][1], state.profile.keycodes[2][63], state.hardware.keycodes.get('2:63')]", browser);
-  equal(layerReadback, [0xbeef, 0x1211, 0x1258, 0x1258], "Layer read must load every physical key while preserving staged edits.");
+  equal(layerReadback, [0xbeef, 0x1211, 0x125e, 0x125e], "Layer read must use the sparse factory column and preserve staged edits.");
   const displayedReadback = vm.runInContext(`(() => {
     const key = keys[1], token = "2:" + key.id;
     state.profile.keycodes[2][key.id] = 0xbeef;
@@ -1470,12 +1492,16 @@ async function main() {
   vm.runInContext('toggleAdvancedRemoval("5")', browser);
   const removedDks = await vm.runInContext("applyChanges().then((ok) => [ok, dirtyCount(), state.hardware.advancedByKey.size])", browser);
   equal(removedDks, [true, 0, 0], "Applying a DKS removal must clear its hardware record.");
-  browser.navigator.hid.getDevices = async () => [device];
+  const otherKeyboard = new FakeDevice(), restartedKeyboard = new FakeDevice();
+  otherKeyboard.serialByte = 43;
+  restartedKeyboard.currentConfig = device.currentConfig;
+  restartedKeyboard.reportRate = 3;
+  browser.navigator.hid.getDevices = async () => [otherKeyboard, restartedKeyboard];
   vm.runInContext("state.transport = injectedTransport; state.profile.settings.reportRate = 3; state.dirty.settings.add('reportRate')", browser);
-  await vm.runInContext("applyChanges()", browser);
+  equal(await vm.runInContext("applyChanges()", browser), true, "Apply must verify the requested polling rate after restart.");
   if (!device.sent.some(({ packet }) => JSON.stringify(packet.slice(0, 4)) === JSON.stringify([2, 5, 2, 3]))) throw new Error("Polling-rate write encoding changed.");
-  const reconnectState = vm.runInContext("[Boolean(state.transport?.connected), state.transport !== injectedTransport, injectedTransport.device.opened]", browser);
-  equal(reconnectState, [true, true, true], "Polling-rate changes must close the stale HID session and automatically reconnect.");
+  equal(vm.runInContext("state.transport.device", browser) === restartedKeyboard, true, "Polling-rate reconnect must follow the original identity even when another authorized keyboard appears first.");
+  equal([device.opened, otherKeyboard.opened], [false, false], "Polling-rate reconnect must close the old session and the unrelated probe.");
 
   if (device.sent.some(({ packet }) => packet[0] === 8)) throw new Error("Ordinary configuration sent a firmware command without starting an update.");
   console.log("Smoke test passed: WebHID packets, RGB mappings, Pages packaging, languages, integrated tools, and update isolation verified.");

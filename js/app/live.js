@@ -19,7 +19,8 @@ function lightingReadStatus() {
   return `<div class="lighting-read-status"><span id="lightingReadStatus" role="status">${esc(message)}</span><button id="refreshLightingProfiles" class="button ghost small" type="button" ${!connected() || state.fnLightingBusy ? "disabled" : ""}>Refresh lighting</button></div>`;
 }
 async function readLightingProfiles({ force = false, renderAfter = true } = {}) {
-  if (!connected() || state.firmwareBusy || state.gamepadBusy || state.writeInFlight) return;
+  if (!connected() || state.firmwareBusy || state.gamepadBusy || (state.writeInFlight && !state.connecting) ||
+      (state.profileNeedsReload && !state.profileSyncInFlight)) return;
   const transport = state.transport, profile = Number(state.profile.profileIndex);
   if (lightingReadState.pending && lightingReadState.transport === transport && lightingReadState.profile === profile) return lightingReadState.pending.promise;
   if (state.fnLightingBusy) return;
@@ -28,8 +29,11 @@ async function readLightingProfiles({ force = false, renderAfter = true } = {}) 
   const job = { promise: new Promise((resolve) => { finish = resolve; }) }, fnGeneration = fnLightingView.generation;
   Object.assign(lightingReadState, { transport, profile, fnGeneration, loaded: false, errors: [], pending: job });
   const current = () => lightingReadState.pending === job && state.transport === transport && transport.connected && Number(state.profile.profileIndex) === profile && fnGeneration === fnLightingView.generation;
+  const adopting = state.connecting || state.profileSyncInFlight;
   state.fnLightingBusy = true; fnLightingView.busy = true;
-  stopPolling(); stopProfilePolling(); clearTimeout(state.timers.autoApply);
+  stopPolling();
+  if (!state.profileSyncInFlight) stopProfilePolling();
+  clearTimeout(state.timers.autoApply);
   document.querySelectorAll(".lighting-page input,.lighting-page select,.lighting-page button").forEach((node) => { node.disabled = true; });
   const status = document.querySelector("#lightingReadStatus"); if (status) status.textContent = "Reading keyboard, strip and Fn lighting…";
   renderStatus();
@@ -39,29 +43,34 @@ async function readLightingProfiles({ force = false, renderAfter = true } = {}) 
     catch (error) { if (current()) lightingReadState.errors.push(`${label}: ${error.message || error}`); }
   };
   try {
-    for (const area of [0, 1]) await attempt(area ? "Strip settings" : "Keyboard settings", async () => {
-      const [base, palette] = await Promise.all([transport.getLightingBase(area), transport.getLightingPalette(area)]);
-      if (!current()) return;
+    for (const area of [0, 1]) {
       const target = area ? state.profile.lighting.decorative : state.profile.lighting,
-        original = area ? state.original?.lighting?.decorative : state.original?.lighting;
-      if (!state.dirty[area ? "decorativeBase" : "lightingBase"]) {
-        target.base = { ...target.base, ...base }; if (original) original.base = { ...target.base };
-      }
-      if (!state.dirty[area ? "decorativePalette" : "lightingPalette"]) {
-        target.palette = palette.map(rgbToHex); if (original) original.palette = [...target.palette];
-      }
-    });
+        original = adopting ? null : area ? state.original?.lighting?.decorative : state.original?.lighting;
+      const label = area ? "Strip" : "Keyboard";
+      await attempt(`${label} settings`, async () => {
+        const base = await transport.getLightingBase(area);
+        if (current() && (adopting || !state.dirty[area ? "decorativeBase" : "lightingBase"])) {
+          target.base = { ...target.base, ...base }; if (original) original.base = { ...target.base };
+        }
+      });
+      await attempt(`${label} palette`, async () => {
+        const palette = await transport.getLightingPalette(area);
+        if (current() && (adopting || !state.dirty[area ? "decorativePalette" : "lightingPalette"])) {
+          target.palette = palette.map(rgbToHex); if (original) original.palette = [...target.palette];
+        }
+      });
+    }
     await attempt("Keyboard colors", async () => {
       const matrix = await transport.readCustomLighting(MATRIX_ROWS, MATRIX_COLS, 0);
       if (!current()) return;
       state.hardware.customMatrix = matrix;
       for (const key of keys) {
-        if (state.dirty.customLighting.has(key.id)) continue;
+        if (!adopting && state.dirty.customLighting.has(key.id)) continue;
         const records = lightingMatrixIndexes(key).map((index) => matrix[index]).filter(Boolean), record = records[Math.floor(records.length / 2)] || records[0];
         if (!record) continue;
         state.profile.lighting.perKey[key.id] = rgbToHex(record);
         state.profile.lighting.customEnabled[key.id] = key.n === "Space" ? records.some((item) => Boolean(item.custom)) : Boolean(record.custom);
-        if (state.original?.lighting) {
+        if (!adopting && state.original?.lighting) {
           state.original.lighting.perKey[key.id] = state.profile.lighting.perKey[key.id];
           state.original.lighting.customEnabled[key.id] = state.profile.lighting.customEnabled[key.id];
         }
@@ -72,10 +81,10 @@ async function readLightingProfiles({ force = false, renderAfter = true } = {}) 
       if (!current()) return;
       state.hardware.decorativeMatrix = matrix;
       matrix.forEach((record, index) => {
-        if (state.dirty.decorativeLighting.has(index)) return;
+        if (!adopting && state.dirty.decorativeLighting.has(index)) return;
         state.profile.lighting.decorative.perLed[index] = rgbToHex(record);
         state.profile.lighting.decorative.customEnabled[index] = Boolean(record.custom);
-        if (state.original?.lighting?.decorative) {
+        if (!adopting && state.original?.lighting?.decorative) {
           state.original.lighting.decorative.perLed[index] = state.profile.lighting.decorative.perLed[index];
           state.original.lighting.decorative.customEnabled[index] = Boolean(record.custom);
         }
@@ -205,12 +214,14 @@ async function readAdvanced() {
 
 async function readAllAdvancedRecords({ renderDuringLoad = true } = {}) {
   if (!connected()) return 0;
+  const transport = state.transport, profile = state.profile.profileIndex;
   const results = await Promise.allSettled(
     keys.map(async (key) => [
       key,
-      await state.transport.getAdvancedKey(position(key)),
+      await transport.getAdvancedKey(position(key)),
     ]),
   );
+  if (transport !== state.transport || profile !== state.profile.profileIndex) return 0;
   const failed = [];
   let loaded = 0;
   state.hardware.advancedByKey.clear();

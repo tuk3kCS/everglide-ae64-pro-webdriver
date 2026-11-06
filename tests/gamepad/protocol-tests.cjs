@@ -32,6 +32,22 @@ async function main() {
   const fitted = Protocol.fitTravelLimits(config, limits);
   equal(config.bindings[0].endMm, 3.5); equal(fitted.bindings[0].endMm, 3.31); equal(fitted.bindings[0].maxTravelMm, 3.31);
   equal(fitted.bindings[0].startMm, 0.5); Protocol.validateTravelLimits(fitted, limits); checks++;
+  const sparse = Model.emptyProfile();
+  const enter = Model.KEYS.find((key) => key.label === "Enter");
+  sparse.bindings[0] = { ...fitted.bindings[0], key: enter.id };
+  sparse.mode = "controller";
+  const mappedTransport = {
+    ...limitedTransport,
+    getPerformance: async (address) => {
+      equal(address, { row: 3, col: 13 });
+      return { axisRangeMax: 3310 };
+    },
+    getCurrentConfig: async () => 2,
+  };
+  await assert.rejects(Protocol.upload(mappedTransport, sparse, {
+    resolvePosition: (key) => ({ row: key.row, col: key.col + 1 }),
+    profileIndex: 1,
+  }), /onboard profile changed/); checks++; equal(writes, 0);
   const alreadyShort = Model.defaults(); alreadyShort.bindings[0].startMm = 1; alreadyShort.bindings[0].endMm = 3;
   equal(Protocol.fitTravelLimits(alreadyShort, limits).bindings[0].endMm, 3);
   const tooDeep = Model.defaults(); tooDeep.bindings[0].startMm = 3.4;

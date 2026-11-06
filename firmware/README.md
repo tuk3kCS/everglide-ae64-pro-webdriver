@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The newest experimental custom build is **XInput + Fn RGB v0.8**. It removes repeated scan/release work, caches controller calculations, shortens interrupt masking and corrects physical matrix/Fn detection. Saved mappings/Fn colors and the USB switch remain compatible. It is verified offline; physical LED response still needs testing. See the [v0.8 report](../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md). Earlier v0.6/v0.7 images are retained.
+The bundled experimental custom build is **XInput + Fn RGB v0.8**. It removes repeated scan/release work, caches controller calculations, shortens interrupt masking and corrects physical matrix/Fn detection. Saved mappings/Fn colors and the USB switch remain compatible. Offline verification covers the image and its protocol. Physical LED response still needs testing. See the [v0.8 report](../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md).
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 

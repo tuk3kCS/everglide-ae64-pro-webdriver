@@ -88,9 +88,9 @@ async function main() {
     const wrong = new Device({ board: 123 });f.choose(wrong);assert.equal(await f.run("connectKeyboard()"), false);assert.equal(wrong.opened, false);assert.equal(wrong.sent.length, 1);
     // Normal application connections still load settings after the identity preflight.
     Object.assign(f.c, { clone: (v) => JSON.parse(JSON.stringify(v)), rgbToHex: () => "#000000", firmwareKeyPositions: () => new Map(), defaultSocdDraft: () => ({}),
-      clearDirty() {}, maybeShowCalibrationRecommendation() {}, readKeymapLayer: async () => {}, readFnLayerTarget: async () => {}, readSelectedKey: async () => {},
+      keys: [], clearDirty() {}, maybeShowCalibrationRecommendation() {}, readKeymapLayer: async () => 0, readFnLayerTarget: async () => {}, readSelectedKey: async () => {},
       readAllPerformanceRecords: async () => {}, readAllAdvancedRecords: async () => {}, probeFnLighting: async () => {} });
-    Object.assign(f.state.hardware, { performance: new Map(), keycodes: new Map(), advancedByKey: new Map() });f.state.profile = { layer: 0, lighting: { base: {}, decorative: { base: {} } } };
+    Object.assign(f.state.hardware, { performance: new Map(), keycodes: new Map(), advancedByKey: new Map() });f.state.profile = { layer: 0, lighting: { customEnabled: [], decorative: { customEnabled: [] } } };
     const app = new Device({ mode: 0, bootCollection: false });f.choose(app);assert.equal(await f.run("connectKeyboard()"), true, JSON.stringify(f.logs.slice(-3)));
     assert.equal(f.state.bootloaderConnected, false);assert.ok(app.sent.length > 1);assert.deepEqual(app.sent[0].slice(0, 2), [1, 2]);
     console.log("PASS: recovery connects through normal chooser, unplug/replug/startup recovery, fresh image requirement, identity-only preflight and error-only reconnect prompt. No hardware accessed.");

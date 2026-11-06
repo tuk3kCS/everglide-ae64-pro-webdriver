@@ -959,14 +959,20 @@ function renderStatus() {
   document.querySelector("#connectionDot").className = connected() || state.bootloaderConnected && state.transport?.connected
     ? ""
     : "offline";
-  document.querySelector("#dirtyStatus").textContent = writing
+  document.querySelector("#dirtyStatus").textContent = state.profileSyncInFlight
+    ? "Reading onboard profile…"
+    : state.profileNeedsReload && connected()
+      ? "Waiting for the onboard profile to finish loading…"
+      : writing
     ? "Writing to keyboard…"
     : count
       ? `${count} ${autoApply ? "queued" : "staged"} change${count === 1 ? "" : "s"}`
       : autoApply
         ? t("autoApplyActive")
         : t("noPendingChanges");
-  document.querySelector("#applyButton").disabled = count === 0 || autoApply || writing || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy;
+  document.querySelector("#applyButton").disabled = count === 0 || autoApply || toolOperationBusy() || state.profileNeedsReload;
+  const pageContent = document.querySelector("#pageContent");
+  if (pageContent) pageContent.inert = Boolean(state.connecting || state.profileSyncInFlight || state.profileNeedsReload && connected() && state.page !== "firmware");
   document.querySelector("#revertButton").disabled = count === 0 || writing || state.fnLightingBusy;
   const autoApplyToggle = document.querySelector("#autoApplyToggle");
   autoApplyToggle.checked = autoApply;
