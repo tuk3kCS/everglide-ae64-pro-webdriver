@@ -54,6 +54,8 @@ function mounted({ caps, state = { enabled: true, targetEnabled: true, phase: 0,
 async function main() {
   const t = transport();
   assert.equal((await P.probe(t)).usbDeviceSwitch, true);
+  assert.equal((await P.probe(t)).usbDevicePersistent, false);
+  assert.equal((await P.probe(transport({ flags: 30 }))).usbDevicePersistent, true);
   assert.deepEqual(await P.readUsbState(t), { boardId: BOARD, protocolVersion: 1, enabled: true, targetEnabled: true, phase: 0, revision: 9 });
   const pending = await P.setUsbEnabled(t, false, 9);
   assert.deepEqual(pending, { boardId: BOARD, protocolVersion: 1, enabled: true, targetEnabled: false, phase: 1, revision: 10, accepted: true });
@@ -92,6 +94,10 @@ async function main() {
   await assert.rejects(P.setUsbEnabled(activeUpload, false, 9), /already running/); releaseUpload(); await assert.rejects(uploading, /Stopped test upload/);
 
   const caps = { verified: true, boardId: BOARD, protocolVersion: 1, transports: { xinput: true }, usbDeviceSwitch: true };
+  const persistent = mounted({ caps: { ...caps, usbDevicePersistent: true } });
+  await persistent.component.ready;
+  assert.match(persistent.nodes.get("usbDeviceHint").textContent, /saves this choice.*power loss/);
+  persistent.component.dispose();
   const stock = mounted({ caps: { ...caps, usbDeviceSwitch: false } }); await stock.component.ready;
   assert.equal(stock.nodes.get("usbDeviceEnabled").disabled, true); assert.match(stock.nodes.get("usbDeviceStatus").textContent, /Requires/); stock.component.dispose();
   let stateReadFails = true;

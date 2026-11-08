@@ -4,6 +4,22 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.bin",
+      "name": "Experimental XInput + Fn RGB v0.8.1 · saved mappings",
+      "kind": "custom",
+      "experimental": true,
+      "version": "Custom",
+      "appVersion": "0.1.0.0",
+      "date": "2026-11-08",
+      "bytes": 143696,
+      "sha256": "168fc023054869df0f78ed36a7cf7bb873a4006cce30f03c4a71075c19f596bd",
+      "boardId": "0030000A",
+      "payloadCrc32": "9d0c07b0",
+      "description": "Saves Xbox device visibility across unplugging and power loss, restores it before USB enumeration, and preserves saved mappings and Fn colors. Based on v0.8. Offline verified; physical cold-boot testing remains required.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin",
       "name": "Experimental XInput + Fn RGB v0.8 · saved mappings",

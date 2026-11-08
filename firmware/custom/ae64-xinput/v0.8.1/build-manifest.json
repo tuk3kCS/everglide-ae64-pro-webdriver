@@ -1,0 +1,1344 @@
+{
+  "status": "EXPERIMENTAL_UNTESTED_ON_HARDWARE",
+  "stock_sha256": "3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d",
+  "image": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.bin",
+  "image_bytes": 143696,
+  "image_sha256": "168fc023054869df0f78ed36a7cf7bb873a4006cce30f03c4a71075c19f596bd",
+  "payload_bytes": 139600,
+  "payload_crc32": "9d0c07b0",
+  "original_payload_bytes": 114680,
+  "append_vma": "0x8003d000",
+  "reserved_ram": [
+    "0x8a960",
+    "0x8b960"
+  ],
+  "sections": [
+    {
+      "name": "",
+      "type": 0,
+      "flags": 0,
+      "address": 0,
+      "offset": 0,
+      "bytes": 0
+    },
+    {
+      "name": ".text",
+      "type": 1,
+      "flags": 6,
+      "address": 2147733504,
+      "offset": 4096,
+      "bytes": 24318
+    },
+    {
+      "name": ".rodata",
+      "type": 1,
+      "flags": 50,
+      "address": 2147757824,
+      "offset": 28416,
+      "bytes": 592
+    },
+    {
+      "name": ".bss",
+      "type": 8,
+      "flags": 3,
+      "address": 567680,
+      "offset": 31104,
+      "bytes": 3920
+    },
+    {
+      "name": ".symtab",
+      "type": 2,
+      "flags": 0,
+      "address": 0,
+      "offset": 31104,
+      "bytes": 5024
+    },
+    {
+      "name": ".shstrtab",
+      "type": 3,
+      "flags": 0,
+      "address": 0,
+      "offset": 36128,
+      "bytes": 46
+    },
+    {
+      "name": ".strtab",
+      "type": 3,
+      "flags": 0,
+      "address": 0,
+      "offset": 36174,
+      "bytes": 3531
+    }
+  ],
+  "symbols": {
+    "ae64_fn_rgb.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    ".L0 ": {
+      "address": 2147757432,
+      "bytes": 0,
+      "section": 1
+    },
+    "$x": {
+      "address": 2147757496,
+      "bytes": 0,
+      "section": 1
+    },
+    "process": {
+      "address": 2147733820,
+      "bytes": 1386,
+      "section": 1
+    },
+    "$d": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "ae64_gamepad.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "analog_valid": {
+      "address": 2147735864,
+      "bytes": 144,
+      "section": 1
+    },
+    "stick": {
+      "address": 2147737676,
+      "bytes": 84,
+      "section": 1
+    },
+    "analog": {
+      "address": 2147737760,
+      "bytes": 58,
+      "section": 1
+    },
+    "axis_value": {
+      "address": 2147738436,
+      "bytes": 100,
+      "section": 1
+    },
+    ".L__const.gp_encode_xinput_state.masks": {
+      "address": 2147757856,
+      "bytes": 20,
+      "section": 2
+    },
+    "ae64_gamepad_physical.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "make_core": {
+      "address": 2147738858,
+      "bytes": 564,
+      "section": 1
+    },
+    "copy_analog": {
+      "address": 2147742918,
+      "bytes": 256,
+      "section": 1
+    },
+    "released": {
+      "address": 2147740498,
+      "bytes": 182,
+      "section": 1
+    },
+    "digital_report": {
+      "address": 2147740680,
+      "bytes": 232,
+      "section": 1
+    },
+    "take_key": {
+      "address": 2147742020,
+      "bytes": 118,
+      "section": 1
+    },
+    "cached_analog_update": {
+      "address": 2147742138,
+      "bytes": 664,
+      "section": 1
+    },
+    "cached_axis": {
+      "address": 2147743174,
+      "bytes": 186,
+      "section": 1
+    },
+    "ae64_gamepad_protocol.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "ae64_xusb.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    ".L__const.ae64_xusb_device_descriptor.bytes": {
+      "address": 2147757976,
+      "bytes": 18,
+      "section": 2
+    },
+    "board_port.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "fn_load_current": {
+      "address": 2147747524,
+      "bytes": 74,
+      "section": 1
+    },
+    "fn_reconcile": {
+      "address": 2147747598,
+      "bytes": 392,
+      "section": 1
+    },
+    "state": {
+      "address": 567680,
+      "bytes": 2304,
+      "section": 3
+    },
+    "gp_load_current": {
+      "address": 2147747990,
+      "bytes": 412,
+      "section": 1
+    },
+    ".L_MergedGlobals": {
+      "address": 570452,
+      "bytes": 1148,
+      "section": 3
+    },
+    "matrix_columns": {
+      "address": 2147758071,
+      "bytes": 70,
+      "section": 2
+    },
+    "row_lengths": {
+      "address": 2147758066,
+      "bytes": 5,
+      "section": 2
+    },
+    "default_profile": {
+      "address": 2147758141,
+      "bytes": 208,
+      "section": 2
+    },
+    "mapping_changed": {
+      "address": 2147754258,
+      "bytes": 342,
+      "section": 1
+    },
+    "install": {
+      "address": 2147754600,
+      "bytes": 204,
+      "section": 1
+    },
+    "record_key": {
+      "address": 2147748946,
+      "bytes": 234,
+      "section": 1
+    },
+    "make_configuration": {
+      "address": 2147750066,
+      "bytes": 120,
+      "section": 1
+    },
+    "usb_config": {
+      "address": 2147758060,
+      "bytes": 6,
+      "section": 2
+    },
+    "usb_persona": {
+      "address": 2147750678,
+      "bytes": 162,
+      "section": 1
+    },
+    "fn_protocol": {
+      "address": 569984,
+      "bytes": 468,
+      "section": 3
+    },
+    "fn_read": {
+      "address": 2147750840,
+      "bytes": 66,
+      "section": 1
+    },
+    "fn_install": {
+      "address": 2147750906,
+      "bytes": 250,
+      "section": 1
+    },
+    ".L__const.board_usb_initialize.io": {
+      "address": 2147758044,
+      "bytes": 16,
+      "section": 2
+    },
+    "in_complete": {
+      "address": 2147751180,
+      "bytes": 16,
+      "section": 1
+    },
+    "out_complete": {
+      "address": 2147751196,
+      "bytes": 58,
+      "section": 1
+    },
+    "event": {
+      "address": 2147751254,
+      "bytes": 278,
+      "section": 1
+    },
+    "usb_start": {
+      "address": 2147751156,
+      "bytes": 24,
+      "section": 1
+    },
+    "arm_out": {
+      "address": 2147755112,
+      "bytes": 94,
+      "section": 1
+    },
+    ".LJTI24_0": {
+      "address": 2147757996,
+      "bytes": 0,
+      "section": 2
+    },
+    "save_profile": {
+      "address": 2147754868,
+      "bytes": 244,
+      "section": 1
+    },
+    "reset_physical": {
+      "address": 2147754804,
+      "bytes": 64,
+      "section": 1
+    },
+    "fn_save_ok": {
+      "address": 570452,
+      "bytes": 1,
+      "section": 3
+    },
+    "fn_colors": {
+      "address": 570456,
+      "bytes": 1144,
+      "section": 3
+    },
+    "fn_storage.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "valid": {
+      "address": 2147756264,
+      "bytes": 260,
+      "section": 1
+    },
+    "checksum": {
+      "address": 2147756888,
+      "bytes": 70,
+      "section": 1
+    },
+    "gp_storage.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "wire_valid": {
+      "address": 2147756836,
+      "bytes": 52,
+      "section": 1
+    },
+    "runtime.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "fn_rgb_init": {
+      "address": 2147733504,
+      "bytes": 70,
+      "section": 1
+    },
+    "memset": {
+      "address": 2147757410,
+      "bytes": 22,
+      "section": 1
+    },
+    "fn_rgb_handle": {
+      "address": 2147733574,
+      "bytes": 246,
+      "section": 1
+    },
+    "gp_crc32": {
+      "address": 2147743360,
+      "bytes": 58,
+      "section": 1
+    },
+    "gp_linear_curve": {
+      "address": 2147735206,
+      "bytes": 38,
+      "section": 1
+    },
+    "gp_config_empty": {
+      "address": 2147735244,
+      "bytes": 316,
+      "section": 1
+    },
+    "gp_config_valid": {
+      "address": 2147735560,
+      "bytes": 304,
+      "section": 1
+    },
+    "gp_reset": {
+      "address": 2147736008,
+      "bytes": 38,
+      "section": 1
+    },
+    "gp_bound_keys": {
+      "address": 2147736046,
+      "bytes": 334,
+      "section": 1
+    },
+    "gp_keyboard_suppression": {
+      "address": 2147736380,
+      "bytes": 24,
+      "section": 1
+    },
+    "gp_curve_level_validated": {
+      "address": 2147736404,
+      "bytes": 92,
+      "section": 1
+    },
+    "gp_stick_axes_validated": {
+      "address": 2147736496,
+      "bytes": 248,
+      "section": 1
+    },
+    "gp_update": {
+      "address": 2147736744,
+      "bytes": 932,
+      "section": 1
+    },
+    "memcpy": {
+      "address": 2147757382,
+      "bytes": 28,
+      "section": 1
+    },
+    "gp_watchdog": {
+      "address": 2147737818,
+      "bytes": 102,
+      "section": 1
+    },
+    "gp_report_equal": {
+      "address": 2147737920,
+      "bytes": 112,
+      "section": 1
+    },
+    "gp_encode_hid": {
+      "address": 2147738032,
+      "bytes": 228,
+      "section": 1
+    },
+    "gp_encode_xinput_state": {
+      "address": 2147738260,
+      "bytes": 176,
+      "section": 1
+    },
+    "gp_hid_report_descriptor": {
+      "address": 2147757876,
+      "bytes": 93,
+      "section": 2
+    },
+    "gp_hid_report_descriptor_size": {
+      "address": 2147757972,
+      "bytes": 4,
+      "section": 2
+    },
+    "gp_physical_config_empty": {
+      "address": 2147738536,
+      "bytes": 294,
+      "section": 1
+    },
+    "gp_physical_config_valid": {
+      "address": 2147738830,
+      "bytes": 28,
+      "section": 1
+    },
+    "gp_physical_bound_keys": {
+      "address": 2147739422,
+      "bytes": 44,
+      "section": 1
+    },
+    "gp_physical_keyboard_suppression": {
+      "address": 2147739466,
+      "bytes": 56,
+      "section": 1
+    },
+    "gp_physical_reset": {
+      "address": 2147739522,
+      "bytes": 48,
+      "section": 1
+    },
+    "gp_physical_update": {
+      "address": 2147739570,
+      "bytes": 928,
+      "section": 1
+    },
+    "gp_physical_update_cached": {
+      "address": 2147740912,
+      "bytes": 1108,
+      "section": 1
+    },
+    "gp_physical_watchdog": {
+      "address": 2147742802,
+      "bytes": 116,
+      "section": 1
+    },
+    "gp_wire_decode": {
+      "address": 2147743418,
+      "bytes": 736,
+      "section": 1
+    },
+    "gp_vendor_init": {
+      "address": 2147744154,
+      "bytes": 282,
+      "section": 1
+    },
+    "gp_vendor_handle": {
+      "address": 2147744436,
+      "bytes": 1576,
+      "section": 1
+    },
+    "ae64_xusb_config_valid": {
+      "address": 2147746012,
+      "bytes": 88,
+      "section": 1
+    },
+    "ae64_xusb_init": {
+      "address": 2147746100,
+      "bytes": 100,
+      "section": 1
+    },
+    "ae64_xusb_interface_descriptor": {
+      "address": 2147746200,
+      "bytes": 308,
+      "section": 1
+    },
+    "ae64_xusb_device_descriptor": {
+      "address": 2147746508,
+      "bytes": 32,
+      "section": 1
+    },
+    "ae64_xusb_ms_string": {
+      "address": 2147746540,
+      "bytes": 168,
+      "section": 1
+    },
+    "ae64_xusb_ms_compatible_id": {
+      "address": 2147746708,
+      "bytes": 122,
+      "section": 1
+    },
+    "ae64_xusb_control": {
+      "address": 2147746830,
+      "bytes": 240,
+      "section": 1
+    },
+    "ae64_xusb_encode_input": {
+      "address": 2147747070,
+      "bytes": 38,
+      "section": 1
+    },
+    "ae64_xusb_configured": {
+      "address": 2147747108,
+      "bytes": 36,
+      "section": 1
+    },
+    "ae64_xusb_submit": {
+      "address": 2147747144,
+      "bytes": 122,
+      "section": 1
+    },
+    "ae64_xusb_in_complete": {
+      "address": 2147747266,
+      "bytes": 16,
+      "section": 1
+    },
+    "ae64_xusb_out": {
+      "address": 2147747282,
+      "bytes": 130,
+      "section": 1
+    },
+    "board_fn_load_hook": {
+      "address": 2147747412,
+      "bytes": 112,
+      "section": 1
+    },
+    "stock_fn_load_original": {
+      "address": 2147757512,
+      "bytes": 8,
+      "section": 1
+    },
+    "fn_storage_address": {
+      "address": 2147755206,
+      "bytes": 24,
+      "section": 1
+    },
+    "fn_storage_decode": {
+      "address": 2147755278,
+      "bytes": 130,
+      "section": 1
+    },
+    "gp_storage_address": {
+      "address": 2147756114,
+      "bytes": 24,
+      "section": 1
+    },
+    "gp_storage_read": {
+      "address": 2147756138,
+      "bytes": 126,
+      "section": 1
+    },
+    "board_fn_save_hook": {
+      "address": 2147748402,
+      "bytes": 302,
+      "section": 1
+    },
+    "stock_fn_save_original": {
+      "address": 2147757520,
+      "bytes": 8,
+      "section": 1
+    },
+    "stock_flash_program": {
+      "address": 2147695170,
+      "bytes": 0,
+      "section": 65521
+    },
+    "fn_storage_append": {
+      "address": 2147755794,
+      "bytes": 250,
+      "section": 1
+    },
+    "gp_storage_append": {
+      "address": 2147756524,
+      "bytes": 312,
+      "section": 1
+    },
+    "gp_usb_storage_address": {
+      "address": 2147756958,
+      "bytes": 24,
+      "section": 1
+    },
+    "gp_usb_storage_append": {
+      "address": 2147757208,
+      "bytes": 174,
+      "section": 1
+    },
+    "board_fn_render_hook": {
+      "address": 2147748704,
+      "bytes": 216,
+      "section": 1
+    },
+    "stock_fn_render": {
+      "address": 2147702122,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_key_context": {
+      "address": 2147748920,
+      "bytes": 26,
+      "section": 1
+    },
+    "board_keyboard_press_hook": {
+      "address": 2147749180,
+      "bytes": 144,
+      "section": 1
+    },
+    "stock_keyboard_press_original": {
+      "address": 2147757528,
+      "bytes": 8,
+      "section": 1
+    },
+    "board_keyboard_release_hook": {
+      "address": 2147749324,
+      "bytes": 40,
+      "section": 1
+    },
+    "stock_keyboard_release_original": {
+      "address": 2147757536,
+      "bytes": 8,
+      "section": 1
+    },
+    "board_advanced_key_hook": {
+      "address": 2147749364,
+      "bytes": 186,
+      "section": 1
+    },
+    "stock_advanced_key_original": {
+      "address": 2147757544,
+      "bytes": 8,
+      "section": 1
+    },
+    "board_key_action": {
+      "address": 2147749550,
+      "bytes": 374,
+      "section": 1
+    },
+    "board_key_process_hook": {
+      "address": 2147749924,
+      "bytes": 96,
+      "section": 1
+    },
+    "stock_key_process": {
+      "address": 2147640754,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_device_descriptor": {
+      "address": 2147750020,
+      "bytes": 10,
+      "section": 1
+    },
+    "board_configuration": {
+      "address": 2147750030,
+      "bytes": 36,
+      "section": 1
+    },
+    "board_other_speed": {
+      "address": 2147750186,
+      "bytes": 36,
+      "section": 1
+    },
+    "board_usb_initialize": {
+      "address": 2147750222,
+      "bytes": 456,
+      "section": 1
+    },
+    "gp_usb_storage_read": {
+      "address": 2147756982,
+      "bytes": 226,
+      "section": 1
+    },
+    "stock_add_interface": {
+      "address": 2147685524,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_add_endpoint": {
+      "address": 2147685578,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_usb_initialize": {
+      "address": 2147685854,
+      "bytes": 0,
+      "section": 65521
+    },
+    "fn_storage_read_image": {
+      "address": 2147755586,
+      "bytes": 208,
+      "section": 1
+    },
+    "stock_write": {
+      "address": 2147680996,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_ep0_hook": {
+      "address": 2147751532,
+      "bytes": 190,
+      "section": 1
+    },
+    "stock_ep0_original": {
+      "address": 2147757504,
+      "bytes": 8,
+      "section": 1
+    },
+    "board_scan_hook": {
+      "address": 2147751722,
+      "bytes": 942,
+      "section": 1
+    },
+    "stock_scan": {
+      "address": 2147643086,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_tick": {
+      "address": 2147695506,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_schedule_hook": {
+      "address": 2147752664,
+      "bytes": 684,
+      "section": 1
+    },
+    "stock_schedule": {
+      "address": 2147640308,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_dispatch_hook": {
+      "address": 2147753348,
+      "bytes": 910,
+      "section": 1
+    },
+    "stock_vendor_reply": {
+      "address": 2147673304,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_dispatch_original": {
+      "address": 2147757496,
+      "bytes": 8,
+      "section": 1
+    },
+    "stock_read": {
+      "address": 2147681086,
+      "bytes": 0,
+      "section": 65521
+    },
+    "fn_storage_clear": {
+      "address": 2147755230,
+      "bytes": 48,
+      "section": 1
+    },
+    "memmove": {
+      "address": 2147757432,
+      "bytes": 64,
+      "section": 1
+    },
+    "stock_save3": {
+      "address": 2147634190,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_dispatch_continue": {
+      "address": 2147673978,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_save12": {
+      "address": 2147634142,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_ep0_continue": {
+      "address": 2147682134,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_save8": {
+      "address": 2147634164,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_fn_load_continue": {
+      "address": 2147663458,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_fn_save_continue": {
+      "address": 2147663774,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_keyboard_press_continue": {
+      "address": 2147636978,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_keyboard_release_continue": {
+      "address": 2147637326,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_advanced_key_continue": {
+      "address": 2147642156,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_key_context_trampoline": {
+      "address": 2147757552,
+      "bytes": 86,
+      "section": 1
+    },
+    "board_timed_context_trampoline": {
+      "address": 2147757640,
+      "bytes": 94,
+      "section": 1
+    },
+    "board_key_action_trampoline": {
+      "address": 2147757736,
+      "bytes": 86,
+      "section": 1
+    },
+    "__state_end": {
+      "address": 571600,
+      "bytes": 0,
+      "section": 3
+    },
+    "__state_start": {
+      "address": 567680,
+      "bytes": 0,
+      "section": 3
+    },
+    "stock_usb_event": {
+      "address": 2147678344,
+      "bytes": 0,
+      "section": 65521
+    }
+  },
+  "patches": [
+    {
+      "payload_offset": "0xa594",
+      "container_offset": "0xb594",
+      "before": "ef90707d",
+      "after": "ef50c15c",
+      "reason": "board_fn_render_hook"
+    },
+    {
+      "payload_offset": "0xae5e",
+      "container_offset": "0xbe5e",
+      "before": "ef827fd9",
+      "after": "6f40617f",
+      "reason": "board_fn_load_hook"
+    },
+    {
+      "payload_offset": "0xaf9a",
+      "container_offset": "0xbf9a",
+      "before": "ef825fc7",
+      "after": "6f409129",
+      "reason": "board_fn_save_hook"
+    },
+    {
+      "payload_offset": "0x6e08",
+      "container_offset": "0x7e08",
+      "before": "eff06f8c",
+      "after": "ef903112",
+      "reason": "board_scan_hook"
+    },
+    {
+      "payload_offset": "0x6e20",
+      "container_offset": "0x7e20",
+      "before": "efe02ff9",
+      "after": "ef904120",
+      "reason": "board_key_process_hook"
+    },
+    {
+      "payload_offset": "0x46ee",
+      "container_offset": "0x56ee",
+      "before": "9307c5ff",
+      "after": "6fb0e164",
+      "reason": "board_keyboard_press_hook"
+    },
+    {
+      "payload_offset": "0x484a",
+      "container_offset": "0x584a",
+      "before": "eff24fbc",
+      "after": "6fb02158",
+      "reason": "board_keyboard_release_hook"
+    },
+    {
+      "payload_offset": "0x5b28",
+      "container_offset": "0x6b28",
+      "before": "efe26f8e",
+      "after": "6fa0c12c",
+      "reason": "board_advanced_key_hook"
+    },
+    {
+      "payload_offset": "0x56bc",
+      "container_offset": "0x66bc",
+      "before": "93f72708",
+      "after": "efc04173",
+      "reason": "board_key_context_trampoline"
+    },
+    {
+      "payload_offset": "0x573a",
+      "container_offset": "0x673a",
+      "before": "03c51c01",
+      "after": "efc0e170",
+      "reason": "board_timed_context_trampoline"
+    },
+    {
+      "payload_offset": "0x57f4",
+      "container_offset": "0x67f4",
+      "before": "83d90700",
+      "after": "efc0416b",
+      "reason": "board_key_action_trampoline"
+    },
+    {
+      "payload_offset": "0x6e60",
+      "container_offset": "0x7e60",
+      "before": "efe04fd9",
+      "after": "ef909147",
+      "reason": "board_schedule_hook"
+    },
+    {
+      "payload_offset": "0xea70",
+      "container_offset": "0xfa70",
+      "before": "ef10f036",
+      "after": "ef10e16d",
+      "reason": "board_usb_initialize"
+    },
+    {
+      "payload_offset": "0xd776",
+      "container_offset": "0xe776",
+      "before": "ef628fc9",
+      "after": "6f30e160",
+      "reason": "board_dispatch_hook"
+    },
+    {
+      "payload_offset": "0xf752",
+      "container_offset": "0x10752",
+      "before": "ef42cfc8",
+      "after": "6f00b171",
+      "reason": "board_ep0_hook"
+    },
+    {
+      "payload_offset": "0x19f84",
+      "container_offset": "0x1af84",
+      "before": "92fb0280",
+      "after": "84100480",
+      "reason": "board_device_descriptor"
+    },
+    {
+      "payload_offset": "0x19f88",
+      "container_offset": "0x1af88",
+      "before": "98fb0280",
+      "after": "8e100480",
+      "reason": "board_configuration"
+    },
+    {
+      "payload_offset": "0x19f90",
+      "container_offset": "0x1af90",
+      "before": "acfb0280",
+      "after": "2a110480",
+      "reason": "board_other_speed"
+    },
+    {
+      "payload_offset": "0x1066c",
+      "container_offset": "0x1166c",
+      "before": "b7c50800",
+      "after": "b7b50800",
+      "reason": "reserve patch state: heap end upper immediate"
+    },
+    {
+      "payload_offset": "0x10674",
+      "container_offset": "0x11674",
+      "before": "93854596",
+      "after": "93850596",
+      "reason": "reserve patch state: heap end lower immediate"
+    },
+    {
+      "payload_offset": "0x1bc80",
+      "container_offset": "0x1cc80",
+      "before": "0200",
+      "after": "0d01",
+      "reason": "custom bcdDevice 0x010D; keyboard-only persona uses 0x010E"
+    }
+  ],
+  "build_command": [
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+    "build-exe",
+    "-target",
+    "riscv32-freestanding-none",
+    "-mcpu",
+    "generic_rv32+m+a+c",
+    "-O",
+    "ReleaseSmall",
+    "-fno-strip",
+    "-fentry=board_usb_initialize",
+    "--no-gc-sections",
+    "-T",
+    "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\memory.ld",
+    "-femit-bin=C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64-xinput-experimental.elf",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_fn_rgb.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_physical.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_protocol.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_xusb.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\board_port.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\fn_storage.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\gp_storage.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\runtime.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\trampolines.o"
+  ],
+  "compiler_version": "0.17.0",
+  "verified": {
+    "host_tests": true,
+    "hardware_boot": false,
+    "windows_xinput": false,
+    "bootloader_acceptance": false,
+    "flashed": false,
+    "static_image_audit": true
+  },
+  "build_commands": [
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\src\\ae64_fn_rgb.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_fn_rgb.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\src\\ae64_gamepad.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\src\\ae64_gamepad_physical.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_physical.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\src\\ae64_gamepad_protocol.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_protocol.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\src\\ae64_xusb.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_xusb.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\board_port.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\board_port.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\fn_storage.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\fn_storage.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\gp_storage.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\gp_storage.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\runtime.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\runtime.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\include",
+      "-c",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\trampolines.S",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\trampolines.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "build-exe",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu",
+      "generic_rv32+m+a+c",
+      "-O",
+      "ReleaseSmall",
+      "-fno-strip",
+      "-fentry=board_usb_initialize",
+      "--no-gc-sections",
+      "-T",
+      "C:\\GitHub\\everglide-ae64-pro-webdriver\\firmware\\custom\\ae64-xinput\\source\\board\\memory.ld",
+      "-femit-bin=C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64-xinput-experimental.elf",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_fn_rgb.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_physical.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_gamepad_protocol.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\ae64_xusb.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\board_port.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\fn_storage.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\gp_storage.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\runtime.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\ChatGPT\\AE64 Pro R2\\build-v081\\trampolines.o"
+    ]
+  ],
+  "heap": {
+    "original_begin": "0x87964",
+    "original_end": "0x8b964",
+    "new_end": "0x8a960",
+    "remaining_bytes": 12284,
+    "reserved_bytes": 4100
+  }
+}

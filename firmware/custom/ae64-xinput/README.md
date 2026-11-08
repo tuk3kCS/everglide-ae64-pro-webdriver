@@ -1,18 +1,16 @@
 # AE64 Pro experimental native XInput and Fn RGB firmware
 
-Current build: [`../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin`](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.bin), **142,888 bytes**, SHA-256 `753feeafd003de913c394a7b7c0e74a8e33dfa2ab633b8ef572bddb5ad43935b`.
+Current build [XInput + Fn RGB v0.8.1](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.bin), **143,696 bytes**, SHA-256 `168fc023054869df0f78ed36a7cf7bb873a4006cce30f03c4a71075c19f596bd`.
 
-v0.8 removes repeated synthetic releases and scanner-history rewrites, caches validated controller calculations, evaluates controller frames with interrupts enabled, and corrects the sparse physical matrix including the default Fn key. It retains exact physical output gates, momentary Fn origins, saved mappings/Fn colors, the real millisecond clock and the Xbox USB switch. See the [v0.8 optimization report](../../../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md).
+v0.8.1 saves the Xbox USB visibility choice and restores it before USB initialization, including after power loss and when another onboard profile is active. It builds on v0.8. See the [persistence report](../../../docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md).
 
-**v0.8 is verified offline and has not been flashed during this work.** The user reported slower physical Fn lighting on v0.6/v0.7 than stock. The repeated-work regression is removed in source and synthetic tests; stock-equivalent LED latency still needs a physical comparison. No measured millisecond improvement is claimed.
-
-`source/` builds v0.8; its ELF/manifests and test evidence are in `v0.8/`. Earlier images/evidence are retained. `history/v0.7-source.zip` preserves the prior source tree; some historical line endings were normalized during archiving. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
+The image passed offline firmware and browser tests. Physical flashing and cold-boot verification remain pending. `source/` builds v0.8.1. Its ELF, manifests and verification evidence are in `v0.8.1/`. The previous binary and evidence remain in `v0.8/`, and `history/v0.8-source.zip` preserves the preceding source tree. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
 
 ## Configure and flash
 
 Use the main web driver's **Gamepad mode â†’ Hardware Solution** to edit assignments. It shares the driver's keyboard connection. Use **Firmware** to select this custom image or any bundled factory release. The standalone `/gamepad` page no longer exists.
 
-v0.4 and newer start with no controller assignments unless a valid mapping was saved for the active onboard profile. Valid v0.4–v0.7 saved mappings remain readable in v0.8. Read and verify the active mapping after upgrading; configure/import and **Apply to keyboard** if needed. The mapping then survives power loss and native keymap/Fn saves. Export a backup before firmware changes or factory reset. The Xbox USB visibility switch remains session-only; boot defaults remain enabled.
+v0.4 and newer start with no controller assignments unless a valid mapping was saved for the active onboard profile. Valid v0.4–v0.7 saved mappings remain readable in v0.8. Read and verify the active mapping after upgrading; configure/import and **Apply to keyboard** if needed. The mapping then survives power loss and native keymap/Fn saves. Export a backup before firmware changes or factory reset. In v0.8.1, the Xbox USB visibility switch saves its choice across power loss. After upgrading from v0.8, switch it off once to save the disabled preference. A keyboard without a saved preference starts enabled.
 
 Digital controls follow the native normal/RT latch, and analog controls use calibrated travel. Saved custom windows are not silently changed when a switchâ€™s available range changes; invalid calibration/ranges remain neutral until corrected. A repeated USB configuration notification preserves existing transfer-buffer ownership.
 

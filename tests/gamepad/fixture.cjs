@@ -23,6 +23,7 @@ function fixture({ transport = null, connectTarget = transport, savedProfile = n
   sandbox.window = sandbox;
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../js/gamepad/studio.js"), "utf8"), sandbox, { timeout: 1000 });
   const component = sandbox.AE64GamepadStudio.mount(root, { getTransport: () => current, getKeyTravel, readKeyTravel, onCapabilities, onRead, onConnect: async () => { current = connectTarget; }, notify: (text, error) => notices.push({ text, error }), onBusy: (value) => { busy = value; } });
-  return { html, nodes, component, root, notices, events, intervals, saved: () => saved, busy: () => busy, setTransport: (value) => { current = value; } };
+  return { html, nodes, component, root, notices, events, intervals, saved: () => saved, busy: () => busy, setTransport: (value) => { current = value; },
+    selectKey: (id) => nodes.get("keyboard").listeners.click({ target: { closest: () => ({ dataset: { key: String(id) } }) } }) };
 }
 module.exports = { fixture, Model, Protocol };

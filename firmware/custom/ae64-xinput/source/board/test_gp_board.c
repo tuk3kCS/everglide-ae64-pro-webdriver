@@ -48,5 +48,17 @@ int main(void) {
     cold_boot();read_wire(actual);CHECK(memcmp(actual,default_profile,208)==0);
     /* Corrupted/missing saved record stays empty, never returns six examples. */
     CHECK(upload(wire)==0);profile_flash[0][GP_STORAGE_OFFSET+32]^=1;cold_boot();read_wire(actual);CHECK(memcmp(actual,default_profile,208)==0);
-    printf("PASS: %u persistent board checks; real commit/readback, cold reboot, 3.31mm output, replay ownership, Fn/native saves, profile isolation and failed/corrupt records.\n",checks);return 0;
+    /* Real mapping commits while Xbox is hidden retain its saved preference. */
+    CHECK(command(0x26,NULL,0)==GP_VENDOR_OK);
+    uint8_t preference[10]={10,0,0x30,0,0,0,0,0,0,0};
+    memcpy(preference+6,last_reply+18,4);
+    CHECK(command(0x27,preference,sizeof(preference))==GP_VENDOR_OK);cold_boot();
+    CHECK(board_configuration(1)[4]==3);
+    CHECK(upload(wire)==GP_VENDOR_OK);cold_boot();read_wire(actual);
+    CHECK(board_configuration(1)[4]==3&&memcmp(actual,wire,208)==0);
+    CHECK(command(0x26,NULL,0)==GP_VENDOR_OK);
+    preference[4]=1;memcpy(preference+6,last_reply+18,4);
+    CHECK(command(0x27,preference,sizeof(preference))==GP_VENDOR_OK);cold_boot();
+    CHECK(board_configuration(1)[4]==4);
+    printf("PASS: %u persistent board checks; real commit/readback, cold reboot, hidden-Xbox commits, 3.31mm output, replay ownership, Fn/native saves, profile isolation and failed/corrupt records.\n",checks);return 0;
 }

@@ -10,6 +10,8 @@ async function main() {
   const api = { probe: async () => caps, read: async () => { reads++;return { ...caps, config: profile }; }, upload: async () => { throw new Error("Automatic loading must not write"); } };
   const f = fixture({ transport, protocol: api, getKeyTravel: limits, onCapabilities: (value) => detected.push(value), onRead: (config) => loaded.push(config) });
   await f.component.ready;assert.equal(reads, 1);assert.equal(loaded.length, 1);assert.equal(detected[0].transports.xinput, true);
+  assert.equal(f.nodes.get("tuningControl").textContent, "—", "Automatic profile reads must not select LT");
+  f.selectKey(15);
   assert.equal(f.nodes.get("profileName").value, profile.name);assert.equal(f.nodes.get("outputMode").value, "mixed");assert.equal(f.nodes.get("endMm").value, "2.75");assert.equal(f.busy(), false);
   for (const listener of f.events.hid.get("disconnect")) listener({ device: transport.device });assert.equal(detected.at(-1), null);f.component.dispose();
   reads = 0;const later = fixture({ connectTarget: transport, protocol: api, getKeyTravel: limits });await later.component.ready;assert.equal(reads, 0);

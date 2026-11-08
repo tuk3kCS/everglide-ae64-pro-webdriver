@@ -35,7 +35,43 @@ static void seal(uint8_t *bytes) {
     uint8_t crc_input[16+GP_WIRE_BYTES];memcpy(crc_input,bytes,16);memcpy(crc_input+16,bytes+GP_STORAGE_HEADER,GP_WIRE_BYTES);
     uint32_t crc=gp_crc32(crc_input,sizeof(crc_input));for(unsigned i=0;i<4;i++)bytes[16+i]=(uint8_t)(crc>>(8*i));
 }
+static void usb_program(uintptr_t address,uint32_t length,const uint8_t *data) {
+    calls++;
+    CHECK(address==gp_usb_storage_address((uint8_t)active_profile)&&length==GP_USB_STORAGE_BYTES);
+    CHECK(!(address&3u)&&!((uintptr_t)data&3u));
+    if(fail_call)return;
+    if(partial_call)length/=2;
+    for(unsigned i=0;i<length;i++)flash[active_profile][GP_USB_STORAGE_OFFSET+i]&=data[i];
+}
+static void usb_preferences(void) {
+    for(unsigned profile=0;profile<4;profile++)for(unsigned power=0;power<2;power++) {
+        active_profile=profile;memset(flash,0x69,sizeof(flash));
+        uint8_t *record=flash[profile]+GP_USB_STORAGE_OFFSET;
+        memset(record,0xff,GP_USB_STORAGE_BYTES);memcpy(neighbors,flash,sizeof(flash));
+        calls=fail_call=partial_call=0;
+        CHECK(gp_usb_storage_append(profile,power!=0,UINT32_MAX,usb_program,record)&&calls==1);
+        bool enabled;uint32_t revision;
+        CHECK(gp_usb_storage_read(record,profile,&enabled,&revision)&&enabled==(power!=0)&&revision==UINT32_MAX);
+        for(unsigned p=0;p<4;p++)for(unsigned offset=0;offset<0x2000;offset++)
+            if(p!=profile||offset<GP_USB_STORAGE_OFFSET||offset>=GP_USB_STORAGE_OFFSET+GP_USB_STORAGE_BYTES)
+                CHECK(flash[p][offset]==neighbors[p][offset]);
+        for(unsigned byte=0;byte<GP_USB_STORAGE_BYTES;byte++)for(unsigned bit=0;bit<8;bit++) {
+            record[byte]^=1u<<bit;enabled=power==0;revision=123;
+            CHECK(!gp_usb_storage_read(record,profile,&enabled,&revision)&&enabled==(power==0)&&revision==123);
+            record[byte]^=1u<<bit;
+        }
+        CHECK(!gp_usb_storage_read(record,(profile+1u)%4u,&enabled,&revision));
+        for(unsigned failure=0;failure<2;failure++) {
+            memset(record,0xff,GP_USB_STORAGE_BYTES);fail_call=failure==0;partial_call=failure==1;
+            CHECK(!gp_usb_storage_append(profile,true,0,usb_program,record));
+            CHECK(!gp_usb_storage_read(record,profile,&enabled,&revision));
+        }
+    }
+    CHECK(!gp_usb_storage_address(4));
+    CHECK(!gp_usb_storage_append(4,true,0,usb_program,flash[0]));
+}
 int main(void) {
+    usb_preferences();
     _Alignas(4) uint8_t wire[GP_WIRE_BYTES],restored[GP_WIRE_BYTES],valid_image[GP_STORAGE_BYTES];bool enabled;uint32_t revision;
     CHECK(GP_STORAGE_BYTES==240);CHECK(gp_storage_address(4)==0);CHECK(gp_storage_address(255)==0);
     for(unsigned profile=0;profile<GP_STORAGE_PROFILES;profile++)for(unsigned power=0;power<2;power++) {

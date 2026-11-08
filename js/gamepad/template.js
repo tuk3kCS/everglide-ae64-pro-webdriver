@@ -22,7 +22,7 @@ window.AE64GamepadTemplate = `
     <span><strong id="usbDeviceTitle">Xbox controller device</strong><small>Show or hide the Xbox device in Windows.</small></span>
     <input data-keyboard-input="allow" id="usbDeviceEnabled" type="checkbox" role="switch" aria-describedby="usbDeviceHint usbDeviceStatus" disabled>
   </label>
-  <p id="usbDeviceHint">Changes take effect immediately and briefly reconnect the whole keyboard over USB. This setting lasts until power is disconnected; mappings are retained during this reconnect. Output mode “Gamepad off” only mutes controller input.</p>
+  <p id="usbDeviceHint">Changing this briefly reconnects the whole keyboard over USB. Firmware v0.8.1 saves this choice across power loss. Output mode “Gamepad off” mutes controller input.</p>
   <p id="usbDeviceStatus" role="status">Connect compatible custom firmware to change Xbox device visibility.</p>
 </section>
 
@@ -80,8 +80,8 @@ window.AE64GamepadTemplate = `
     <div class="assignment-head">
       <span id="selectedKeyName">Q</span>
       <div>
-        <strong id="selectedAction">Left trigger</strong>
-        <small id="selectedHint">Analog travel mapping</small>
+        <strong id="selectedAction">Choose a controller action</strong>
+        <small id="selectedHint">Choose a control below to assign it to Q.</small>
       </div>
       <button id="clearBinding" class="text-button">Remove assignment</button>
     </div>
@@ -92,11 +92,11 @@ window.AE64GamepadTemplate = `
       <div>
         <p class="eyebrow">02 / TUNE</p>
         <h2>Choose your travel window</h2>
-        <p id="tuningLead">Below the start is zero. At full output, your trigger reaches 255.</p>
+        <p id="tuningLead">Select an assigned key or choose a controller action to edit its travel window.</p>
       </div>
-      <span id="tuningControl" class="pill">LT</span>
+      <span id="tuningControl" class="pill">—</span>
     </div>
-    <div id="analogEditor">
+    <div id="analogEditor" hidden>
       <div class="range-inputs">
         <label>
           <span>START</span>

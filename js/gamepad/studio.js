@@ -7,7 +7,7 @@
   const M = window.AE64GamepadModel, $ = (id) => root.querySelector(`#${id}`), STORAGE = "ae64-gamepad-studio-v1";
   const icon = (control) => window.AE64ControllerIcons.html(control);
   const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-  let config = M.emptyProfile(), selectedKey = 15, selectedControl = "LT", transport = getTransport(), capabilities = null, busy = false, profileLoaded = false;
+  let config = M.emptyProfile(), selectedKey = 15, selectedControl = null, transport = getTransport(), capabilities = null, busy = false, profileLoaded = false;
   let deviceLimits = [], travelGeneration = 0, travelError = "", travelRead = null;
   let usbState = null, usbSwitchPending = false, usbSwitchError = "";
   let hasLocalDraft = false, hardwareProfile = null;
@@ -87,6 +87,9 @@
   function draftDiffersFromKeyboard() { return Boolean(hardwareProfile && profileFingerprint(config) !== profileFingerprint(hardwareProfile)); }
   function updateUsbSwitch() {
     const supported = usbSwitchSupported(), toggle = $("usbDeviceEnabled");
+    $("usbDeviceHint").textContent = capabilities?.usbDevicePersistent
+      ? "The keyboard saves this choice across unplugging, restarts and power loss. Changing it briefly reconnects the whole keyboard over USB. Output mode “Gamepad off” mutes controller input."
+      : "Changing this briefly reconnects the whole keyboard over USB. Older custom firmware keeps this choice until power is disconnected. Output mode “Gamepad off” mutes controller input.";
     toggle.checked = Boolean(usbState && (usbSwitchPending ? usbState.targetEnabled : usbState.enabled));
     toggle.disabled = busy || usbSwitchPending || !supported || !usbState || usbState.phase !== 0;
     $("usbDeviceStatus").textContent = usbSwitchPending ? "USB reconnecting… Xbox device change is not confirmed yet."
@@ -126,10 +129,24 @@
     $("controlPicker").innerHTML = groups.map(([title, entries]) => `<div class="control-group"><span>${title}</span>${entries.map((entry) => { const b = config.bindings.find((item) => item.control === entry.id), key = b.key !== null ? M.KEYS[b.key] : null; return `<button data-control="${entry.id}" class="control-action${selectedControl === entry.id ? " active" : ""}${key ? " assigned" : ""}" title="${escape(entry.label)}" aria-label="${escape(entry.label)}${key ? `, assigned to ${escape(key.label)}` : ""}" aria-pressed="${selectedControl === entry.id}">${icon(entry.id)}${key ? `<small>${escape(key.label)}</small>` : ""}</button>`; }).join("")}</div>`).join("");
   }
   function renderEditor() {
-    const b = binding(), control = M.CONTROL.get(selectedControl), digital = control.kind === "button", key = M.KEYS[selectedKey];
-    $("selectedKeyName").textContent = key.label; $("selectedAction").textContent = b.key === selectedKey ? control.label : `Assign ${control.label}`;
-    $("selectedHint").textContent = b.key === selectedKey ? (digital ? "Follows this key’s actuation and Rapid Trigger" : "Analog travel mapping") : `Choose a control below to assign it to ${key.label}.`;
+    const b = binding(), control = M.CONTROL.get(selectedControl), key = M.KEYS[selectedKey];
+    $("selectedKeyName").textContent = key.label;
     $("clearBinding").disabled = !config.bindings.some((item) => item.key === selectedKey);
+    const limit = keyTravel(selectedKey);
+    $("deviceTravel").textContent = limit ? limit.switchName ? `${limit.switchName} · using ${(limit.maxTravelUm / 1000).toFixed(2)} mm available switch travel.` : `Keyboard reports ${(limit.maxTravelUm / 1000).toFixed(2)} mm for ${key.label}.` : "Choose a switch in Performance or connect the keyboard to detect its travel.";
+    $("editorError").textContent = travelError;
+    if (!b || !control) {
+      $("selectedAction").textContent = "Choose a controller action";
+      $("selectedHint").textContent = `Choose a control below to assign it to ${key.label}.`;
+      $("analogEditor").hidden = $("digitalEditor").hidden = true;
+      $("tuningControl").textContent = "—";
+      $("tuningLead").textContent = "Select an assigned key or choose a controller action to edit its travel window.";
+      for (const id of rangeFields) $(id).value = "";
+      return;
+    }
+    const digital = control.kind === "button";
+    $("selectedAction").textContent = b.key === selectedKey ? control.label : `Assign ${control.label}`;
+    $("selectedHint").textContent = b.key === selectedKey ? (digital ? "Follows this key’s actuation and Rapid Trigger" : "Analog travel mapping") : `Choose a control below to assign it to ${key.label}.`;
     $("analogEditor").hidden = digital; $("digitalEditor").hidden = !digital;
     $("tuningControl").textContent = selectedControl;
     $("tuningLead").textContent = digital ? "A digital controller button follows the keyboard’s own press and release state." : `Below the start is zero. At full output, ${control.kind === "trigger" ? "your trigger reaches 255" : "this direction reaches maximum deflection"}.`;
@@ -137,9 +154,7 @@
     $("startMm").max = $("endMm").max = String(b.maxTravelMm);
     root.querySelectorAll("[data-curve]").forEach((button) => button.classList.toggle("active", button.dataset.curve === b.curve));
     $("curveDescription").textContent = b.curve === "linear" ? "A proportional response across your selected travel range." : "A gentle start and finish, with a more responsive middle.";
-    $("editorError").textContent = travelError; drawCurve();
-    const limit = keyTravel(selectedKey);
-    $("deviceTravel").textContent = limit ? limit.switchName ? `${limit.switchName} · using ${(limit.maxTravelUm / 1000).toFixed(2)} mm available switch travel.` : `Keyboard reports ${(limit.maxTravelUm / 1000).toFixed(2)} mm for ${key.label}.` : "Choose a switch in Performance or connect the keyboard to detect its travel.";
+    drawCurve();
   }
   function renderSticks() {
     $("stickSettings").innerHTML = config.sticks.map((s, i) => `<div class="stick-setting"><strong>${i ? "Right" : "Left"} stick</strong><label><input type="checkbox" data-stick-circle="${i}" ${s.circular ? "checked" : ""}>Circular gate</label><label class="setting-policy">Opposing directions<select data-stick-policy="${i}"><option value="difference" ${s.opposition === "difference" ? "selected" : ""}>Subtract travel levels</option><option value="neutral" ${s.opposition === "neutral" ? "selected" : ""}>Neutral when both pressed</option><option value="deeper" ${s.opposition === "deeper" ? "selected" : ""}>Higher output wins</option></select></label><label class="setting-deadzone">Radial dead zone<input type="range" data-stick-deadzone="${i}" min="0" max="0.94" step="0.01" value="${s.deadzone}" ${!s.circular ? "disabled" : ""}><output>${Math.round(s.deadzone * 100)}%</output></label></div>`).join("");
@@ -251,18 +266,19 @@
     } catch (error) { if (!disposed && connection === getTransport()) notify(automatic ? `Could not read the gamepad profile automatically. Use Read keyboard profile to retry. ${error.message}` : error.message, true); }
     finally { setBusy(false); if (!disposed) updateCompatibility(); }
   }
-  $("keyboard").addEventListener("click", (event) => { const key = event.target.closest("[data-key]"); if (!key) return; selectedKey = Number(key.dataset.key); const current = config.bindings.find((b) => b.key === selectedKey); if (current) selectedControl = current.control; renderKeyboard(); renderControls(); renderEditor(); });
+  $("keyboard").addEventListener("click", (event) => { const key = event.target.closest("[data-key]"); if (!key) return; selectedKey = Number(key.dataset.key); const current = config.bindings.find((b) => b.key === selectedKey); selectedControl = current?.control || null; renderKeyboard(); renderControls(); renderEditor(); });
   $("controlPicker").addEventListener("click", (event) => { const control = event.target.closest("[data-control]"); if (!control) return; selectedControl = control.dataset.control; change((next) => {
     next.bindings.forEach((b) => { if (b.key === selectedKey) b.key = null; });
     const b = next.bindings.find((b) => b.control === selectedControl), known = keyTravel(selectedKey);b.key = selectedKey;
     if (known) Object.assign(b, automaticTravel.has(b.control) ? M.defaultTravel(known.maxTravelUm / 1000) : { maxTravelMm: known.maxTravelUm / 1000, endMm: Math.min(b.endMm, known.maxTravelUm / 1000), startMm: Math.min(b.startMm, Math.max(0, Math.min(b.endMm, known.maxTravelUm / 1000) - 0.001)) });
   }); refreshTravelDefaults(); });
-  $("clearBinding").addEventListener("click", () => change((next) => { next.bindings.forEach((b) => { if (b.key === selectedKey) b.key = null; }); }));
+  $("clearBinding").addEventListener("click", () => { selectedControl = null; change((next) => { next.bindings.forEach((b) => { if (b.key === selectedKey) b.key = null; }); }); });
   for (const id of ["startMm", "endMm", "maxTravelMm"]) $(id).addEventListener("change", () => {
+    if (!binding()) return;
     const values = Object.fromEntries(["startMm", "endMm", "maxTravelMm"].map((field) => [field, Number($(field).value)]));
     if (change((next) => Object.assign(next.bindings.find((b) => b.control === selectedControl), values))) { automaticTravel.delete(selectedControl); if (id === "maxTravelMm") automaticMaximum.delete(selectedControl); persist(); }
   });
-  $("curveSelector").addEventListener("click", (event) => { const button = event.target.closest("[data-curve]"); if (button) change((next) => { next.bindings.find((b) => b.control === selectedControl).curve = button.dataset.curve; }); });
+  $("curveSelector").addEventListener("click", (event) => { const button = event.target.closest("[data-curve]"); if (button && binding()) change((next) => { next.bindings.find((b) => b.control === selectedControl).curve = button.dataset.curve; }); });
   $("stickSettings").addEventListener("change", (event) => { const el = event.target; if (el.dataset.stickCircle !== undefined) change((next) => { const s = next.sticks[Number(el.dataset.stickCircle)]; s.circular = el.checked; if (!s.circular) s.deadzone = 0; }, true); else if (el.dataset.stickPolicy !== undefined) change((next) => { next.sticks[Number(el.dataset.stickPolicy)].opposition = el.value; }, true); else if (el.dataset.stickDeadzone !== undefined) change((next) => { next.sticks[Number(el.dataset.stickDeadzone)].deadzone = Number(el.value); }, true); });
   $("stickSettings").addEventListener("input", (event) => { const el = event.target; if (el.dataset.stickDeadzone !== undefined) el.nextElementSibling.textContent = `${Math.round(Number(el.value) * 100)}%`; });
   $("profileName").addEventListener("change", () => change((next) => { next.name = $("profileName").value.trim(); }));
@@ -287,7 +303,7 @@
   $("export").addEventListener("click", () => { const blob = new Blob([JSON.stringify(M.validate(config), null, 2) + "\n"], { type: "application/json" }), url = URL.createObjectURL(blob), link = document.createElement("a"); link.href = url; link.download = `${config.name.replace(/[^a-z0-9_-]+/gi, "-").slice(0, 50) || "ae64-gamepad"}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); });
   $("import").addEventListener("click", () => $("importFile").click());
   $("importFile").addEventListener("change", async () => { const file = $("importFile").files[0]; try { if (!file) return; if (file.size > 65536) throw new Error("Choose a profile file smaller than 64 KB."); const next = M.validate(JSON.parse(await file.text())); stopLive(true); config = next; hasLocalDraft = true; automaticTravel.clear(); automaticMaximum.clear(); persist(); render(); await refreshTravelDefaults(); notify("Profile imported. Nothing was written to the keyboard."); } catch (error) { notify(error.message, true); } finally { $("importFile").value = ""; } });
-  $("restoreDefaults").addEventListener("click", async () => { stopLive(true); config = M.defaults(); hasLocalDraft = true; automaticTravel = new Set(M.CONTROLS.map((c) => c.id)); automaticMaximum = new Set(automaticTravel); useAutomaticTravel(); selectedKey = 15; selectedControl = "LT"; persist(); render(); await refreshTravelDefaults(); notify("Example profile restored using your switches' travel limits. Nothing was written to the keyboard."); });
+  $("restoreDefaults").addEventListener("click", async () => { stopLive(true); config = M.defaults(); hasLocalDraft = true; automaticTravel = new Set(M.CONTROLS.map((c) => c.id)); automaticMaximum = new Set(automaticTravel); useAutomaticTravel(); selectedKey = 15; selectedControl = null; persist(); render(); await refreshTravelDefaults(); notify("Example profile restored using your switches' travel limits. Nothing was written to the keyboard."); });
   const onDisconnect = (event) => {
     if (disposed || event.device !== transport?.device) return;
     stopLive(true); transport = null; capabilities = null; profileLoaded = false; deviceLimits = []; travelGeneration++; usbState = null; options.onCapabilities?.(null); updateCompatibility();

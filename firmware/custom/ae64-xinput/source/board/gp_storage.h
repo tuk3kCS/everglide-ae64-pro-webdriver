@@ -7,6 +7,8 @@
 #define GP_STORAGE_OFFSET 0x1c00u
 #define GP_STORAGE_HEADER 32u
 #define GP_STORAGE_BYTES (GP_STORAGE_HEADER+GP_WIRE_BYTES)
+#define GP_USB_STORAGE_OFFSET 0x1d00u
+#define GP_USB_STORAGE_BYTES 16u
 
 typedef void (*gp_storage_program_fn)(uintptr_t,uint32_t,const uint8_t *);
 uintptr_t gp_storage_address(uint8_t profile);
@@ -22,4 +24,10 @@ bool gp_storage_read(const uint8_t *image,uint8_t profile,
 bool gp_storage_append(uint8_t profile,const uint8_t wire[GP_WIRE_BYTES],
                        bool usb_enabled,uint32_t revision,
                        gp_storage_program_fn program,const uint8_t *mapped_image);
+/* Separate from GPR1 so older mapping records remain readable. The newest
+ * valid sequence across all four profiles is the keyboard-wide USB choice. */
+uintptr_t gp_usb_storage_address(uint8_t profile);
+bool gp_usb_storage_read(const uint8_t *image,uint8_t profile,bool *enabled,uint32_t *revision);
+bool gp_usb_storage_append(uint8_t profile,bool enabled,uint32_t revision,
+                           gp_storage_program_fn program,const uint8_t *mapped_image);
 #endif

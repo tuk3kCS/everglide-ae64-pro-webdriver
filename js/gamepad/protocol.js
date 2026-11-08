@@ -54,7 +54,7 @@
     const bytes = await request(transport, CMD.INFO);
     if (bytes.length !== 20 || view(bytes).getUint32(0, true) !== BOARD || bytes[5] !== 24 || bytes[6] !== VERSION || bytes[7] !== 0 || view(bytes).getUint16(14, true) !== CONFIG_BYTES) throw new UnsupportedFirmwareError("The keyboard did not identify the supported AE64 gamepad firmware.");
     const data = view(bytes);
-    return { verified: true, protocolVersion: VERSION, boardId: BOARD, transports: { hid: Boolean(bytes[4] & 1), xinput: Boolean(bytes[4] & 2) }, persistent: Boolean(bytes[4] & 4), usbDeviceSwitch: Boolean(bytes[4] & 8), revision: data.getUint32(8, true), maxTravelUm: data.getUint16(12, true), configBytes: CONFIG_BYTES, crc32: data.getUint32(16, true) };
+    return { verified: true, protocolVersion: VERSION, boardId: BOARD, transports: { hid: Boolean(bytes[4] & 1), xinput: Boolean(bytes[4] & 2) }, persistent: Boolean(bytes[4] & 4), usbDeviceSwitch: Boolean(bytes[4] & 8), usbDevicePersistent: Boolean(bytes[4] & 16), revision: data.getUint32(8, true), maxTravelUm: data.getUint16(12, true), configBytes: CONFIG_BYTES, crc32: data.getUint32(16, true) };
   }
   const locks = new WeakSet();
   function decodeUsbState(bytes) {

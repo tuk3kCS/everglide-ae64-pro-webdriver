@@ -2,6 +2,8 @@
 #define main base_board_tests
 #include "test_board.c"
 #undef main
+#include "gp_storage.h"
+#include "fn_storage.h"
 static void request(uint8_t command,bool enabled,uint32_t revision) {
     uint8_t *q=ram+0x8115c;memset(q,0,64);q[0]=0x10;q[1]=command;q[2]=1;q[3]=73;
     memcpy(q+4,"AGP1",4);
@@ -38,6 +40,54 @@ static void finish(bool enabled) {
     owned=NULL;event_callback(0,1);event_callback(0,7);
     CHECK(ram[0x80584]==3);
     request(0x26,false,0);CHECK(last_reply[8]==0 && last_reply[15]==enabled && last_reply[16]==enabled && last_reply[17]==0);
+}
+static void reboot(unsigned profile,bool enabled,uint32_t expected_revision) {
+    owned=NULL;ram[0x82ba8]=(uint8_t)profile;
+    memset(usb_registers,0,sizeof(usb_registers));usb_registers[0x140/4]=1;usb_registers[0x148/4]=0x157;
+    CHECK(board_usb_initialize(0,0xf300c000,stock_usb_event)==0);
+    event_callback(0,1);event_callback(0,7);
+    request(0x26,false,0);
+    CHECK(last_reply[8]==0&&last_reply[15]==enabled&&last_reply[16]==enabled&&last_reply[17]==0&&revision()==expected_revision);
+    CHECK(board_configuration(1)[4]==(enabled?4:3)&&board_device_descriptor(0)[12]==(enabled?13:14));
+    struct ae64_usb_setup setup={0xc0,0x20,0,4,255};uint8_t *data=NULL;uint32_t length=0;
+    CHECK(board_ep0_hook(0,&setup,&data,&length)&&length==(enabled?40u:16u));
+}
+static void persistence(void) {
+    memset(profile_flash,0xff,sizeof(profile_flash));reboot(0,true,0);
+    CHECK(gp_storage_append(0,example_profile,true,17,stock_flash_program,profile_flash[0]+GP_STORAGE_OFFSET));
+    /* Preserve nonzero Fn colors, all mapping bytes and the native prefix. */
+    struct fn_storage colors;fn_storage_clear(&colors,0);
+    memset(colors.data,0x56,FN_STORAGE_COLORS);colors.data[FN_STORAGE_COLORS]=7;colors.revision=19;
+    memset(profile_flash[0]+FN_STORAGE_OFFSET,0xff,FN_STORAGE_HEADER+FN_STORAGE_BYTES);
+    CHECK(fn_storage_append(&colors,stock_flash_program,profile_flash[0]+FN_STORAGE_OFFSET));
+    board_fn_load_hook();
+    unsigned saves=fn_saves;
+    request(0x27,true,0);CHECK(last_reply[8]==0&&fn_saves==saves);
+    request(0x27,false,0);CHECK(last_reply[8]==0&&fn_saves==saves+1);finish(false);
+    CHECK(!memcmp(profile_flash[0]+FN_STORAGE_OFFSET+FN_STORAGE_HEADER,colors.data,FN_STORAGE_BYTES));
+    CHECK(!memcmp(profile_flash[0]+GP_STORAGE_OFFSET+GP_STORAGE_HEADER,example_profile,GP_WIRE_BYTES));
+    for(unsigned i=0;i<0x16ac;i++)CHECK(profile_flash[0][i]==0x69);
+    reboot(0,false,1);
+    /* An empty/different onboard profile must keep the global choice. */
+    reboot(3,false,1);board_fn_save_hook();reboot(1,false,1);
+    request(0x27,true,1);CHECK(last_reply[8]==0);finish(true);
+    reboot(0,true,2);board_fn_save_hook();reboot(3,true,2);
+    request(0x27,false,2);CHECK(last_reply[8]==0);finish(false);
+    reboot(1,false,3);board_fn_save_hook();reboot(0,false,3);
+    /* Invalid profile and flash failure cannot acknowledge a saved change. */
+    ram[0x82ba8]=4;request(0x27,true,3);CHECK(last_reply[8]==GP_VENDOR_CONFLICT);
+    ram[0x82ba8]=0;fail_flash=true;
+    request(0x27,true,3);CHECK(last_reply[8]==GP_VENDOR_STORAGE);fail_flash=false;
+    request(0x26,false,0);CHECK(last_reply[15]==0&&last_reply[17]==0&&revision()==3);
+    reboot(2,false,3);
+    /* Sequence wrap and corrupted records are ignored correctly at boot. */
+    memset(profile_flash[2],0xff,0x2000);
+    CHECK(gp_usb_storage_append(2,true,UINT32_MAX,stock_flash_program,profile_flash[2]+GP_USB_STORAGE_OFFSET));
+    memset(profile_flash[3],0xff,0x2000);
+    CHECK(gp_usb_storage_append(3,false,0,stock_flash_program,profile_flash[3]+GP_USB_STORAGE_OFFSET));
+    memset(profile_flash[0],0xff,0x2000);memset(profile_flash[1],0xff,0x2000);
+    reboot(1,false,0);
+    profile_flash[3][GP_USB_STORAGE_OFFSET+12]^=1;reboot(1,true,UINT32_MAX);
 }
 int main(void) {
     fixture();descriptors();
@@ -97,6 +147,7 @@ int main(void) {
     CHECK(memcmp(descriptor,board_device_descriptor(0),18)==0&&ram[0x80584]==1);
     tick(750);CHECK((usb_registers[0x140/4]&1)&&ram[0x80584]==3);
     request(0x26,false,0);CHECK(last_reply[15]==1&&last_reply[16]==1&&last_reply[17]==0);
-    printf("PASS: %u synthetic USB persona/ACK/DMA/descriptor/rearm/timeout checks; no hardware accessed.\n",checks);
+    persistence();
+    printf("PASS: %u synthetic USB persona/persistent preference/reboot/profile/ACK/DMA/storage-failure checks; no hardware accessed.\n",checks);
     return 0;
 }

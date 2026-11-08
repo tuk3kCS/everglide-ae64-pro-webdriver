@@ -20,6 +20,7 @@ async function main() {
   const f = fixture({ connectTarget: transport }); const { nodes } = f; await f.component.ready;
   assert.equal(nodes.get("matchTravel").disabled, true);
   await nodes.get("connect").listeners.click();
+  f.selectKey(15);
   assert.equal(nodes.get("matchTravel").disabled, false);
   assert.equal(nodes.get("endMm").value, "3.31");
   assert.equal(nodes.get("maxTravelMm").value, "3.31");

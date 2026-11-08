@@ -63,7 +63,7 @@ struct board_state {
     uint8_t fn_origin[64];
     bool fn_tracking;
     bool profile_valid;
-    bool usb_enabled,usb_target;
+    bool usb_enabled,usb_target,usb_preference_enabled;
     bool initialized,suspended,out_armed;
     void (*original_event)(uint8_t,uint8_t);
 };
@@ -78,6 +78,7 @@ static bool install(void *,const struct gp_physical_config *,uint8_t,const uint8
 static uint64_t keyboard_suppression(void);
 static void fn_transition(void);
 static void fn_reconcile(void);
+static bool save_profile(const uint8_t *,uint32_t,bool,uint32_t);
 #ifndef AE64_HOST_TEST
 _Static_assert(sizeof(struct stock_interface)==28,"Stock RV32 interface ABI");
 _Static_assert(sizeof(struct stock_endpoint)==8,"Stock RV32 endpoint ABI");
@@ -162,9 +163,14 @@ static bool usb_switch_request(const uint8_t *q,uint8_t *r,uint32_t now) {
             if(state.vendor.staging_active && (uint32_t)(now-state.vendor.last_activity_ms)>GP_TRANSACTION_TIMEOUT_MS)state.vendor.staging_active=false;
             if(fn_protocol.active && (uint32_t)(now-fn_protocol.last_activity)>GP_TRANSACTION_TIMEOUT_MS)fn_protocol.active=false;
             if(state.vendor.staging_active||fn_protocol.active)status=GP_VENDOR_CONFLICT;
-            else if(state.usb_enabled!=(bool)q[14]) {
-                state.usb_target=(bool)q[14];state.usb_revision++;state.usb_requested_at=now;state.usb_phase=1;
-                reset_physical();
+            else if(state.usb_enabled!=(bool)q[14] || state.usb_preference_enabled!=(bool)q[14]) {
+                if(!state.initialized||!state.profile_valid||state.profile!=load8(0x82ba8))status=GP_VENDOR_CONFLICT;
+                else if(!save_profile(state.vendor.active,state.vendor.revision,(bool)q[14],state.usb_revision+1u))status=GP_VENDOR_STORAGE;
+                else {
+                    state.usb_preference_enabled=state.usb_target=(bool)q[14];state.usb_revision++;
+                    state.usb_requested_at=stock_tick();state.usb_phase=1;
+                    reset_physical();
+                }
             }
         }
     }
@@ -198,8 +204,18 @@ void board_fn_save_hook(void) {
     if(fn_colors.loaded&&fn_colors.profile==load8(0x82ba8))
         fn_save_ok=fn_storage_append(&fn_colors,stock_flash_program,fn_image(fn_colors.profile));
     if(state.initialized && state.profile_valid && state.profile==load8(0x82ba8))
-        fn_save_ok=fn_save_ok&&gp_storage_append(state.profile,state.vendor.active,true,state.vendor.revision,
-            stock_flash_program,RAM(gp_storage_address(state.profile)));
+        fn_save_ok=fn_save_ok&&gp_storage_append(state.profile,state.vendor.active,state.usb_preference_enabled,state.vendor.revision,
+            stock_flash_program,RAM(gp_storage_address(state.profile)))&&
+            gp_usb_storage_append(state.profile,state.usb_preference_enabled,state.usb_revision,
+                stock_flash_program,RAM(gp_usb_storage_address(state.profile)));
+}
+static bool save_profile(const uint8_t *wire,uint32_t revision,bool enabled,uint32_t usb_revision) {
+    fn_ensure_current();
+    if(!fn_colors.loaded||fn_colors.profile!=state.profile)return false;
+    stock_fn_save_original();
+    return fn_storage_append(&fn_colors,stock_flash_program,fn_image(state.profile))&&
+        gp_storage_append(state.profile,wire,enabled,revision,stock_flash_program,RAM(gp_storage_address(state.profile)))&&
+        gp_usb_storage_append(state.profile,enabled,usb_revision,stock_flash_program,RAM(gp_usb_storage_address(state.profile)));
 }
 static void gp_load_current(void) {
     const uint8_t profile=load8(0x82ba8);
@@ -216,7 +232,7 @@ static void gp_load_current(void) {
     }
     uint32_t saved=irq_lock();
     state.mapping=mapping;mapping_changed();state.profile=profile;state.profile_valid=profile<4;
-    gp_vendor_init(&state.vendor,wire,revision,GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_PERSISTENT,ceiling,install,0);
+    gp_vendor_init(&state.vendor,wire,revision,GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_USB_PERSISTENT|GP_CAP_PERSISTENT,ceiling,install,0);
     reset_physical();
     irq_unlock(saved);
 }
@@ -408,11 +424,7 @@ static bool install(void *user,const struct gp_physical_config *mapping,uint8_t 
     if(!state.profile_valid||state.profile!=load8(0x82ba8)||state.usb_phase)return false;
     /* Save the native keymap once, preserving both independent trailers.
      * Install only after mapped flash readback confirms the complete record. */
-    fn_ensure_current();
-    if(!fn_colors.loaded||fn_colors.profile!=state.profile)return false;
-    stock_fn_save_original();
-    if(!fn_storage_append(&fn_colors,stock_flash_program,fn_image(state.profile)) ||
-       !gp_storage_append(state.profile,wire,true,mapping->revision,stock_flash_program,RAM(gp_storage_address(state.profile))))return false;
+    if(!save_profile(wire,mapping->revision,state.usb_preference_enabled,state.usb_revision))return false;
     uint32_t saved=irq_lock();state.mapping=*mapping;mapping_changed();
     reset_physical();irq_unlock(saved);
     return true;
@@ -470,7 +482,16 @@ const uint8_t *board_other_speed(uint8_t speed) {
 int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8_t,uint8_t)) {
     clear(&state,sizeof(state));state.original_event=original_event;state.usb_base=base;
     state.key_context=GP_NONE;
-    state.usb_target=true;usb_persona(true);
+    state.usb_preference_enabled=true;
+    bool preference_found=false;
+    for(uint8_t profile=0;profile<GP_STORAGE_PROFILES;profile++) {
+        bool enabled;uint32_t revision;
+        if(gp_usb_storage_read(RAM(gp_usb_storage_address(profile)),profile,&enabled,&revision)&&
+           (!preference_found||(revision!=state.usb_revision&&(uint32_t)(revision-state.usb_revision)<UINT32_C(0x80000000)))) {
+            state.usb_preference_enabled=enabled;state.usb_revision=revision;preference_found=true;
+        }
+    }
+    state.usb_target=state.usb_preference_enabled;usb_persona(state.usb_target);
     /* 10000 is a temporary protocol-validation ceiling, not sensor calibration.
      * Scan frames use each native calibrated maximum; missing calibration is neutral.
      */
@@ -481,7 +502,6 @@ int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8
     const struct ae64_xusb_io io={usb_start,0,0,0};
     ae64_xusb_init(&state.xusb,&usb_config,&io);
     ae64_xusb_ms_string(&usb_config,state.os_string);
-    ae64_xusb_ms_compatible_id(&usb_config,state.compatible);
     state.endpoint_in=(struct stock_endpoint){XUSB_IN,in_complete};
     state.endpoint_out=(struct stock_endpoint){XUSB_OUT,out_complete};
     stock_add_interface(bus,&state.interface);

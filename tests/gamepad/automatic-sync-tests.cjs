@@ -10,6 +10,7 @@ async function main() {
   const transport = { connected: true, getPerformance: async () => { reads++;return { axisRangeMax: 3310 }; } };
   const clean = fixture({ transport, savedProfile: { ...previous, keyboardFingerprint: fingerprint(previous) }, getKeyTravel: (key) => ({ key: key.id, maxTravelUm: 4000 }), protocol });
   await clean.component.ready;
+  clean.selectKey(15);
   assert.equal(clean.nodes.get("profileName").value, onboard.name, "A previously confirmed local copy cannot hide a different active keyboard profile");
   assert.equal(reads, 64, "Read every key even when selected-switch values are cached");
   assert.equal(clean.nodes.get("maxTravelMm").value, "3.31");assert.equal(clean.nodes.get("endMm").value, "3.31");

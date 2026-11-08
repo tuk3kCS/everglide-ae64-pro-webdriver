@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The bundled experimental custom build is **XInput + Fn RGB v0.8**. It removes repeated scan/release work, caches controller calculations, shortens interrupt masking and corrects physical matrix/Fn detection. Saved mappings/Fn colors and the USB switch remain compatible. Offline verification covers the image and its protocol. Physical LED response still needs testing. See the [v0.8 report](../docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md).
+The newest bundled experimental build is **XInput + Fn RGB v0.8.1**. It saves Xbox device visibility across power loss and restores the choice before USB enumeration. It retains v0.8's scan optimizations, saved mappings and Fn colors. The v0.8 image remains available. See the [v0.8.1 report](../docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md). Physical cold-boot validation is pending.
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 

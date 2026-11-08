@@ -10,6 +10,7 @@ assert.throws(() => M.defaultTravel(0.005));
 const provider = (key) => ({ key: key.id, maxTravelUm: key.id === 17 ? 3600 : Number(ur.axis_range_max), switchName: key.id === 17 ? "Other switch" : "UR Ice Magnetic" });
 async function main() {
   const f = fixture({ savedProfile: M.defaults(), getKeyTravel: provider });await f.component.ready;
+  f.selectKey(15);
   assert.equal(f.nodes.get("maxTravelMm").value, "3.31");assert.equal(f.nodes.get("endMm").value, "3.31");assert.match(f.nodes.get("deviceTravel").textContent, /UR Ice Magnetic/);
   const rt = f.saved().bindings.find((b) => b.control === "RT");assert.equal(rt.maxTravelMm, 3.6);assert.equal(rt.endMm, 3.5);
   // Newly assigned controls use the physical key's switch, not an unassigned 4mm default.
@@ -21,15 +22,16 @@ async function main() {
   const reload = fixture({ savedProfile: manual, getKeyTravel: (key) => ({ key: key.id, maxTravelUm: 3600, switchName: "New switch" }) });await reload.component.ready;
   const custom = reload.saved().bindings.find((b) => b.control === "RX+");assert.deepEqual([custom.startMm, custom.endMm, custom.maxTravelMm], [1, 3, 3.6]);
   assert.equal(reload.saved().bindings.find((b) => b.control === "RT").maxTravelMm, 3.6);
-  await reload.nodes.get("restoreDefaults").listeners.click();assert.equal(reload.nodes.get("maxTravelMm").value, "3.60");reload.component.dispose();
-  const legacy = fixture({ savedProfile: M.defaults(), getKeyTravel: provider });await legacy.component.ready;assert.equal(legacy.nodes.get("maxTravelMm").value, "3.31");legacy.component.dispose();
+  await reload.nodes.get("restoreDefaults").listeners.click();reload.selectKey(15);assert.equal(reload.nodes.get("maxTravelMm").value, "3.60");reload.component.dispose();
+  const legacy = fixture({ savedProfile: M.defaults(), getKeyTravel: provider });await legacy.component.ready;legacy.selectKey(15);assert.equal(legacy.nodes.get("maxTravelMm").value, "3.31");legacy.component.dispose();
   const oldWindow = M.defaults();Object.assign(oldWindow.bindings[0], { startMm: 1, endMm: 3 });
   const upgraded = fixture({ savedProfile: oldWindow, getKeyTravel: provider });await upgraded.component.ready;assert.deepEqual([upgraded.saved().bindings[0].startMm, upgraded.saved().bindings[0].endMm, upgraded.saved().bindings[0].maxTravelMm], [1, 3, 3.31]);
+  upgraded.selectKey(15);
   upgraded.nodes.get("maxTravelMm").value = "3.20";upgraded.nodes.get("maxTravelMm").listeners.change();const explicit = upgraded.saved();upgraded.component.dispose();
   const overridden = fixture({ savedProfile: explicit, getKeyTravel: provider });await overridden.component.ready;assert.equal(overridden.saved().bindings[0].maxTravelMm, 3.2);overridden.component.dispose();
   const caps = { verified: true, protocolVersion: 1, boardId: 0x0030000a, transports: { xinput: true } };
   const readDefault = fixture({ transport: { connected: true }, getKeyTravel: provider, protocol: { probe: async () => caps, read: async () => ({ ...caps, config: M.defaults() }) } });
-  await readDefault.component.ready;await readDefault.nodes.get("connect").listeners.click();assert.equal(readDefault.nodes.get("maxTravelMm").value, "3.31");assert.match(readDefault.notices.at(-1).text, /Apply to activate/);readDefault.component.dispose();
+  await readDefault.component.ready;await readDefault.nodes.get("connect").listeners.click();readDefault.selectKey(15);assert.equal(readDefault.nodes.get("maxTravelMm").value, "3.31");assert.match(readDefault.notices.at(-1).text, /Apply to activate/);readDefault.component.dispose();
   // Integration resolves each visual key to its selector record and caps against actual firmware.
   const physical = { id: 99, uiRow: 1, col: 1 }, context = { keys: [physical], state: { profile: { performance: { 99: { axisV2Id: 12432, axisRangeMax: 4000 } } }, hardware: { performance: new Map([[99, { axisRangeMax: 3200 }]]) }, switchCatalog: [{ axisV2Id: 12432, axisRangeMax: 3310, name: "UR Ice Magnetic" }] } };
   vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-page.js"), "utf8"), context);context.key = M.KEYS[15];

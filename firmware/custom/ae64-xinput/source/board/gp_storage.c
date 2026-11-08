@@ -6,6 +6,8 @@ _Static_assert(GP_STORAGE_OFFSET>=0x1700u+16u+1136u,"Fn trailer overlap");
 _Static_assert(GP_STORAGE_OFFSET>=8u+0x16a4u,"Native keymap overlap");
 _Static_assert(GP_STORAGE_OFFSET+GP_STORAGE_BYTES<=0x2000u,"Native allocation boundary");
 _Static_assert(!(GP_STORAGE_HEADER%4u)&&!(GP_WIRE_BYTES%4u),"Native program word alignment");
+_Static_assert(GP_USB_STORAGE_OFFSET>=GP_STORAGE_OFFSET+GP_STORAGE_BYTES,"USB preference overlap");
+_Static_assert(GP_USB_STORAGE_OFFSET+GP_USB_STORAGE_BYTES<=0x2000u,"USB preference allocation boundary");
 
 static uint16_t u16(const uint8_t *p) { return (uint16_t)(p[0]|(uint16_t)p[1]<<8); }
 static uint32_t u32(const uint8_t *p) { return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24; }
@@ -54,4 +56,22 @@ bool gp_storage_append(uint8_t profile,const uint8_t wire[GP_WIRE_BYTES],bool us
     if(!same(mapped+GP_STORAGE_HEADER,payload,GP_WIRE_BYTES))return false;
     program(address,GP_STORAGE_HEADER,header);
     return same(mapped,header,GP_STORAGE_HEADER)&&valid(mapped,profile);
+}
+uintptr_t gp_usb_storage_address(uint8_t profile) {
+    return profile<GP_STORAGE_PROFILES?UINT32_C(0x800b2000)+(uintptr_t)profile*0x4000u+GP_USB_STORAGE_OFFSET:0;
+}
+bool gp_usb_storage_read(const uint8_t *image,uint8_t profile,bool *enabled,uint32_t *revision) {
+    if(!image||!enabled||!revision||profile>=GP_STORAGE_PROFILES||
+       !same(image,(const uint8_t *)"GPU1",4)||image[4]!=1||image[5]!=profile||
+       image[6]>1||image[7]||u32(image+12)!=gp_crc32(image,12))return false;
+    *enabled=image[6]!=0;*revision=u32(image+8);return true;
+}
+bool gp_usb_storage_append(uint8_t profile,bool enabled,uint32_t revision,
+                           gp_storage_program_fn program,const uint8_t *mapped) {
+    uintptr_t address=gp_usb_storage_address(profile);
+    if(!address||!program||!mapped)return false;
+    _Alignas(4) uint8_t record[GP_USB_STORAGE_BYTES]={'G','P','U','1',1,0,0,0};
+    record[5]=profile;record[6]=enabled?1u:0u;p32(record+8,revision);p32(record+12,gp_crc32(record,12));
+    program(address,GP_USB_STORAGE_BYTES,record);
+    return same(mapped,record,GP_USB_STORAGE_BYTES);
 }

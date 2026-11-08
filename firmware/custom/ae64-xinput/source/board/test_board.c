@@ -189,7 +189,7 @@ static void digital(void) {
 static void protocol(void) {
     uint8_t *req=ram+0x80b00+0x65c;memset(req,0,64);req[0]=0x10;req[1]=0x20;req[2]=1;req[3]=42;memcpy(req+4,"AGP1",4);
     board_dispatch_hook();CHECK(last_reply[0]==0x10 && last_reply[1]==0x20 && last_reply[3]==42 && last_reply[8]==0);
-    CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_PERSISTENT));
+    CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_USB_PERSISTENT|GP_CAP_PERSISTENT));
     unsigned old=dispatch_count;req[0]=1;board_dispatch_hook();CHECK(dispatch_count==old+1);
 }
 int main(void) {

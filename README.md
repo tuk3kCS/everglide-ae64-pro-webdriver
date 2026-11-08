@@ -22,7 +22,7 @@ The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firm
 
 ### Stock and custom firmware
 
-| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Bundled custom firmware (XInput + Fn RGB v0.8) |
+| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Bundled custom firmware (XInput + Fn RGB v0.8.1) |
 | --- | --- | --- |
 | Keymaps, Hall performance and live travel, advanced actions, macros, standard RGB | Native AE64 configuration interface | Same native configuration interface |
 | Gamepad workspace | Read switch travel and edit or export local drafts | Read and apply onboard mappings when AGP1 is verified |
@@ -30,7 +30,7 @@ The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firm
 | Custom Fn1–Fn3 colors | Unavailable | Available when FNR1 is verified |
 | Firmware update and recovery | Board-matched application and recovery workflow | Same board-matched workflow |
 
-The custom build also reports application version `0.1.0.0`. The driver checks the extension replies before enabling their controls. The six images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
+The custom build also reports application version `0.1.0.0`. The driver checks the extension replies before enabling their controls. The bundled images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
 
 ### Editing workflow
 
@@ -84,7 +84,7 @@ See the [Fn RGB guide](docs/firmware-research/fn-rgb/README.md) for firmware evi
 
 ### Hardware Solution
 
-Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboardâ€™s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboardâ€™s gamepad profile**. All 64 physical keys’ travel limits are read automatically, including when cached switch settings already exist. The read button remains available for refresh or retry. A previously confirmed local copy follows the active keyboard profile; unsaved edits stay a separate local draft. The Assign workspace uses the full page width, with tuning and stick behavior below it. Automatic loading does not upload a configuration; a failed read retains the local draft.
+Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboardâ€™s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboardâ€™s gamepad profile**. All 64 physical keys’ travel limits are read automatically, including when cached switch settings already exist. The read button remains available for refresh or retry. A previously confirmed local copy follows the active keyboard profile; unsaved edits stay a separate local draft. The Assign workspace uses the full page width, with tuning and stick behavior below it. No controller action is selected on entry. Select an assigned key or choose an action to open tuning. Automatic loading does not upload a configuration; a failed read retains the local draft.
 
 Assign physical keys to LT/RT triggers, all four directions of both sticks, A/B/X/Y, bumpers, Back/Start, stick presses, and D-pad buttons. Analog controls support adjustable travel windows, linear/smooth response, circular stick gates, radial dead zones, and opposing-direction policies. Digital buttons follow the keyâ€™s normal actuation and Rapid Trigger state.
 
@@ -100,7 +100,7 @@ Controller icons appear in the assignment picker, mapped keys, preview, and Over
 
 Use **Apply to keyboard** after changing modes or mappings. Gamepad off does not remove the controller device from Windows.
 
-With **v0.3**, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. This choice lasts until power loss; boot defaults remain enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [v0.3 firmware report](docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
+With **v0.3**, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. In v0.8.1, this choice is saved across power loss and applies across onboard profiles. After upgrading from v0.8, turn it off once to save the disabled preference. Earlier builds keep the choice until power loss. A keyboard without a saved preference starts enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [v0.3 firmware report](docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
 
 #### Switch-aware travel defaults
 
@@ -120,7 +120,7 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.8** image. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.8/v0.8.1** images. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.
