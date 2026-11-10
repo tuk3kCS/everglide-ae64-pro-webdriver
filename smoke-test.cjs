@@ -187,7 +187,8 @@ class FakeDevice {
 
 async function main() {
   for (const file of ["protocol.js", ...APP_FILES]) new Function(read(file));
-  const html = read("index.html");
+  const reloaded = read("index.html");
+  const html = read("legacy/index.html");
   const app = APP_FILES.map(read).join("\n");
   const xml = read("languages.xml");
   const gitignore = read(".gitignore");
@@ -233,23 +234,28 @@ async function main() {
     if (!pagesWorkflow.includes(file)) throw new Error(`GitHub Pages artifact omits ${file}.`);
   if (!pagesWorkflow.includes("cp index.html styles.css protocol.js app.js languages.xml about.html robots.txt sitemap.xml _site/") || !pagesWorkflow.includes("cp js/app/*.js _site/js/app/") || !pagesWorkflow.includes("cp assets/images/axis.png _site/assets/images/") || !pagesWorkflow.includes("cp -R assets/images/he_switch_images _site/assets/images/") || !pagesWorkflow.includes("node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json") || !pagesWorkflow.includes("cp assets/hall-effect-switches/supported-switches.json assets/hall-effect-switches/catalog-overrides.json _site/assets/hall-effect-switches/") || !pagesWorkflow.includes("cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/") || !pagesWorkflow.includes("path: _site"))
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
+  if (!pagesWorkflow.includes("cp -R v2 _site/v2") || !pagesWorkflow.includes("cp -R legacy _site/legacy"))
+    throw new Error("GitHub Pages must include the Reloaded assets, V2 alias and Legacy entry.");
   for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 
-  if (!html.includes('id="heroConnect"') || !html.includes('id="applyButton"')) throw new Error("Required connect/apply controls are missing.");
+  if (!reloaded.includes('data-edition="reloaded"') || !reloaded.includes('id="legacyModeLink" href="legacy/"') || !html.includes('<base href="../">'))
+    throw new Error("Reloaded and Legacy must resolve from the root and legacy routes.");
   const publicUrl = "https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/";
   for (const marker of ['name="robots" content="index, follow', `rel="canonical" href="${publicUrl}"`, 'type="application/ld+json"', '"@type": "WebApplication"'])
-    if (!html.includes(marker)) throw new Error(`Search metadata is missing: ${marker}.`);
+    if (!reloaded.includes(marker)) throw new Error(`Search metadata is missing: ${marker}.`);
   const robots = read("robots.txt"), sitemap = read("sitemap.xml");
   if (!robots.includes("User-agent: *") || !robots.includes("Allow: /") || !robots.includes(`${publicUrl}sitemap.xml`)) throw new Error("robots.txt must allow crawling and advertise the sitemap.");
   if (!sitemap.includes(`<loc>${publicUrl}</loc>`) || !sitemap.includes("<urlset")) throw new Error("sitemap.xml must include the canonical GitHub Pages URL.");
-  let previousScript = -1;
-  for (const file of ["protocol.js", ...APP_FILES]) {
-    const script = `<script src="${file}"></script>`;
-    const position = html.indexOf(script);
-    if (position < 0) throw new Error(`index.html does not load ${file}.`);
-    if (position <= previousScript) throw new Error(`Application script order is invalid at ${file}.`);
-    previousScript = position;
+  for (const [entry, markup] of [["index.html", reloaded], ["legacy/index.html", html]]) {
+    if (!markup.includes('id="heroConnect"') || !markup.includes('id="applyButton"'))
+      throw new Error(`Required connect/apply controls are missing from ${entry}.`);
+    let previousScript = -1;
+    for (const file of ["protocol.js", ...APP_FILES]) {
+      const position = markup.indexOf(`<script src="${file}"></script>`);
+      if (position <= previousScript) throw new Error(`Application script order in ${entry} is invalid at ${file}.`);
+      previousScript = position;
+    }
   }
   for (const file of APP_FILES) {
     const lines = read(file).split(/\r?\n/).length;

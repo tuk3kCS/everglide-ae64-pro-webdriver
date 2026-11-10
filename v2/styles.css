@@ -220,15 +220,51 @@ button, input, select, textarea { font-family: inherit; }
 .gamepad-studio .button.primary:hover:not(:disabled) { background: var(--mint-strong); }
 
 [data-view="profiles"] .settings-usb,
+[data-view="profiles"] .settings-hero,
 [data-view="profiles"] .settings-appearance,
 [data-view="profiles"] .settings-recovery,
 [data-view="settings"] .settings-profile { display: none; }
-[data-view="profiles"] .settings-profile { grid-column: 1 / -1; }
-[data-view="profiles"] .profile-slot-row { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
-[data-view="profiles"] .profile-slot-row button { width: auto; min-height: 48px; }
+[data-view="profiles"] .settings-profile,
+[data-view="profiles"] .settings-files { grid-column: 1 / -1; }
+[data-view="profiles"] .profile-slot-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 12px;
+  margin-bottom: 18px;
+}
+.reloaded-profile-card {
+  display: flex; align-items: center; min-width: 0; gap: 8px; padding: 7px 10px 7px 7px;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: grab;
+}
+.reloaded-profile-card:hover { background: var(--control-bg); }
+.reloaded-profile-card.active, .reloaded-profile-card.drop-target { border-color: var(--mint); }
+.reloaded-profile-card.drop-target { background: var(--active-surface); box-shadow: 0 0 0 1px var(--mint); }
+.reloaded-profile-card.dragging { opacity: .5; cursor: grabbing; }
+.profile-slot-row .reloaded-profile-load {
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; width: auto; height: auto;
+  min-height: 48px; padding: 4px; border-color: transparent; background: transparent;
+  font: inherit; color: var(--text); text-align: left;
+}
+.reloaded-profile-icon {
+  display: grid; place-items: center; flex: 0 0 36px; height: 36px;
+  border: 2px solid var(--line); border-radius: 50%; background: var(--control-bg); font-size: 18px;
+}
+.reloaded-profile-card.active .reloaded-profile-icon { border-color: var(--mint); color: var(--mint); }
+.reloaded-profile-label { display: grid; min-width: 0; gap: 3px; }
+.reloaded-profile-label b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reloaded-profile-label small, .reloaded-profile-grip { color: var(--muted); }
+.reloaded-profile-move { display: flex; gap: 4px; }
+.reloaded-profile-move button { width: 27px; height: 30px; }
+.reloaded-profile-move button:disabled { opacity: .32; cursor: default; }
+.reloaded-profile-grip { font-size: 19px; }
+.reloaded-profile-card button:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 
-#welcome { max-width: none; min-height: 100svh; padding: clamp(2.5rem, 8vh, 6rem) 1.5rem 2rem; background: var(--rail); }
+.work-area:has([data-view="firmware"]) .work-header { display: none; }
+.reloaded-firmware-connect { margin-bottom: 16px; }
+.reloaded-firmware-connect .firmware-device { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.reloaded-firmware-connect .firmware-device p { flex: 1 1 17rem; margin: 0; }
+
+#welcome { position: relative; max-width: none; min-height: 100svh; padding: clamp(2.5rem, 8vh, 6rem) 1.5rem 2rem; background: var(--rail); }
 .welcome-content { width: min(100%, 73rem); margin: 0 auto; text-align: center; }
+.welcome-legacy { position: absolute; inset: 12px 14px auto auto; text-decoration: none; }
 .welcome-brand { display: table; margin: 0 auto 22px; padding-inline: 6px; border: 2px solid currentColor; font-size: 22px; font-weight: 1000; }
 .welcome-content h1 { margin: 0; font-size: clamp(2.25rem, 5vw, 3.1rem); }
 .welcome-content > p { max-width: 55rem; margin: 16px auto; color: var(--muted); font-size: 1.18rem; }
@@ -245,7 +281,7 @@ button, input, select, textarea { font-family: inherit; }
   color: var(--welcome-key); border-color: var(--welcome-key); box-shadow: inset 0 -4px #0009, 0 0 7px var(--welcome-key);
 }
 #welcome .hero-keyboard .key b { color: inherit; font-size: .9em; }
-.welcome-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 16px; }
+.welcome-links { display: grid; width: min(100%, 25rem); margin-inline: auto; }
 .welcome-links .panel { display: grid; gap: 4px; text-align: left; color: var(--text); text-decoration: none; cursor: pointer; }
 .welcome-links .panel:hover { border-color: var(--control-hover); }
 .welcome-links small { color: var(--muted); }

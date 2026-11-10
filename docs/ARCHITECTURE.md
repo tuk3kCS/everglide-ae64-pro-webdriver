@@ -6,7 +6,7 @@ The EPOMAKER HE30 driver was used as the structural reference: keep a small boot
 
 ## Runtime order
 
-[index.html](../index.html) defines the load order. The driver starts with `protocol.js` and the gamepad, flasher and Fn RGB protocol modules. The application scripts then load shared state, translations and theme, feature editors, integration modules, page rendering and listeners, device and profile operations, and finally the permanent shell bindings in `app.js`.
+[index.html](../index.html) serves Reloaded and [legacy/index.html](../legacy/index.html) serves the classic driver. Both start with `protocol.js` and the gamepad, flasher and Fn RGB protocol modules. The application scripts then load shared state, translations and theme, feature editors, integration modules, page rendering and listeners, device and profile operations, and finally the permanent shell bindings in `app.js`.
 
 The scripts share top-level declarations. Keep dependency order when adding or moving a script.
 
@@ -26,7 +26,7 @@ Page controls update the staged `state.profile` and mark the relevant dirty grou
 - Put staged-change review and profile persistence in `profiles.js`.
 - Keep `app.js` limited to permanent document listeners and startup.
 - Keep each application file below 1,000 lines; split by feature when it approaches that limit.
-- Add every runtime file to `index.html`, the Pages packaging step, and `smoke-test.cjs` in the same change.
+- Update each affected HTML entry, the Pages packaging step, and `smoke-test.cjs` when adding runtime files.
 
 ## Verification
 

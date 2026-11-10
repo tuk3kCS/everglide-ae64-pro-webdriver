@@ -26,6 +26,7 @@
   let remapGroup = "keyboard";
   const paint = render;
   const paintStatus = renderStatus;
+  const paintToolbar = renderToolbar;
   const selectClassicMappingKey = selectMappingKey;
 
   navigation.addEventListener("click", (event) => {
@@ -42,6 +43,14 @@
     paintStatus();
     document.querySelector("#connectButton").textContent = connected()
       ? "Reconnect keyboard" : "Connect keyboard";
+  };
+
+  renderToolbar = () => {
+    paintToolbar();
+    const select = document.querySelector("#quickProfileSelect");
+    const options = new Map(Array.from(select.options, (option) => [Number(option.value), option]));
+    select.append(...reloadedProfileSlots().map((slot) => options.get(slot)));
+    select.value = state.profile.profileIndex;
   };
 
   selectMappingKey = (event) => {
@@ -208,11 +217,7 @@
     if (state.page === "keymap") paintRemap();
     if (state.page === "lighting") paintReloadedLighting(content);
     if (state.page === "gamepad") paintReloadedGamepad(content);
-    if (view === "profiles") {
-      content.querySelectorAll("[data-profile-slot]").forEach((button) => {
-        const index = Number(button.dataset.profileSlot);
-        button.textContent = state.hardware.configNames[index] || `Profile ${index + 1}`;
-      });
-    }
+    if (state.page === "firmware") paintReloadedFirmware(content);
+    if (view === "profiles") paintReloadedProfiles(content);
   };
 })();

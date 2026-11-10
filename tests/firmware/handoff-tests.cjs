@@ -67,10 +67,27 @@ async function main(){
   for(const flag of ["permissionDenied","cancelPicker"]){let invoked=false;const f=await fixture({permission:true,[flag]:true,onPoll:async({c})=>{if(!invoked){invoked=true;await vm.runInContext("authorizeFirmwareHandoff()",c)}}});try{await f.run("startFirmwareUpdate()");assert.equal(f.run("firmwareView.phase"),"error");assert.equal(f.world.writes,0);assert.equal(f.run("firmwareView.prepared"),f.prepared);assert.equal(f.state.firmwareBusy,false);}finally{await f.close()}}
   // Manual reconnect after a failed transfer retains its image but requires a
   // fresh explicit Start; no partial image is silently resumed.
-  const f=await fixture();try{
-    f.c.connectKeyboard=async()=>{f.state.bootloaderConnected=true;f.run("firmwareView.prepared=null;firmwareView.selectedId='' ");return true};
-    await f.run("connectFirmwareDevice()");assert.equal(f.run("firmwareView.prepared"),f.prepared);assert.equal(f.run("firmwareView.selectedId"),"local");assert.equal(f.world.writes,0);
-  }finally{await f.close()}
+  for (const automatic of [false, true]) {
+    const f = await fixture();
+    try {
+      f.c.openWorkspace = f.c.render;
+      await f.state.transport.close();
+      f.state.transport = null;
+      f.c.connectKeyboard = async (device, { choose }) => {
+        assert.equal(device, null);
+        assert.equal(choose, true);
+        const found = await f.c.inspectFirmwareDevice(f.boot);
+        f.c.enterFirmwareRecovery(found.transport, found.info);
+        return true;
+      };
+      if (automatic) await f.c.detectFirmwareRecovery(f.boot);
+      else await f.run("connectFirmwareDevice()");
+      assert.equal(f.state.transport.device, f.boot);
+      assert.equal(f.run("firmwareView.prepared"), f.prepared);
+      assert.equal(f.run("firmwareView.selectedId"), "local");
+      assert.equal(f.world.writes, 0);
+    } finally { await f.close(); }
+  }
   console.log("PASS: real updater handoff without refresh/reselection; automatic boot/app reconnect, lost entry ACK, browser authorization, transient opens, rejected choices, cancel/denial, and retained image after errors. Simulated USB only.");
 }
 main().catch(e=>{console.error(e);process.exitCode=1});

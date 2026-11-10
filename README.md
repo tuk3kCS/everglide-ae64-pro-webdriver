@@ -16,17 +16,17 @@ cd everglide-ae64-pro-webdriver
 python -m http.server 4173 --bind 127.0.0.1
 ~~~
 
-Open [localhost:4173](http://localhost:4173), then choose **Connect keyboard**. Serve the files over HTTPS or localhost instead of opening index.html directly. Running the driver needs no bundler or npm installation; Node.js is used for maintenance scripts and offline tests.
+Open [localhost:4173](http://localhost:4173), then choose **Initialize a device**. Serve the files over HTTPS or localhost. Running the driver needs no bundler or npm installation. Node.js is used for maintenance scripts and offline tests.
 
 The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firmware files and commands for other keyboards are not interchangeable.
 
 ### AE64 Pro Reloaded
 
-Open [Reloaded at /v2](http://localhost:4173/v2/) for the Wootility 5.4.2-style workspace. Quick Settings puts key selection, actuation, Rapid Trigger and dead zones together. Remap places the layer list beside the keyboard and supports dragging assignments from a searchable catalog. The original driver remains at [the root route](http://localhost:4173/).
+Reloaded is the default driver. Quick Settings puts key selection, actuation, Rapid Trigger and dead zones together. Remap supports dragging assignments from a searchable catalog. Choose **Legacy mode** on the welcome page to open [the classic driver](http://localhost:4173/legacy/). Existing `/v2/` links redirect to Reloaded.
 
 Both editions use the same AE64 Pro protocol and onboard profiles. Each has its own browser drafts, language, theme and Auto apply preference. Changes saved to the physical keyboard are visible to either edition when it reads the device.
 
-Reloaded's entry point and layout live under `v2/`. GitHub Pages includes that directory alongside the original driver. The bundled Nunito Sans fonts use the [SIL Open Font License](v2/fonts/OFL.txt).
+Reloaded starts at `index.html` and uses layouts and assets under `v2/`. The classic driver starts at `legacy/index.html`. The bundled Nunito Sans fonts use the [SIL Open Font License](v2/fonts/OFL.txt).
 
 ### Stock and custom firmware
 

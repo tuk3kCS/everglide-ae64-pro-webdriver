@@ -90,9 +90,12 @@ function enterFirmwareRecovery(transport, info) {
   stopPolling(); stopProfilePolling(); disposeGamepadPage(); resetFnLightingCapability();
   clearTimeout(state.timers.autoApply);
   state.transport = transport; state.knownDevice = transport.device; state.bootloaderConnected = true;
-  state.hardware.info = { ...info, boardIdHex: "0030000A" }; state.page = "firmware";
-  firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null;
-  firmwareView.selectedId = ""; firmwareView.selectionError = "";
+  state.hardware.info = { ...info, boardIdHex: "0030000A" };
+  if (state.page !== "firmware") {
+    firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null;
+    firmwareView.selectedId = ""; firmwareView.selectionError = "";
+  }
+  state.page = "firmware";
   firmwareView.recoveryRequired = true;
   firmwareView.recoveryMessage = "The keyboard is connected in recovery mode. Choose firmware below to complete recovery.";
   firmwareProgress({ phase: "recovery", percent: 0, written: 0, total: 0, detail: firmwareView.recoveryMessage });
@@ -105,14 +108,7 @@ function noteFirmwareRecoveryDisconnect() {
 }
 async function connectFirmwareDevice() {
   if (toolOperationBusy()) return;
-  const prepared = firmwareView.prepared, selectedId = firmwareView.selectedId;
-  const connected = await connectKeyboard(null, { choose: true });
-  if (connected && state.bootloaderConnected && prepared && !firmwareView.prepared) {
-    firmwareView.prepared = prepared; firmwareView.selectedId = selectedId;
-    firmwareView.recoveryMessage = "Your selected firmware is retained. Review and start it to write a complete fresh image.";
-    firmwareProgress({ phase: "recovery", detail: firmwareView.recoveryMessage });
-    render();
-  }
+  await connectKeyboard(null, { choose: true });
 }
 async function authorizeFirmwareHandoff() {
   const waiting = firmwareView.waiting;

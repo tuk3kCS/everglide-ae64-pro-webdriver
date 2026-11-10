@@ -9,7 +9,7 @@ for (const control of M.CONTROLS) {
 assert.equal(new Set(Object.values(Icons.files)).size, 24);
 assert.equal(Icons.files["LY+"], "12_left_stick_up.png");assert.equal(Icons.files["LY-"], "13_left_stick_down.png");
 assert.equal(Icons.files["RY+"], "17_right_stick_up.png");assert.equal(Icons.files["RX-"], "19_right_stick_left.png");
-const navigation = fs.readFileSync(path.join(root, "index.html"), "utf8").match(/<nav id="sideNav"[\s\S]*?<\/nav>/)[0];
+const navigation = fs.readFileSync(path.join(root, "legacy", "index.html"), "utf8").match(/<nav id="sideNav"[\s\S]*?<\/nav>/)[0];
 assert.ok(navigation.indexOf('data-page="advanced"') < navigation.indexOf('data-page="gamepad"'));
 assert.ok(navigation.indexOf('data-page="gamepad"') < navigation.indexOf('data-page="lighting"'));
 assert.match(fs.readFileSync(path.join(root, ".github/workflows/pages.yml"), "utf8"), /cp assets\/controller_icons\/\*\.png _site\/assets\/controller_icons\//);

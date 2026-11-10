@@ -1,5 +1,124 @@
 "use strict";
 
+const reloadedProfileOrderKey = globalThis.AE64_STORAGE_PREFIX + "onboard-profile-order-v1";
+const reloadedProfileDragType = "application/x-ae64-onboard-profile";
+let reloadedProfileOrder = [];
+try {
+  const savedOrder = JSON.parse(localStorage.getItem(reloadedProfileOrderKey));
+  if (Array.isArray(savedOrder)) reloadedProfileOrder = savedOrder;
+} catch {
+  // The default slot order also works if saved preferences cannot be read.
+}
+
+function reloadedProfileSlots() {
+  const slots = state.hardware.configIndexes;
+  return [...new Set([...reloadedProfileOrder, ...slots])].filter((slot) => slots.includes(slot));
+}
+
+function paintReloadedProfiles(page) {
+  const panel = page.querySelector(".settings-profile");
+  const list = panel.querySelector(".profile-slot-row");
+  const slots = reloadedProfileSlots();
+  const active = Number(state.profile.profileIndex);
+  const name = (slot) => state.hardware.configNames[slot] || `Profile ${slot + 1}`;
+  panel.querySelector("h2").textContent = "Onboard profiles";
+  panel.querySelector(".panel-head p").textContent =
+    "Click to activate a profile. Drag one card onto another to swap their order in this browser. Slot numbers and keyboard shortcuts stay the same.";
+  panel.querySelector(".panel-head").after(list);
+  list.setAttribute("aria-label", "Onboard profiles");
+  list.innerHTML = slots.map((slot, index) => `
+    <div class="reloaded-profile-card${slot === active ? " active" : ""}" data-reloaded-slot="${slot}" draggable="true">
+      <button class="reloaded-profile-load" type="button" data-load-profile="${slot}" aria-pressed="${slot === active}"
+        data-keyboard-input="allow" aria-label="Activate ${esc(name(slot))}, onboard slot ${slot + 1}">
+        <span class="reloaded-profile-icon" aria-hidden="true">⌨</span>
+        <span class="reloaded-profile-label"><b>${esc(name(slot))}</b><small>Slot ${slot + 1}${slot === active ? " · Active" : ""}</small></span>
+      </button>
+      <div class="reloaded-profile-move">
+        <button type="button" data-swap-profile="${slots[index - 1] ?? ""}" ${index === 0 ? "disabled" : ""}
+          data-keyboard-input="allow" aria-label="Move ${esc(name(slot))} earlier" title="Move earlier">↑</button>
+        <button type="button" data-swap-profile="${slots[index + 1] ?? ""}" ${index === slots.length - 1 ? "disabled" : ""}
+          data-keyboard-input="allow" aria-label="Move ${esc(name(slot))} later" title="Move later">↓</button>
+      </div>
+      <span class="reloaded-profile-grip" aria-hidden="true" title="Drag to swap profiles">⠿</span>
+    </div>`).join("");
+
+  function swap(source, target, restoreFocus = false) {
+    if (toolOperationBusy() || source === target || !slots.includes(source) || !slots.includes(target)) return;
+    const order = [...slots];
+    const from = order.indexOf(source), to = order.indexOf(target);
+    [order[from], order[to]] = [order[to], order[from]];
+    reloadedProfileOrder = order;
+    try {
+      localStorage.setItem(reloadedProfileOrderKey, JSON.stringify(order));
+      showToast(`Swapped ${name(source)} and ${name(target)} in My Profiles.`);
+    } catch {
+      showToast("Profile order changed for this session. Browser storage is unavailable.", true);
+    }
+    render();
+    if (restoreFocus) page.querySelector(`[data-load-profile="${source}"]`)?.focus();
+  }
+
+  let dragged = null;
+  function clearDrag() {
+    list.querySelector(".dragging")?.classList.remove("dragging");
+    list.querySelector(".drop-target")?.classList.remove("drop-target");
+    dragged = null;
+  }
+  for (const card of list.querySelectorAll("[data-reloaded-slot]")) {
+    const slot = Number(card.dataset.reloadedSlot);
+    card.querySelector("[data-load-profile]").addEventListener("click", () => {
+      if (slot !== Number(state.profile.profileIndex)) switchProfile(slot);
+    });
+    for (const button of card.querySelectorAll("[data-swap-profile]:enabled"))
+      button.addEventListener("click", () => swap(slot, Number(button.dataset.swapProfile), true));
+    card.addEventListener("dragstart", (event) => {
+      if (toolOperationBusy() || event.target.closest("[data-swap-profile]")) return event.preventDefault();
+      event.dataTransfer.setData(reloadedProfileDragType, String(slot));
+      event.dataTransfer.effectAllowed = "move";
+      dragged = slot;
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragover", (event) => {
+      if (dragged === null || dragged === slot || !event.dataTransfer.types.includes(reloadedProfileDragType)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      card.classList.add("drop-target");
+    });
+    card.addEventListener("dragleave", (event) => {
+      if (!card.contains(event.relatedTarget)) card.classList.remove("drop-target");
+    });
+    card.addEventListener("drop", (event) => {
+      if (dragged === null || event.dataTransfer.getData(reloadedProfileDragType) !== String(dragged)) return;
+      event.preventDefault();
+      const source = dragged;
+      clearDrag();
+      swap(source, slot);
+    });
+    card.addEventListener("dragend", clearDrag);
+  }
+}
+
+function paintReloadedFirmware(page) {
+  const intro = page.querySelector(".firmware-intro");
+  intro.querySelector("h2").textContent = "Flash or recover firmware";
+  intro.querySelector("p").textContent = "Install a factory or custom release, or recover an AE64 Pro already in recovery mode.";
+  const grid = page.querySelector(".firmware-page .page-grid");
+  const [image, flash] = grid.children;
+  image.querySelector("h2").textContent = "2. Choose an image";
+  flash.querySelector("h2").textContent = "3. Flash the keyboard";
+  const connect = document.createElement("section");
+  connect.className = "panel reloaded-firmware-connect";
+  connect.innerHTML = '<div class="panel-head"><div><h2>1. Connect the keyboard</h2><p>Select your AE64 Pro in normal or recovery mode.</p></div></div>';
+  const device = flash.querySelector(".firmware-device");
+  const button = device.querySelector("#firmwareConnect");
+  if (!state.transport?.connected) {
+    button.textContent = state.bootloaderConnected ? "Reconnect recovery keyboard" : "Connect keyboard";
+    device.querySelector("p").textContent = "Use a USB data cable and choose the keyboard in the browser’s device list.";
+  }
+  connect.append(device);
+  grid.before(connect);
+}
+
 let reloadedGamepadView = "setup";
 
 function paintReloadedGamepad(page) {

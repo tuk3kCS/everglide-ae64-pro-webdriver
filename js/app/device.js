@@ -295,7 +295,8 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
   } finally {
     state.connecting = false;
     if (!silent) hideProgress();
-    renderStatus();
+    if (state.page === "firmware") render();
+    else renderStatus();
   }
 }
 async function detectKnownKeyboard() {

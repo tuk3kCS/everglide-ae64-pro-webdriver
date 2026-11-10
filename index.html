@@ -1,30 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-edition="reloaded">
 <head>
-  <meta name="google-site-verification" content="PUk9OiI-Cq2YrFn-p4tZdN2vddSIlqG0yXbhTgHOZU8" />
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#07111d">
-  <meta name="description" content="Configure the Everglide AE64 Pro Hall-effect keyboard locally with an independent WebHID driver for key mapping, actuation, Rapid Trigger, RGB, profiles, DKS, SOCD, macros, and calibration.">
+  <meta name="google-site-verification" content="PUk9OiI-Cq2YrFn-p4tZdN2vddSIlqG0yXbhTgHOZU8">
+  <meta name="theme-color" content="#191a1c">
+  <meta name="description" content="AE64 Pro Reloaded is a WebHID keyboard configurator with a Wootility-style workspace.">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <meta name="googlebot" content="index, follow">
-  <meta name="application-name" content="AE64 Pro Control">
   <link rel="canonical" href="https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/">
-  <link rel="sitemap" type="application/xml" href="https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/sitemap.xml">
+  <link rel="sitemap" type="application/xml" href="sitemap.xml">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="AE64 Pro Control">
-  <meta property="og:title" content="AE64 Pro Control — Everglide AE64 Pro WebHID Driver">
-  <meta property="og:description" content="A local-first WebHID driver for configuring the Everglide AE64 Pro Hall-effect keyboard without the manufacturer cloud.">
+  <meta property="og:title" content="AE64 Pro Reloaded — Everglide AE64 Pro WebHID Driver">
+  <meta property="og:description" content="Remap keys, tune Hall-effect performance, and configure RGB and gamepad controls locally over WebHID.">
   <meta property="og:url" content="https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="AE64 Pro Control — Everglide AE64 Pro WebHID Driver">
-  <meta name="twitter:description" content="Configure key mapping, Hall-effect performance, RGB, profiles, and advanced features locally through WebHID.">
-  <title>AE64 Pro Control — Everglide AE64 Pro WebHID Driver</title>
+  <title>AE64 Pro Reloaded</title>
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "AE64 Pro Control",
+      "name": "AE64 Pro Reloaded",
       "alternateName": "Everglide AE64 Pro Web Driver",
       "url": "https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/",
       "codeRepository": "https://github.com/tuk3kCS/everglide-ae64-pro-webdriver",
@@ -41,101 +36,100 @@
   <link rel="stylesheet" href="js/app/tools.css">
   <link rel="stylesheet" href="js/app/fn-lighting.css">
   <link rel="stylesheet" href="js/app/lighting-preview.css">
+  <link rel="stylesheet" href="v2/fonts.css">
+  <link rel="stylesheet" href="v2/styles.css">
+  <script src="v2/config.js"></script>
 </head>
 <body>
-  <header class="topbar" id="topbar">
-    <a class="brand" href="#top" aria-label="AE64 Pro Control home">
-      <span class="brand-mark">AE</span>
-      <span><strong>AE64 CONTROL</strong><small data-i18n="brandTagline">Independent WebHID driver</small></span>
-    </a>
-    <nav class="topnav" aria-label="Primary navigation">
-      <label class="language-control compact">
-        <span class="sr-only" data-i18n="language">Language</span>
-        <select class="language-select" aria-label="Language"></select>
-      </label>
-      <button class="button primary" id="connectButton" type="button" data-i18n="connectKeyboard">Connect keyboard</button>
-    </nav>
-  </header>
-
-  <main id="top">
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow" data-i18n="heroEyebrow">Alternative WebHID configurator</p>
-        <h1><span data-i18n="heroLine1">Your AE64.</span><br><em data-i18n="heroLine2">Fully visible.</em></h1>
-        <p class="lead" data-i18n="heroLead">Configure actuation, Rapid Trigger, remaps, RGB, profiles and the keyboard's hidden diagnostic controls directly through WebHID.</p>
-        <div class="hero-actions">
-          <button class="button primary big" id="heroConnect" type="button"><span data-i18n="connectKeyboard">Connect keyboard</span><b>→</b></button>
-          <button class="button ghost" id="openGamepadTools" type="button">Gamepad mode</button>
-          <button class="button ghost" id="openFirmwareTools" type="button">Firmware</button>
-        </div>
-        <p class="compatibility"><i></i><span data-i18n="compatibility">Desktop Chrome or Edge · HTTPS or localhost · no account required</span></p>
+  <header id="topbar" class="hidden"></header>
+  <main id="welcome">
+    <div class="welcome-content" id="welcomeContent">
+      <a class="button ghost small welcome-legacy" id="legacyModeLink" href="legacy/">Legacy mode</a>
+      <span class="welcome-brand" aria-hidden="true">AE</span>
+      <h1>Welcome to AE64 Pro Reloaded</h1>
+      <p>Configure your AE64 Pro in one place. Remap keys, tune actuation and Rapid Trigger, and customize lighting and gamepad controls.</p>
+      <div class="welcome-actions">
+        <button id="tryWorkspace" class="button ghost" type="button">Try out Reloaded</button>
+        <button id="startInitialization" class="button primary" type="button">Initialize a device</button>
+        <button id="openFirmwareTools" class="button ghost" type="button">Flash or recover firmware</button>
       </div>
-      <div class="hero-console" aria-label="Driver status preview">
-        <div class="console-head"><span>AE64 / HID</span><span class="live-dot" data-i18n="ready">READY</span></div>
-        <div id="heroKeyboard" class="hero-keyboard" aria-hidden="true"></div>
-        <div class="console-grid">
-          <article><span data-i18n="deviceId">Device ID</span><strong>1CA6:300A</strong></article>
-          <article><span data-i18n="reportSize">Report size</span><strong>64 B</strong></article>
-          <article><span data-i18n="collection">Collection</span><strong>FFB0:0001</strong></article>
-        </div>
+      <div id="heroKeyboard" class="hero-keyboard" aria-hidden="true"></div>
+      <div class="welcome-links">
+        <button id="openGamepadTools" class="panel" type="button"><strong>Gamepad</strong><small>Explore controller mappings and travel settings.</small></button>
       </div>
+    </div>
+    <section id="initializeDevice" class="initialize-device" aria-labelledby="initializeTitle" hidden>
+      <button id="cancelInitialization" class="button ghost" type="button">Cancel and exit</button>
+      <ol class="initialize-steps" aria-label="Setup progress">
+        <li aria-current="step">Setup</li><li>Connect</li><li>Configure</li>
+      </ol>
+      <h1 id="initializeTitle" tabindex="-1">Plug your AE64 Pro into your computer</h1>
+      <p>Use a USB data cable. Choose your AE64 Pro when the browser asks which device to connect.</p>
+      <svg class="initialize-usb" viewBox="0 0 200 124" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" aria-hidden="true">
+        <rect x="12" y="23" width="176" height="56" rx="8"/><path d="M24 39h152M24 53h152M24 67h152M100 80v24m-9 0h18v13H91z"/>
+      </svg>
+      <button id="heroConnect" class="button primary" type="button">Connect keyboard</button>
+      <p id="initializeStatus" role="status" class="initialize-status">Use Chrome or Edge on localhost or HTTPS for WebHID.</p>
     </section>
-
   </main>
 
-  <section class="workspace hidden" id="workspace" aria-label="AE64 Pro workspace">
-    <aside class="sidebar">
-      <div class="device-title">
-        <button class="device-icon" id="backHomeButton" type="button" aria-label="Return to home" title="Home">64</button>
-        <div><strong>Everglide AE64 Pro</strong><small id="connectionLabel" data-i18n="offlineWorkspace">Offline workspace</small></div>
-      </div>
-      <section class="sidebar-profile" aria-label="Quick profile switch">
-        <div>
-          <span data-i18n="quickProfile">Quick profile</span>
-          <button id="quickProfileRename" type="button" data-i18n="rename">Rename</button>
-        </div>
-        <select id="quickProfileSelect" aria-label="Quick profile switch"></select>
-      </section>
-      <nav id="sideNav" aria-label="Configuration pages">
-        <button class="active" data-page="overview" type="button"><span>⌂</span><b data-i18n="overview">Overview</b></button>
-        <button data-page="keymap" type="button"><span>⌨</span><b data-i18n="keymap">Key mapping</b></button>
-        <button data-page="performance" type="button"><span>↕</span><b data-i18n="performance">Performance</b></button>
-        <button data-page="advanced" type="button"><span>⚡</span><b data-i18n="featureLab">Advanced mapping</b></button>
-        <button data-page="gamepad" type="button"><span>◈</span><b data-i18n="gamepadMode">Gamepad mode</b></button>
-        <button data-page="lighting" type="button"><span>✦</span><b data-i18n="lighting">Lighting</b></button>
-        <button data-page="settings" type="button"><span>◉</span><b data-i18n="settings">Device settings</b></button>
-        <button data-page="firmware" type="button"><span>⇩</span><b data-i18n="firmwareUpdate">Firmware</b></button>
-        <button data-page="diagnostics" type="button"><span>≋</span><b data-i18n="diagnostics">Diagnostics</b></button>
-        <button data-page="about" type="button"><span>ⓘ</span><b data-i18n="about">About us</b></button>
+  <section class="workspace hidden" id="workspace" aria-label="AE64 Pro Reloaded workspace">
+    <div id="sideNav" class="reloaded-navigation">
+      <nav class="tool-rail" aria-label="Workspace tools">
+        <button id="backHomeButton" class="rail-brand" type="button" aria-label="Welcome" title="Welcome">AE</button>
+        <button type="button" data-page="performance" data-view="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg><b>Keyboard</b></button><button type="button" data-page="settings" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4m0 12v4M2 12h4m12 0h4M5 5l3 3m8 8 3 3M19 5l-3 3m-8 8-3 3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><b>Settings</b></button><button type="button" data-page="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 4 3c-1 .5-1 1-1 2m0 3h.01"/></svg><b>Help</b></button>
       </nav>
-      <div class="sidebar-note"><i></i><p><strong data-i18n="stagedEdits">Staged edits</strong><br><span id="stagedEditsBody" data-i18n="stagedEditsBody">Nothing reaches the keyboard until Apply.</span></p></div>
-      <section class="sidebar-controls sidebar-preferences" aria-label="Language and appearance">
-        <label><span data-i18n="language">Language</span><select class="language-select"></select></label>
-        <label><span>Theme</span><select id="sidebarThemeSelect" aria-label="Appearance theme"><option value="mint">Mint</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
-      </section>
-    </aside>
-
+      <aside class="sidebar">
+        <h2>Keyboard Configuration</h2>
+        <div class="device-title">
+          <span class="device-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg></span>
+          <div><small id="connectionLabel">Offline workspace</small><strong>Everglide AE64 Pro</strong></div>
+        </div>
+        <nav aria-label="Keyboard configuration">
+          <p>Profiles</p>
+          <button type="button" data-page="performance" data-view="quick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg><b>Quick Settings</b></button><button type="button" data-page="settings" data-view="profiles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h7m-3.5-3.5v7"/></svg><b>My Profiles</b></button>
+          <p>Keyboard Configuration</p>
+          <button type="button" data-page="performance" data-view="actuation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14M5 21h14m-7-16v14m-3-11 3-3 3 3m-6 8 3 3 3-3"/></svg><b>Actuation Point</b></button>
+          <button type="button" data-page="performance" data-view="rapid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5v9a3 3 0 0 0 6 0V9a3 3 0 0 1 6 0v10m-3-3 3 3 3-3M2 8l3-3 3 3"/></svg><b>Rapid Trigger</b></button>
+          <button type="button" data-page="lighting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18M6 14h12M12 2v5M5 6l3 3m11-3-3 3"/></svg><b>RGB Settings</b></button>
+          <button type="button" data-page="keymap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg><b>Remap</b></button>
+          <button type="button" data-page="advanced"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 16l4-8 4 8m-6-3h4"/></svg><b>Advanced Keys</b></button>
+          <button type="button" data-page="gamepad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 6h10c3 0 4 3 5 8l.4 2.2c.4 2-1.7 3.3-3.1 2l-3.3-3.2H8l-3.3 3.2c-1.4 1.3-3.5 0-3.1-2L2 14c1-5 2-8 5-8Z"/><path d="M6 10v4m-2-2h4m8 0h.01m3-2h.01"/></svg><b>Gamepad</b></button>
+          <button type="button" data-page="performance" data-view="switches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4m0 12v4M2 12h4m12 0h4M5 5l3 3m8 8 3 3M19 5l-3 3m-8 8-3 3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><b>Magnetic Switches</b></button>
+          <p>Device tools</p>
+          <button type="button" data-page="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg><b>Device Overview</b></button><button type="button" data-page="firmware"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg><b>Firmware</b></button><button type="button" data-page="diagnostics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l3-8 5 16 3-8h5"/></svg><b>Diagnostics</b></button>
+        </nav>
+        <section class="sidebar-controls sidebar-preferences" aria-label="Language and appearance">
+          <label><span>Language</span><select class="language-select"></select></label>
+          <label><span>Theme</span><select id="sidebarThemeSelect"><option value="dark">Dark</option><option value="light">Light</option><option value="mint">Mint</option></select></label>
+        </section>
+        <a class="classic-link" href="legacy/">Legacy driver ↗</a>
+      </aside>
+    </div>
     <div class="work-area">
       <div class="work-chrome">
         <header class="work-header">
-          <div class="work-heading">
-            <h1 id="pageTitle">Overview</h1>
+          <div class="profile-toolbar">
+            <span class="profile-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1m4 0h1m4 0h1M6 12h1m4 0h1m4 0h1M8 15h8"/></svg></span>
+            <select id="quickProfileSelect" aria-label="Active onboard profile"></select>
+            <button class="button ghost small" id="quickProfileRename" type="button">Rename</button>
           </div>
-          <div class="work-actions">
-            <label class="auto-apply-control" title="Experimental: write each completed edit to the keyboard automatically.">
-              <span><b data-i18n="autoApply">Auto apply</b><small data-i18n="experimental">EXPERIMENTAL</small></span>
-              <input class="toggle" id="autoApplyToggle" type="checkbox" aria-describedby="autoApplyHint">
-              <span class="sr-only" id="autoApplyHint" data-i18n="autoApplyHint">Writes completed edits to the keyboard automatically.</span>
-            </label>
-            <button class="button ghost" id="revertButton" type="button" data-i18n="revert">Revert</button>
-            <button class="button primary" id="applyButton" type="button" data-i18n="applyChanges">Apply changes</button>
+          <div class="header-actions">
+            <div class="work-actions">
+              <label class="auto-apply-control" title="Experimental automatic writes"><span><b>Auto apply</b></span><input class="toggle" id="autoApplyToggle" type="checkbox" aria-label="Auto apply"></label>
+              <button class="button ghost" id="revertButton" type="button">Revert</button>
+              <button class="button primary" id="applyButton" type="button">Apply changes</button>
+            </div>
+            <button class="button primary" id="connectButton" type="button">Connect keyboard</button>
           </div>
         </header>
         <div class="status-strip" id="statusStrip">
-          <span><i id="connectionDot"></i><b id="connectionStatus" data-i18n="offline">Offline</b></span>
-          <span id="dirtyStatus" data-i18n="noPendingChanges">No pending changes</span>
+          <span><i id="connectionDot"></i><b id="connectionStatus">Offline</b></span>
+          <span id="dirtyStatus">No pending changes</span>
+          <span id="stagedEditsBody" class="sr-only"></span>
         </div>
       </div>
+      <h1 id="pageTitle" class="sr-only">Quick Settings</h1>
       <div class="page" id="pageContent"></div>
     </div>
   </section>
@@ -332,6 +326,9 @@
   <script src="js/app/device.js"></script>
   <script src="js/app/live.js"></script>
   <script src="js/app/profiles.js"></script>
+  <script src="v2/panels.js"></script>
+  <script src="v2/workspace.js"></script>
   <script src="app.js"></script>
+  <script src="v2/start.js"></script>
 </body>
 </html>
