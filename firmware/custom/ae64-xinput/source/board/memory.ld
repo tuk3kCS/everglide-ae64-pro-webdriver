@@ -39,3 +39,4 @@ stock_save8 = 0x80024BF4;
 stock_fn_load_continue = 0x8002BE62;
 stock_fn_save_continue = 0x8002BF9E;
 stock_flash_program = 0x80033A42;
+stock_rgb_save_original = 0x8002C29C;

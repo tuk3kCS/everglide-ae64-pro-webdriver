@@ -6,7 +6,10 @@ static uint32_t u32(const uint8_t *p) { return (uint32_t)p[0]|(uint32_t)p[1]<<8|
 static void put32(uint8_t *p,uint32_t v) { for(unsigned i=0;i<4;i++)p[i]=(uint8_t)(v>>(8*i)); }
 static void copy(uint8_t *d,const uint8_t *s,size_t n) { while(n--)*d++=*s++; }
 static bool same(const uint8_t *a,const uint8_t *b,unsigned n) { uint8_t x=0;while(n--)x|=*a++^*b++;return x==0; }
-static bool selector(uint8_t p,uint8_t l) { return p<FN_RGB_PROFILES&&l>=1&&l<=FN_RGB_LAYERS; }
+static bool selector(const struct fn_rgb_context *c,uint8_t p,uint8_t l) {
+    return p<FN_RGB_PROFILES&&l<=FN_RGB_LAYERS&&(l||c->main_per_profile);
+}
+static unsigned bytes(uint8_t layer) { return layer?FN_RGB_BYTES:MAIN_RGB_BYTES; }
 void fn_rgb_init(struct fn_rgb_context *c,fn_rgb_read_fn read,fn_rgb_install_fn install,void *user,bool persistent) {
     *c=(struct fn_rgb_context){0};c->read=read;c->install=install;c->user=user;c->persistent=persistent;
 }
@@ -15,15 +18,15 @@ static uint8_t process(struct fn_rgb_context *c,uint8_t cmd,const uint8_t *p,uns
     if(c->active&&(uint32_t)(now-c->last_activity)>5000)c->active=false;
     uint8_t colors[FN_RGB_BYTES];bool enabled;uint32_t revision;
     if(cmd==0x30||cmd==0x35) {
-        if((cmd==0x30&&n!=2)||(cmd==0x35&&n!=9)||!selector(p[0],p[1]))return GP_VENDOR_FORMAT;
+        if((cmd==0x30&&n!=2)||(cmd==0x35&&n!=9)||!selector(c,p[0],p[1]))return GP_VENDOR_FORMAT;
         if(!c->read(c->user,p[0],p[1],colors,&enabled,&revision))return GP_VENDOR_STORAGE;
         if(cmd==0x30) {
-            put32(out,0x0030000a);out[4]=4;out[5]=3;out[6]=6;out[7]=21;
-            out[8]=(uint8_t)(2u|(c->persistent?1u:0u));out[9]=enabled;out[10]=p[0];out[11]=p[1];
-            put32(out+12,revision);put32(out+16,gp_crc32(colors,FN_RGB_BYTES));*length=20;
+            put32(out,0x0030000a);out[4]=4;out[5]=3;out[6]=6;out[7]=p[1]?21:15;
+            out[8]=(uint8_t)(2u|(c->persistent?1u:0u)|(p[1]?0u:4u));out[9]=enabled;out[10]=p[0];out[11]=p[1];
+            put32(out+12,revision);put32(out+16,gp_crc32(colors,bytes(p[1])));*length=20;
         } else {
             unsigned offset=u16(p+6),count=p[8];
-            if(!count||count>48||offset+count>FN_RGB_BYTES)return GP_VENDOR_FORMAT;
+            if(!count||count>48||offset+count>bytes(p[1]))return GP_VENDOR_FORMAT;
             if(u32(p+2)!=revision)return GP_VENDOR_CONFLICT;
             put32(out,revision);out[4]=(uint8_t)offset;out[5]=(uint8_t)(offset>>8);
             copy(out+6,colors+offset,count);*length=(uint8_t)(6+count);
@@ -37,7 +40,7 @@ static uint8_t process(struct fn_rgb_context *c,uint8_t cmd,const uint8_t *p,uns
     }
     if(!c->install)return GP_VENDOR_BACKEND;
     if(cmd==0x31) {
-        if(n!=20||!selector(p[0],p[1])||p[2]>1||p[3])return GP_VENDOR_FORMAT;
+        if(n!=20||!selector(c,p[0],p[1])||p[2]>1||(!p[1]&&!p[2])||p[3])return GP_VENDOR_FORMAT;
         uint8_t nonzero=0;for(unsigned i=12;i<20;i++)nonzero|=p[i];if(!nonzero)return GP_VENDOR_FORMAT;
         if(!c->read(c->user,p[0],p[1],colors,&enabled,&revision))return GP_VENDOR_STORAGE;
         if(u32(p+4)!=revision)return GP_VENDOR_CONFLICT;
@@ -49,8 +52,8 @@ static uint8_t process(struct fn_rgb_context *c,uint8_t cmd,const uint8_t *p,uns
     if(cmd==0x32) {
         if(n<11||n>54)return GP_VENDOR_FORMAT;
         unsigned offset=u16(p+8),count=n-10;
-        if(offset+count>FN_RGB_BYTES)return GP_VENDOR_FORMAT;
         if(!c->active||!same(p,c->token,8))return GP_VENDOR_CONFLICT;
+        if(offset+count>bytes(c->layer))return GP_VENDOR_FORMAT;
         for(unsigned i=0;i<count;i++) {
             unsigned x=offset+i;
             /* Conflicting retransmits fail; exact duplicate chunks are safe. */
@@ -63,8 +66,9 @@ static uint8_t process(struct fn_rgb_context *c,uint8_t cmd,const uint8_t *p,uns
     if(cmd==0x33) {
         if(n!=8)return GP_VENDOR_FORMAT;
         if(!c->active||!same(p,c->token,8))return GP_VENDOR_CONFLICT;
-        for(unsigned i=0;i<FN_RGB_BYTES;i++)if(!(c->received[i/8]&(1u<<(i%8))))return GP_VENDOR_INCOMPLETE;
-        if(gp_crc32(c->staging,FN_RGB_BYTES)!=c->checksum)return GP_VENDOR_CRC;
+        const unsigned length_bytes=bytes(c->layer);
+        for(unsigned i=0;i<length_bytes;i++)if(!(c->received[i/8]&(1u<<(i%8))))return GP_VENDOR_INCOMPLETE;
+        if(gp_crc32(c->staging,length_bytes)!=c->checksum)return GP_VENDOR_CRC;
         if(!c->read(c->user,c->profile,c->layer,colors,&enabled,&revision))return GP_VENDOR_STORAGE;
         if(revision!=c->revision)return GP_VENDOR_CONFLICT;
         if(!c->install(c->user,c->profile,c->layer,c->staging,c->enabled,c->revision))return GP_VENDOR_STORAGE;

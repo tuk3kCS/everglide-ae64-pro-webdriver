@@ -1,0 +1,35 @@
+{
+  "version": "0.9",
+  "base_custom_version": "0.8.1.1",
+  "factory_app_version": "0.1.0.0",
+  "image": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.9.bin",
+  "image_bytes": 145424,
+  "image_sha256": "d007b422520a00b66fd0b2039c534bf894b1dfdf772362fa2ee14119110c751c",
+  "offline_verified": true,
+  "flashed": false,
+  "hardware_verified": false,
+  "persistent_state_bytes": 3920,
+  "reserved_state_bytes": 4096,
+  "identity_marker": {
+    "command": "01 02",
+    "offset": 48,
+    "bytes_hex": "414536340100090000",
+    "display": "v0.9.0.0 custom based on v0.1.0.0"
+  },
+  "main_rgb": {
+    "profile_slots": 4,
+    "matrix_dimensions": [
+      6,
+      15
+    ],
+    "bytes_per_matrix": 360,
+    "trailer_signature": "MRG1",
+    "trailer_offset": "0x1D20",
+    "migration": "Slots without a valid record inherit the previous shared Main RGB colors."
+  },
+  "verification": {
+    "firmware_packets": 2597,
+    "main_rgb": "PASS: synthetic board integration, 1699 checks; no hardware exercised.\nPASS: 7987 Main RGB board checks, 4 slots, migration, read-back, stale/wrong-profile/invalid write rejection, native and strip saves, clears, and corrupt-record fallback.",
+    "browser_firmware": "PASS: browser client ↔ compiled C firmware, 554 real packets; four Main maps and 4×3 Fn isolation, read-back, stale revisions and disable."
+  }
+}

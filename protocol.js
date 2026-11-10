@@ -10,6 +10,12 @@
 (function exposeAE64Protocol(global) {
   const REPORT_ID = 0;
   const REPORT_LENGTH = 64;
+  function decodeCustomFirmware(data, boardId) {
+    if (boardId !== 0x0030000a || data[16] !== 0 || data.length !== REPORT_LENGTH ||
+        ![0x41, 0x45, 0x36, 0x34, 1].every((byte, index) => data[48 + index] === byte)) return null;
+    const version = data.slice(53, 57);
+    return version.some(Boolean) ? Array.from(version).join(".") : null;
+  }
   const MATRIX_ROWS = 6;
   const MATRIX_COLS = 21;
   const DECORATIVE_ROWS = 1;
@@ -221,11 +227,7 @@
       const data = await this.transact([FAMILY.DEVICE, 2]);
       const boardId = ((data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7]) >>> 0;
       const firmware = Array.from(data.slice(8, 12)).join(".");
-      const customVersion = data.slice(53, 57);
-      const hasCustomIdentity = boardId === 0x0030000a && data[16] === 0 && data.length === REPORT_LENGTH &&
-        [0x41, 0x45, 0x36, 0x34, 1].every((byte, index) => data[48 + index] === byte) &&
-        customVersion.some(Boolean);
-      const customFirmware = hasCustomIdentity ? Array.from(customVersion).join(".") : null;
+      const customFirmware = decodeCustomFirmware(data, boardId);
       return {
         type: data[2], subType: data[3], boardId,
         boardIdHex: boardId.toString(16).padStart(8, "0"),
@@ -659,7 +661,7 @@
     }
   }
 
-  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, MACRO_ACTIONS_PER_PAGE, MACRO_MAX_PAGES, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors });
+  const api = Object.freeze({ AE64HidTransport, DEVICE_FILTERS, REPORT_ID, REPORT_LENGTH, MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS, MACRO_ACTIONS_PER_PAGE, MACRO_MAX_PAGES, FAMILY, SAVE_GROUP, AXIS_DATA, ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE, le16, read16, decodeAdvanced, encodeColors, decodeColors, decodeCustomFirmware });
   global.AE64Protocol = api;
   global.AE64HidTransport = AE64HidTransport;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

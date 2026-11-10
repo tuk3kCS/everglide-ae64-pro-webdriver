@@ -1,20 +1,68 @@
 "use strict";
 
 let reloadedLivePressPosition = null;
+let reloadedLivePressSize = null;
+const livePressArrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
-function positionReloadedLivePress(panel, left, top) {
+function positionReloadedLivePress(panel, left, top, { remember = true } = {}) {
   const inset = 8;
-  reloadedLivePressPosition = {
+  const position = {
     left: clamp(left, inset, Math.max(inset, document.documentElement.clientWidth - panel.offsetWidth - inset)),
     top: clamp(top, inset, Math.max(inset, document.documentElement.clientHeight - panel.offsetHeight - inset)),
   };
-  panel.style.inset = `${reloadedLivePressPosition.top}px auto auto ${reloadedLivePressPosition.left}px`;
+  panel.style.inset = `${position.top}px auto auto ${position.left}px`;
+  if (remember) reloadedLivePressPosition = position;
+}
+
+function applyReloadedLivePressSize(panel) {
+  if (!reloadedLivePressSize) return;
+  const { width, height } = reloadedLivePressSize;
+  panel.style.width = `${width}px`;
+  panel.style.height = `${height}px`;
+  panel.classList.add("resized");
+}
+
+function resizeReloadedLivePress(panel, origin, dx, dy) {
+  const maxWidth = document.documentElement.clientWidth - 16;
+  const maxHeight = document.documentElement.clientHeight - 16;
+  reloadedLivePressSize = {
+    width: clamp(origin.width - dx, Math.min(248, maxWidth), maxWidth),
+    height: clamp(origin.height - dy, Math.min(180, maxHeight), maxHeight),
+  };
+  applyReloadedLivePressSize(panel);
+  positionReloadedLivePress(panel, origin.right - panel.offsetWidth, origin.bottom - panel.offsetHeight);
+}
+
+function bindLivePressPointer(handle, start, move) {
+  let drag = null;
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || drag) return;
+    const origin = start(event);
+    if (!origin) return;
+    drag = { pointer: event.pointerId, x: event.clientX, y: event.clientY, origin };
+    handle.setPointerCapture(event.pointerId);
+  });
+  handle.addEventListener("pointermove", (event) => {
+    if (event.pointerId === drag?.pointer)
+      move(drag.origin, event.clientX - drag.x, event.clientY - drag.y);
+  });
+  handle.addEventListener("lostpointercapture", () => { drag = null; });
+}
+
+function bindLivePressArrows(handle, adjust) {
+  handle.addEventListener("keydown", (event) => {
+    const direction = livePressArrows[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    const step = event.shiftKey ? 40 : 12;
+    adjust(direction[0] * step, direction[1] * step);
+  });
 }
 
 window.addEventListener("resize", () => {
   const panel = document.querySelector(".reloaded-live-press");
   if (panel?.offsetWidth && reloadedLivePressPosition)
-    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top);
+    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top, { remember: false });
 });
 
 function paintReloadedLivePress(page) {
@@ -45,34 +93,29 @@ function paintReloadedLivePress(page) {
   readout.prepend(valueRow, panel.querySelector(".axis-visual"));
   panel.querySelector("#pressedKeyList").parentElement.classList.add("live-press-pressed");
   panel.append(scope);
+  const resize = document.createElement("button");
+  resize.type = "button";
+  resize.className = "live-press-resize";
+  resize.dataset.keyboardInput = "allow";
+  resize.setAttribute("aria-label", "Resize Live Press Distance panel with arrow keys");
+  resize.title = "Drag to resize";
+  panel.prepend(resize);
 
+  applyReloadedLivePressSize(panel);
   if (reloadedLivePressPosition)
-    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top);
+    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top, { remember: false });
 
-  let drag = null;
-  header.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0 || close.contains(event.target) || drag) return;
-    const { left, top } = panel.getBoundingClientRect();
-    drag = { pointer: event.pointerId, x: event.clientX - left, y: event.clientY - top };
-    header.setPointerCapture(event.pointerId);
+  const bounds = () => panel.getBoundingClientRect();
+  const move = ({ left, top }, dx, dy) => positionReloadedLivePress(panel, left + dx, top + dy);
+  bindLivePressPointer(header, (event) => {
+    if (close.contains(event.target)) return null;
     panel.classList.add("moving");
-  });
-  header.addEventListener("pointermove", (event) => {
-    if (event.pointerId === drag?.pointer)
-      positionReloadedLivePress(panel, event.clientX - drag.x, event.clientY - drag.y);
-  });
-  header.addEventListener("lostpointercapture", () => {
-    drag = null;
-    panel.classList.remove("moving");
-  });
-  handle.addEventListener("keydown", (event) => {
-    const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
-    if (!direction) return;
-    event.preventDefault();
-    const { left, top } = panel.getBoundingClientRect();
-    const step = event.shiftKey ? 40 : 12;
-    positionReloadedLivePress(panel, left + direction[0] * step, top + direction[1] * step);
-  });
+    return bounds();
+  }, move);
+  header.addEventListener("lostpointercapture", () => panel.classList.remove("moving"));
+  bindLivePressArrows(handle, (dx, dy) => move(bounds(), dx, dy));
+  bindLivePressPointer(resize, bounds, (origin, dx, dy) => resizeReloadedLivePress(panel, origin, dx, dy));
+  bindLivePressArrows(resize, (dx, dy) => resizeReloadedLivePress(panel, bounds(), dx, dy));
   close.addEventListener("click", () => {
     page.querySelector("#livePressDistanceToggle").click();
     page.querySelector("#livePressDistanceToggle").focus();

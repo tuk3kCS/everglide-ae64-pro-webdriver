@@ -1,8 +1,12 @@
 /* Stock v0.1.0.0 per-profile keymap-tail extension. SPDX-License-Identifier: MIT */
 #include "fn_storage.h"
+#include "gp_storage.h"
 _Static_assert(FN_STORAGE_COLORS+2==FN_STORAGE_BYTES,"Trailer payload size");
 _Static_assert(FN_STORAGE_OFFSET+FN_STORAGE_HEADER+FN_STORAGE_BYTES<=0x2000,"Native pair boundary");
 _Static_assert(FN_STORAGE_OFFSET>=8+0x16a4,"Native keymap payload boundary");
+_Static_assert(MAIN_RGB_OFFSET>=GP_USB_STORAGE_OFFSET+GP_USB_STORAGE_BYTES,"Main RGB overlaps USB settings");
+_Static_assert(MAIN_RGB_OFFSET+16u+MAIN_RGB_BYTES<=0x2000u,"Main RGB exceeds profile allocation");
+_Static_assert(!(MAIN_RGB_OFFSET%4u)&&!(MAIN_RGB_BYTES%4u),"Main RGB word alignment");
 static uint32_t u32(const uint8_t *p) {
     return (uint32_t)p[0]|(uint32_t)p[1]<<8|(uint32_t)p[2]<<16|(uint32_t)p[3]<<24;
 }
@@ -17,9 +21,9 @@ uintptr_t fn_storage_address(uint8_t profile) {
 void fn_storage_clear(struct fn_storage *s,uint8_t profile) {
     *s=(struct fn_storage){0};s->profile=profile;s->loaded=profile<FN_RGB_PROFILES;
 }
-static uint32_t checksum(const uint8_t *header,const uint8_t *data) {
+static uint32_t checksum(const uint8_t *header,const uint8_t *data,unsigned bytes) {
     uint32_t crc=UINT32_MAX;
-    for(unsigned i=0;i<12+FN_STORAGE_BYTES;i++) {
+    for(unsigned i=0;i<12+bytes;i++) {
         crc^=i<12?header[i]:data[i-12];
         for(unsigned bit=0;bit<8;bit++)crc=(crc>>1)^((0u-(crc&1u))&UINT32_C(0xedb88320));
     }
@@ -29,7 +33,7 @@ static bool valid(const uint8_t *p,uint8_t profile) {
     if(!p||profile>=FN_RGB_PROFILES||!same(p,(const uint8_t *)"FNR1",4))return false;
     if(p[4]!=1||p[5]!=profile||p[6]!=(uint8_t)FN_STORAGE_BYTES||p[7]!=(uint8_t)(FN_STORAGE_BYTES>>8))return false;
     if(p[16+FN_STORAGE_COLORS]&0xf8u||p[17+FN_STORAGE_COLORS])return false;
-    return u32(p+12)==checksum(p,p+16);
+    return u32(p+12)==checksum(p,p+16,FN_STORAGE_BYTES);
 }
 bool fn_storage_decode(struct fn_storage *s,uint8_t profile,const uint8_t *image) {
     fn_storage_clear(s,profile);
@@ -52,10 +56,35 @@ bool fn_storage_append(const struct fn_storage *s,fn_storage_program_fn program,
     if(!s->loaded||!address||!program||!mapped||(s->data[FN_STORAGE_COLORS]&0xf8u)||s->data[FN_STORAGE_COLORS+1])return false;
     _Alignas(4) uint8_t header[FN_STORAGE_HEADER]={ 'F','N','R','1',1,0,0,0,0,0,0,0,0,0,0,0 };
     header[5]=s->profile;header[6]=(uint8_t)FN_STORAGE_BYTES;header[7]=(uint8_t)(FN_STORAGE_BYTES>>8);
-    p32(header+8,s->revision);p32(header+12,checksum(header,s->data));
+    p32(header+8,s->revision);p32(header+12,checksum(header,s->data,FN_STORAGE_BYTES));
     /* These exact lengths are word aligned: the stock API rounds to words. */
     program(address+16,FN_STORAGE_BYTES,s->data);
     if(!same(mapped+16,s->data,FN_STORAGE_BYTES))return false;
     program(address,FN_STORAGE_HEADER,header);
     return same(mapped,header,FN_STORAGE_HEADER)&&valid(mapped,s->profile);
+}
+
+uintptr_t main_rgb_address(uint8_t profile) {
+    return profile<FN_RGB_PROFILES?fn_storage_address(profile)+MAIN_RGB_OFFSET-FN_STORAGE_OFFSET:0;
+}
+static bool main_rgb_flags_valid(const uint8_t *colors) {
+    for(unsigned i=3;i<MAIN_RGB_BYTES;i+=4)if(colors[i]&&colors[i]!=255)return false;
+    return true;
+}
+bool main_rgb_read(const uint8_t *image,uint8_t profile,uint8_t *colors,uint32_t *revision) {
+    if(!image||!colors||!revision||!main_rgb_address(profile)||!same(image,(const uint8_t *)"MRG1",4))return false;
+    if(image[4]!=1||image[5]!=profile||image[6]!=(uint8_t)MAIN_RGB_BYTES||image[7]!=(uint8_t)(MAIN_RGB_BYTES>>8)||
+       u32(image+12)!=checksum(image,image+16,MAIN_RGB_BYTES)||!main_rgb_flags_valid(image+16))return false;
+    copy(colors,image+16,MAIN_RGB_BYTES);*revision=u32(image+8);return true;
+}
+bool main_rgb_append(uint8_t profile,const uint8_t *colors,uint32_t revision,
+                     fn_storage_program_fn program,const uint8_t *mapped) {
+    uintptr_t address=main_rgb_address(profile);
+    if(!address||!colors||!program||!mapped||((uintptr_t)colors&3u)||!main_rgb_flags_valid(colors))return false;
+    _Alignas(4) uint8_t header[16]={'M','R','G','1',1,profile,(uint8_t)MAIN_RGB_BYTES,(uint8_t)(MAIN_RGB_BYTES>>8)};
+    p32(header+8,revision);p32(header+12,checksum(header,colors,MAIN_RGB_BYTES));
+    program(address+16,MAIN_RGB_BYTES,colors);
+    if(!same(mapped+16,colors,MAIN_RGB_BYTES))return false;
+    program(address,16,header);
+    return same(mapped,header,16);
 }

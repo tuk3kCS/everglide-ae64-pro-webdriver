@@ -15,7 +15,7 @@ static const struct stock_endpoint *ep_in,*ep_out;
 static void (*event_callback)(uint8_t,uint8_t);
 static bool fail_write;
 static const uint8_t *owned;
-static uint8_t profile_flash[4][0x2000];
+static _Alignas(4) uint8_t profile_flash[4][0x2000],shared_rgb_flash[0x1000];
 static unsigned fn_renders,fn_saves;
 static bool fail_flash;
 static void (*scan_model)(void);
@@ -28,6 +28,7 @@ static void (*evaluation_model)(void);
 void board_test_evaluation_hook(void) { if(evaluation_model)evaluation_model(); }
 void *test_stock_ram(uintptr_t a) {
     if(a>=0xf300c000u && a<0xf300c400u)return (uint8_t *)usb_registers+(a-0xf300c000u);
+    if(a>=0x800a2000u&&a<0x800a3000u)return shared_rgb_flash+(a-0x800a2000u);
     if(a>=0x800b2000u&&a<0x800c0000u) {
         unsigned profile=(unsigned)(a-0x800b2000u)/0x4000u,offset=(unsigned)(a-0x800b2000u)%0x4000u;
         CHECK(profile<4&&offset<0x2000u);return profile_flash[profile]+offset;
@@ -38,6 +39,12 @@ void stock_fn_render(void) {
     fn_renders++;for(unsigned i=0;i<360;i++)ram[0x8d084+i]=0x5a;
 }
 void stock_fn_load_original(void) {}
+void stock_rgb_save_original(void) {
+    const uint32_t magic[2]={0x20250508u,0x20260929u};
+    memcpy(shared_rgb_flash,magic,sizeof(magic));
+    memcpy(shared_rgb_flash+0x200,ram+0x8cf1c,360);
+    memcpy(shared_rgb_flash+0x400,ram+0x8cb1c,38*4);
+}
 void stock_fn_save_original(void) {
     CHECK(ram[0x82ba8]<4);memset(profile_flash[ram[0x82ba8]],0xff,0x2000);fn_saves++;
     /* Native records occupy the exact prefix; the trailer must not change it. */
@@ -200,7 +207,7 @@ static void protocol(void) {
     uint8_t original[64],*reply=ram+0x8111c;
     memset(reply,0,64);stock_device_info();memcpy(original,reply,64);
     board_device_info();
-    const uint8_t marker[]={'A','E','6','4',1,0,8,1,1};
+    const uint8_t marker[]={'A','E','6','4',1,0,9,0,0};
     CHECK(memcmp(reply,original,48)==0);
     CHECK(memcmp(reply+48,marker,sizeof(marker))==0);
     CHECK(memcmp(reply+57,original+57,7)==0);

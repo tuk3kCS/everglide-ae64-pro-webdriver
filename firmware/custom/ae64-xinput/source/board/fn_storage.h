@@ -25,4 +25,10 @@ bool fn_storage_read_image(const uint8_t *image,uint8_t profile,uint8_t layer,
  * Programs colors first, then the validating header, and checks mapped readback.
  * This function never erases, changes profile, or calls the native save itself. */
 bool fn_storage_append(const struct fn_storage *,fn_storage_program_fn,const uint8_t *mapped_image);
+
+#define MAIN_RGB_OFFSET 0x1d20u
+uintptr_t main_rgb_address(uint8_t profile);
+bool main_rgb_read(const uint8_t *image,uint8_t profile,uint8_t *colors,uint32_t *revision);
+bool main_rgb_append(uint8_t profile,const uint8_t *colors,uint32_t revision,
+                     fn_storage_program_fn program,const uint8_t *mapped_image);
 #endif

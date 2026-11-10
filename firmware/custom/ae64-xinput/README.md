@@ -1,10 +1,12 @@
-# AE64 Pro experimental native XInput and Fn RGB firmware
+# AE64 Pro experimental native XInput and per-profile RGB firmware
 
-Current build [XInput + Fn RGB v0.8.1.1](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.1.bin), **143,768 bytes**, SHA-256 `e3c342ccf549317026f2ab6777d746f0f8054e9372b8d4d847551bca2cd925e6`.
+Current build [XInput + per-profile RGB v0.9](../../AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.9.bin), **145,424 bytes**, SHA-256 `d007b422520a00b66fd0b2039c534bf894b1dfdf772362fa2ee14119110c751c`.
 
-v0.8.1.1 extends the factory DeviceInfo reply with a custom build marker. The driver displays **v0.8.1.1 custom based on v0.1.0.0**. v0.8.1 introduced persistent Xbox USB visibility and restores it before USB initialization. See the [persistence report](../../../docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md).
+v0.9 saves a checksummed Main per-key RGB record in the existing keymap allocation for each onboard slot. Slots without a valid record inherit the old shared Main matrix. The driver displays **v0.9.0.0 custom based on v0.1.0.0** and checks the Main RGB capability before it writes. v0.8.1 introduced persistent Xbox USB visibility and restores it before USB initialization. See the [persistence report](../../../docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md).
 
-v0.8.1.1 passed offline firmware and browser tests. The maintainer reported no issues in their latest physical-keyboard tests of v0.8.1. See [validation](../../../docs/firmware-research/VALIDATION.md#physical-keyboard-testing). `source/` builds v0.8.1.1. Its ELF, manifests and verification evidence are in `v0.8.1.1/`. The preceding v0.8.1 source is in `history/v0.8.1-source.zip`. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
+v0.9 passed offline firmware and browser tests. Physical flashing and boot still need validation. The maintainer reported no issues in their latest physical-keyboard tests of v0.8.1. See [validation](../../../docs/firmware-research/VALIDATION.md#physical-keyboard-testing). `source/` builds v0.9. Its ELF, manifests and verification evidence are in `v0.9/`. The pinned stock base remains v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`.
+
+The [v0.9 storage map](../../../docs/firmware-research/hardware/AE64-Pro-v0.9-storage-map.svg) shows the flash banks, the four profile records, and the custom SRAM reservation.
 
 ## Configure and flash
 
@@ -23,7 +25,7 @@ python firmware/custom/ae64-xinput/source/build.py --zig C:\path\to\zig.exe --st
 python firmware/custom/ae64-xinput/source/verify.py --wasi --zig C:\path\to\zig.exe --stock firmware/XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin --image-dir build/ae64-xinput --work build/verification
 ```
 
-The source builder requires the exact stock SHA-256, links RV32IMAC code at `8003D000`, patches fifteen pinned instruction/call sites, three descriptor callbacks and the DeviceInfo dispatch entry, reserves 4,100 bytes from the stock heap (4,096 usable), preserves original offsets/flash helpers, and updates container size/CRC. The linker checks the total state against the same 4,096-byte reservation. New build manifests record every patch and symbol; verification records byte-preservation, container/ABI/link audits, host board/storage/protocol tests and real browser-client/C-firmware packet exchanges.
+The source builder requires the exact stock SHA-256, links RV32IMAC code at `8003D000`, patches pinned instruction and dispatch sites, reserves 4,100 bytes from the stock heap (4,096 usable), preserves original offsets and flash helpers, and updates container size and CRC. The linker checks the total state against the same 4,096-byte reservation. The build manifest records every patch and symbol. Verification covers original byte preservation, the container, ABI, linking, board and storage behavior, and packet exchanges between the browser client and compiled firmware.
 
 `source/` contains the integrated port and builders. `portable-reference/` preserves the original mapper/protocol/XUSB component tests. `component-test-results.json` and the build manifests describe the historical build environment; their original absolute command paths are retained as provenance. `check_xinput.py` is a read-only Windows controller-state diagnostic. The `.elf` is the extension with symbols, not a full keyboard flashing image.
 

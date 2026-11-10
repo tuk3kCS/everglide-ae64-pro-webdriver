@@ -230,6 +230,7 @@ async function applyChanges({ automatic = false } = {}) {
   );
   try {
     const transport = state.transport;
+    if (state.dirty.customLighting.size && expectsProfileMainRgb()) requireProfileMainRgb();
     if (await transport.getCurrentConfig() !== Number(state.profile.profileIndex) || transport !== state.transport)
       throw new Error("The onboard profile changed. Return to the staged profile on the keyboard or revert the edits.");
     const performanceIds = [...state.dirty.performance],
@@ -472,48 +473,38 @@ async function applyChanges({ automatic = false } = {}) {
       await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
     }
     if (state.dirty.customLighting.size) {
-      if (!state.hardware.customMatrix)
-        state.hardware.customMatrix = await state.transport.readCustomLighting(
-          MATRIX_ROWS,
-          MATRIX_COLS,
-          0,
-        );
+      const profile = Number(state.profile.profileIndex),
+        client = expectsProfileMainRgb() ? requireProfileMainRgb() : null,
+        scoped = client ? await client.read(profile, 0) : null,
+        matrix = scoped?.matrix || (state.hardware.customMatrix || await readMainRgbMatrix(transport)).slice();
       for (const id of state.dirty.customLighting) {
         const key = keys[id],
           matrixIndexes = lightingMatrixIndexes(key),
           color = hexToRgb(state.profile.lighting.perKey[id]);
         if (!matrixIndexes.length)
           throw new Error(`Custom lighting matrix position is unavailable for ${key.n}.`);
+        if (scoped && matrixIndexes.some((index) => index % MATRIX_COLS >= scoped.cols))
+          throw new Error(`This firmware has no Main RGB cell for ${key.n}.`);
         color.custom = Boolean(state.profile.lighting.customEnabled[id]);
         matrixIndexes.forEach((matrixIndex) => {
-          state.hardware.customMatrix[matrixIndex] = { ...color };
+          matrix[matrixIndex] = { ...color };
         });
       }
-      await state.transport.writeCustomLighting(
-        state.hardware.customMatrix,
-        MATRIX_ROWS,
-        MATRIX_COLS,
-        0,
-      );
-      await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
-      const id = [...state.dirty.customLighting][0],
-        key = keys[id],
-        matrixIndexes = lightingMatrixIndexes(key);
-      if (!matrixIndexes.length)
-        throw new Error(`Custom lighting matrix position is unavailable for ${key.n}.`);
-      for (const matrixIndex of matrixIndexes) {
-        const packet = await state.transport.getCustomLightingPacket(
-          Math.floor(matrixIndex / 15),
-          0,
-        ),
-        verified = packet[matrixIndex % 15];
-        if (
-          rgbToHex(verified) !==
-            state.profile.lighting.perKey[id].toLowerCase() ||
-          Boolean(verified.custom) !==
-            Boolean(state.profile.lighting.customEnabled[id])
-        )
-          throw new Error(`Custom lighting verification failed for ${key.n}.`);
+      if (scoped) {
+        const result = await client.write(profile, 0, { matrix, enabled: true, revision: scoped.revision });
+        state.hardware.customMatrix = result.matrix;
+      } else {
+        await transport.writeCustomLighting(matrix, MATRIX_ROWS, MATRIX_COLS, 0);
+        await transport.saveParameters(SAVE_GROUP.LIGHTING);
+        const id = [...state.dirty.customLighting][0], key = keys[id];
+        for (const matrixIndex of lightingMatrixIndexes(key)) {
+          const packet = await transport.getCustomLightingPacket(Math.floor(matrixIndex / 15), 0),
+            verified = packet[matrixIndex % 15];
+          if (rgbToHex(verified) !== state.profile.lighting.perKey[id].toLowerCase() ||
+              Boolean(verified.custom) !== Boolean(state.profile.lighting.customEnabled[id]))
+            throw new Error(`Custom lighting verification failed for ${key.n}.`);
+        }
+        state.hardware.customMatrix = matrix;
       }
     }
     if (state.dirty.decorativeBase || state.dirty.decorativePalette) {

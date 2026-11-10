@@ -4,6 +4,23 @@
   "firmwareDirectory": "firmware/",
   "firmwares": [
     {
+      "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.9.bin",
+      "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.9.bin",
+      "name": "Experimental XInput + per-profile RGB v0.9",
+      "kind": "custom",
+      "experimental": true,
+      "version": "0.9",
+      "appVersion": "0.1.0.0",
+      "customFirmware": "0.9.0.0",
+      "date": "2026-11-10",
+      "bytes": 145424,
+      "sha256": "d007b422520a00b66fd0b2039c534bf894b1dfdf772362fa2ee14119110c751c",
+      "boardId": "0030000A",
+      "payloadCrc32": "c3acfcc1",
+      "description": "Stores Main per-key RGB separately in each of the four onboard profiles. Retains saved Fn colors, gamepad mappings, and the USB visibility setting. Verified offline.",
+      "changelog": []
+    },
+    {
       "id": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.1.bin",
       "file": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.1.bin",
       "name": "Experimental XInput + Fn RGB v0.8.1.1 · saved mappings",
@@ -11,6 +28,7 @@
       "experimental": true,
       "version": "0.8.1.1",
       "appVersion": "0.1.0.0",
+      "customFirmware": "0.8.1.1",
       "date": "2026-11-09",
       "bytes": 143768,
       "sha256": "e3c342ccf549317026f2ab6777d746f0f8054e9372b8d4d847551bca2cd925e6",

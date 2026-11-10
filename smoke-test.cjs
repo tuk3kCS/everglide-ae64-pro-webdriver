@@ -236,6 +236,8 @@ async function main() {
     throw new Error("GitHub Pages must upload the isolated runtime-only artifact.");
   if (!pagesWorkflow.includes("cp -R v2 _site/v2") || !pagesWorkflow.includes("cp -R legacy _site/legacy"))
     throw new Error("GitHub Pages must include the Reloaded assets, V2 alias and Legacy entry.");
+  if (!pagesWorkflow.includes("node scripts/version-pages-release.cjs _site"))
+    throw new Error("GitHub Pages must package release-specific runtime URLs.");
   for (const privatePath of ["xsyd.top HAR files", "xsyd.top.har", "captured_usb_packets.pcapng", "tasks.txt", "ae64pro.txt", ".openai"])
     if (pagesWorkflow.includes(privatePath)) throw new Error(`GitHub Pages workflow publishes non-runtime content: ${privatePath}.`);
 

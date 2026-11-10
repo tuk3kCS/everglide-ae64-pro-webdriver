@@ -1,6 +1,7 @@
 /* Original AE64 updater reconstructed from the factory driver. SPDX-License-Identifier: MIT */
 (function (root) {
   "use strict";
+  const { decodeCustomFirmware } = typeof module !== "undefined" && module.exports ? require("../../protocol.js") : root.AE64Protocol;
   const BOARD = 0x0030000a, HEADER = 4096, CHUNK = 56, MAX_IMAGE = 262144;
   const COMMAND = Object.freeze({ ENTER: 1, WRITE: 2, VALIDATE: 3, RESTART: 4 });
   const crcTable = Uint32Array.from({ length: 256 }, (_, i) => {
@@ -44,8 +45,9 @@
   }
   function decodeInfo(reply) {
     if (!(reply instanceof Uint8Array) || reply.length !== 64 || reply[0] !== 1 || reply[1] !== 2) throw new Error("Keyboard identity response was incomplete.");
+    const boardId = ((reply[4] << 24) | (reply[5] << 16) | (reply[6] << 8) | reply[7]) >>> 0;
     return {
-      boardId: ((reply[4] << 24) | (reply[5] << 16) | (reply[6] << 8) | reply[7]) >>> 0,
+      boardId, customFirmware: decodeCustomFirmware(reply, boardId),
       runMode: reply[16], firmware: Array.from(reply.slice(8, 12)).join("."),
       serial: reply.slice(17, 29).some((x) => x !== 0 && x !== 255) ? Array.from(reply.slice(17, 29), (x) => x.toString(16).padStart(2, "0")).join("") : "",
     };
@@ -115,6 +117,10 @@
         active = found.transport; lease = await active.acquireExclusive();
         const app = await identity(lease); checkIdentity(app, 0, reconnectIdentity, Boolean(found.explicit));
         if (prepared.entry.appVersion && app.firmware !== prepared.entry.appVersion) throw new Error(`An application reconnected, but reports ${app.firmware} instead of ${prepared.entry.appVersion}.`);
+        if (prepared.entry.customFirmware && app.customFirmware !== prepared.entry.customFirmware)
+          throw new Error(`The keyboard reconnected, but did not confirm custom firmware v${prepared.entry.customFirmware}.`);
+        if (prepared.entry.kind === "stock" && app.customFirmware)
+          throw new Error(`The keyboard reconnected reporting custom firmware v${app.customFirmware}. The factory image could not be confirmed.`);
         completed = true; this.progress({ phase: "complete", percent: 100, written: image.length, total: image.length });
         return { transport: active, info: app, image: info, validated: true, chunkAckWords: Array.from(ackStatuses) };
       } catch (error) {

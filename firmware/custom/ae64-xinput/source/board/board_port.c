@@ -10,6 +10,8 @@
 #define RECORD_BASE UINT32_C(0x82bb8)
 #define PERFORMANCE_BASE UINT32_C(0x865cc)
 #define STOCK_FLAGS UINT32_C(0x8d2d0)
+#define MAIN_RGB_MATRIX UINT32_C(0x8cf1c)
+#define SHARED_RGB_FLASH UINT32_C(0x800a2000)
 #define KEYBOARD_REPORT_FLAGS UINT32_C(0x8081c)
 #define GP UINT32_C(0x80b00)
 #define XUSB_IN 0x85u
@@ -71,6 +73,7 @@ static struct board_state state;
 static struct fn_rgb_context fn_protocol;
 static struct fn_storage fn_colors;
 static bool fn_save_ok;
+static uint8_t main_rgb_loaded_profile;
 static void gp_load_current(void);
 static void mapping_changed(void);
 static void keyboard_policy_update(void);
@@ -190,32 +193,59 @@ static void fn_load_current(void) {
 static void fn_ensure_current(void) {
     if(!fn_colors.loaded||fn_colors.profile!=load8(0x82ba8))fn_load_current();
 }
+static const uint8_t *main_rgb_image(uint8_t profile) { return RAM(main_rgb_address(profile)); }
+static void main_rgb_legacy(uint8_t *colors) {
+    if(load32(SHARED_RGB_FLASH)==UINT32_C(0x20250508)&&load32(SHARED_RGB_FLASH+4)==UINT32_C(0x20260929))
+        copy(colors,RAM(SHARED_RGB_FLASH+0x200u),MAIN_RGB_BYTES);
+    else clear(colors,MAIN_RGB_BYTES);
+}
+static void main_rgb_load_current(void) {
+    uint8_t profile=load8(0x82ba8);
+    main_rgb_loaded_profile=profile;
+    if(profile>=FN_RGB_PROFILES)return;
+    uint8_t *matrix=RAM(MAIN_RGB_MATRIX);uint32_t revision;
+    if(!main_rgb_read(main_rgb_image(profile),profile,matrix,&revision))main_rgb_legacy(matrix);
+}
+void board_rgb_save_shared(void) {
+    /* The native strip save erases and rewrites both areas. Save the original
+     * shared Main colors there so unconfigured slots keep the same baseline. */
+    uint8_t active[MAIN_RGB_BYTES],*matrix=RAM(MAIN_RGB_MATRIX);
+    copy(active,matrix,sizeof(active));main_rgb_legacy(matrix);
+    stock_rgb_save_original();
+    copy(matrix,active,sizeof(active));
+}
 void board_fn_load_hook(void) {
-    stock_fn_load_original();fn_load_current();
+    stock_fn_load_original();fn_load_current();main_rgb_load_current();
     /* A profile switch while Fn is held must still release its original
      * physical press, even if the newly loaded layer maps that key differently. */
     fn_reconcile();fn_transition();
     store32(0x8d260,0);
     if(state.initialized)gp_load_current();
 }
+static bool save_active_trailers(const uint8_t *wire,uint32_t revision,bool enabled,uint32_t usb_revision,
+                                 const uint8_t *new_rgb,uint32_t rgb_revision) {
+    fn_ensure_current();
+    const uint8_t profile=load8(0x82ba8);
+    if(!fn_colors.loaded||fn_colors.profile!=profile)return false;
+    _Alignas(4) uint8_t previous_rgb[MAIN_RGB_BYTES];
+    if(!new_rgb&&main_rgb_read(main_rgb_image(profile),profile,previous_rgb,&rgb_revision))new_rgb=previous_rgb;
+    stock_fn_save_original();
+    /* Verify each trailer independently. An earlier failure must not skip
+     * the other records after the native erase. */
+    bool fn_ok=fn_storage_append(&fn_colors,stock_flash_program,fn_image(profile));
+    bool gp_ok=!wire||gp_storage_append(profile,wire,enabled,revision,stock_flash_program,RAM(gp_storage_address(profile)));
+    bool usb_ok=!wire||gp_usb_storage_append(profile,enabled,usb_revision,stock_flash_program,RAM(gp_usb_storage_address(profile)));
+    bool rgb_ok=!new_rgb||main_rgb_append(profile,new_rgb,rgb_revision,stock_flash_program,main_rgb_image(profile));
+    return fn_ok&&gp_ok&&usb_ok&&rgb_ok;
+}
 void board_fn_save_hook(void) {
     if(state.initialized && state.profile!=load8(0x82ba8))gp_load_current();
-    fn_ensure_current();stock_fn_save_original();fn_save_ok=false;
-    if(fn_colors.loaded&&fn_colors.profile==load8(0x82ba8))
-        fn_save_ok=fn_storage_append(&fn_colors,stock_flash_program,fn_image(fn_colors.profile));
-    if(state.initialized && state.profile_valid && state.profile==load8(0x82ba8))
-        fn_save_ok=fn_save_ok&&gp_storage_append(state.profile,state.vendor.active,state.usb_preference_enabled,state.vendor.revision,
-            stock_flash_program,RAM(gp_storage_address(state.profile)))&&
-            gp_usb_storage_append(state.profile,state.usb_preference_enabled,state.usb_revision,
-                stock_flash_program,RAM(gp_usb_storage_address(state.profile)));
+    const uint8_t *wire=state.initialized&&state.profile_valid?state.vendor.active:0;
+    fn_save_ok=save_active_trailers(wire,state.vendor.revision,state.usb_preference_enabled,state.usb_revision,0,0);
 }
 static bool save_profile(const uint8_t *wire,uint32_t revision,bool enabled,uint32_t usb_revision) {
-    fn_ensure_current();
-    if(!fn_colors.loaded||fn_colors.profile!=state.profile)return false;
-    stock_fn_save_original();
-    return fn_storage_append(&fn_colors,stock_flash_program,fn_image(state.profile))&&
-        gp_storage_append(state.profile,wire,enabled,revision,stock_flash_program,RAM(gp_storage_address(state.profile)))&&
-        gp_usb_storage_append(state.profile,enabled,usb_revision,stock_flash_program,RAM(gp_usb_storage_address(state.profile)));
+    return state.profile_valid&&state.profile==load8(0x82ba8)&&
+        save_active_trailers(wire,revision,enabled,usb_revision,0,0);
 }
 static void gp_load_current(void) {
     const uint8_t profile=load8(0x82ba8);
@@ -238,13 +268,29 @@ static void gp_load_current(void) {
 }
 static bool fn_read(void *user,uint8_t profile,uint8_t layer,uint8_t *colors,bool *enabled,uint32_t *revision) {
     (void)user;
+    if(layer==0&&profile<FN_RGB_PROFILES) {
+        *enabled=true;
+        if(!main_rgb_read(main_rgb_image(profile),profile,colors,revision)) {
+            main_rgb_legacy(colors);*revision=0;
+            for(unsigned i=3;i<MAIN_RGB_BYTES;i+=4)colors[i]=colors[i]==255?255:0;
+        }
+        return true;
+    }
     return fn_storage_read_image(fn_image(profile),profile,layer,colors,enabled,revision);
 }
 static bool fn_install(void *user,uint8_t profile,uint8_t layer,const uint8_t *colors,bool enabled,uint32_t revision) {
     (void)user;
     /* The native save serializes the active keymap. Never change this index
      * merely to save another profile, which would overwrite its keymap. */
-    if(profile!=load8(0x82ba8)||profile>=4||layer<1||layer>3)return false;
+    if(profile!=load8(0x82ba8)||profile>=4||layer>3)return false;
+    if(layer==0) {
+        if(!enabled||main_rgb_loaded_profile!=profile||!state.profile_valid||state.profile!=profile)return false;
+        for(unsigned i=3;i<MAIN_RGB_BYTES;i+=4)if(colors[i]&&colors[i]!=255)return false;
+        if(!save_active_trailers(state.vendor.active,state.vendor.revision,state.usb_preference_enabled,state.usb_revision,colors,revision+1u))return false;
+        copy(RAM(MAIN_RGB_MATRIX),colors,MAIN_RGB_BYTES);
+        store32(0x8d260,0);
+        return true;
+    }
     fn_ensure_current();
     if(!fn_colors.loaded||fn_colors.revision!=revision)return false;
     copy(fn_colors.data+(layer-1u)*FN_RGB_BYTES,colors,FN_RGB_BYTES);
@@ -498,7 +544,8 @@ int board_usb_initialize(uint8_t bus,uintptr_t base,void (*original_event)(uint8
     for(unsigned i=0;i<64;i++)state.maximum[i]=10000;
     gp_load_current();
     fn_rgb_init(&fn_protocol,fn_read,fn_install,0,true);
-    fn_load_current();
+    fn_protocol.main_per_profile=true;
+    fn_load_current();main_rgb_load_current();
     const struct ae64_xusb_io io={usb_start,0,0,0};
     ae64_xusb_init(&state.xusb,&usb_config,&io);
     ae64_xusb_ms_string(&usb_config,state.os_string);
@@ -598,6 +645,12 @@ void board_dispatch_hook(void) {
          * that frame is being evaluated with interrupts enabled. */
         read_maxima(state.vendor.max_travel_um);
         const uint8_t *request=RAM(GP+0x65c);
+        /* Reject legacy Main writes on this build. Strip writes and all
+         * native lighting reads remain available. */
+        if(request[0]==0x05&&request[1]==0x04&&request[2]==0) {
+            clear(state.reply,64);state.reply[0]=0x05;state.reply[1]=0x04;state.reply[2]=0xff;
+            stock_vendor_reply(state.reply);return;
+        }
         if(usb_switch_request(request,state.reply,stock_tick())) { stock_vendor_reply(state.reply);return; }
         if(state.usb_phase && request[0]==0x10 && (request[1]>=0x21 && request[1]<=0x35)) {
             clear(state.reply,64);copy(state.reply,request,8);state.reply[8]=GP_VENDOR_CONFLICT;
@@ -616,7 +669,7 @@ void board_dispatch_hook(void) {
 void board_device_info(void) {
     /* Native 01:02 uses bytes 0–44 of its cleared 64-byte reply.
      * Keep the factory version and UID, then add a versioned tail marker. */
-    static const uint8_t identity[]={'A','E','6','4',1,0,8,1,1};
+    static const uint8_t identity[]={'A','E','6','4',1,0,9,0,0};
     stock_device_info();
     copy(RAM(GP+0x61c+48),identity,sizeof(identity));
 }

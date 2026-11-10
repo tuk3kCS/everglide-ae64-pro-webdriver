@@ -28,17 +28,20 @@ Both editions use the same AE64 Pro protocol and onboard profiles. Each has its 
 
 Reloaded starts at `index.html` and uses layouts and assets under `v2/`. The classic driver starts at `legacy/index.html`. The bundled Nunito Sans fonts use the [SIL Open Font License](v2/fonts/OFL.txt).
 
+GitHub Pages checks the current deployment each time the driver opens and loads that deployment's files from a unique path. Browser profiles and preferences are kept. After the first deployment with this change, if a browser still shows the old entry page, open the same address once with a new query such as `?fresh=1` before any `#tab` fragment.
+
 ### Stock and custom firmware
 
-| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Current custom firmware (XInput + Fn RGB v0.8.1.1) |
+| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Current custom firmware (XInput + per-profile RGB v0.9) |
 | --- | --- | --- |
 | Keymaps, Hall performance and live travel, advanced actions, macros, standard RGB | Native AE64 configuration interface | Same native configuration interface |
 | Gamepad workspace | Read switch travel and edit or export local drafts | Read and apply onboard mappings when AGP1 is verified |
 | Xbox controller device switch | Unavailable | Available when AGP1 advertises USB switching |
 | Custom Fn1–Fn3 colors | Unavailable | Available when FNR1 is verified |
+| Main per-key RGB | Shared across the four onboard profiles | Independent maps when per-profile storage is verified |
 | Firmware update and recovery | Board-matched application and recovery workflow | Same board-matched workflow |
 
-The driver displays **v0.8.1.1 custom based on v0.1.0.0** when it reads the build marker from the keyboard. Earlier custom builds and factory images display their native application version. The driver checks the extension replies before enabling Gamepad and custom Fn RGB controls. The bundled images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
+The driver displays **v0.9.0.0 custom based on v0.1.0.0** when it reads the v0.9 build marker from the keyboard. Factory images and custom builds before v0.8.1.1 display their native application version. The driver checks extension replies before enabling Gamepad, custom Fn RGB, or per-profile Main RGB controls. The bundled images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
 
 ### Editing workflow
 
@@ -71,6 +74,8 @@ Advanced-feature dialogs include configuration guidance and local tutorial video
 ## Lighting
 
 The Lighting page uses one shared keyboard and light-strip preview. Offline, paused and staged main effects use 20 distinct animated approximations, labeled as such. A clean live preview uses actual RGB frames from the keyboard. Per-key overrides remain visible. Its standard sections are **Keyboard**, **Per-key**, and **Light strip**. Drag a rectangle to select keys or strip LEDs in the corresponding editor; Ctrl/⌘ toggles selection. Selecting Space colors its five physical LEDs together.
+
+On v0.9, select the onboard slot in the sidebar, edit **Per-key** colors and click **Apply changes** to save that slot’s Main overrides. Each slot starts with the previous shared colors until you save its own map. The editor shows which slot will receive the changes. Factory and older custom firmware continue to share Main per-key colors across the onboard slots. Light-strip overrides remain shared on all builds.
 
 ### Custom Fn colors
 
@@ -128,7 +133,7 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and three experimental **XInput + Fn RGB** releases: v0.8, v0.8.1, and v0.8.1.1. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases and four experimental **XInput + RGB** releases through v0.9. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.

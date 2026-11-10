@@ -11,6 +11,26 @@
   };
   const navigation = document.querySelector("#sideNav");
   const content = document.querySelector("#pageContent");
+  const sidebarToggle = document.querySelector("#toggleSidebar");
+  const sidebarPreference = globalThis.AE64_STORAGE_PREFIX + "compact-sidebar";
+  function setSidebarCompact(compact) {
+    document.documentElement.dataset.sidebar = compact ? "compact" : "expanded";
+    const label = compact ? "Expand sidebar" : "Collapse sidebar";
+    sidebarToggle.setAttribute("aria-label", label);
+    sidebarToggle.setAttribute("aria-expanded", String(!compact));
+    sidebarToggle.title = label;
+  }
+  setSidebarCompact(localStorage.getItem(sidebarPreference) === "true");
+  sidebarToggle.addEventListener("click", () => {
+    const compact = document.documentElement.dataset.sidebar !== "compact";
+    setSidebarCompact(compact);
+    localStorage.setItem(sidebarPreference, String(compact));
+  });
+  for (const button of navigation.querySelectorAll(".sidebar button[data-page]")) {
+    const label = button.querySelector("b").textContent;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+  }
   const performanceRoutes = {
     quick: "quick-settings", actuation: "actuation-point", rapid: "rapid-trigger", switches: "magnetic-switches",
   };
@@ -39,8 +59,7 @@
 
   renderStatus = () => {
     paintStatus();
-    document.querySelector("#connectButton").textContent = connected()
-      ? "Reconnect keyboard" : "Connect keyboard";
+    document.querySelector("#connectButton").classList.toggle("hidden", connected());
   };
 
   renderToolbar = () => {

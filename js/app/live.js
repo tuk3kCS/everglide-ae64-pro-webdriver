@@ -61,7 +61,7 @@ async function readLightingProfiles({ force = false, renderAfter = true } = {}) 
       });
     }
     await attempt("Keyboard colors", async () => {
-      const matrix = await transport.readCustomLighting(MATRIX_ROWS, MATRIX_COLS, 0);
+      const matrix = await readMainRgbMatrix(transport);
       if (!current()) return;
       state.hardware.customMatrix = matrix;
       for (const key of keys) {
@@ -121,11 +121,7 @@ async function loadCustomLighting() {
   stopPolling();
   showProgress("Reading custom lighting", "Loading all nine matrix packets.");
   try {
-    state.hardware.customMatrix = await state.transport.readCustomLighting(
-      MATRIX_ROWS,
-      MATRIX_COLS,
-      0,
-    );
+    state.hardware.customMatrix = await readMainRgbMatrix(state.transport);
     keys.forEach((key) => {
       const records = lightingMatrixIndexes(key)
           .map((matrixIndex) => state.hardware.customMatrix[matrixIndex])

@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The current experimental build is **XInput + Fn RGB v0.8.1.1**. It supplies a build marker so the driver displays both the custom build and its factory base. v0.8.1 introduced persistent Xbox visibility alongside saved mappings and Fn colors. The catalog retains v0.8 and v0.8.1. See the [custom firmware guide](custom/ae64-xinput/README.md) and [physical keyboard testing](../docs/firmware-research/VALIDATION.md#physical-keyboard-testing).
+The current experimental build is **XInput + per-profile RGB v0.9**. It stores Main per-key colors independently for each onboard slot and keeps the existing Fn colors, gamepad mappings, and saved Xbox visibility. The driver checks the custom build marker after the keyboard restarts. The catalog retains v0.8, v0.8.1, and v0.8.1.1. See the [custom firmware guide](custom/ae64-xinput/README.md) and [physical keyboard testing](../docs/firmware-research/VALIDATION.md#physical-keyboard-testing).
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 

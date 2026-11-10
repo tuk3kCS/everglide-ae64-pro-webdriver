@@ -23,6 +23,7 @@ class Keyboard {
     const r = new Uint8Array(64); r.set(bytes.subarray(0, 2));
     if (bytes[0] === 1 && bytes[1] === 2) {
       new DataView(r.buffer).setUint32(4, this.board, false); r.set(this.applicationVersion, 8); r[16] = this.mode; r[17] = this.serial;
+      if (this.mode === 0 && this.customVersion) r.set([0x41, 0x45, 0x36, 0x34, 1, ...this.customVersion], 48);
     } else if (bytes[0] === 8) {
       if (bytes[1] === F.COMMAND.ENTER) this.mode = 255;
       if (bytes[1] === F.COMMAND.WRITE) {
@@ -69,6 +70,19 @@ async function main() {
   equal(k.sent.filter((p) => p[0] === 8).map((p) => p[1]).slice(-2), [3, 4]);
   equal(answer.chunkAckWords, [0x12345678], "Unknown per-chunk ACK words are recorded; final validation gates success.");
   equal(success.events.at(-1).percent, 100);check(!success.update.running);await answer.transport.close();
+  const markedRelease = catalog.firmwares.find((entry) => entry.version === "0.9");
+  equal(markedRelease.customFirmware, "0.9.0.0");
+  const marked = new Keyboard(), markedUpdate = await updater(marked);
+  marked.customVersion = [0, 9, 0, 0];
+  markedUpdate.prepared.entry.customFirmware = markedRelease.customFirmware;
+  const markedResult = await markedUpdate.update.run(markedUpdate.prepared, markedUpdate.t);
+  equal(markedResult.info.customFirmware, "0.9.0.0");await markedResult.transport.close();
+  const unmarkedUpdate = await updater(new Keyboard());
+  unmarkedUpdate.prepared.entry.customFirmware = markedRelease.customFirmware;
+  await assert.rejects(unmarkedUpdate.update.run(unmarkedUpdate.prepared, unmarkedUpdate.t), /did not confirm custom firmware/);checks++;
+  const stockUpdate = await updater(marked);
+  marked.chunks = [];stockUpdate.prepared.entry.kind = "stock";
+  await assert.rejects(stockUpdate.update.run(stockUpdate.prepared, stockUpdate.t), /factory image could not be confirmed/);checks++;
   // Full automatic flow with new HID objects in both modes and another AE64.
   const originalApp = new Keyboard(), autoBoot = new Keyboard({ mode: 255 }), autoApp = new Keyboard(), secondKeyboard = new Keyboard({ mode: 255, serial: 2 });
   const automatic = await updater(originalApp, { delay: async () => { throw new Error("Fixed mode delays must not be used"); }, reconnect: async (expected) => {

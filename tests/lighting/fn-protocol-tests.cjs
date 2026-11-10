@@ -10,6 +10,14 @@ async function main() {
   await assert.rejects(new F.Client({ raw: async (q) => Uint8Array.from([16, 255, ...Array(62).fill(0)]) }).capabilities(), F.UnsupportedFirmwareError);
   const forged = { raw: async (q) => { const b = q.slice();b[9] = 20;new DataView(b.buffer).setUint32(10, 123, true);return b; } };
   await assert.rejects(new F.Client(forged).capabilities(), F.UnsupportedFirmwareError);
+  const matrix = Array.from({ length: 126 }, () => ({ r: 0, g: 0, b: 0, custom: false }));
+  const old = new F.Client({ getCurrentConfig: async () => 0, raw: async (q) => {
+    assert.equal(q[1], 0x30, "Unverified Main capability must prevent writes");
+    const b = q.slice(); b[9] = 20;
+    b.set([10, 0, 48, 0, 4, 3, 6, 21, 3, 1, 0, 0], 10);
+    return b;
+  } });
+  await assert.rejects(old.write(0, 0, { matrix, enabled: true, revision: 0 }), F.UnsupportedFirmwareError);
   let sends = 0;
   const wrongProfile = new F.Client({ getCurrentConfig: async () => 2, raw: async () => { sends++;throw new Error("Must not send"); } });
   await assert.rejects(wrongProfile.write(0, 1, { enabled: true, colors, revision: 0 }), /Switch the onboard/);assert.equal(sends, 0);
@@ -39,8 +47,23 @@ async function main() {
       assert.deepEqual(sent.slice(stale).map((q) => q[1]), [0x31]);
     }
     activeProfile = 0;const original = await client.read(0, 1), off = await client.write(0, 1, { ...original, enabled: false });assert.equal(off.enabled, false);assert.deepEqual(off.colors, original.colors);
+    const main = [];
+    for (let profile = 0; profile < 4; profile++) {
+      activeProfile = profile;
+      const before = await client.read(profile, 0);
+      assert.equal(before.cols, 15);
+      assert.deepEqual(before.matrix, matrix);
+      const changed = matrix.slice();
+      changed[21 + profile] = { r: 18 + profile, g: 37, b: 81, custom: true };
+      const saved = await client.write(profile, 0, { ...before, matrix: changed });
+      assert.equal(saved.revision, 1);
+      assert.deepEqual(saved.matrix, changed);
+      main.push(changed);
+      await assert.rejects(client.write(profile, 0, { ...before, matrix: changed }), /configuration changed/);
+    }
+    for (let profile = 0; profile < 4; profile++) assert.deepEqual((await client.read(profile, 0)).matrix, main[profile]);
     assert.ok(sent.every((q) => q.length === 64 && q[0] === 0x10 && q[1] >= 0x30 && q[1] <= 0x35));
-    console.log(`PASS: browser client ↔ compiled C firmware, ${sent.length} real packets; 4×3 isolation, read-back, stale revisions and disable.`);
+    console.log(`PASS: browser client ↔ compiled C firmware, ${sent.length} real packets; four Main maps and 4×3 Fn isolation, read-back, stale revisions and disable.`);
   } finally { child.stdin.end();child.kill(); }
 }
 main().catch((error) => { console.error(error);process.exitCode = 1; });

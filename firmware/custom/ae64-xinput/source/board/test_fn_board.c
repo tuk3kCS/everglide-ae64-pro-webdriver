@@ -18,17 +18,18 @@ static unsigned upload_fn(uint8_t profile,uint8_t layer,const uint8_t *colors,ui
 static uint32_t word(unsigned address) { uint32_t value;memcpy(&value,ram+address,4);return value; }
 int main(void) {
     base_board_tests();memset(profile_flash,0xff,sizeof(profile_flash));uint8_t colors[FN_RGB_BYTES];
-    memset(ram+0x8cc4c,0xa7,360);memset(ram+0x8d084-4,0x73,4);memset(ram+0x8d084+360,0x74,4);
+    memset(ram+0x8cc4c,0xa7,360);memset(ram+0x8d084+360,0x74,4);
     for(unsigned profile=0;profile<4;profile++) {
         ram[0x82ba8]=(uint8_t)profile;board_fn_load_hook();
         for(unsigned layer=1;layer<=3;layer++) {
             for(unsigned i=0;i<FN_RGB_BYTES;i++)colors[i]=(uint8_t)(i+profile*17+layer*31);
             CHECK(upload_fn((uint8_t)profile,(uint8_t)layer,colors,layer-1,true)==0);
-            ram[0x82b9d]=(uint8_t)layer;put32(ram+0x8d2d0,0x20);unsigned before=fn_renders;board_fn_render_hook();CHECK(fn_renders==before+1);
+            ram[0x82b9d]=(uint8_t)layer;put32(ram+0x8d2d0,0x20);
+            uint32_t main_tail=word(0x8d084-4);unsigned before=fn_renders;board_fn_render_hook();CHECK(fn_renders==before+1);
             for(unsigned row=0;row<6;row++)for(unsigned col=0;col<15;col++) {
                 unsigned i=(row*21+col)*3;CHECK(word(0x8d084+(row*15+col)*4)==(0xff000000u|(uint32_t)colors[i]<<16|(uint32_t)colors[i+1]<<8|colors[i+2]));
             }
-            CHECK(word(0x8d084-4)==0x73737373u&&word(0x8d084+360)==0x74747474u);
+            CHECK(word(0x8d084-4)==main_tail&&word(0x8d084+360)==0x74747474u);
             CHECK(word(0x8cc4c)==0xa7a7a7a7u);
             board_fn_save_hook();board_fn_load_hook();board_fn_render_hook();CHECK(word(0x8d084)!=(uint32_t)0x5a5a5a5a);
             CHECK(profile_flash[profile][0x16ab]==0x69&&profile_flash[profile][0x16ac]==0xff);

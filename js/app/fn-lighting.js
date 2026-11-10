@@ -34,7 +34,7 @@ function fnTargetLayer() {
   return layer ?? 0;
 }
 const fnLightingView = {
-  transport: null, client: null, caps: null, generation: 0, busy: false,
+  transport: null, client: null, caps: null, mainCaps: null, generation: 0, busy: false,
   selected: new Set([0]), color: "#73f0c0", selectionScope: "",
   drafts: new Map(), errors: new Map(),
 };
@@ -47,9 +47,24 @@ function fnLightingAvailable() {
     fnLightingView.caps?.verified && fnLightingView.caps.profiles === 4 &&
     fnLightingView.caps.layers === 3 && fnLightingView.caps.rows === 6 && fnLightingView.caps.cols === 21);
 }
+function expectsProfileMainRgb() {
+  const [major, minor] = String(state.hardware.info?.customFirmware || "").split(".").map(Number);
+  return major > 0 || minor >= 9;
+}
+function profileMainRgbAvailable() {
+  return Boolean(connected() && fnLightingView.transport === state.transport && fnLightingView.mainCaps?.verified);
+}
+function requireProfileMainRgb() {
+  if (!profileMainRgbAvailable()) throw new Error("Per-profile RGB support could not be verified. Reconnect before applying per-key colors.");
+  return fnLightingView.client;
+}
+async function readMainRgbMatrix(transport) {
+  if (expectsProfileMainRgb()) return (await requireProfileMainRgb().read(fnLightingProfile(), 0)).matrix;
+  return transport.readCustomLighting(MATRIX_ROWS, MATRIX_COLS, 0);
+}
 function resetFnLightingCapability() {
   fnLightingView.generation++;
-  fnLightingView.transport = null; fnLightingView.client = null; fnLightingView.caps = null;
+  fnLightingView.transport = null; fnLightingView.client = null; fnLightingView.caps = null; fnLightingView.mainCaps = null;
   fnLightingView.drafts.clear(); fnLightingView.errors.clear();
   if (isFnLightingTab() || state.lightingTab === "fn") state.lightingTab = "main";
 }
@@ -62,6 +77,14 @@ async function probeFnLighting(transport) {
     if (generation !== fnLightingView.generation || state.transport !== transport) return false;
     if (!caps?.verified || caps.profiles !== 4 || caps.layers !== 3 || caps.rows !== 6 || caps.cols !== 21) return false;
     fnLightingView.transport = transport; fnLightingView.client = client; fnLightingView.caps = caps;
+    if (expectsProfileMainRgb()) {
+      try {
+        const mainCaps = await client.capabilities(fnLightingProfile(), 0);
+        if (generation === fnLightingView.generation && state.transport === transport &&
+            mainCaps?.verified && mainCaps.persistent && mainCaps.profiles === 4 && mainCaps.rows === 6 && mainCaps.cols === 15)
+          fnLightingView.mainCaps = mainCaps;
+      } catch (error) { log("Per-profile Main RGB unavailable", error.message); }
+    }
     return true;
   } catch (_) { return false; }
 }

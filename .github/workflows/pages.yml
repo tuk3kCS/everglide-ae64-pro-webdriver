@@ -79,6 +79,7 @@ jobs:
           if [ -d assets/hall-effect-switches/images ]; then cp -R assets/hall-effect-switches/images _site/assets/hall-effect-switches/; fi
           cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/
           touch _site/.nojekyll
+          node scripts/version-pages-release.cjs _site "$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5

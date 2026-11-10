@@ -7,15 +7,17 @@
 #define FN_RGB_BYTES 378u
 #define FN_RGB_PROFILES 4u
 #define FN_RGB_LAYERS 3u
+#define MAIN_RGB_BYTES (6u*15u*4u)
 /* Backends run in the serialized native configuration task. Read must return
  * the committed revision; install must check expected_revision before saving. */
 typedef bool (*fn_rgb_read_fn)(void *,uint8_t,uint8_t,uint8_t *,bool *,uint32_t *);
 typedef bool (*fn_rgb_install_fn)(void *,uint8_t,uint8_t,const uint8_t *,bool,uint32_t);
 struct fn_rgb_context {
-    uint8_t staging[FN_RGB_BYTES],received[(FN_RGB_BYTES+7)/8],token[8];
+    _Alignas(4) uint8_t staging[FN_RGB_BYTES];
+    uint8_t received[(FN_RGB_BYTES+7)/8],token[8];
     uint32_t revision,checksum,last_activity;
     uint8_t profile,layer;
-    bool enabled,active,persistent;
+    bool enabled,active,persistent,main_per_profile;
     fn_rgb_read_fn read;
     fn_rgb_install_fn install;
     void *user;

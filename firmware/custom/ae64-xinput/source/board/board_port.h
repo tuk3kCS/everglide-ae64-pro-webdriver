@@ -24,6 +24,8 @@ void stock_fn_render(void);
 void stock_fn_load_original(void);
 void stock_fn_save_original(void);
 void stock_flash_program(uintptr_t,uint32_t,const uint8_t *);
+void stock_rgb_save_original(void);
+void board_rgb_save_shared(void);
 void stock_dispatch_original(void);
 void stock_device_info(void);
 bool stock_ep0_original(uint8_t, const struct ae64_usb_setup *, uint8_t **, uint32_t *);
