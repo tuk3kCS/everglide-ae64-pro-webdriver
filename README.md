@@ -1,10 +1,40 @@
 # AE64 Pro Control
 
-An unofficial, local-first WebHID driver for the **Everglide AE64 Pro** magnetic keyboard. Configure keymaps, Hall-effect performance, RGB, advanced key behavior, firmware updates, and custom gamepad output from one browser interface.
+
+<p align="center">
+  <img src="assets/showcase/showcase1.png" alt="" width="48%" />
+  <img src="assets/showcase/showcase2.png" alt="" width="48%" />
+</p>
+<p align="center">
+<img src="assets/showcase/showcase3.png" alt="" width="96%" />
+</p>
+
+
+An unofficial WebHID driver for the **Everglide AE64 Pro** magnetic keyboard. Configure keymaps, Hall-effect performance, RGB, advanced key behavior, firmware updates, and custom gamepad output from one browser interface.
 
 The driver is a static website. It communicates directly with the keyboard and does not require an account or the manufacturer’s cloud service.
 
 [Open the web driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/) · [Firmware library](firmware/README.md) · [Firmware research](docs/firmware-research/README.md)
+
+## Unleashing AE64 Pro's full potential using custom firmware
+
+### Controller emulation mode
+
+<img src="assets/showcase/gamepad.gif" alt="" width="96%" />
+</p>
+
+### Per-key FN layer RGB effect (from Wooting)
+
+<img src="assets/showcase/fn_rgb1.png" alt="" height="80%" />
+</p>
+<img src="assets/showcase/fn_rgb2.gif" alt="" width="96%" />
+</p>
+
+### Independent per-key led effect for each profile
+
+
+<img src="assets/showcase/profile_rgb.gif" alt="" width="96%" />
+</p>
 
 ## Getting started
 
@@ -20,17 +50,9 @@ Open [localhost:4173](http://localhost:4173), then choose **Initialize a device*
 
 The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firmware files and commands for other keyboards are not interchangeable.
 
-### AE64 Pro Reloaded
-
-Reloaded is the default driver. Quick Settings puts key selection, actuation, Rapid Trigger and dead zones together. Remap supports dragging assignments from a searchable catalog. Choose **Legacy mode** on the welcome page to open [the classic driver](http://localhost:4173/legacy/). Existing `/v2/` links redirect to Reloaded.
-
-Both editions use the same AE64 Pro protocol and onboard profiles. Each has its own browser drafts, language, theme and Auto apply preference. Changes saved to the physical keyboard are visible to either edition when it reads the device.
-
-Reloaded starts at `index.html` and uses layouts and assets under `v2/`. The classic driver starts at `legacy/index.html`. The bundled Nunito Sans fonts use the [SIL Open Font License](v2/fonts/OFL.txt).
-
-GitHub Pages checks the current deployment each time the driver opens and loads that deployment's files from a unique path. Browser profiles and preferences are kept. After the first deployment with this change, if a browser still shows the old entry page, open the same address once with a new query such as `?fresh=1` before any `#tab` fragment.
-
 ### Stock and custom firmware
+
+AGP1 - indicator that custom firmware is installed in the keyboard
 
 | Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Current custom firmware (XInput + per-profile RGB v0.9) |
 | --- | --- | --- |
