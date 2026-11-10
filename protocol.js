@@ -220,10 +220,17 @@
     async getDeviceInfo() {
       const data = await this.transact([FAMILY.DEVICE, 2]);
       const boardId = ((data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7]) >>> 0;
+      const firmware = Array.from(data.slice(8, 12)).join(".");
+      const customVersion = data.slice(53, 57);
+      const hasCustomIdentity = boardId === 0x0030000a && data[16] === 0 && data.length === REPORT_LENGTH &&
+        [0x41, 0x45, 0x36, 0x34, 1].every((byte, index) => data[48 + index] === byte) &&
+        customVersion.some(Boolean);
+      const customFirmware = hasCustomIdentity ? Array.from(customVersion).join(".") : null;
       return {
         type: data[2], subType: data[3], boardId,
         boardIdHex: boardId.toString(16).padStart(8, "0"),
-        firmware: Array.from(data.slice(8, 12)).join("."),
+        firmware, customFirmware,
+        firmwareDisplay: customFirmware ? `v${customFirmware} custom based on v${firmware}` : firmware,
         pcb: Array.from(data.slice(12, 16)).join("-"),
         runMode: data[16], serial: decodeSerial(data.slice(17, 29)),
         timestamp: new TextDecoder().decode(data.slice(29, 41)).replace(/\0+$/g, ""),

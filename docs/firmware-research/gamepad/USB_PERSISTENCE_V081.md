@@ -43,6 +43,6 @@ Offline image verification covers container CRC, pinned native patch sites, ELF 
 
 The USB suite exercises disabled/enabled cold boots, profile changes, preference propagation, mapping/Fn preservation, redundant requests, storage failure, sequence wrap, corrupt records, ACK handling, endpoint ownership and descriptor changes. The storage suite flips every preference-record bit and tests interrupted programming and neighboring data preservation.
 
-Physical flashing, real power-cycle behavior and real flash timing remain unverified for this new image. These tests use synthetic RAM, flash and USB state.
+The release-time checks used synthetic RAM, flash and USB state. The maintainer later reported no issues in their v0.8.1 physical-keyboard testing. See [physical keyboard testing](../VALIDATION.md#physical-keyboard-testing).
 
 The prior source is retained in `firmware/custom/ae64-xinput/history/v0.8-source.zip`. Build and verification manifests for this release are in `firmware/custom/ae64-xinput/v0.8.1/`.

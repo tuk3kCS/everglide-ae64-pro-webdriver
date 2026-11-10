@@ -13,4 +13,4 @@ Downloaded from the tutorial assets referenced by `https://xsyd.top/v2-app/` on 
 - `socd_neutral.webm`
 - `socd_last-override.webm`
 
-The four SOCD videos, RS video, and MPT video are used by the Advanced-page information dialogs. The Pages artifact currently packages the tutorial directory so the local references work after deployment.
+The Advanced information dialogs use these videos for DKS, MPT, Mod-Tap, Toggle, End Key, Rappy Snappy, and the four SOCD modes. GitHub Pages packages them with the driver.

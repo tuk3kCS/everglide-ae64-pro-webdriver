@@ -1,5 +1,7 @@
 # AE64 Pro v0.3: USB controller visibility, guards and validation
 
+This report records v0.3. Its binary and build evidence are in Git history, and its [source archive](../../../firmware/custom/ae64-xinput/history/v0.3-source.zip) is in the repository. See the [current firmware guide](../../../firmware/custom/ae64-xinput/README.md) for build and update instructions.
+
 October 29, 2026. New image: `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin`, **136,192 bytes**, SHA-256 `c14109b2911a52fd4f8a12bf0a89d295bdf4b8c4ebb76d13083bc03f3c087b71`. This is an experimental, offline-verified successor to v0.2. It has not been flashed or tested on a physical keyboard during this work.
 
 ## Firmware-folder review
@@ -8,7 +10,7 @@ The library contains five unchanged manufacturer containers and separately named
 
 The custom firmware is an append-only RISC-V extension, not a reconstruction of the entire manufacturer firmware. The native payload stays at its existing addresses. The builder links the extension at `0x8003D000`, reserves the existing 4KB state region from the stock heap, checks original instruction signatures, patches eight integration calls, redirects descriptor callbacks, and updates the container length/CRC. Build manifests list every changed original byte range. v0.3 also redirects the device-descriptor callback so both USB configurations have distinct device revisions.
 
-`source/board/board_port.c` integrates the physical mapper, XUSB endpoints, native scan/scheduler, control dispatch and Fn-color storage/rendering. `source/src/` contains independently testable mapper, physical adapter, packet protocol, XUSB and Fn RGB code. `fn_storage.c` appends CRC-checked Fn colors to the verified unused tails of the native keymap allocations. `portable-reference/` and the top-level older ELF/manifests are historical component/v0.1 records, not the current build. v0.2 image/evidence remain unchanged; its pre-change source is archived in `history/v0.2-source.zip` with repository-relative paths. Current v0.3 ELF, build manifest and verification report are under `firmware/custom/ae64-xinput/v0.3/`.
+`source/board/board_port.c` integrates the physical mapper, XUSB endpoints, native scan/scheduler, control dispatch and Fn-color storage/rendering. `source/src/` contains independently testable mapper, physical adapter, packet protocol, XUSB and Fn RGB code. `fn_storage.c` appends CRC-checked Fn colors to the verified unused tails of the native keymap allocations. `portable-reference/` and the top-level older ELF/manifests are historical component/v0.1 records, not the current build. v0.2 image/evidence remain unchanged; its pre-change source is archived in `history/v0.2-source.zip` with repository-relative paths. The v0.3 release stored its ELF, build manifest and verification report under `firmware/custom/ae64-xinput/v0.3/`.
 
 The existing mapper's neutral/rearm, actual-calibration limits, asynchronous XUSB buffer ownership, transactional uploads and Fn persistence checks are retained. The new visibility setting uses RAM; no new flash sector, Fn trailer byte or undocumented persistent field is borrowed.
 
@@ -79,4 +81,4 @@ Windows Application Control blocked newly compiled native test executables. Port
 
 Physical boot, high-speed detach/reattach, host reset ordering, active Device Manager removal, sustained endpoint traffic and recovery remain unverified. If the transition cannot be confirmed, the UI requests reconnect/readback and does not claim success. A power cycle restores the default enabled state. Selecting the new image in Firmware only prepares it; flashing still requires the existing review and explicit Start action.
 
-Rebuild with `source/build.py`; verify with `source/verify.py --wasi` when using the portable test runtime. Both require the pinned factory image and Zig path documented in the custom firmware README. When verifying this release layout, pass `--image firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.3.bin --image-dir firmware/custom/ae64-xinput/v0.3` because the binary is kept outside the evidence directory to avoid duplicate catalog entries. v0.2 remains available for comparison or an explicit rollback through the existing updater.
+The archived source contains the original build and verification scripts. The current firmware selector lists v0.8 and newer custom images.

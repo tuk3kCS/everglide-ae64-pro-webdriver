@@ -44,6 +44,9 @@ def main():
     # The preview issue must not become an unverified rewrite of the factory RGB
     # engine. All twenty native render callbacks and their table remain intact.
     stock_payload=stock[4096:]
+    check(struct.unpack_from('<I',payload,0x19754)[0]==symbols['board_device_info']['address'],'DeviceInfo handler entry')
+    check(symbols['stock_device_info']['address']==0x8002da42,'Native DeviceInfo address')
+    check(payload[0xca42:0xcb0a]==stock_payload[0xca42:0xcb0a],'Native DeviceInfo handler changed')
     for begin,end,label in [(0x6e6e,0xa536,'RGB effect engine'),(0xc442,0xc544,'lighting mode handler'),(0xa9c0,0xaa36,'RGB timing loop'),(0x1456a,0x14906,'native Fn renderer'),(0x1b0b0,0x1b150,'twenty RGB callback pairs')]:
         check(payload[begin:end]==stock_payload[begin:end],label+' changed')
     expected_columns=[list(range(14)),list(range(14)),list(range(12))+[13],[0]+list(range(2,15)),[0,1,2,6,9,10,12,13,14]]

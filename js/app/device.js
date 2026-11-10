@@ -268,6 +268,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
     log("Connected", {
       boardId: info.boardIdHex,
       firmware: info.firmware,
+      customFirmware: info.customFirmware,
       protocol,
       lightingAreas,
       doubleLighting: Boolean(doubleLighting),
@@ -279,7 +280,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
     openWorkspace();
     startProfilePolling();
     maybeShowCalibrationRecommendation();
-    showToast(`AE64 Pro connected · firmware ${info.firmware}`);
+    showToast(`AE64 Pro connected · firmware ${info.firmwareDisplay || info.firmware}`);
     return true;
   } catch (error) {
     log("Connection failed", error.message);

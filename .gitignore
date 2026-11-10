@@ -5,3 +5,4 @@ _site/
 har/
 __pycache__/
 *.pyc
+.openai/

@@ -1,6 +1,6 @@
-# Fn RGB extension v0.2
+# Fn RGB extension
 
-This build adds configurable static Fn lighting to the existing experimental native Xbox/XInput firmware. The pinned base is factory v0.1.0.0, SHA256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`. Analysis, compilation and tests did not write to a keyboard. This new image has not been tested on hardware.
+v0.2 introduced configurable static Fn lighting on top of native Xbox/XInput. The pinned factory base is v0.1.0.0, SHA-256 `3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d`. The [current custom firmware guide](../../../firmware/custom/ae64-xinput/README.md) links to the active release and its validation.
 
 v0.7 additionally retains each physical Fn press action until release, stages Transparent above newly assigned Fn triggers, and requests an immediate next-task composition on layer changes. See the [v0.7 Fn/input/timing report](../gamepad/INPUT_FN_TIMING_FIX_V07.md). These changes address Fn2/Fn3 release resolution; physical LED latency still needs retesting.
 
@@ -38,7 +38,7 @@ The host matrix is 6×21, with six unused columns in each row. The LED frame is 
 
 Each onboard profile uses 1,134 RGB bytes (three 378-byte maps), two enable/reserved bytes and a 16-byte versioned CRC header: **1,152 bytes**. Native keymaps occupy offsets `0000..16AB` in each 8 KB allocation. The extension occupies `1700..1B7F`, within the verified unused tail. Total across four profiles is **4,608 bytes** in their existing allocations.
 
-Only the current profile is cached in RAM. Linked extension BSS is **3,792 bytes**, within the existing 4,096-byte reservation; no further reduction of the 12,284-byte remaining native heap is needed. The image is 134,960 bytes, within the existing inferred 256 KB application region. Runtime heap headroom remains a hardware test.
+The firmware caches the active profile in RAM. In the v0.2 build, linked extension BSS is **3,792 bytes**, within the existing 4,096-byte reservation; no further reduction of the 12,284-byte remaining native heap is needed. The image is 134,960 bytes, within the existing inferred 256 KB application region. Runtime heap headroom remains a hardware test.
 
 The native save erases and rewrites the selected keymap allocation. The extension wraps native save to append its cached colors after every keymap save, and wraps native load to restore them. A complete CRC-checked trailer is required before enabling colors. Read-back is required after programming. Only the active onboard profile can be written; select another onboard profile in the sidebar first. Temporarily changing the native index would overwrite that profile with the wrong keymap, so the firmware rejects it.
 
@@ -47,11 +47,10 @@ Saving inherits the factory erase/rewrite power-loss boundary; it is not a dual-
 ## Use
 
 1. Export existing keyboard settings and gamepad assignments.
-2. In **Firmware**, select **Experimental XInput + Fn RGB v0.2**, review it and start the update on the intended keyboard. Selecting it alone does not flash anything.
-3. Reconnect. In **Lighting → Fn 1 / Fn 2 / Fn 3**, select the active onboard profile in the sidebar, choose the Fn 1, Fn 2 or Fn 3 button and read its map. Drag on the shared keyboard preview to select keys; Ctrl/⌘ toggles selection.
+2. In **Firmware**, select the current **Experimental XInput + Fn RGB** image, review it and start the update on the intended keyboard.
+3. Reconnect. In **Lighting → Fn 1 / Fn 2 / Fn 3**, select the onboard profile in the sidebar, then choose Fn 1, Fn 2 or Fn 3. The driver reads all three maps automatically. Drag on the shared keyboard preview to select keys; Ctrl/⌘ toggles selection.
 4. Enable custom colors, select keys, choose colors and click **Apply Fn profile**. Apply writes and reads back the selected layer. The normal Auto apply setting does not apply Fn drafts.
 5. Hold a key mapped to that Fn layer to check the physical LEDs; release it to check the main effect. Repeat for the three layers and four profiles. Unplug/reconnect to validate persistence.
-6. Reapply an exported gamepad profile after reconnecting. Gamepad assignments remain session-only; Fn colors persist independently.
 
 ## Protocol and verification
 
@@ -59,7 +58,7 @@ The separate extension uses family `10`, commands `30..35`, version 1 and magic 
 
 Offline validation includes 40,084 storage checks (including every single-bit corruption of a trailer), 1,865 protocol checks, 24,726 synthetic board checks, browser-client/C-firmware packet exchange, existing gamepad and range regressions, complete container/CRC/hook/trampoline audits, all seven catalog image streams and browser UI checks. These establish implementation consistency, not hardware LED behavior, bootloader acceptance or recovery.
 
-The rebuilt image, manifest, ELF and verification record are under `firmware/custom/ae64-xinput/v0.2/` and `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.2.bin`. Rebuild with `source/build.py`, then run `source/verify.py`; commands are in the custom firmware README. Native evidence is pinned to this stock release and does not establish layouts in future vendor builds.
+The v0.2 source is archived in [v0.2-source.zip](../../../firmware/custom/ae64-xinput/history/v0.2-source.zip). Its binary and build records are in Git history. The [custom firmware guide](../../../firmware/custom/ae64-xinput/README.md) gives commands for rebuilding the current release. Native evidence is pinned to this stock release and does not establish layouts in future vendor builds.
 
 The Fn editor uses the sidebar’s active profile only. Its three layer buttons sit beside Keyboard, Per-key and Light strip. It reuses the single unified keyboard preview and rectangle selection; there is no second keyboard or profile dropdown inside the Fn editor. This UI revision does not change the firmware image or FNR1 protocol.
 

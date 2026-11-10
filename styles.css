@@ -418,6 +418,7 @@ button { color: inherit; }
 .mapping-picker-search, .advanced-picker-search { display: grid; gap: 6px; }
 .mapping-picker-search input, .advanced-picker-search input { min-height: 41px; }
 .mapping-picker-list, .advanced-picker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; gap: 7px; max-height: none; overflow: auto; padding: 1px 3px 3px 1px; }
+.mapping-picker-list.search-results { max-height: min(43svh, 26rem); }
 .mapping-picker-list button, .advanced-picker-grid button { min-width: 0; min-height: 67px; display: grid; align-content: center; gap: 5px; padding: 9px; border: 1px solid var(--line-soft); border-radius: 9px; background: color-mix(in srgb, var(--panel-3) 82%, transparent); color: var(--text); text-align: left; cursor: pointer; }
 .mapping-picker-list button span, .advanced-picker-grid button span { color: var(--muted); font: 850 7px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .07em; }
 .mapping-picker-list button b, .advanced-picker-grid button b { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }

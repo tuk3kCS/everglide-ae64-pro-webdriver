@@ -1,5 +1,7 @@
 # v0.5: simultaneous controller keys
 
+This report records v0.5. Its binary and build evidence are in Git history, and its [source archive](../../../firmware/custom/ae64-xinput/history/v0.5-source.zip) is in the repository. See the [current firmware guide](../../../firmware/custom/ae64-xinput/README.md) for build and update instructions.
+
 October 29, 2026. Image: `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.5.bin`, **138,040 bytes**, SHA-256 `78cd833f4af6d57e37eaf5d5e7f66449fe4ba5cd2ed59d359ba15407a419c206`.
 
 ## Observed on the connected keyboard

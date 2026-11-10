@@ -23,6 +23,7 @@ stock_schedule = 0x800263F4;
 stock_save3 = 0x80024C0E;
 stock_save12 = 0x80024BDE;
 stock_dispatch_continue = 0x8002E77A;
+stock_device_info = 0x8002DA42;
 stock_ep0_continue = 0x80030756;
 stock_add_interface = 0x80031494;
 stock_add_endpoint = 0x800314CA;

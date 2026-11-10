@@ -26,7 +26,7 @@ The native command table already includes global settings, key layout, per-key H
 
 ## v0.0.5.0 → v0.0.6.0
 
-**Exception diagnostics.** The stop stub at payload `0xFE40` in v5 is an infinite loop. Its matching v6 path at `0xFE72` now formats `Exception occurred! cause: %ld, epc: %ld`, calls the formatting output routine, then loops. Later versions retain it. This adds diagnostic information; it does not prove that the underlying fault was fixed. Exact instructions and string references are in [focused native evidence](symbols/FOCUSED_NATIVE_FINDINGS.md) and `symbols/confirmed-deltas.json`.
+**Exception diagnostics.** The stop stub at payload `0xFE40` in v5 is an infinite loop. Its matching v6 path at `0xFE72` now formats `Exception occurred! cause: %ld, epc: %ld`, calls the formatting output routine, then loops. Later versions retain it. This adds diagnostic information; it does not prove that the underlying fault was fixed. Exact instructions and string references are in `symbols/FOCUSED_NATIVE_FINDINGS.md` and `symbols/confirmed-deltas.json` in [full-research.zip](full-research.zip).
 
 **Profile-switch scheduling.** In request `02 03`, changing to an accepted profile adds writes to a second event/state word. Profile indices 0, 1, 2 and 3 select flags `0x08`, `0x10`, `0x20` and `0x40`, respectively. This is additional state notification. The downstream user-visible effect has not been established.
 
@@ -38,7 +38,7 @@ The native command table already includes global settings, key layout, per-key H
 
 **Switch selection invalidates calibration status.** The driver calls request bytes 21–22 of `04 02` the `axisV2Id`. When this value changes, v7 adds a zero write to byte 8 of the corresponding per-key axis record. That byte is returned as response byte 20 and called `calibrate` by the driver. V6 stores the new axis ID without this zero write. This supports calibration-status invalidation when changing the selected switch/axis. It does not prove immediate complete sensor recalibration or a measured accuracy improvement.
 
-**Report-building logic.** The matching report builder changes substantially. The v7 ordinary-key bitmap branch explicitly accepts `(usage - 4) & 0xFF <= 108`, tests a key bit before setting it, and separately handles boot-report slots. This identifies explicit bitmap-range and duplicate-bit handling. A complete input-path proof or latency comparison was not performed. See [HID/report-path findings](analysis/HID_REPORT_CHANGES.md).
+**Report-building logic.** The matching report builder changes substantially. The v7 ordinary-key bitmap branch explicitly accepts `(usage - 4) & 0xFF <= 108`, tests a key bit before setting it, and separately handles boot-report slots. This identifies explicit bitmap-range and duplicate-bit handling. A complete input-path proof or latency comparison was not performed. See `analysis/HID_REPORT_CHANGES.md` in [full-research.zip](full-research.zip).
 
 The shared HID descriptor itself remains identical to v6; this change is in the code constructing its data.
 
@@ -68,7 +68,7 @@ The applications do not provide the bootloader's real `08 02` writer, `08 03` va
 
 ## Reproduction and evidence
 
-- `originals/` contains the five unchanged input containers; SHA-256 hashes are recorded in `analysis/inventory.json` and the original manifest.
+- In [full-research.zip](full-research.zip), `originals/` contains the five unchanged input containers. The [firmware library](../../firmware/README.md) also includes those images. In the archive, SHA-256 hashes are recorded in `analysis/inventory.json` and the original manifest.
 - `tools/analyze_firmware.py` reproduces header/CRC validation, extracted payloads, strings, HID fields and optional linear disassembly.
 - `analysis/*-disassembly.txt`, `*-string-xrefs.json`, and `usb-descriptors-decoded.json` retain byte-level coordinates.
 - `protocol/native-handler-excerpts/` anchors handler findings to exact bytes and instructions. `symbols/REVIEW.md` records an independent check of the main native claims.

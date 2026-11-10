@@ -56,10 +56,17 @@ const KEYBOARD_MAPPING_GROUPS = Object.freeze([
 ]);
 
 function mappingPickerEntries(group = state.mappingPickerGroup, search = state.mappingSearch) {
+  const query = search.trim().toLowerCase();
+  if (query) {
+    return KEYMAP_SELECTABLE_GROUPS.flatMap((category) =>
+      KEYCODE_GROUPS[category]
+        .filter((entry) => entry.label.toLowerCase().includes(query))
+        .map((entry) => ({ ...entry, category })),
+    );
+  }
   const source = KEYCODE_GROUPS[group] || KEYCODE_GROUPS.keyboard;
   const keyboardGroup = KEYBOARD_MAPPING_GROUPS.find((item) => item.id === state.mappingKeyboardGroup) || KEYBOARD_MAPPING_GROUPS[0];
-  return source.filter((entry) => (group !== "keyboard" || keyboardGroup.test(Number(entry.code))) &&
-    entry.label.toLowerCase().includes(String(search || "").toLowerCase()));
+  return group === "keyboard" ? source.filter((entry) => keyboardGroup.test(Number(entry.code))) : source;
 }
 
 function mappingKeyboardGroupForCode(code) {
@@ -71,10 +78,49 @@ function renderMappingPicker() {
   if (!body) return;
   const group = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingPickerGroup) ? state.mappingPickerGroup : "keyboard";
   const active = displayedKeycode(selectedKey());
+  const searching = Boolean(state.mappingSearch.trim());
   const entries = mappingPickerEntries(group);
   const groupLabel = group === "keyboard" ? (KEYBOARD_MAPPING_GROUPS.find((item) => item.id === state.mappingKeyboardGroup)?.label || "Keyboard") : group[0].toUpperCase() + group.slice(1);
   if (title) title.textContent = `Map ${selectedKey().n}`;
-  body.innerHTML = `<div class="mapping-picker-shell"><aside class="mapping-picker-sidebar"><div class="mapping-picker-summary"><span>PHYSICAL KEY</span><strong>${esc(selectedKey().n)}</strong><small>${esc(["Main", "Fn1", "Fn2", "Fn3"][Number(state.profile.layer)])} · currently ${esc(keycodeLabel(active))}</small></div><div class="mapping-picker-groups" role="tablist" aria-label="Keymap groups">${KEYMAP_SELECTABLE_GROUPS.map((item) => `<button type="button" role="tab" data-mapping-picker-group="${item}" class="${item === group ? "active" : ""}" aria-selected="${item === group}"><span>${item === "keyboard" ? "Keyboard" : item[0].toUpperCase() + item.slice(1)}</span><i aria-hidden="true">›</i></button>`).join("")}</div></aside><section class="mapping-picker-catalog"><div class="mapping-picker-catalog-head"><div><span>KEYMAP CATALOG</span><strong>${esc(groupLabel)}</strong></div><b>${entries.length} VALUES</b></div>${group === "keyboard" ? `<div class="mapping-keyboard-groups" role="tablist" aria-label="Keyboard key groups">${KEYBOARD_MAPPING_GROUPS.map((item) => `<button type="button" role="tab" data-mapping-keyboard-group="${item.id}" class="${item.id === state.mappingKeyboardGroup ? "active" : ""}" aria-selected="${item.id === state.mappingKeyboardGroup}">${esc(item.label)}</button>`).join("")}</div>` : ""}<label class="mapping-picker-search"><span>Search this group</span><input class="search-input" id="mappingPickerSearch" type="search" placeholder="Search ${group === "keyboard" ? "keyboard keys" : `${group} functions`}" value="${esc(state.mappingSearch)}"></label><div class="mapping-picker-list">${entries.length ? entries.map((entry) => `<button type="button" data-mapping-picker-keycode="${entry.code}" class="${Number(entry.code) === Number(active) ? "active" : ""}"><span>${Number(entry.code) === Number(active) ? "CURRENT" : "KEY VALUE"}</span><b>${esc(entry.label)}</b><small>0x${Number(entry.code).toString(16).padStart(4, "0").toUpperCase()}</small></button>`).join("") : `<p class="mapping-picker-empty">No matching keycodes.</p>`}</div></section></div>`;
+  body.innerHTML = `
+    <div class="mapping-picker-shell">
+      <aside class="mapping-picker-sidebar">
+        <div class="mapping-picker-summary">
+          <span>PHYSICAL KEY</span><strong>${esc(selectedKey().n)}</strong>
+          <small>${esc(["Main", "Fn1", "Fn2", "Fn3"][Number(state.profile.layer)])} · currently ${esc(keycodeLabel(active))}</small>
+        </div>
+        <div class="mapping-picker-groups" role="tablist" aria-label="Keymap groups">
+          ${KEYMAP_SELECTABLE_GROUPS.map((item) => {
+            const selected = !searching && item === group;
+            return `<button type="button" role="tab" data-mapping-picker-group="${item}" class="${selected ? "active" : ""}" aria-selected="${selected}"><span>${item[0].toUpperCase() + item.slice(1)}</span><i aria-hidden="true">›</i></button>`;
+          }).join("")}
+        </div>
+      </aside>
+      <section class="mapping-picker-catalog">
+        <div class="mapping-picker-catalog-head">
+          <div><span>KEYMAP CATALOG</span><strong>${searching ? "All categories" : esc(groupLabel)}</strong></div>
+          <b>${entries.length} ${searching ? "MATCHES" : "VALUES"}</b>
+        </div>
+        ${group === "keyboard" ? `<div class="mapping-keyboard-groups" role="tablist" aria-label="Keyboard key groups">
+          ${KEYBOARD_MAPPING_GROUPS.map((item) => {
+            const selected = !searching && item.id === state.mappingKeyboardGroup;
+            return `<button type="button" role="tab" data-mapping-keyboard-group="${item.id}" class="${selected ? "active" : ""}" aria-selected="${selected}">${esc(item.label)}</button>`;
+          }).join("")}
+        </div>` : ""}
+        <label class="mapping-picker-search">
+          <span>Search all categories</span>
+          <input class="search-input" id="mappingPickerSearch" type="search" placeholder="Search keybinds…" autocomplete="off" value="${esc(state.mappingSearch)}">
+        </label>
+        <div class="mapping-picker-list${searching ? " search-results" : ""}">
+          ${entries.length ? entries.map((entry) => {
+            const current = Number(entry.code) === Number(active);
+            const category = entry.category?.toUpperCase();
+            const badge = current ? category ? `CURRENT · ${category}` : "CURRENT" : category || "KEY VALUE";
+            return `<button type="button" data-mapping-picker-keycode="${entry.code}" class="${current ? "active" : ""}"><span>${badge}</span><b>${esc(entry.label)}</b><small>0x${Number(entry.code).toString(16).padStart(4, "0").toUpperCase()}</small></button>`;
+          }).join("") : '<p class="mapping-picker-empty">No matching keybinds.</p>'}
+        </div>
+      </section>
+    </div>`;
   bindMappingPicker();
 }
 
@@ -137,11 +183,13 @@ function bindMappingPicker() {
     renderMappingPicker();
   }));
   document.querySelector("#mappingPickerSearch")?.addEventListener("input", (event) => {
-    state.mappingSearch = event.target.value;
+    if (event.isComposing) return;
+    const { value, selectionStart, selectionEnd } = event.target;
+    state.mappingSearch = value;
     renderMappingPicker();
     const search = document.querySelector("#mappingPickerSearch");
     search?.focus();
-    search?.setSelectionRange(search.value.length, search.value.length);
+    search?.setSelectionRange(selectionStart, selectionEnd);
   });
   document.querySelectorAll("[data-mapping-picker-keycode]").forEach((button) => button.addEventListener("click", () => applyMappingPickerKeycode(button.dataset.mappingPickerKeycode)));
 }

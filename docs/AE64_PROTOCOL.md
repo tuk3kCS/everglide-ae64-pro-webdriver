@@ -1,6 +1,6 @@
 # AE64 Pro vendor-HID report protocol
 
-This map was derived from the manufacturer JavaScript bundles captured in the two HAR files under `xsyd.top HAR files/`, checked against `ae64pro.txt`, and verified further with `captured_usb_packets.pcapng`. It describes the AE64 family; the HE30 uses a different protocol.
+This map combines the manufacturer driver capture, USB packet observations and the current AE64 Pro driver. The repository retains [the HAR](../xsyd.top.har), [manufacturer code excerpts](firmware-research/protocol/evidence/index.json) and [native handler traces](firmware-research/protocol/NATIVE_HANDLERS.md).
 
 ## Transport and identity
 
@@ -26,11 +26,11 @@ The driver serializes requests: only one request awaits a reply at a time. Norma
 | `03` | Layout and key | four layers, per-key mapping, layout metadata, defaults |
 | `04` | Performance | per-key Hall settings and raw axis data |
 | `05` | Lighting | base effect, palette, custom matrix |
-| `06` | Higher key | advanced-key reads and capture-verified SOCD pair writes; other writers deferred |
-| `07` | Macro | mode/data reads; writes deferred |
-| `08` | Firmware upgrade | **excluded** |
+| `06` | Higher key | DKS, MPT, Mod-Tap, Toggle, End Key, SOCD and Rappy Snappy reads and writes |
+| `07` | Macro | mode metadata and paged event data, reads and writes |
+| `08` | Firmware upgrade | Boot entry, image transfer, validation and restart in the [Firmware tab](../firmware/README.md) |
 | `0A` | Custom command | manufacturer web-driver handshake |
-| `0C`–`11` | Display/three-mode/voice/touch/gamepad/3D | generic manufacturer surfaces, exposed through feature diagnostics when reported |
+| `10` | Custom extensions | Capability-gated [AGP1](firmware-research/gamepad/CONFIGURATION_PROTOCOL.md) controller configuration and [FNR1](firmware-research/fn-rgb/README.md) Fn colors |
 
 ## Device and global commands
 
@@ -56,6 +56,8 @@ The driver serializes requests: only one request awaits a reply at a time. Norma
 | Macro capacity | `02 0E 00` | count and 16-bit capacity |
 | Shake optimization | `02 10 01` / `02 10 00 enabled` | boolean |
 
+Custom v0.8.1.1 extends the `01 02` reply at bytes 48–56. Bytes 48–51 contain ASCII `AE64`, byte 52 contains schema version 1, and bytes 53–56 contain the four custom version components. The driver accepts this marker on a full AE64 Pro application reply. The native version at bytes 8–11 remains the factory base used by updater verification. Stock and earlier builds use the native version for display. The [DeviceInfo handler trace](firmware-research/protocol/native-handler-excerpts/0.1.0.0-family01-cmd02.txt) records the factory fields.
+
 Commit groups are `0` all, `1` calibration, `2` performance, `3` lighting, `4` layout, `5` higher/advanced key, `6` macro, and `7` axis.
 
 System mode is `0 = Windows`, `1 = macOS`. AE64 polling-rate values are reverse ordered: `5 = 250 Hz`, `4 = 500 Hz`, `3 = 1,000 Hz`, `2 = 2,000 Hz`, `1 = 4,000 Hz`, and `0 = 8,000 Hz`. The generic manufacturer enum also defines `6 = 125 Hz`, but that option is not exposed for AE64.
@@ -70,7 +72,7 @@ System mode is `0 = Windows`, `1 = macOS`. AE64 polling-rate values are reverse 
 | Layout style/geometry | `03 05 row` |
 | Default layout row | `03 06 packedSystemLayer row` |
 
-The visible UI has rows 0–4, but AE64 firmware addresses physical rows **1–5**. Columns are zero-based within each displayed row. Keycodes are 16-bit values; this is wider than the standard one-byte keyboard usage space and permits media, mouse, lighting, and firmware-internal functions.
+The visible UI has rows 0–4 and AE64 firmware addresses physical rows **1–5**. Firmware columns are zero-based matrix addresses and may have gaps. For example, Enter is row 3 column 13, Space is row 5 column 6, and Fn is row 5 column 10. The driver reads `03 05` geometry and falls back to the verified board layout. Keycodes are 16-bit values; this is wider than the standard one-byte keyboard usage space and permits media, mouse, lighting, and firmware-internal functions.
 
 ## Performance
 
@@ -90,7 +92,7 @@ Read with `04 01 row col`; write with `04 02 row col …`.
 
 The packet contains both `normalPress` and `normalRelease`, but the captured AE64 application treats standard mode as a single **Trigger Travel** control: it reads and edits `normalPress` and leaves `normalRelease` untouched. In Rapid Trigger mode it hides `normalPress`, uses `rtFirstTouch` as the initial actuation distance, and exposes `rtPress` / `rtRelease` as the downstroke and upstroke movement sensitivities. The alternative UI keeps one Actuation distance control visible and maps it to the field used by the active mode. It also provides an explicitly experimental fixed-mode `normalRelease` control so that field can be tested without implying that the manufacturer UI normally edits it.
 
-The original application writes only performance mode `0` (standard) or `1` (Rapid Trigger). No AE64 capability reply, UI branch, or captured write proves a mode equivalent to Wooting's Continuous Rapid Trigger. Mode `2` exists on the unrelated HE30 protocol, but is deliberately not sent to AE64 hardware without an AE64-specific capture.
+The AE64 tuning editor offers mode `0` (standard) and `1` (Rapid Trigger). The [stock handler analysis](firmware-research/protocol/NATIVE_HANDLERS.md) also identifies an accepted internal mode `2` on later stock releases. Its behavior remains uncharacterized.
 
 Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. Ordinary tuning writes preserve axis/calibration metadata from a fresh hardware read.
 
@@ -117,9 +119,9 @@ Palette configuration uses subtype `01` with exactly eight `B,G,R,hue` records. 
 
 The manufacturer's UI treats palette index `0` specially: it draws a rainbow swatch and does not offer an RGB editor for that entry. The stored red record is therefore a seed/placeholder, not the visible meaning of the selector. Rainbow is selected by base `paletteIndex = 0`; it is not encoded by a nonzero `hue` byte. Indexes `1…7` are the seven editable solid colors.
 
-Fn does not own a separate palette or lighting configuration. Keycodes `F100…F103` switch to Main/Fn1/Fn2/Fn3. Keycode `0001` is Transparent: it resolves downward through the preceding layers until a non-transparent mapping is found. The original driver's mapping code reinforces this rule by automatically writing `0001` into every higher layer when an Fn-layer switch is assigned, allowing the same physical trigger to keep working after the layer changes.
+Factory Fn overlays use the stock action-group colors. The FNR1 extension adds per-profile static colors on compatible custom firmware. Keycodes `F100…F103` switch to Main/Fn1/Fn2/Fn3. Keycode `0001` is Transparent: it resolves downward through the preceding layers until a non-transparent mapping is found. The original driver's mapping code reinforces this rule by automatically writing `0001` into every higher layer when an Fn-layer switch is assigned, allowing the same physical trigger to keep working after the layer changes.
 
-While an Fn layer is held, the firmware lights only meaningful mappings that differ from the inherited mapping; transparent, empty, and unchanged positions remain dark. Highlighted positions use firmware-selected static colors, so different keys may share a color or use different colors. Those colors are not present in the key-map records and must not be invented by the web driver: they arrive in the ordinary area-0 `05 03` framebuffer. The alternative driver therefore polls type-3 key status only for rows containing `F101…F103` triggers (including remapped physical keys), resolves transparent mappings for labels, masks inherited positions, and preserves the exact per-key RGB delivered by the framebuffer.
+The native Fn compositor selects a color from the raw Fn action. Transparent is dark and an explicit Empty action can receive the ordinary keyboard color. The driver polls type-3 status for rows with Fn triggers and resolves transparent mappings for preview labels. The area-0 live frame can precede the physical Fn overlay. The custom Fn editor shows the selected layer's color draft. See the [Fn renderer trace](firmware-research/fn-rgb/fn-rgb/REPORT.md).
 
 The custom matrix and current LED framebuffer are read as `05 03 area packet` and custom overrides are written as `05 04 area packet …`. Each packet carries fifteen `B,G,R,flag` records. `flag = FF` enables a custom override; `00` leaves that LED following the base effect. During dynamic effects the RGB bytes still contain the instantaneous rendered LED color when the flag is `00`.
 
@@ -132,7 +134,7 @@ The custom matrix and current LED framebuffer are read as `05 03 area packet` an
 
 Key combinations are not family `06` records. They are ordinary 16-bit layer mappings with a modifier mask in the high byte and one normal keyboard usage in the low byte. See `KEY_COMBINATIONS_AND_MEMORY.md` for timing, ambiguity, and capacity details.
 
-`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for Feature Lab inspection. DKS, MPT, SOCD, and RS have capture-verified editors and writers; MT/TGL/END remain deferred.
+`06 01 row col 00` returns the selected advanced record. The mode byte identifies `0` none, `1` DKS, `2` MPT, `3` MT, `4` TGL, `5` END, `6` SOCD, or `7` RS. `protocol.js` decodes these records for the Advanced page, which provides editors and verified write paths for all seven modes.
 
 Dynamic Key Stroke is a single mode-1 record on one physical host key:
 
@@ -199,7 +201,7 @@ The original UI exposes six playback modes: four click-repeat variants where re-
 07 04 macroId offset packedAction...
 ```
 
-Each packed action is four bytes little-endian: bit 31 is direction (`1` pressed/down, `0` released/up), bits 16–30 are delay in milliseconds, and bits 0–15 are the 16-bit keycode. The original editor records keyboard operations, permits inserting/editing individual key records, lets the user choose direction up/down and time in milliseconds, supports drag-to-reorder, and validates each delay as `1…32768 ms`. Empty recordings are explicitly allowed in the UI as a draft state, but a saved macro needs complete key/time/direction data. A macro is bound to a physical key through ordinary key mapping using the macro keycode group; the sequence itself remains in family `07`.
+Each packed action is four bytes little-endian: bit 31 is direction (`1` pressed/down, `0` released/up), bits 16–30 are delay in milliseconds, and bits 0–15 are the 16-bit keycode. The original editor records keyboard operations, permits inserting/editing individual key records, lets the user choose direction up/down and time in milliseconds, supports drag-to-reorder, and validates each delay as `1…32768 ms`. Empty recordings are explicitly allowed in the UI as a draft state, but a saved macro needs complete key/time/direction data. The Advanced macro editor stages the host key's layer mapping to its macro slot. Family `07` stores the sequence.
 
 The offset is a **page number**, not an event index. Each report carries 15 four-byte actions, so a macro with `actNum = 31` is transferred at offsets `0`, `1`, and `2`; only the first 31 decoded records are used. The captured original store reads `ceil(actNum / 15)` pages and writes the same 15-action slices. This driver follows that paging exactly and performs full multi-page read-back verification.
 
@@ -211,7 +213,7 @@ The reported `{ macroCount: 16, macroNumber: 960 }` fields remain firmware-defin
 
 ## Safety boundary
 
-- Firmware family `08`, bootloader actions, and update-file handling do not exist in this implementation.
+- The Firmware tab owns family `08` and takes an exclusive transport lease during updates. It checks board identity, validates the selected image and waits for bootloader validation before restarting.
 - Destructive factory reset remains disabled until device testing.
 - Basic writable records are read before modification, committed with their matching save group, and important fields are read back for verification.
 - Commands inferred only from generic manufacturer capabilities are displayed diagnostically, not sent to an AE64 unless its feature bitmap and packet shape are verified.

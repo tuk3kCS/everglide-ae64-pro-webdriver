@@ -55,6 +55,12 @@ void stock_keyboard_press_original(uint32_t usage,uint32_t owner) { if(press_mod
 void stock_keyboard_release_original(uint32_t usage,uint32_t owner) { if(release_model)release_model(usage,owner); }
 void stock_advanced_key_original(uintptr_t address,uintptr_t settings,uint32_t owner) { if(advanced_model)advanced_model(address,settings,owner); }
 void stock_dispatch_original(void) { dispatch_count++; }
+void stock_device_info(void) {
+    uint8_t *reply=ram+0x8111c;
+    memset(reply,0x68,45);
+    reply[0]=1;reply[1]=2;reply[4]=0;reply[5]=0x30;reply[6]=0;reply[7]=10;
+    reply[8]=0;reply[9]=1;reply[10]=0;reply[11]=0;reply[16]=0;
+}
 bool stock_ep0_original(uint8_t bus,const struct ae64_usb_setup *s,uint8_t **d,uint32_t *n) {
     (void)bus;(void)s;(void)d;(void)n;ep0_count++;return false;
 }
@@ -191,6 +197,13 @@ static void protocol(void) {
     board_dispatch_hook();CHECK(last_reply[0]==0x10 && last_reply[1]==0x20 && last_reply[3]==42 && last_reply[8]==0);
     CHECK(last_reply[10]==0x0a && last_reply[14]==(GP_CAP_XINPUT|GP_CAP_USB_SWITCH|GP_CAP_USB_PERSISTENT|GP_CAP_PERSISTENT));
     unsigned old=dispatch_count;req[0]=1;board_dispatch_hook();CHECK(dispatch_count==old+1);
+    uint8_t original[64],*reply=ram+0x8111c;
+    memset(reply,0,64);stock_device_info();memcpy(original,reply,64);
+    board_device_info();
+    const uint8_t marker[]={'A','E','6','4',1,0,8,1,1};
+    CHECK(memcmp(reply,original,48)==0);
+    CHECK(memcmp(reply+48,marker,sizeof(marker))==0);
+    CHECK(memcmp(reply+57,original+57,7)==0);
 }
 int main(void) {
     fixture();descriptors();analog();digital();protocol();

@@ -6,29 +6,15 @@ The EPOMAKER HE30 driver was used as the structural reference: keep a small boot
 
 ## Runtime order
 
-`index.html` loads these files in order:
+[index.html](../index.html) defines the load order. The driver starts with `protocol.js` and the gamepad, flasher and Fn RGB protocol modules. The application scripts then load shared state, translations and theme, feature editors, integration modules, page rendering and listeners, device and profile operations, and finally the permanent shell bindings in `app.js`.
 
-1. `protocol.js` — HID transport, packet codecs, constants, and commands.
-2. `js/app/foundation.js` — layout/catalog data, translations, application state, and shared helpers.
-3. `js/app/switches.js` — captured magnetic-switch catalog and image discovery.
-4. `js/app/theme.js` — Mint/Dark/Light appearance tokens and local persistence.
-5. `js/app/mapping.js` — mapping and key-combination data, editors, and codecs.
-6. `js/app/rappy.js` — Rappy Snappy editor and tutorial.
-7. `js/app/mpt.js` — Multi-Point Trigger editor, compatible-key palette, write workflow, and tutorial.
-8. `js/app/pages.js` — page markup and keyboard/status renderers.
-9. `js/app/interactions.js` — staged edits, page controls, and RGB selection gestures.
-10. `js/app/device.js` — connection, workspace reads, key reads, and write verification helpers.
-11. `js/app/live.js` — live RGB matrices, Fn status, calibration, travel tests, and polling.
-12. `js/app/profiles.js` — change review, apply/revert, onboard profiles, import, and export.
-13. `app.js` — permanent shell bindings and startup only.
-
-These are classic scripts that intentionally share top-level declarations. Do not add `async`, `defer`, or `type="module"` to individual script tags without converting the whole dependency model.
+The scripts share top-level declarations. Keep dependency order when adding or moving a script.
 
 ## Data and write flow
 
 Page controls update the staged `state.profile` and mark the relevant dirty group. Confirming the Apply dialog calls the writer for each dirty group. Experimental auto apply calls the same verified writer after a short debounce; it does not use a separate protocol path. Writers read firmware-owned fields where needed, write the staged values, read them back, and commit only the matching flash group. Live readers and polling never commit data.
 
-`protocol.js` is the only layer that should construct raw 64-byte HID reports. Application modules call its named transport methods and work with decoded objects.
+`protocol.js` constructs native configuration reports and serializes access to the device. The firmware updater, AGP1 client and FNR1 client encode their own packets and use the same transport. Application modules call those clients and work with decoded values.
 
 ## Extending the driver
 

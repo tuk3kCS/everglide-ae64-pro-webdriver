@@ -1,5 +1,7 @@
 # v0.4: saved mappings and reconnect input
 
+This report records v0.4. Its binary and build evidence are in Git history, and its [source archive](../../../firmware/custom/ae64-xinput/history/v0.4-source.zip) is in the repository. See the [current firmware guide](../../../firmware/custom/ae64-xinput/README.md) for build and update instructions.
+
 October 29, 2026. Image: `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.4.bin`, **137,768 bytes**, SHA-256 `ac7b7b460aeb878969ec1a4b5c286b57c8e562da077f48bfa5db68e2f1e585fe`.
 
 ## Confirmed cause

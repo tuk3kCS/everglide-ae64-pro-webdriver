@@ -31,7 +31,7 @@ Included metadata: manifest.json, server-response.json, SHA256SUMS.txt.
 
 ## Integrated firmware selector
 
-The newest bundled experimental build is **XInput + Fn RGB v0.8.1**. It saves Xbox device visibility across power loss and restores the choice before USB enumeration. It retains v0.8's scan optimizations, saved mappings and Fn colors. The v0.8 image remains available. See the [v0.8.1 report](../docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md). Physical cold-boot validation is pending.
+The current experimental build is **XInput + Fn RGB v0.8.1.1**. It supplies a build marker so the driver displays both the custom build and its factory base. v0.8.1 introduced persistent Xbox visibility alongside saved mappings and Fn colors. The catalog retains v0.8 and v0.8.1. See the [custom firmware guide](custom/ae64-xinput/README.md) and [physical keyboard testing](../docs/firmware-research/VALIDATION.md#physical-keyboard-testing).
 
 The web driver's Firmware tab reads `catalog.json` and lets the user select any listed image, including older factory versions and the custom builds currently present under this directory. Custom source/build evidence and limitations are under `custom/ae64-xinput/`.
 
@@ -45,4 +45,4 @@ Bootloader and application reconnection are automatic, with no fixed startup del
 
 The normal connection flow accepts both application and recovery collections, then reads identity before any application handshake or settings request. Recovery mode opens Firmware and requires a fresh image choice. Recovery disconnects retain this state; an authorized replug is detected automatically when no other device session is active. The driver will not resume an interrupted partial image automatically: choose the firmware and explicitly start a complete new transfer.
 
-The new integrated updater is covered by simulated lifecycle/failure tests, real-image CRC/hash/packet tests and deployment tests. It has not been exercised on physical hardware. Do not treat file checks as proof of bootloader acceptance, a working application or recovery. The 256 KiB supported size bound comes from the stock application's inferred active-region backup behavior.
+Updater tests simulate USB transitions and failures and check the size, CRC, SHA-256 and complete packet stream of each bundled image. The 256 KiB supported size bound comes from the stock application's inferred active-region backup behavior. The maintainer's physical-keyboard report covers operation of the installed v0.8.1 image.

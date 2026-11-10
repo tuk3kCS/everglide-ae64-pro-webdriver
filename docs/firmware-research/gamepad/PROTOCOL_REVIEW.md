@@ -1,6 +1,6 @@
 # Independent AGP1 protocol review
 
-The reviewed implementation is the original C staging engine in `include/ae64_gamepad_protocol.h` and `src/ae64_gamepad_protocol.c`, together with the browser client `C:/GitHub/everglide-ae64-pro-webdriver/gamepad/protocol.js`. This review is bounded to offline configuration encoding, transfer/state handling, and integration contracts. It does not test USB or keyboard hardware.
+The reviewed implementation is the original C staging engine in `include/ae64_gamepad_protocol.h` and `src/ae64_gamepad_protocol.c`, together with the browser client the precursor to [the integrated browser client](../../../js/gamepad/protocol.js). This review is bounded to offline configuration encoding, transfer/state handling, and integration contracts. It does not test USB or keyboard hardware.
 
 ## Result
 

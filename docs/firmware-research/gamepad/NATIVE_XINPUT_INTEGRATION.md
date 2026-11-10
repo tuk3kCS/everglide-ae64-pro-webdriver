@@ -1,6 +1,6 @@
 # Native Windows XInput: implementation and remaining board port
 
-Status: compiled/tested portable components and an independent configuration editor. **No linked, flashable AE64 Pro application has been produced. Native Windows XInput enumeration has not been demonstrated.** The user confirmed native XInput is required and that no debugger or confirmed recovery procedure is available.
+This historical integration plan describes the portable components and early editor. For the linked application and current build, see the [custom firmware guide](../../../firmware/custom/ae64-xinput/README.md).
 
 ## Implemented
 

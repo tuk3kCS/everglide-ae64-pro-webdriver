@@ -2,13 +2,11 @@
 
 The five supplied AE64 Pro app images do **not implement the generic web driver's Handle/gamepad protocol**. This is established from their native dispatch tables, their device-feature response, and the descriptors registered by the latest app. The generic website contains gamepad controls for other supported devices; their presence in the website is not evidence of a hidden working controller mode on the AE64 Pro.
 
-This investigation used static code and offline decoding only. No keyboard command, mode switch, flash write, or reboot was sent for this task. A custom gamepad firmware has not been validated on hardware.
+This investigation used static code and offline decoding of the stock images. The [current custom firmware guide](../../../firmware/custom/ae64-xinput/README.md) covers the later XInput port.
 
 ## Evidence retained
 
-[stock-evidence/stock-capability.json](stock-evidence/stock-capability.json) records original payload SHA-256 values, native table entries, feature fields and decoded top-level HID collections for all five versions. The directory also contains exact native instruction excerpts, the three recovered HID descriptor byte arrays per version, and shipped JavaScript snippets G01–G04 with their source URL, hash, and offsets.
-
-`stock-evidence/reconstruct.py` repeats the capability checks from the existing research workspace. `stock-evidence/descriptor_refs.py` reconstructs the latest descriptor address references. They operate on local files only.
+The retained [native dispatch tables](../protocol/native-dispatch-tables.json) record the handlers for all five stock releases. [full-research.zip](../full-research.zip) contains the original images and `analysis/usb-descriptors-decoded.json`. The labels G01–G04 below refer to manufacturer snippets from the original investigation.
 
 ## Native protocol support
 

@@ -2,9 +2,9 @@
 
 An unofficial, local-first WebHID driver for the **Everglide AE64 Pro** magnetic keyboard. Configure keymaps, Hall-effect performance, RGB, advanced key behavior, firmware updates, and custom gamepad output from one browser interface.
 
-The driver is a static website. It communicates directly with the keyboard and does not require an account or the manufacturerâ€™s cloud service.
+The driver is a static website. It communicates directly with the keyboard and does not require an account or the manufacturer’s cloud service.
 
-[Open the web driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/) Â· [Firmware library](firmware/README.md) Â· [Firmware research](docs/firmware-research/README.md)
+[Open the web driver](https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/) · [Firmware library](firmware/README.md) · [Firmware research](docs/firmware-research/README.md)
 
 ## Getting started
 
@@ -22,7 +22,7 @@ The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firm
 
 ### Stock and custom firmware
 
-| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Bundled custom firmware (XInput + Fn RGB v0.8.1) |
+| Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Current custom firmware (XInput + Fn RGB v0.8.1.1) |
 | --- | --- | --- |
 | Keymaps, Hall performance and live travel, advanced actions, macros, standard RGB | Native AE64 configuration interface | Same native configuration interface |
 | Gamepad workspace | Read switch travel and edit or export local drafts | Read and apply onboard mappings when AGP1 is verified |
@@ -30,11 +30,11 @@ The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firm
 | Custom Fn1–Fn3 colors | Unavailable | Available when FNR1 is verified |
 | Firmware update and recovery | Board-matched application and recovery workflow | Same board-matched workflow |
 
-The custom build also reports application version `0.1.0.0`. The driver checks the extension replies before enabling their controls. The bundled images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
+The driver displays **v0.8.1.1 custom based on v0.1.0.0** when it reads the build marker from the keyboard. Earlier custom builds and factory images display their native application version. The driver checks the extension replies before enabling Gamepad and custom Fn RGB controls. The bundled images share the same factory key layout, including the sparse sensor columns used for Enter, Space, Fn, and the arrows.
 
 ### Editing workflow
 
-1. Connect and let the driver read the keyboardâ€™s settings.
+1. Connect and let the driver read the keyboard’s settings.
 2. Select the active onboard profile in the sidebar. Each of the four profiles has Main, Fn1, Fn2, and Fn3 keymap layers.
 3. Make changes, review the staged edits, then use **Apply changes** to write and verify them. **Revert** discards ordinary staged keyboard edits.
 
@@ -45,7 +45,7 @@ Optional **Auto apply** writes completed ordinary keyboard edits after a short d
 | Area | Available controls |
 | --- | --- |
 | Overview | Select any virtual key to inspect its mapping, performance and controller assignment, including local-draft versus keyboard-confirmed status. |
-| Key mapping | Four layers per profile; keyboard, media, mouse, firmware/function values, and key combinations. |
+| Key mapping | Four layers per profile. Search across Keyboard, Media, Mouse, Firmware, and Lighting from any catalog tab. Create key combinations in Advanced. |
 | Performance | Per-key actuation, Rapid Trigger first touch, synchronized or independent RT press/release sensitivity, top/bottom dead zones, and an experimental fixed-release editor. |
 | Switches and calibration | An 82-entry switch catalog, per-key switch assignments, multi-key editing, Hall calibration, and live travel/ADC inspection. |
 | Advanced | Compact feature cards beside a column of assigned actions; DKS, Multi-Point Trigger, SOCD, Rappy Snappy, Mod-Tap (MT), Toggle (TGL), and End Key (END) editors with verified writes and removable assignments. |
@@ -62,7 +62,7 @@ Advanced-feature dialogs include configuration guidance and local tutorial video
 
 ## Lighting
 
-The Lighting page uses one shared keyboard and light-strip preview. Offline, paused and staged main effects use 20 distinct animated approximations, labeled as such. A clean live preview uses actual RGB frames from the keyboard. Per-key overrides remain visible. Its standard sections are **Keyboard**, **Per-key**, and **Light strip**. Drag a rectangle to select keys or strip LEDs in the corresponding editor; Ctrl/âŒ˜ toggles selection. Selecting Space colors its five physical LEDs together.
+The Lighting page uses one shared keyboard and light-strip preview. Offline, paused and staged main effects use 20 distinct animated approximations, labeled as such. A clean live preview uses actual RGB frames from the keyboard. Per-key overrides remain visible. Its standard sections are **Keyboard**, **Per-key**, and **Light strip**. Drag a rectangle to select keys or strip LEDs in the corresponding editor; Ctrl/⌘ toggles selection. Selecting Space colors its five physical LEDs together.
 
 ### Custom Fn colors
 
@@ -70,11 +70,11 @@ The experimental **XInput + Fn RGB** firmware adds independent static per-key co
 
 - Keyboard and light-strip settings, per-key colors, and all three supported Fn color profiles are read automatically on connection and profile changes. A Refresh lighting button retries failed reads without replacing staged colors.
 - Choose the active profile in the sidebar, then select a Fn lighting button. There is no additional profile or layer dropdown inside the editor.
-- The shared keyboard switches to that Fn layerâ€™s color draft. Drag on it to select keys, then choose a color; black turns a selected key off.
-- Enable the layerâ€™s custom colors and use its Apply button to save and read them back. There is no second keyboard preview below the main one.
+- The shared keyboard switches to that Fn layer’s color draft. Drag on it to select keys, then choose a color; black turns a selected key off.
+- Enable the layer’s custom colors and use its Apply button to save and read them back. There is no second keyboard preview below the main one.
 - Holding a key mapped to that Fn layer displays the saved static colors on the keyboard. Releasing Fn restores the normal effect. Disabling custom colors restores the factory Fn action-group colors.
 
-Fn colors persist in the keyboardâ€™s profile storage. They use the factory Fn intensity convention rather than the normal effectâ€™s brightness slider. During editing, the preview shows the selected color draft, not a live reading of the physical Fn overlay. The perimeter strip keeps its normal settings and is not selectable in the Fn editor.
+Fn colors persist in the keyboard’s profile storage. They use the factory Fn intensity convention rather than the normal effect’s brightness slider. During editing, the preview shows the selected color draft, not a live reading of the physical Fn overlay. The perimeter strip keeps its normal settings and is not selectable in the Fn editor.
 
 See the [Fn RGB guide](docs/firmware-research/fn-rgb/README.md) for firmware evidence, storage accounting, and hardware-validation limits.
 
@@ -84,11 +84,11 @@ See the [Fn RGB guide](docs/firmware-research/fn-rgb/README.md) for firmware evi
 
 ### Hardware Solution
 
-Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboardâ€™s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboardâ€™s gamepad profile**. All 64 physical keys’ travel limits are read automatically, including when cached switch settings already exist. The read button remains available for refresh or retry. A previously confirmed local copy follows the active keyboard profile; unsaved edits stay a separate local draft. The Assign workspace uses the full page width, with tuning and stick behavior below it. No controller action is selected on entry. Select an assigned key or choose an action to open tuning. Automatic loading does not upload a configuration; a failed read retains the local draft.
+Compatible custom firmware exposes native Xbox/XInput controller output on Windows while retaining the keyboard’s configuration interface. Once the driver confirms that firmware, it hides the firmware-setup panel and **automatically reads the keyboard’s gamepad profile**. All 64 physical keys’ travel limits are read automatically, including when cached switch settings already exist. The read button remains available for refresh or retry. A previously confirmed local copy follows the active keyboard profile; unsaved edits stay a separate local draft. The Assign workspace uses the full page width, with tuning and stick behavior below it. No controller action is selected on entry. Select an assigned key or choose an action to open tuning. Automatic loading does not upload a configuration; a failed read retains the local draft.
 
-Assign physical keys to LT/RT triggers, all four directions of both sticks, A/B/X/Y, bumpers, Back/Start, stick presses, and D-pad buttons. Analog controls support adjustable travel windows, linear/smooth response, circular stick gates, radial dead zones, and opposing-direction policies. Digital buttons follow the keyâ€™s normal actuation and Rapid Trigger state.
+Assign physical keys to LT/RT triggers, all four directions of both sticks, A/B/X/Y, bumpers, Back/Start, stick presses, and D-pad buttons. Analog controls support adjustable travel windows, linear/smooth response, circular stick gates, radial dead zones, and opposing-direction policies. Digital buttons follow the key’s normal actuation and Rapid Trigger state.
 
-Controller icons appear in the assignment picker, mapped keys, preview, and Overview. Overview distinguishes local drafts from assignments read or confirmed on the connected keyboard; Gamepad off dims the preserved mappings.
+Controller icons appear in the assignment picker, mapped keys, and Overview. Overview distinguishes local drafts from assignments read or confirmed on the connected keyboard; Gamepad off dims the preserved mappings.
 
 #### Output modes
 
@@ -100,17 +100,17 @@ Controller icons appear in the assignment picker, mapped keys, preview, and Over
 
 Use **Apply to keyboard** after changing modes or mappings. Gamepad off does not remove the controller device from Windows.
 
-With **v0.3**, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. In v0.8.1, this choice is saved across power loss and applies across onboard profiles. After upgrading from v0.8, turn it off once to save the disabled preference. Earlier builds keep the choice until power loss. A keyboard without a saved preference starts enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [v0.3 firmware report](docs/firmware-research/gamepad/USB_DEVICE_SWITCH_V03.md).
+From **v0.3** onward, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. In v0.8.1 and newer, this choice is saved across power loss and applies across onboard profiles. After upgrading from v0.8, turn it off once to save the disabled preference. Earlier builds keep the choice until power loss. A keyboard without a saved preference starts enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [USB persistence report](docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md).
 
 #### Switch-aware travel defaults
 
-Defaults use each physical keyâ€™s selected switch profile and catalog range, capped by its known keyboard-reported limit. Mixed-switch keyboards are supported. For **UR Ice Magnetic**, the default switch travel and full-output point are **3.31 mm**, with a **0.50 mm** start.
+Defaults use each physical key’s selected switch profile and catalog range, capped by its known keyboard-reported limit. Mixed-switch keyboards are supported. For **UR Ice Magnetic**, the default switch travel and full-output point are **3.31 mm**, with a **0.50 mm** start.
 
-New assignments and restored examples use those per-key limits. Legacy 4.00 mm defaults, including factory-default gamepad ranges read from the keyboard, are adapted in the local draft. Custom windows such as 1â€“3 mm, explicit maximum overrides, and imported profiles are preserved where applicable. Automatically managed windows are shortened when needed to fit a smaller range.
+New assignments and restored examples use those per-key limits. Legacy 4.00 mm defaults, including factory-default gamepad ranges read from the keyboard, are adapted in the local draft. Custom windows such as 1–3 mm, explicit maximum overrides, and imported profiles are preserved where applicable. Automatically managed windows are shortened when needed to fit a smaller range.
 
-If switch metadata is unavailable, the driver attempts to read the keyboardâ€™s limits automatically. **Use keyboard travel limits** remains available for manual refresh. Apply still checks the actual keyboard limits before uploading.
+If switch metadata is unavailable, the driver attempts to read the keyboard’s limits automatically. **Refresh travel limits** retries the device read. Apply still checks the actual keyboard limits before uploading.
 
-**v0.4 and newer save applied gamepad mappings in the active onboard profile.** Apply once after upgrading, then the saved assignments, output mode, ranges and stick settings are restored after power loss. A profile without a valid saved mapping starts empty. v0.2/v0.3 remain session-only. Browser drafts are kept separately and automatic connection reads no longer overwrite them; Apply activates/saves the draft, while an explicit Read replaces it with the keyboardâ€™s settings. See the [v0.4 reconnect fix](docs/firmware-research/gamepad/RECONNECT_FIX_V04.md). **v0.5 fixes simultaneous controller keys and release updates** by preserving the native scanner’s event history around keyboard suppression; see the [rollover investigation](docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md). **v0.6 adds explicit normal-key releases** and keeps suppression active through sensor faults and pending USB changes; see the [keyboard-release fix](docs/firmware-research/gamepad/KEYBOARD_RELEASE_FIX_V06.md). **v0.7 adds exact physical keyboard-output gates, momentary Fn press ownership and a real millisecond clock.** It also stages Transparent above Fn triggers and requests a prompt LED frame on layer changes. See the [input/Fn/timing report](docs/firmware-research/gamepad/INPUT_FN_TIMING_FIX_V07.md). **v0.8 removes repeated scan/release processing, caches controller calculations and corrects the sparse physical matrix.** See the [optimization report](docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md); physical LED latency remains to be measured.
+**v0.4 and newer save applied gamepad mappings in the active onboard profile.** Apply once after upgrading, then the saved assignments, output mode, ranges and stick settings are restored after power loss. A profile without a valid saved mapping starts empty. v0.2/v0.3 remain session-only. Browser drafts are kept separately and automatic connection reads no longer overwrite them; Apply activates/saves the draft, while an explicit Read replaces it with the keyboard’s settings. See the [v0.4 reconnect fix](docs/firmware-research/gamepad/RECONNECT_FIX_V04.md). **v0.5 fixes simultaneous controller keys and release updates** by preserving the native scanner’s event history around keyboard suppression; see the [rollover investigation](docs/firmware-research/gamepad/ROLLOVER_FIX_V05.md). **v0.6 adds explicit normal-key releases** and keeps suppression active through sensor faults and pending USB changes; see the [keyboard-release fix](docs/firmware-research/gamepad/KEYBOARD_RELEASE_FIX_V06.md). **v0.7 adds exact physical keyboard-output gates, momentary Fn press ownership and a real millisecond clock.** It also stages Transparent above Fn triggers and requests a prompt LED frame on layer changes. See the [input/Fn/timing report](docs/firmware-research/gamepad/INPUT_FN_TIMING_FIX_V07.md). **v0.8 removes repeated scan/release processing, caches controller calculations and corrects the sparse physical matrix.** See the [optimization report](docs/firmware-research/gamepad/SCAN_FN_OPTIMIZATION_V08.md); physical LED latency remains to be measured.
 
 ### Software Solution
 
@@ -120,14 +120,14 @@ The controls are integrated into the main driver; there is no standalone /gamepa
 
 ## Firmware updates and recovery
 
-The [firmware directory](firmware/README.md) contains five unchanged factory releases and the experimental **XInput + Fn RGB v0.8/v0.8.1** images. The Firmware tab lists files from its generated catalog and also accepts a local binary.
+The [firmware directory](firmware/README.md) contains five unchanged factory releases and three experimental **XInput + Fn RGB** releases: v0.8, v0.8.1, and v0.8.1.1. The Firmware tab lists files from its generated catalog and also accepts a local binary.
 
 1. Export settings and gamepad/Fn-color backups you want to retain.
 2. Connect the intended keyboard, open **Firmware**, and choose an image.
 3. Review its identity, size, and hash, then choose **Start firmware update**.
 4. Keep USB connected while the driver writes, validates, restarts, and reconnects the keyboard.
 
-The driver checks the container header, board ID, payload length, CRC-32, and catalog size/SHA-256 where available. It sends the complete image, requires the keyboardâ€™s validation response before restarting, and excludes ordinary configuration traffic during the update.
+The driver checks the container header, board ID, payload length, CRC-32, and catalog size/SHA-256 where available. It sends the complete image, requires the keyboard’s validation response before restarting, and excludes ordinary configuration traffic during the update.
 
 Bootloader and application transitions reconnect automatically when the browser already permits access to those USB modes. The reviewed firmware stays selected through the handoff. If a mode needs browser permission, use **Allow recovery keyboard** or **Allow restarted keyboard** on the progress panel; the same update continues after selection without refreshing or reselecting its image. Automatic matching retains identity checks, and an explicit selection is still checked for board and run mode. Unresolved reconnection failures stop the update and offer **Reconnect keyboard**.
 
@@ -143,9 +143,9 @@ GitHub Pages regenerates the catalog and packages the actual binaries during dep
 
 ## Validation and limitations
 
-- The driverâ€™s packet codecs, editors, read-back workflows, image streams, reconnect/recovery logic, and UI behavior have offline regression coverage. Recent browser UI checks use simulated devices.
+- The driver’s packet codecs, editors, read-back workflows, image streams, reconnect/recovery logic, and UI behavior have offline regression coverage. Recent browser UI checks use simulated devices.
 - The earlier experimental XInput v0.1 image was flashed separately by the user. Follow-up read-only checks observed Windows Xbox 360 controller enumeration, custom protocol replies, and a connected XInput device. This does not validate every analog behavior or later firmware changes.
-- The current **XInput + Fn RGB v0.8** image was compiled and checked offline. USB controller removal/reappearance also needs physical validation. Its Fn LED output, physical persistence, and the integrated flashing workflow still need hardware validation.
+- On November 9, 2026, the maintainer reported completing physical-keyboard testing of v0.8.1 with no issues observed in that round. The v0.8.1.1 version marker passed linked-image and browser tests. See [physical keyboard testing](docs/firmware-research/VALIDATION.md#physical-keyboard-testing).
 - Gamepad mappings persist in v0.4 and newer; v0.2/v0.3 mappings remain volatile. Fn colors are designed to persist; factory resets or later factory keymap saves can erase them. Export backups before changing firmware. Native flash saving inherits an erase/rewrite power-loss risk.
 - Factory restore is visible but disabled pending physical-device verification. Additional catalog-only lighting effects and extended right-side modifier combinations remain experimental.
 
@@ -159,6 +159,7 @@ Run the same offline checks used by GitHub Pages:
 node scripts/build-firmware-catalog.cjs
 node smoke-test.cjs
 node tests/device-serial-tests.cjs
+node tests/performance/live-gauge-tests.cjs
 node tests/firmware/flasher-tests.cjs
 node tests/firmware/ui-tests.cjs
 node tests/firmware/reconnect-tests.cjs
@@ -170,10 +171,14 @@ node tests/gamepad/travel-limits-tests.cjs
 node tests/gamepad/switch-defaults-tests.cjs
 node tests/gamepad/icons-overview-tests.cjs
 node tests/gamepad/auto-load-tests.cjs
+node tests/gamepad/automatic-sync-tests.cjs
+node tests/gamepad/overview-selection-tests.cjs
 node tests/gamepad/usb-switch-tests.cjs
 node tests/gamepad/usb-reconnect-tests.cjs
 node tests/lighting/fn-ui-tests.cjs
+node tests/lighting/automatic-read-tests.cjs
 node tests/lighting/fn-selection-tests.cjs
+node tests/lighting/fn-mapping-tests.cjs
 node tests/lighting/fn-protocol-tests.cjs
 node tests/lighting/effect-preview-tests.cjs
 ~~~

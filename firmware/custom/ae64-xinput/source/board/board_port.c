@@ -613,6 +613,13 @@ void board_dispatch_hook(void) {
     }
     stock_dispatch_original();
 }
+void board_device_info(void) {
+    /* Native 01:02 uses bytes 0–44 of its cleared 64-byte reply.
+     * Keep the factory version and UID, then add a versioned tail marker. */
+    static const uint8_t identity[]={'A','E','6','4',1,0,8,1,1};
+    stock_device_info();
+    copy(RAM(GP+0x61c+48),identity,sizeof(identity));
+}
 #ifdef AE64_HOST_TEST
 const struct gp_report *board_test_report(void) { return &state.report; }
 bool board_test_install(const uint8_t *wire) {

@@ -1,5 +1,7 @@
 # v0.7: physical keyboard-output gates, momentary Fn and hardware timing
 
+This report records v0.7. Its binary and build evidence are in Git history, and its [source archive](../../../firmware/custom/ae64-xinput/history/v0.7-source.zip) is in the repository. See the [current firmware guide](../../../firmware/custom/ae64-xinput/README.md) for build and update instructions.
+
 October 31, 2026. Image: `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.7.bin`, **140,104 bytes**, SHA-256 `8c3df91f94c376a403c100f18108efccf16c5b397c0101a9e3427f46314b3524`.
 
 ## Reports and investigation boundary

@@ -10,6 +10,6 @@ This directory incorporates the earlier firmware investigation into the web-driv
 - `tools/`: scripts for reconstructing binary analysis and checking evidence.
 - `full-research.zip`: the complete original research bundle, including disassemblies, analysis data, symbols, evidence and original binary archive. Extract it into a separate folder to use its original relative paths.
 
-These are historical research reports and include the uncertainties known at their creation. Their statements that an integrated image was not yet available describe that earlier stage. The current implementation and later hardware observations are documented in `../../firmware/custom/ae64-xinput/README.md`; the current flasher is in `../../js/firmware/flasher.js` and the integrated controls are under `../../js/gamepad/`.
+Research reports record the evidence and uncertainties at the time of each investigation. For the current release, see the [custom firmware guide](../../firmware/custom/ae64-xinput/README.md), [physical keyboard testing](VALIDATION.md#physical-keyboard-testing), and [firmware library](../../firmware/README.md).
 
 Factory binaries and their original API metadata are retained in `../../firmware/`. No original factory binary was modified. The custom image is a separately named file with source, build evidence and tests.

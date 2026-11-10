@@ -16,12 +16,16 @@ Sequence identifies one request/reply. An independent nonzero 8-byte random **tr
 | `23` COMMIT | token[8], intended CRC-32 LE32, expected active revision LE32 | new revision LE32, persistent flag byte |
 | `24` ABORT | token[8] | empty |
 | `25` READ | expected revision LE32, offset LE16, count byte 1–48 | revision LE32, offset LE16, requested bytes |
+| `26` USB status | empty | 12-byte switch state |
+| `27` Set USB visibility | board ID LE32, desired bool byte, reserved zero byte, expected USB revision LE32 | 12-byte switch state |
 
 A second token cannot replace an active staging transaction, write into it, abort it or commit it. Repeated BEGIN with the same token and identical parameters is idempotent and preserves received bytes. A commit requires every byte, CRC agreement, unchanged revision, valid mappings and an available backend. Only then is the installation callback invoked. Its contract requires an atomic neutral/rearmed state installation and no partial changes on failure. Actual persistent storage remains the board port's responsibility.
 
 The editor uses 40-byte write chunks, reads back the complete active blob after COMMIT, and compares it byte for byte. Missing acknowledgements after COMMIT produce an **unconfirmed** result, not a claim that nothing was applied. An expired owner cannot affect a later owner's transaction. Revision comparisons prevent lost updates between editors.
 
-INFO data: bytes 0–3 board ID LE32; byte 4 capability bits (`1` HID, `2` native XInput, `4` persistence); byte 5 binding count=24; byte 6 version=1; byte 7 reserved=0; bytes 8–11 active revision; bytes 12–13 maximum accepted physical-travel units=10000 micrometers; bytes 14–15 blob length=208; bytes 16–19 active-blob CRC-32. A global 10 mm format bound is not the physical stroke of every installed switch.
+INFO data: bytes 0–3 board ID LE32; byte 4 capability bits (`0x01` HID, `0x02` native XInput, `0x04` saved mappings, `0x08` USB switch, `0x10` persistent USB visibility); byte 5 binding count=24; byte 6 version=1; byte 7 reserved=0; bytes 8–11 active revision; bytes 12–13 maximum accepted physical-travel units=10000 micrometers; bytes 14–15 blob length=208; bytes 16–19 active-blob CRC-32. A global 10 mm format bound is not the physical stroke of every installed switch.
+
+The USB status includes board ID at bytes 0–3, switch version at 4, current and target visibility at 5–6, phase at 7, and the USB revision at 8–11. This revision is separate from the mapping revision. The driver verifies the USB state after reconnecting. See the [v0.3 USB switch protocol](USB_DEVICE_SWITCH_V03.md#agp1-extension) and [v0.8.1 persistence](USB_PERSISTENCE_V081.md).
 
 Statuses: 0 OK, 1 unsupported, 2 malformed, 3 conflict/busy/wrong owner, 4 invalid configuration, 5 incomplete transfer, 6 CRC mismatch, 7 backend unavailable, 8 install/storage failure.
 
@@ -43,7 +47,7 @@ The format is serialized explicitly; never transmit the compiler's C struct layo
 
 Binding record: byte 0 physical key index 0–63, or 255 unmapped; byte 1 curve 0 linear/1 smooth; bytes 2–3 start micrometers; bytes 4–5 full-output micrometers; bytes 6–7 declared switch travel micrometers. Require `0 <= start < end <= declared`, declared 10–10000. The board additionally checks the interval against independently obtained per-key calibrated stroke; browser metadata cannot override calibration. Digital controls ignore analog geometry for output and consume canonical keyboard/RT pressed states, while the records retain valid geometry for a stable shared format.
 
-Record order: LT, RT, LX−, LX+, LY−, LY+, RX−, RX+, RY−, RY+, A, B, X, Y, LB, RB, Back, Start, L3, R3, D-pad Up, Down, Left, Right. Positive Y is up. Physical indices match the independent driver's exact 64-key layout; firmware still needs a verified physical-index-to-matrix translation.
+Record order: LT, RT, LX−, LX+, LY−, LY+, RX−, RX+, RY−, RY+, A, B, X, Y, LB, RB, Back, Start, L3, R3, D-pad Up, Down, Left, Right. Positive Y is up. Physical indices match the independent driver's exact 64-key layout; the current board port translates those indices using the [sparse factory matrix](SCAN_FN_OPTIMIZATION_V08.md).
 
 The wire profile currently permits one controller assignment per physical key. The reusable physical engine can support duplicates, but the UI and wire format validator intentionally enforce the simpler v1 policy. Profile names live in exported JSON/browser drafts and are not stored in this compact blob.
 
@@ -53,4 +57,4 @@ For travel `t`, start `a`, end `b`, calculate `clamp((t-a)/(b-a),0,1)`, then the
 
 LT/RT quantize independently to 0–255, including simultaneous full travel. XInput sticks use their standard signed 16-bit range for precision, while each assigned direction uses the same configurable travel window. Digital buttons use the stock pressed state, preserving actuation/RT semantics. Config, calibration, mode, fault and stale-frame transitions neutralize and require release before rearming.
 
-Neither this configuration protocol nor a successful host-side transaction establishes that native XInput USB enumeration works. See PATCH_FEASIBILITY.md for the remaining integration boundaries.
+The [custom firmware guide](../../../firmware/custom/ae64-xinput/README.md) describes the integrated XInput implementation and current release.

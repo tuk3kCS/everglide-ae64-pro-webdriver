@@ -1,5 +1,7 @@
 # v0.6: release normal keyboard input from controller-mapped keys
 
+This report records v0.6. Its binary and build evidence are in Git history, and its [source archive](../../../firmware/custom/ae64-xinput/history/v0.6-source.zip) is in the repository. See the [current firmware guide](../../../firmware/custom/ae64-xinput/README.md) for build and update instructions.
+
 October 30, 2026. Image: `firmware/AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.6.bin`, **138,480 bytes**, SHA-256 `ea90ac6b1613915fbd87edebd85b7be4631fb3c7e4bb06bff5e190315de6863b`.
 
 ## Report and evidence

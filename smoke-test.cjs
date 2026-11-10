@@ -776,6 +776,12 @@ async function main() {
     if (!app.includes(group)) throw new Error(`Grouped keyboard keymap picker omitted ${group}.`);
   const mappingPickerMarkup = vm.runInContext(`(() => { state.mappingPickerGroup = "keyboard"; state.mappingKeyboardGroup = "function"; state.mappingSearch = ""; renderMappingPicker(); return document.querySelector("#mappingPickerBody").innerHTML; })()`, browser);
   if (!mappingPickerMarkup.includes('data-mapping-keyboard-group="function"') || !mappingPickerMarkup.includes("F1")) throw new Error("Keyboard mapping popup did not render its grouped function-key list.");
+  const crossCategorySearch = vm.runInContext(`(() => {
+    const queries = [" Numpad Enter ", "volume up", "mouse wheel back", "switch fn2 layer", "lighting direction", "macro"];
+    return queries.map((query) => mappingPickerEntries("keyboard", query).map(({ code }) => code));
+  })()`, browser);
+  equal(crossCategorySearch, [[88], [0x20e9], [0x4b01], [0xf102], [0xf308, 0xf318], []],
+    "Keymap search must find actions outside the active category and preserve the selectable catalog.");
   const multipleSelection = vm.runInContext(`(() => {
     state.profile.selected = 2;
     state.selectedKeys = new Set([1, 2]);

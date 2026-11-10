@@ -9,10 +9,13 @@ const { AE64HidTransport } = require("../protocol.js");
 const factory = fs.readFileSync(path.join(__dirname, "../docs/firmware-research/protocol/evidence/P12.js.txt"), "utf8");
 assert.match(factory, /sn:t\.slice\(17,29\)\.join\(""\)/);
 
-async function decode(serial) {
+async function decode(serial, { marker = [], board = 0x0a, runMode = 0 } = {}) {
   const packet = new Uint8Array(64);
   packet.set([1, 2, 0, 0, 0, 0x30, 0, 0x0a, 0, 1, 0, 0]);
   packet.set(serial, 17);
+  packet[7] = board;
+  packet[16] = runMode;
+  packet.set(marker, 48);
   const transport = new AE64HidTransport(null);
   transport.transact = async (request) => {
     assert.deepEqual(request, [1, 2]);
@@ -29,8 +32,20 @@ async function decode(serial) {
   assert.match(info.serial, /^\d+$/);
   assert.equal(info.boardIdHex, "0030000a");
   assert.equal(info.firmware, "0.1.0.0");
+  assert.equal(info.firmwareDisplay, "0.1.0.0");
+  assert.equal(info.customFirmware, null);
+  const marker = [0x41, 0x45, 0x36, 0x34, 1, 0, 8, 1, 1];
+  const custom = await decode(mixed, { marker });
+  assert.equal(custom.firmware, "0.1.0.0");
+  assert.equal(custom.serial, info.serial);
+  assert.equal(custom.customFirmware, "0.8.1.1");
+  assert.equal(custom.firmwareDisplay, "v0.8.1.1 custom based on v0.1.0.0");
+  assert.equal((await decode(mixed, { marker, runMode: 255 })).customFirmware, null);
+  assert.equal((await decode(mixed, { marker, board: 0x0b })).customFirmware, null);
+  marker[4] = 2;
+  assert.equal((await decode(mixed, { marker })).customFirmware, null);
   assert.equal((await decode([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1])).serial, "012345678901");
   assert.equal((await decode(Array(12).fill(0))).serial, "000000000000");
   assert.equal((await decode(Array(12).fill(255))).serial, "255".repeat(12));
-  console.log("PASS: device S/N matches the factory decimal-byte format; zero, 0xff and non-UTF-8 UID bytes are preserved. No hardware accessed.");
+  console.log("PASS: DeviceInfo serial, native version, custom build marker, stock fallback and recovery/unknown marker handling. No hardware accessed.");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

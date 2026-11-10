@@ -127,4 +127,4 @@ For a later manually supervised update with a validated image, the existing driv
 - Reassembling all generated chunk payloads reproduces each complete original file.
 - The isolated P04 request builder was executed with only its numeric constants and array helpers, without loading the app or communicating with hardware. Python's generated packet stream matches that builder on **every write packet of all five images**. See [vendor-packet-reference.json](vendor-packet-reference.json) for packet counts and whole-stream SHA-256 values.
 
-Run `python test_offline.py` to repeat the three grouped tests against the five original images. These results verify format and request generation, not hardware flashing or bootloader acceptance.
+Run `python test_offline.py` from the `protocol/` directory in the extracted [research archive](../full-research.zip) to check the five original images and their generated packet streams.

@@ -1,6 +1,14 @@
 # Validation performed
 
-Date: October 28, 2026. All checks below were offline. No firmware update, boot transition, erase command, validation request, reboot or custom application execution was sent to the keyboard during this investigation.
+## Physical keyboard testing
+
+On November 9, 2026, the maintainer reported completing their tests of **v0.8.1** on a physical AE64 Pro and observing no issues in that round. This is a qualitative test report.
+
+The **v0.8.1.1** release adds the version marker and passed offline tests of the linked DeviceInfo handler, browser display and complete image. The physical report applies to v0.8.1.
+
+## October 28, 2026 stock research
+
+All checks below were offline. No firmware update, boot transition, erase command, validation request, reboot or custom application execution was sent to the keyboard during this investigation.
 
 ## Original image and protocol checks: PASS
 
@@ -12,7 +20,7 @@ Date: October 28, 2026. All checks below were offline. No firmware update, boot 
 - Every generated packet has the correct 64-byte payload size, family/command, file offset, length and padding; concatenating packet data reconstructs the complete container.
 - Packet counts and whole-stream hashes match the isolated vendor packet builder for every packet of all five originals.
 
-Reproduce with `python protocol/test_offline.py originals` and `python tools/verify_evidence.py`. The former runs three grouped tests; the latter runs four evidence tests.
+Extract [full-research.zip](full-research.zip), then run `python protocol/test_offline.py originals` and `python tools/verify_evidence.py` from the extracted `AE64-Pro-research` directory. The former runs three grouped tests; the latter runs four evidence tests.
 
 ## Static evidence checks: PASS
 

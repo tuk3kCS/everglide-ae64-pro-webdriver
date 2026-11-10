@@ -1,6 +1,6 @@
 # AE64 Pro custom firmware: source to binary to keyboard
 
-This is the engineering pipeline supported by the current evidence. It includes working offline container tools and a tested portable C module. **A complete, flash-ready custom keyboard firmware has not been produced.** The board definition, exact silicon, Hall wiring, persistent-storage layout, bootloader acceptance and independent recovery still require hardware investigation. The supplied HPM project intentionally stops before building an unimplemented board port.
+This historical guide covers the original offline container tools and HPM SDK scaffold, including the open hardware questions for a full port. The current patch-based firmware has its own [build instructions](../../firmware/custom/ae64-xinput/README.md). Extract [full-research.zip](full-research.zip) for the scaffold and its original paths.
 
 The architecture is RV32 RISC-V with compressed instructions. Multiple startup and MMIO matches strongly support HPM5300-family compatibility. `XS117` remains the catalog label, not a proven public part number. See [hardware evidence](hardware/HARDWARE_AND_TOOLCHAIN.md) and [startup maps](hardware/STARTUP_MEMORY_MAPS.md).
 
@@ -19,7 +19,7 @@ flowchart LR
 
 For a small feature, an audited patch to a known vendor application preserves much of the existing board initialization, scan/calibration and USB implementation. It still requires exact function/data mapping and recovery, and a CRC-correct patch is not automatically safe. A diagnostic string edit is not equivalent to a functional custom firmware.
 
-For substantial changes, write a new application using the confirmed chip's SDK and your own board port. That is the route described by the [HPM project scaffold](development/hpm-port-template/README.md). It offers greater control but requires reconstructing startup, peripherals and firmware behavior. No ready AE64 Pro QMK/ZMK target or vendor firmware source was established in this investigation.
+For substantial changes, write a new application using the confirmed chip's SDK and your own board port. That is the route described by the HPM project scaffold at `development/hpm-port-template/README.md` in the extracted archive. It offers greater control but requires reconstructing startup, peripherals and firmware behavior. No ready AE64 Pro QMK/ZMK target or vendor firmware source was established in this investigation.
 
 ## 2. Establish board identity and recovery
 
@@ -53,7 +53,7 @@ Use the exact confirmed MCU's [official HPM SDK/toolchain setup](https://hpm-sdk
 
 The starting architecture/ABI in the scaffold is `rv32imac_zicsr_zifencei` / `ilp32`. This is a baseline, not a proof that every selected SDK component or vendor instruction extension is covered. Compile output must be inspected against the selected silicon.
 
-An official SHA-256-verified portable Zig 0.17.0 compiler was used during this investigation to validate only the new portable C module. It was staged under the task's work directory; it was not installed globally or bundled in this archive. [Compiler provenance](toolchain-provenance.json) and [test results](development/hpm-port-template/HOST_TEST_RESULTS.md) record the details. It does not replace the complete HPM firmware toolchain/BSP validation.
+An official SHA-256-verified portable Zig 0.17.0 compiler was used during this investigation to validate only the new portable C module. It was staged under the task's work directory; it was not installed globally or bundled in this archive. [Compiler provenance](toolchain-provenance.json) and the archived `development/hpm-port-template/HOST_TEST_RESULTS.md` record the details. It does not replace the complete HPM firmware toolchain/BSP validation.
 
 ## 5. Reconstruct the application linker and startup
 

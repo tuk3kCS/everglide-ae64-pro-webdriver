@@ -1,5 +1,7 @@
 # Project analysis and UI update
 
+This report records the original UI review and its test runs. The [architecture guide](ARCHITECTURE.md) and [project README](../README.md) describe the current driver.
+
 Reviewed on October 29, 2026. Scope: application structure, state and persistence, device communication, page rendering and interaction bindings, gamepad and lighting integration, firmware workflows, tests, deployment configuration, and the five requested UI changes.
 
 ## Architecture
@@ -93,10 +95,10 @@ Browser checks and offline protocol simulations do not validate physical LED out
 ## Existing findings and follow-up opportunities
 
 1. **Narrow-screen page overflow remains outside the changed controls.** At 640px the Lighting page reaches 741px because of its keyboard/perimeter preview; at 390px the English Performance page reaches 408px. Repeating those cases with the original stylesheet produces the same widths. The changed toggle/card components fit their containers. A separate responsive-layout pass should address the page/preview sizing rules.
-2. **The protocol reference is behind the implementation.** The command-family table in `docs/AE64_PROTOCOL.md` still describes some advanced/macro writers as deferred and firmware upgrading as excluded. The current code and dedicated tests implement those paths. Treat the current implementation and focused firmware/gamepad/Fn guides as necessary companions until the table is updated.
+2. **Protocol reference.** The [command-family reference](AE64_PROTOCOL.md) now includes the advanced and macro writers, firmware updates, and custom extensions.
 3. **Shared globals increase coupling.** The ordered classic-script design has no explicit dependency graph. Gradual extraction of pure models/helpers and explicit interfaces would make future changes easier to reason about; a bundler migration is not required for the current task.
 4. **The main renderer and binding file are central maintenance points.** `pages.js` and `interactions.js` must agree on element IDs, page-specific state and lifecycle cleanup. New controls should reuse feature helpers rather than duplicating markup and bindings across pages.
 5. **Offline coverage is strong on behavior, limited on presentation.** The existing VM/fixture tests successfully check protocols, lifecycle and markup, but cannot detect CSS text collisions such as the supplied screenshot. A small browser smoke suite for representative layouts would cover that gap.
-6. **Hardware validation remains a separate milestone.** Current gamepad assignments are session-only in the custom firmware; exported backups remain relevant. The custom firmware/Fn persistence and analog behavior still need physical-device verification as described in the project README.
+6. **Later firmware and physical testing.** v0.4 added saved gamepad mappings and v0.8.1 added persistent Xbox visibility. The [validation record](firmware-research/VALIDATION.md#physical-keyboard-testing) records the maintainer's physical testing.
 
 GitHub Pages CI runs offline checks, assembles the static site, includes feature CSS/JS and local assets, and packages firmware. These changes need no new runtime dependency or build step. The existing local navigation-order edit in `index.html` was preserved. No hosting configuration or deployment was changed.
