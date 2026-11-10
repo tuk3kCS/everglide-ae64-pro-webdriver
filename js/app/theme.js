@@ -8,7 +8,7 @@
  * every screen changes together without coupling appearance to device data.
  */
 
-const THEME_KEY = "ae64-control-theme";
+const THEME_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-theme";
 const THEME_OPTIONS = Object.freeze([
   Object.freeze({ value: "mint", label: "Mint", hint: "Original AE64 Control look", color: "#73f0c0", meta: "#07111d" }),
   Object.freeze({ value: "dark", label: "Dark", hint: "Neutral graphite and blue", color: "#8aa4ff", meta: "#090a0e" }),
@@ -16,7 +16,7 @@ const THEME_OPTIONS = Object.freeze([
 ]);
 
 function normalizeTheme(value) {
-  return THEME_OPTIONS.some((theme) => theme.value === value) ? value : "mint";
+  return THEME_OPTIONS.some((theme) => theme.value === value) ? value : (globalThis.AE64_DEFAULT_THEME || "mint");
 }
 function applyTheme(value, { persist = false, announce = false } = {}) {
   const theme = normalizeTheme(value),

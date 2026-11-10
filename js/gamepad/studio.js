@@ -4,7 +4,7 @@
   function mount(root, options = {}) {
   let disposed = false;
   const getTransport = options.getTransport || (() => null);
-  const M = window.AE64GamepadModel, $ = (id) => root.querySelector(`#${id}`), STORAGE = "ae64-gamepad-studio-v1";
+  const M = window.AE64GamepadModel, $ = (id) => root.querySelector(`#${id}`), STORAGE = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1";
   const icon = (control) => window.AE64ControllerIcons.html(control);
   const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   let config = M.emptyProfile(), selectedKey = 15, selectedControl = null, transport = getTransport(), capabilities = null, busy = false, profileLoaded = false;

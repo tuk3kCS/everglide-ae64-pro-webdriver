@@ -6,8 +6,8 @@ const {
   MATRIX_ROWS, MATRIX_COLS, DECORATIVE_ROWS, DECORATIVE_COLS,
   ADVANCED_MODE, SOCD_MODE, SOCD_PAIR_MODES, LIGHTING_OPEN_MODE,
 } = window.AE64Protocol;
-const STORAGE_KEY = "ae64-control-workspace-v3";
-const LANGUAGE_KEY = "ae64-control-language";
+const STORAGE_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-workspace-v3";
+const LANGUAGE_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-language";
 
 const layout = [
   [

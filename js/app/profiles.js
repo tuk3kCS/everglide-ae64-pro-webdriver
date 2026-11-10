@@ -8,7 +8,7 @@
  * Reviews staged changes, performs verified writes, switches profiles, and imports or exports JSON.
  */
 
-const AUTO_APPLY_KEY = "ae64-control-auto-apply-v1";
+const AUTO_APPLY_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-auto-apply-v1";
 Object.assign(state, {
   autoApply: localStorage.getItem(AUTO_APPLY_KEY) === "true",
   writeInFlight: false,

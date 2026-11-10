@@ -20,6 +20,14 @@ Open [localhost:4173](http://localhost:4173), then choose **Connect keyboard**. 
 
 The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firmware files and commands for other keyboards are not interchangeable.
 
+### AE64 Pro Reloaded
+
+Open [Reloaded at /v2](http://localhost:4173/v2/) for the Wootility 5.4.2-style workspace. Quick Settings puts key selection, actuation, Rapid Trigger and dead zones together. Remap places the layer list beside the keyboard and supports dragging assignments from a searchable catalog. The original driver remains at [the root route](http://localhost:4173/).
+
+Both editions use the same AE64 Pro protocol and onboard profiles. Each has its own browser drafts, language, theme and Auto apply preference. Changes saved to the physical keyboard are visible to either edition when it reads the device.
+
+Reloaded's entry point and layout live under `v2/`. GitHub Pages includes that directory alongside the original driver. The bundled Nunito Sans fonts use the [SIL Open Font License](v2/fonts/OFL.txt).
+
 ### Stock and custom firmware
 
 | Feature | Bundled stock firmware (v0.0.5.0 through v0.1.0.0) | Current custom firmware (XInput + Fn RGB v0.8.1.1) |

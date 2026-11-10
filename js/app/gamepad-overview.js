@@ -2,7 +2,7 @@
 
 const gamepadOverview = { transport: null, profileIndex: null, config: null, pending: false, generation: 0, error: "" };
 function gamepadDraft() {
-  try { const value = localStorage.getItem("ae64-gamepad-studio-v1");return value ? window.AE64GamepadModel.validate(JSON.parse(value)) : null; }
+  try { const value = localStorage.getItem((globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1");return value ? window.AE64GamepadModel.validate(JSON.parse(value)) : null; }
   catch (_) { return null; }
 }
 function gamepadConfigurationEqual(a, b) {
@@ -13,7 +13,7 @@ function gamepadConfigurationEqual(a, b) {
 function gamepadDraftHasChanges(draft) {
   if (!draft) return false;
   try {
-    const saved = JSON.parse(localStorage.getItem("ae64-gamepad-studio-v1"));
+    const saved = JSON.parse(localStorage.getItem((globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1"));
     return saved.keyboardFingerprint !== JSON.stringify([draft.mode, draft.transport, draft.bindings, draft.sticks]);
   } catch (_) { return true; }
 }

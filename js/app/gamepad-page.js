@@ -10,8 +10,9 @@ function updateToolShell() {
   document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename,#backHomeButton,#sidebarThemeSelect,.language-select,#connectButton,#heroConnect").forEach((node) => { node.disabled = busy; });
   if (state.bootloaderConnected) document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename").forEach((node) => { node.disabled = busy || node.dataset?.page !== "firmware"; });
   document.querySelector(".work-actions")?.classList.toggle("hidden", ["gamepad", "firmware"].includes(state.page));
-  if (!document.querySelector("#workspace")?.classList.contains?.("hidden") && window.location && window.location.hash !== `#${state.page}`)
-    window.history?.replaceState(null, "", `#${state.page}`);
+  const route = window.AE64_ROUTE_FOR_PAGE?.(state.page) || state.page;
+  if (!document.querySelector("#workspace")?.classList.contains?.("hidden") && window.location && window.location.hash !== `#${route}`)
+    window.history?.replaceState(null, "", `${window.location.pathname || ""}${window.location.search || ""}#${route}`);
 }
 function gamepadPage() {
   return `<div class="gamepad-mode-page">
