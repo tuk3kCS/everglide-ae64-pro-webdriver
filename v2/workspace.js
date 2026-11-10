@@ -206,14 +206,8 @@
     });
     if (state.page === "performance") paintPerformance(view);
     if (state.page === "keymap") paintRemap();
-    if (state.page === "lighting") {
-      const preview = content.querySelector(".unified-lighting-preview");
-      const command = content.querySelector(".lighting-command");
-      if (preview && command) {
-        command.before(preview);
-        command.querySelector("h2").textContent = titles.lighting;
-      }
-    }
+    if (state.page === "lighting") paintReloadedLighting(content);
+    if (state.page === "gamepad") paintReloadedGamepad(content);
     if (view === "profiles") {
       content.querySelectorAll("[data-profile-slot]").forEach((button) => {
         const index = Number(button.dataset.profileSlot);

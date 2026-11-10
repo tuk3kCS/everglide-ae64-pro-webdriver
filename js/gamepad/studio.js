@@ -267,12 +267,34 @@
     finally { setBusy(false); if (!disposed) updateCompatibility(); }
   }
   $("keyboard").addEventListener("click", (event) => { const key = event.target.closest("[data-key]"); if (!key) return; selectedKey = Number(key.dataset.key); const current = config.bindings.find((b) => b.key === selectedKey); selectedControl = current?.control || null; renderKeyboard(); renderControls(); renderEditor(); });
-  $("controlPicker").addEventListener("click", (event) => { const control = event.target.closest("[data-control]"); if (!control) return; selectedControl = control.dataset.control; change((next) => {
-    next.bindings.forEach((b) => { if (b.key === selectedKey) b.key = null; });
-    const b = next.bindings.find((b) => b.control === selectedControl), known = keyTravel(selectedKey);b.key = selectedKey;
-    if (known) Object.assign(b, automaticTravel.has(b.control) ? M.defaultTravel(known.maxTravelUm / 1000) : { maxTravelMm: known.maxTravelUm / 1000, endMm: Math.min(b.endMm, known.maxTravelUm / 1000), startMm: Math.min(b.startMm, Math.max(0, Math.min(b.endMm, known.maxTravelUm / 1000) - 0.001)) });
-  }); refreshTravelDefaults(); });
-  $("clearBinding").addEventListener("click", () => { selectedControl = null; change((next) => { next.bindings.forEach((b) => { if (b.key === selectedKey) b.key = null; }); }); });
+  function assignControl(control, key = selectedKey) {
+    if (disposed || !M.KEYS[key] || !M.CONTROL.has(control)) return;
+    selectedKey = key;
+    selectedControl = control;
+    change((next) => {
+      next.bindings.forEach((item) => { if (item.key === key) item.key = null; });
+      const nextBinding = next.bindings.find((item) => item.control === control);
+      const known = keyTravel(key);
+      nextBinding.key = key;
+      if (!known) return;
+      const maximum = known.maxTravelUm / 1000;
+      if (automaticTravel.has(control)) Object.assign(nextBinding, M.defaultTravel(maximum));
+      else {
+        nextBinding.maxTravelMm = maximum;
+        nextBinding.endMm = Math.min(nextBinding.endMm, maximum);
+        nextBinding.startMm = Math.min(nextBinding.startMm, Math.max(0, nextBinding.endMm - 0.001));
+      }
+    });
+    refreshTravelDefaults();
+  }
+  function removeAssignment(key = selectedKey) {
+    if (disposed || !M.KEYS[key] || !config.bindings.some((item) => item.key === key)) return;
+    selectedKey = key;
+    selectedControl = null;
+    change((next) => next.bindings.forEach((item) => { if (item.key === key) item.key = null; }));
+  }
+  $("controlPicker").addEventListener("click", (event) => assignControl(event.target.closest("[data-control]")?.dataset.control));
+  $("clearBinding").addEventListener("click", () => removeAssignment());
   for (const id of ["startMm", "endMm", "maxTravelMm"]) $(id).addEventListener("change", () => {
     if (!binding()) return;
     const values = Object.fromEntries(["startMm", "endMm", "maxTravelMm"].map((field) => [field, Number($(field).value)]));
@@ -315,6 +337,8 @@
   const ready = (async () => { await refreshCapabilities(); if (!disposed && !profileLoaded) await refreshTravelDefaults(); })();
   return {
     ready,
+    assignControl,
+    removeAssignment,
     isBusy: () => busy,
     stopLive: () => { if (!disposed) stopLive(true); },
     dispose() {

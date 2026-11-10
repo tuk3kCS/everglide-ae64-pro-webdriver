@@ -227,16 +227,165 @@ button, input, select, textarea { font-family: inherit; }
 [data-view="profiles"] .profile-slot-row { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
 [data-view="profiles"] .profile-slot-row button { width: auto; min-height: 48px; }
 
-#welcome { max-width: none; padding: 7vh 1.5rem; }
-.welcome-content { width: min(100%, 58rem); margin: 0 auto; text-align: center; }
+#welcome { max-width: none; min-height: 100svh; padding: clamp(2.5rem, 8vh, 6rem) 1.5rem 2rem; background: var(--rail); }
+.welcome-content { width: min(100%, 73rem); margin: 0 auto; text-align: center; }
+.welcome-brand { display: table; margin: 0 auto 22px; padding-inline: 6px; border: 2px solid currentColor; font-size: 22px; font-weight: 1000; }
 .welcome-content h1 { margin: 0; font-size: clamp(2.25rem, 5vw, 3.1rem); }
-.welcome-content > p:not(.eyebrow) { color: var(--muted); font-size: 1.18rem; }
-.welcome-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 24px auto; }
-#welcome .hero-keyboard { container-type: inline-size; overflow: auto; padding: 14px 10px; margin: 36px auto; width: min(100%, 50rem); background: #292b2c; border-radius: 12px; }
+.welcome-content > p { max-width: 55rem; margin: 16px auto; color: var(--muted); font-size: 1.18rem; }
+.welcome-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 28px auto; }
+.welcome-actions .button, .initialize-device .primary { min-height: 48px; padding-inline: 20px; }
+#welcome .hero-keyboard {
+  container-type: inline-size; overflow: auto; padding: 16px 12px 24px; margin: clamp(2rem, 6vh, 4.5rem) auto;
+  width: min(100%, 62rem); background: linear-gradient(#313235, #252627);
+  border: 2px solid #111; border-radius: 14px; box-shadow: inset 0 -6px #171819, 0 16px 44px #0006;
+}
+#welcome .hero-keyboard .keyboard { --unit: clamp(1.25rem, 6.26cqw, 4rem); }
+#welcome .hero-keyboard .key {
+  display: grid; place-items: center; background: linear-gradient(145deg, #343639, #1d1f22);
+  color: var(--welcome-key); border-color: var(--welcome-key); box-shadow: inset 0 -4px #0009, 0 0 7px var(--welcome-key);
+}
+#welcome .hero-keyboard .key b { color: inherit; font-size: .9em; }
+.welcome-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 16px; }
+.welcome-links .panel { display: grid; gap: 4px; text-align: left; color: var(--text); text-decoration: none; cursor: pointer; }
+.welcome-links .panel:hover { border-color: var(--control-hover); }
+.welcome-links small { color: var(--muted); }
+.initialize-device { position: relative; margin: 0 auto; max-width: 74rem; padding-block: 14px 36px; text-align: center; }
+.initialize-device h1 { margin: 0 0 12px; font-size: clamp(1.65rem, 4vw, 2.4rem); }
+.initialize-device > p { margin-inline: auto; max-width: 48rem; color: var(--muted); }
+#cancelInitialization { position: absolute; top: 0; right: 0; }
+.initialize-steps { display: flex; justify-content: center; gap: 8px; margin: 22px 0; padding: 0; list-style: none; }
+.initialize-steps li { min-width: 66px; border-top: 7px solid var(--control-bg); padding-top: 6px; font-size: 12px; color: var(--muted); }
+.initialize-steps li[aria-current="step"] { border-color: var(--mint); color: var(--text); }
+.initialize-usb { display: block; width: min(15rem, 75vw); margin: 32px auto 24px; color: var(--mint); }
+.initialize-status { padding: 12px 16px; border-radius: 8px; background: var(--panel-2); }
+#welcome [hidden], .gamepad-studio [hidden] { display: none !important; }
+
+.reloaded-panel-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 25px; margin: 23px 0 12px; }
+.reloaded-panel-heading h2, .reloaded-rgb-title { margin: 0; font-size: 1.55rem; }
+.reloaded-segments { display: flex; flex-wrap: wrap; gap: 5px; }
+.reloaded-segments button {
+  padding: 7px 12px; background: var(--control-bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px; cursor: pointer;
+}
+.reloaded-segments button[aria-pressed="true"] { border-color: var(--mint); }
+.gamepad-studio .reloaded-gamepad-board {
+  container-type: inline-size; width: min(100%, 56rem); margin: 0 auto;
+  padding: 11px 10px 18px; border: 2px solid #121314; border-radius: 12px;
+  background: linear-gradient(#303235, #262728); box-shadow: inset 0 -5px #151617, 0 5px 0 #111213;
+}
+.gamepad-studio .reloaded-gamepad-board .keyboard { --unit: clamp(1.28rem, 6.26cqw, 3.6rem); }
+.gamepad-studio .reloaded-gamepad-board .key { color: #f0f1f2; background: #2a2d2f; border-color: #3b3e42; }
+.gamepad-studio .reloaded-gamepad-board .key.selected { border-color: var(--mint); }
+.gamepad-studio .reloaded-gamepad-board .key.bound { background: #434032; }
+.reloaded-gamepad-setup, .reloaded-gamepad-configuration {
+  display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.25fr); align-items: start; gap: 15px;
+}
+.gamepad-studio .reloaded-gamepad-setup > .card,
+.gamepad-studio .reloaded-gamepad-configuration > .card { grid-column: auto; padding: var(--panel-padding); }
+.gamepad-studio .reloaded-enable-gamepad .usb-device-control,
+.gamepad-studio .reloaded-enable-gamepad .profilebar { margin: 0; padding: 0; border: 0; background: transparent; }
+.gamepad-studio .reloaded-enable-gamepad .profilebar { display: grid; gap: 15px; margin-top: 18px; }
+.gamepad-studio .reloaded-enable-gamepad .profilebar label { min-width: 0; }
+.gamepad-studio .reloaded-enable-gamepad :is(select, input:not([type="checkbox"])) { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--control-bg); }
+.reloaded-enable-gamepad #usbDeviceTitle { font-size: 1.17rem; }
+.gamepad-studio :is(.mapping-card,.tuning-card,.behavior-card) .eyebrow { display: none; }
+.gamepad-studio .mapping-card .control-picker { display: flex; flex-wrap: wrap; gap: 7px; }
+.gamepad-studio .mapping-card .control-group { display: contents; }
+.gamepad-studio .mapping-card .control-group > span { display: none; }
+.gamepad-studio .mapping-card .control-action {
+  width: 44px; min-height: 44px; border-radius: 5px; cursor: grab; background: var(--active-surface);
+}
+.gamepad-studio .mapping-card :is([data-control="A"], [data-control="B"], [data-control="X"], [data-control="Y"], [data-control="BACK"], [data-control="START"]) { order: -1; }
+.gamepad-studio .mapping-card .assignment-head { margin-top: 14px; margin-bottom: 0; }
+.gamepad-studio .reloaded-gamepad-configuration .curve-section { display: flex; flex-direction: column-reverse; }
+.reloaded-gamepad-options, .reloaded-gamepad-setup > .gp-device-bar { grid-column: 1 / -1; }
+.reloaded-gamepad-options summary { cursor: pointer; }
+.reloaded-gamepad-options .solution-grid { margin: 14px 0 0; }
+.reloaded-gamepad-options .hardware-solution-info { margin: 12px 0 0; }
+.gamepad-studio > .profile-actions { justify-content: flex-end; flex-wrap: wrap; margin-block: 14px; }
+.reloaded-gamepad-tester { min-height: 15rem; }
+.tester-signals { display: grid; gap: 12px; }
+.tester-device { display: grid; gap: 12px; padding: 12px; border-radius: 6px; background: var(--panel-3); overflow-wrap: anywhere; }
+.tester-axes { display: grid; gap: 6px; }
+.tester-axes label { display: grid; grid-template-columns: 4rem minmax(0, 1fr) 3.2rem; align-items: center; }
+.tester-axes meter { width: 100%; }
+.tester-axes label span { text-align: right; }
+.tester-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+.tester-buttons span { padding: 4px 7px; border-radius: 4px; background: var(--control-bg); }
+.tester-buttons span.pressed { color: #171819; background: var(--mint); }
+
+.reloaded-lighting-board { display: grid; grid-template-columns: 8.25rem minmax(0, 1fr); align-items: center; gap: 16px; }
+.reloaded-rgb-layers h3 { margin: 0 0 10px; font-size: .88rem; font-weight: 650; text-transform: uppercase; }
+.reloaded-rgb-layers .lighting-tabs { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.reloaded-rgb-layers .lighting-tabs button { justify-content: start; min-width: 0; padding-inline: 10px; font-size: 12px; }
+.reloaded-lighting-board .unified-lighting-preview { min-width: 0; }
+.reloaded-lighting-board .unified-lighting-preview > .panel-head > div { display: none; }
+.reloaded-lighting-board .unified-preview-scroll { container-type: inline-size; }
+.reloaded-lighting-board .decorative-frame {
+  --strip-size: clamp(14px, 3cqw, 23px);
+  grid-template-columns: var(--strip-size) max-content var(--strip-size);
+  grid-template-rows: var(--strip-size) max-content var(--strip-size);
+}
+.reloaded-lighting-board .decorative-keyboard-core .keyboard {
+  --unit: clamp(18px, calc((100cqw - 2 * var(--strip-size) - 16px) / 16 - var(--key-gap)), 3.12rem);
+}
+.reloaded-rgb-title { margin: 9px 0 0; }
+.lighting-page .reloaded-rgb-editors { grid-template-columns: minmax(14rem, .85fr) minmax(0, 2fr); align-items: start; gap: 14px; }
+.reloaded-rgb-editors .lighting-palette-panel { grid-column: auto; min-width: 0; padding: 16px; }
+.reloaded-rgb-editors .lighting-palette-panel .panel-head p,
+.reloaded-rgb-editors .lighting-palette-panel .panel-head .badge,
+.reloaded-rgb-editors .palette-edit-fields small,
+.reloaded-rgb-editors .palette-note { display: none; }
+.reloaded-rgb-editors .lighting-palette-panel .palette-large { display: flex; flex-wrap: wrap; gap: 6px; }
+.reloaded-rgb-editors .palette button { width: 25px; height: 25px; min-height: 0; padding: 0; border-radius: 50%; }
+.reloaded-rgb-editors .palette button span { display: none; }
+.reloaded-rgb-editors .palette-editor { display: flex; flex-direction: column; margin: 12px 0 0; padding: 0; border: 0; background: transparent; }
+.reloaded-rgb-editors .color-preview-stack { display: none; }
+.reloaded-rgb-editors .palette-edit-fields { width: 100%; }
+.reloaded-rgb-editors .editable-color-channels label { padding: 4px; }
+.reloaded-rgb-editors .editable-color-channels input { padding-inline: 4px; }
+.reloaded-color-plane {
+  position: relative; min-height: 145px; aspect-ratio: 1.25; margin: 0 0 12px; border-radius: 7px;
+  touch-action: none; cursor: crosshair;
+  background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(var(--hue) 100% 50%));
+}
+.reloaded-color-plane i {
+  position: absolute; top: var(--value); left: var(--saturation); width: 10px; height: 10px;
+  border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
+}
+.reloaded-color-plane[aria-disabled="true"] { cursor: default; opacity: .5; }
+.reloaded-hue {
+  appearance: none; width: 100%; height: 14px; border: 0; border-radius: 999px;
+  background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
+}
+.reloaded-hue::-webkit-slider-thumb { appearance: none; width: 17px; height: 17px; border: 2px solid #fff; border-radius: 50%; background: #eee; }
+.reloaded-hue:disabled { opacity: .45; }
+.reloaded-effects { padding: 16px; min-width: 0; }
+.reloaded-effect-header, .reloaded-effect-columns { display: grid; gap: 12px; margin-top: 12px; }
+.reloaded-effect-header { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.reloaded-effect-header > label { min-width: 0; margin: 0; }
+.reloaded-effect-header .field select { width: 100%; }
+.reloaded-effect-columns { grid-template-columns: minmax(6rem, .8fr) minmax(8rem, 1fr) minmax(0, 1.4fr); }
+.reloaded-effect-columns h3, .reloaded-effect-columns h2 { font-size: .88rem; text-transform: uppercase; font-weight: 750; }
+.reloaded-base-effect strong { display: block; margin-top: 10px; padding: 10px; border: 1px solid var(--mint); border-radius: 6px; overflow-wrap: anywhere; }
+.reloaded-effect-columns > .panel { padding: 0; border: 0; background: transparent; }
+.reloaded-effect-columns .panel-head { margin-bottom: 10px; }
+.reloaded-effect-columns .panel-head p, .reloaded-effect-columns .panel-head .badge { display: none; }
+.reloaded-effect-columns .lighting-mode-grid {
+  display: grid; grid-template-columns: 1fr; gap: 5px; max-height: 19rem; overflow: auto;
+  padding: 6px; border-radius: 7px; background: var(--panel-3);
+}
+.reloaded-effect-columns .lighting-mode-grid button { min-height: 32px; padding: 5px 7px; text-align: left; background: var(--control-bg); }
+.reloaded-effect-columns .lighting-mode-grid button small { display: none; }
+.reloaded-effect-columns .lighting-mode-grid button.active { background: var(--mint); color: #161718; }
+.reloaded-effect-columns .lighting-mode-grid button.active span { color: inherit; }
+.reloaded-effect-columns .lighting-direction { flex-wrap: wrap; }
 
 @media (max-width: 1150px) {
   .performance-primary.with-live-monitor { grid-template-columns: 1fr; }
   .work-header { padding-inline: 12px; }
+  .reloaded-effect-columns { grid-template-columns: minmax(7rem, 1fr) minmax(0, 1.4fr); }
+  .reloaded-base-effect { grid-column: 1 / -1; }
 }
 @media (max-width: 900px) {
   :root[data-edition="reloaded"] { --sidebar-width: 12rem; }
@@ -250,6 +399,9 @@ button, input, select, textarea { font-family: inherit; }
   .remap-board { grid-template-columns: 1fr; }
   .remap-board .layout-board { grid-column: 1; }
   .remap-board .layer-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .reloaded-lighting-board, .lighting-page .reloaded-rgb-editors,
+  .reloaded-gamepad-setup, .reloaded-gamepad-configuration { grid-template-columns: minmax(0, 1fr); }
+  .reloaded-rgb-layers .lighting-tabs { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
 }
 @media (max-width: 660px) {
   .workspace { display: block; }
@@ -267,4 +419,6 @@ button, input, select, textarea { font-family: inherit; }
   .header-actions, .work-actions { gap: 6px; }
   .work-chrome { position: static; }
   .layout-board .keyboard-wrap, .unified-lighting-preview .keyboard-wrap { padding-inline: 5px; }
+  #cancelInitialization { position: static; }
+  .reloaded-effect-header { grid-template-columns: minmax(0, 1fr); }
 }

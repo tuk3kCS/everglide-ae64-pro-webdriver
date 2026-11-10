@@ -19,22 +19,35 @@
 </head>
 <body>
   <header id="topbar" class="hidden"></header>
-  <main id="welcome" class="hidden">
-    <div class="welcome-content">
-      <p class="eyebrow">AE64 PRO RELOADED</p>
+  <main id="welcome">
+    <div class="welcome-content" id="welcomeContent">
+      <span class="welcome-brand" aria-hidden="true">AE</span>
       <h1>Welcome to AE64 Pro Reloaded</h1>
-      <p>Configure your keys, actuation, Rapid Trigger and lighting. Connect your AE64 Pro or explore the offline workspace.</p>
+      <p>Configure your AE64 Pro in one place. Remap keys, tune actuation and Rapid Trigger, and customize lighting and gamepad controls.</p>
       <div class="welcome-actions">
         <button id="tryWorkspace" class="button ghost" type="button">Try out Reloaded</button>
-        <button id="heroConnect" class="button primary" type="button">Connect keyboard</button>
+        <button id="startInitialization" class="button primary" type="button">Initialize a device</button>
       </div>
       <div id="heroKeyboard" class="hero-keyboard" aria-hidden="true"></div>
-      <div class="welcome-actions">
-        <button id="openGamepadTools" class="button ghost" type="button">Gamepad</button>
-        <button id="openFirmwareTools" class="button ghost" type="button">Firmware</button>
-        <a class="button ghost" href="./">Classic driver</a>
+      <div class="welcome-links">
+        <button id="openGamepadTools" class="panel" type="button"><strong>Gamepad</strong><small>Explore controller mappings and travel settings.</small></button>
+        <button id="openFirmwareTools" class="panel" type="button"><strong>Firmware</strong><small>Choose an image or recover your keyboard.</small></button>
+        <a class="panel" href="./"><strong>Classic driver ↗</strong><small>Open the original AE64 Pro workspace.</small></a>
       </div>
     </div>
+    <section id="initializeDevice" class="initialize-device" aria-labelledby="initializeTitle" hidden>
+      <button id="cancelInitialization" class="button ghost" type="button">Cancel and exit</button>
+      <ol class="initialize-steps" aria-label="Setup progress">
+        <li aria-current="step">Setup</li><li>Connect</li><li>Configure</li>
+      </ol>
+      <h1 id="initializeTitle" tabindex="-1">Plug your AE64 Pro into your computer</h1>
+      <p>Use a USB data cable. Choose your AE64 Pro when the browser asks which device to connect.</p>
+      <svg class="initialize-usb" viewBox="0 0 200 124" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" aria-hidden="true">
+        <rect x="12" y="23" width="176" height="56" rx="8"/><path d="M24 39h152M24 53h152M24 67h152M100 80v24m-9 0h18v13H91z"/>
+      </svg>
+      <button id="heroConnect" class="button primary" type="button">Connect keyboard</button>
+      <p id="initializeStatus" role="status" class="initialize-status">Use Chrome or Edge on localhost or HTTPS for WebHID.</p>
+    </section>
   </main>
 
   <section class="workspace hidden" id="workspace" aria-label="AE64 Pro Reloaded workspace">
@@ -290,6 +303,7 @@
   <script src="js/app/device.js"></script>
   <script src="js/app/live.js"></script>
   <script src="js/app/profiles.js"></script>
+  <script src="v2/panels.js"></script>
   <script src="v2/workspace.js"></script>
   <script src="app.js"></script>
   <script src="v2/start.js"></script>
