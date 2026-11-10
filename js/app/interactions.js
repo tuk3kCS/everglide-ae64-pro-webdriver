@@ -9,9 +9,15 @@ function stagePerformance(field, value) {
   stagePerformanceFields({ [field]: value });
 }
 function stagePerformanceFields(values) {
+  const updateIndicators = ["mode", "normalPress", "rtFirstTouch", "pressDeadStroke", "releaseDeadStroke"]
+    .some((field) => Object.hasOwn(values, field));
   selectedKeyIds().forEach((id) => {
-    Object.assign(state.profile.performance[id], values);
+    const performance = Object.assign(state.profile.performance[id], values);
     state.dirty.performance.add(id);
+    if (updateIndicators) {
+      const indicators = document.querySelector(`.performance-board [data-key="${id}"] .performance-indicators`);
+      if (indicators) indicators.innerHTML = performanceIndicators(performance);
+    }
   });
   renderStatus();
 }

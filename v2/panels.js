@@ -1,5 +1,84 @@
 "use strict";
 
+let reloadedLivePressPosition = null;
+
+function positionReloadedLivePress(panel, left, top) {
+  const inset = 8;
+  reloadedLivePressPosition = {
+    left: clamp(left, inset, Math.max(inset, document.documentElement.clientWidth - panel.offsetWidth - inset)),
+    top: clamp(top, inset, Math.max(inset, document.documentElement.clientHeight - panel.offsetHeight - inset)),
+  };
+  panel.style.inset = `${reloadedLivePressPosition.top}px auto auto ${reloadedLivePressPosition.left}px`;
+}
+
+window.addEventListener("resize", () => {
+  const panel = document.querySelector(".reloaded-live-press");
+  if (panel?.offsetWidth && reloadedLivePressPosition)
+    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top);
+});
+
+function paintReloadedLivePress(page) {
+  const panel = page.querySelector("#livePressPanel");
+  if (!panel) return;
+  panel.parentElement.classList.remove("with-live-monitor");
+  panel.classList.add("reloaded-live-press");
+  panel.setAttribute("aria-label", "Live press distance");
+  page.append(panel);
+
+  const header = panel.querySelector(".panel-head");
+  const title = header.querySelector("h2");
+  title.innerHTML = '<button type="button" class="live-press-handle" data-keyboard-input="allow" aria-label="Move Live Press Distance panel with arrow keys" title="Drag to move"><span aria-hidden="true">⠿</span> Live press distance</button>';
+  const handle = title.firstElementChild;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "button ghost small live-press-close";
+  close.dataset.keyboardInput = "allow";
+  close.setAttribute("aria-label", "Close live press distance");
+  close.textContent = "×";
+  header.append(close);
+
+  const scope = panel.querySelector(".live-press-scope");
+  const readout = panel.querySelector(".live-press-readout");
+  const valueRow = document.createElement("div");
+  valueRow.className = "live-press-value-row";
+  valueRow.append(readout.firstElementChild, panel.querySelector("#livePressValue"));
+  readout.prepend(valueRow, panel.querySelector(".axis-visual"));
+  panel.querySelector("#pressedKeyList").parentElement.classList.add("live-press-pressed");
+  panel.append(scope);
+
+  if (reloadedLivePressPosition)
+    positionReloadedLivePress(panel, reloadedLivePressPosition.left, reloadedLivePressPosition.top);
+
+  let drag = null;
+  header.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || close.contains(event.target) || drag) return;
+    const { left, top } = panel.getBoundingClientRect();
+    drag = { pointer: event.pointerId, x: event.clientX - left, y: event.clientY - top };
+    header.setPointerCapture(event.pointerId);
+    panel.classList.add("moving");
+  });
+  header.addEventListener("pointermove", (event) => {
+    if (event.pointerId === drag?.pointer)
+      positionReloadedLivePress(panel, event.clientX - drag.x, event.clientY - drag.y);
+  });
+  header.addEventListener("lostpointercapture", () => {
+    drag = null;
+    panel.classList.remove("moving");
+  });
+  handle.addEventListener("keydown", (event) => {
+    const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    const { left, top } = panel.getBoundingClientRect();
+    const step = event.shiftKey ? 40 : 12;
+    positionReloadedLivePress(panel, left + direction[0] * step, top + direction[1] * step);
+  });
+  close.addEventListener("click", () => {
+    page.querySelector("#livePressDistanceToggle").click();
+    page.querySelector("#livePressDistanceToggle").focus();
+  });
+}
+
 const reloadedProfileOrderKey = globalThis.AE64_STORAGE_PREFIX + "onboard-profile-order-v1";
 const reloadedProfileDragType = "application/x-ae64-onboard-profile";
 let reloadedProfileOrder = [];

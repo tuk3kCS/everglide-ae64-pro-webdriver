@@ -21,6 +21,14 @@ function activeActuationDistance(performance) {
     ? Number(performance?.rtFirstTouch) || 0
     : Number(performance?.normalPress) || 0;
 }
+function performanceIndicators(performance) {
+  const actuation = activeActuationDistance(performance).toFixed(3);
+  const rapid = Number(performance?.mode) === 1;
+  const deadZones = deadZonesEnabled(performance);
+  return `<span class="performance-actuation"><strong>${actuation}</strong><small>mm</small></span>${
+    rapid ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${
+    deadZones ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}`;
+}
 function rtIndependenceToken(id) {
   return `${Number(state.profile.profileIndex)}:${Number(id)}`;
 }
@@ -186,9 +194,6 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               calibrationRange = Number(state.profile.performance[key.id]?.axisRangeMax) || 4000,
               calibrationPercent = calibrationState.className === "new" ? 100 : Math.min(100, Math.max(0, calibrationRoute / calibrationRange * 100)),
               performance = state.profile.performance[key.id],
-              rapidTrigger = Number(performance?.mode) === 1,
-              deadZone = Number(performance?.pressDeadStroke) > 0 || Number(performance?.releaseDeadStroke) > 0,
-              actuation = activeActuationDistance(performance),
               switchProfile = switchCatalogEntry(performance?.axisV2Id),
               switchRecordPending =
                 showSwitchProfiles &&
@@ -223,7 +228,7 @@ function keyboardHtml({ hero = false, lighting = false } = {}) {
               ? `${advanced.feature.title} ${advanced.removing ? "removal staged" : advanced.staged ? "staged" : "enabled"}${advanced.partner ? ` with ${advanced.partner}` : ""}`
               : "";
             return `<button class="key ${controllerBadge ? "overview-gamepad-key" : ""} ${selected ? "selected" : ""} ${dirty ? "dirty" : ""} ${advanced ? "advanced-key" : ""} ${advanced?.removing ? "advanced-removing" : ""} ${lighting && custom ? "custom-light" : ""} ${fnMeta ? fnMeta.override ? "fn-layer-override" : "fn-layer-inherited" : ""} ${fnMeta && key.id === state.hardware.fnTriggerId ? "fn-held" : ""} ${showPerformance ? "performance-key" : ""} ${showSwitchProfiles ? "switch-profile-key" : ""} ${showPressDistance ? "live-press-key" : ""} ${showCalibration ? `calibration-key calibration-${calibrationState.className}` : ""}" style="--u:${key.u};--key-color:${esc(previewColor)};--switch-color:${esc(switchColor)};--advanced-color:${esc(advanced?.feature.color || "transparent")};--press-depth:${pressPercent.toFixed(2)}%;--calibration-depth:${calibrationPercent.toFixed(2)}%;${effectPreview?.style || ""}" ${effectPreview ? 'data-effect-preview="approximate"' : ""} type="button" title="${esc(`${key.n} · ${mapped}`)}" ${hero ? 'tabindex="-1"' : `data-key="${key.id}" aria-pressed="${lighting ? lightingSelected : keySelected}"`}>
-              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-actuation"><strong>${actuation.toFixed(3)}</strong><small>mm</small></span>${rapidTrigger ? '<i class="performance-flag rt" title="Rapid Trigger enabled">RT</i>' : ""}${deadZone ? '<i class="performance-flag dz" title="Dead zone enabled">DZ</i>' : ""}` : hero ? "" : `<span class="mapped">${esc(compactMapped)}</span>`}${controllerBadge}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
+              ${showPressDistance ? '<i class="press-distance-fill" aria-hidden="true"></i>' : ""}${showCalibration ? `<i class="calibration-fill" aria-hidden="true"></i><span class="calibration-adc" title="Raw Hall ADC">${calibrationAdc}</span>` : ""}${advanced ? `<i class="advanced-indicator" data-advanced-indicator="${advanced.feature.code}" title="${esc(advancedTitle)}">${advanced.feature.code}</i>` : ""}${showSwitchProfiles ? `<span class="switch-key-name" title="${esc(switchName)}">${esc(switchName)}</span>` : showPerformance ? `<span class="performance-indicators">${performanceIndicators(performance)}</span>` : hero ? "" : `<span class="mapped">${esc(compactMapped)}</span>`}${controllerBadge}<b>${esc(key.n)}</b>${lighting ? `<i class="color-dot ${custom ? "custom" : ""}" title="${live ? "Live hardware color" : custom ? "Custom override" : paletteIndex === 0 ? "Firmware rainbow palette" : "Main palette"}"></i>${spacebarDots}` : ""}</button>`;
           })
           .join("")}</div>`,
     )

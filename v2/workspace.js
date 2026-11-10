@@ -22,8 +22,6 @@
     if (page === "performance") return performanceRoutes[performanceView];
     return page === "settings" ? settingsView : page;
   };
-  let remapSearch = "";
-  let remapGroup = "keyboard";
   const paint = render;
   const paintStatus = renderStatus;
   const paintToolbar = renderToolbar;
@@ -89,6 +87,7 @@
       <button type="button" class="button ghost small" data-discard ${state.selectedKeys.size ? "" : "disabled"}>Discard selection</button>`;
     heading.after(selection);
     const board = content.querySelector(".performance-board");
+    paintReloadedLivePress(content);
     if (!state.calibrationActive) {
       const calibration = board.querySelector(".calibration-board-action");
       if (calibration) selection.append(calibration);
@@ -147,57 +146,7 @@
     intro.before(heading);
     intro.querySelector(".mapping-launcher p").textContent = "Drag a key from the catalog onto the keyboard, or select a key and click its new assignment.";
     intro.querySelector("#openMappingPicker").textContent = "Open full catalog";
-    const catalog = document.createElement("section");
-    catalog.className = "panel reloaded-key-catalog";
-    catalog.innerHTML = `<input type="search" id="reloadedRemapSearch" placeholder="Search for a character" aria-label="Search for a key">
-      <div class="reloaded-categories" aria-label="Key categories"></div>
-      <div class="reloaded-catalog-entries"></div>`;
-    intro.after(catalog);
-    const input = catalog.querySelector("input");
-    const categories = catalog.querySelector(".reloaded-categories");
-    const entries = catalog.querySelector(".reloaded-catalog-entries");
-    input.value = remapSearch;
-
-    const assign = (code, id) => {
-      if (toolOperationBusy() || !keys[id] || !KEYCODE_LABELS.has(code)) return;
-      state.profile.selected = id;
-      state.selectedKeys = new Set([id]);
-      applyMappingPickerKeycode(code);
-    };
-    function updateCatalog() {
-      const label = remapGroup === "keyboard" ? "Basic Characters" : remapGroup[0].toUpperCase() + remapGroup.slice(1);
-      categories.innerHTML = KEYMAP_SELECTABLE_GROUPS.map((group) =>
-        `<button class="button ghost small" type="button" data-catalog-group="${group}" aria-pressed="${group === remapGroup}">${esc(group)}</button>`).join("");
-      const choices = remapSearch.trim()
-        ? mappingPickerEntries(remapGroup, remapSearch)
-        : KEYCODE_GROUPS[remapGroup];
-      entries.innerHTML = `<h3>${remapSearch.trim() ? "Search results" : label}</h3><div class="reloaded-keycodes">${choices.map(({ code, label: name }) =>
-        `<button type="button" draggable="true" data-catalog-code="${code}" title="${esc(name)}">${esc(name)}</button>`).join("") || "<p>No matching keys.</p>"}</div>`;
-    }
-    input.addEventListener("input", () => { remapSearch = input.value; updateCatalog(); });
-    categories.addEventListener("click", (event) => {
-      const group = event.target.closest("[data-catalog-group]")?.dataset.catalogGroup;
-      if (group) { remapGroup = group; remapSearch = input.value = ""; updateCatalog(); }
-    });
-    entries.addEventListener("click", (event) => {
-      const code = event.target.closest("[data-catalog-code]")?.dataset.catalogCode;
-      if (code !== undefined) assign(Number(code), selectedKey().id);
-    });
-    const dragType = "application/x-ae64-reloaded-keycode";
-    entries.addEventListener("dragstart", (event) => {
-      const code = event.target.closest("[data-catalog-code]")?.dataset.catalogCode;
-      if (code !== undefined) event.dataTransfer.setData(dragType, code);
-    });
-    board.addEventListener("dragover", (event) => {
-      if (event.dataTransfer.types.includes(dragType) && event.target.closest("[data-key]")) event.preventDefault();
-    });
-    board.addEventListener("drop", (event) => {
-      const key = event.target.closest("[data-key]");
-      if (!key || !event.dataTransfer.types.includes(dragType)) return;
-      event.preventDefault();
-      assign(Number(event.dataTransfer.getData(dragType)), Number(key.dataset.key));
-    });
-    updateCatalog();
+    paintReloadedRemapCatalog(intro, board);
   }
 
   render = () => {
