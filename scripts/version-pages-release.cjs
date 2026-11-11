@@ -81,7 +81,8 @@ function versionPagesRelease(destination, release) {
     html: fs.readFileSync(path.join(site, edition.file), "utf8"),
   }));
   const alias = fs.readFileSync(path.join(site, "v2/index.html"));
-  const about = fs.readFileSync(path.join(site, "about.html"));
+  const about = fs.readFileSync(path.join(site, "about.html"), "utf8")
+    .replace("<head>", `<head>\n  <base href="_releases/${release}/">`);
   const publicFiles = new Set(["robots.txt", "sitemap.xml", ".nojekyll"]);
   const runtime = fs.readdirSync(site).filter((name) => !publicFiles.has(name));
   const target = path.join(releases, release);

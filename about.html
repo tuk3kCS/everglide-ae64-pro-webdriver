@@ -3,40 +3,75 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base target="_blank">
-  <title>About AE64 Pro Control</title>
-  <style>
-    :root { color-scheme: dark; --bg:#081521; --text:#e8f0f4; --muted:#9db1bf; --accent:#73f0c0; --blue:#80aefc; --line:#29485d; --note:#0c1d2a; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--text); background: var(--bg); }
-    :root[data-theme="dark"] { --bg:#0d0f14; --text:#f5f7fb; --muted:#a0a8b8; --accent:#8aa4ff; --blue:#78b8ff; --line:#363b49; --note:#151820; }
-    :root[data-theme="light"] { color-scheme: light; --bg:#f7fafa; --text:#18272c; --muted:#63777e; --accent:#167a62; --blue:#315ea8; --line:#c8d5d7; --note:#edf4f3; }
-    * { box-sizing: border-box; }
-    body { max-width: 760px; margin: 0 auto; padding: clamp(28px, 7vw, 72px); line-height: 1.7; }
-    h1 { margin: 0; color: var(--accent); font-size: clamp(32px, 7vw, 58px); letter-spacing: -.05em; }
-    h2 { margin-top: 40px; color: var(--text); }
-    p, li { color: var(--muted); }
-    a { color: var(--blue); }
-    .eyebrow { color: var(--blue); font: 800 11px/1 ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; }
-    .note { margin-top: 32px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--note); }
-  </style>
+  <meta name="color-scheme" content="light">
+  <title>fat dog's desktop · AE64 Pro Reloaded</title>
+  <link rel="stylesheet" href="v2/about/desktop.css">
+  <script src="v2/about/desktop.js" defer></script>
 </head>
 <body>
-  <!--
-    This file owns the About Us page. Write any trusted HTML you want below:
-    headings, paragraphs, images, credits, links, release notes, or sponsors.
-  -->
-  <span class="eyebrow">Independent · Local-first · Community built</span>
-  <h1>AE64 Pro Control</h1>
-  <p>An independent WebHID driver for the Everglide AE64 Pro. It keeps configuration local to your browser and avoids the original driver's long-distance web dependency.</p>
-
-  <h2>About the project</h2>
-  <p>Replace this starter copy with your own project story, author bio, acknowledgements, support links, or any other HTML content.</p>
-
-  <div class="note">
-    <strong>Firmware safety</strong>
-    <p>Firmware update and bootloader commands are intentionally not included in this project.</p>
-  </div>
-  <script>
-    try { document.documentElement.dataset.theme = parent.document.documentElement.dataset.theme || "mint"; } catch { document.documentElement.dataset.theme = "mint"; }
-  </script>
+  <!-- This file owns the About Us page. The desktop's content is directly editable here. -->
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="screen" x2="0" y2="1"><stop stop-color="#7de6ff"/><stop offset="1" stop-color="#1470d5"/></linearGradient>
+      <linearGradient id="folder" x2="0" y2="1"><stop stop-color="#fff6b3"/><stop offset="1" stop-color="#efab30"/></linearGradient>
+      <linearGradient id="tile" x2="1" y2="1"><stop stop-color="#b8e9ff"/><stop offset=".5" stop-color="#438bc4"/><stop offset="1" stop-color="#164c89"/></linearGradient>
+      <symbol id="computer" viewBox="0 0 48 48"><path d="M7 5h33v27H7z" fill="#f3f3df" stroke="#5d6672" stroke-width="1.5"/><path d="M10 8h27v20H10z" fill="url(#screen)" stroke="#1e405a"/><path d="m12 10 20 0-20 14z" fill="#fff" opacity=".18"/><path d="M18 32h11v5H18zM11 38h26l5 6H5z" fill="#deded1" stroke="#6d7380"/><path d="M10 41h26M16 43h14" stroke="#8e9499"/></symbol>
+      <symbol id="documents" viewBox="0 0 48 48"><path d="M4 11h16l4 5h20v26H4z" fill="#d39123" stroke="#9b6c1d"/><path d="m9 7 24-2 4 29-24 2z" fill="#fff" stroke="#788a99"/><path d="m14 14 17-1m-16 6 17-1m-16 6 13-1" stroke="#7295b5" stroke-width="2"/><path d="M3 21h41l-5 22H7z" fill="url(#folder)" stroke="#c18e35"/><path d="M7 24h32" stroke="#fff9d5" stroke-width="2"/></symbol>
+      <symbol id="notepad" viewBox="0 0 48 48"><path d="m9 8 29-3 3 36-29 3z" fill="#5d8daf" stroke="#375574"/><path d="m6 6 29-3 3 35-29 3z" fill="#fffef4" stroke="#8093a2"/><path d="m11 13 20-2m-19 7 20-2m-19 7 20-2m-19 7 20-2m-19 7 14-1" stroke="#7aa9d1" stroke-width="1.5"/><path d="m9 4 1 5m5-6 1 5m5-6 1 5m5-6 1 5" stroke="#354653" stroke-width="2"/></symbol>
+      <symbol id="keyboard" viewBox="0 0 48 48"><path d="M5 12h38l3 26H2z" fill="#e5e5dd" stroke="#647786" stroke-width="1.5"/><path d="M7 16h34v17H7z" fill="#afb8b7"/><path d="M10 20h3m4 0h3m4 0h3m4 0h3m4 0h1M10 25h3m4 0h3m4 0h3m4 0h3m4 0h1M11 30h3m4 0h15m4 0h2" stroke="#fff" stroke-width="3"/><path d="M3 36h42" stroke="#fff"/></symbol>
+      <symbol id="flag" viewBox="0 0 48 48"><path d="m5 9 16-4v17L5 25z" fill="#f15125"/><path d="m24 5 17 4v16l-17-3z" fill="#80bb03"/><path d="m5 28 16-3v18L5 39z" fill="#00adef"/><path d="m24 25 17 3v11l-17 4z" fill="#ffb900"/></symbol>
+      <symbol id="user" viewBox="0 0 80 80"><rect x="2" y="2" width="76" height="76" rx="5" fill="url(#tile)" stroke="#fff" stroke-width="3"/><circle cx="40" cy="30" r="14" fill="#f1f8fd"/><path d="M14 70c0-20 12-26 26-26s26 6 26 26" fill="#f1f8fd"/><path d="M7 7h66L7 59z" fill="#fff" opacity=".14"/></symbol>
+    </defs>
+  </svg>
+  <main class="desktop" aria-label="Windows XP inspired About desktop">
+    <div class="desktop-stage">
+      <nav class="desktop-icons" aria-label="Desktop shortcuts">
+        <button class="desktop-icon" type="button" data-open="profile"><svg aria-hidden="true"><use href="#computer"/></svg><span>About me</span></button>
+        <button class="desktop-icon" type="button" data-open="contacts"><svg aria-hidden="true"><use href="#documents"/></svg><span>My contacts</span></button>
+        <button class="desktop-icon" type="button" data-open="readme"><svg aria-hidden="true"><use href="#notepad"/></svg><span>Read me.txt</span></button>
+        <a class="desktop-icon" href="https://steamcommunity.com/profiles/76561198317725930/" target="_blank" rel="noopener noreferrer"><img src="v2/about/steam.ico" alt="" width="39" height="39"><span>Steam</span></a>
+        <a class="desktop-icon" href="https://github.com/z750sasr" target="_blank" rel="noopener noreferrer"><img src="v2/about/github.svg" alt="" width="39" height="39"><span>GitHub</span></a>
+      </nav>
+      <div class="desktop-caption"><span>PERSONAL DESKTOP</span><strong>make yourself at home.</strong></div>
+      <div class="windows" id="desktopWindows">
+        <section class="xp-window profile-window active" id="profile" aria-labelledby="profileTitle" data-window data-task-label="About me">
+          <header class="titlebar" data-drag><h1 id="profileTitle"><svg aria-hidden="true"><use href="#computer"/></svg>About me</h1><div class="window-controls"><button type="button" data-minimize aria-label="Minimize About me"><span class="minimize-symbol"></span></button><button type="button" data-maximize aria-label="Maximize About me"><span class="maximize-symbol"></span></button><button class="close-control" type="button" data-close aria-label="Close About me">×</button></div></header>
+          <div class="explorer-toolbar"><span>Address</span><div><svg aria-hidden="true"><use href="#computer"/></svg>My Computer<span class="breadcrumb-arrow">›</span>fat dog</div><span class="go-arrow" aria-hidden="true">➜</span></div>
+          <div class="profile-banner"><span>WELCOME TO MY CORNER OF THE INTERNET</span><svg aria-hidden="true"><use href="#flag"/></svg></div>
+          <div class="profile-body">
+            <div class="profile-identity"><svg class="user-tile" aria-hidden="true"><use href="#user"/></svg><h2>fat dog<span>.</span></h2></div>
+            <p class="profile-story">I really love this AE64 Pro. For me, its hardware is miles ahead of my Wooting 60 (now broken). But its stock software and features felt underwhelming compared to Wooting.</p>
+            <p class="profile-story">That’s why I started building Reloaded — to give this keyboard the software and features I wanted it to have.</p>
+            <div class="profile-actions"><button class="xp-button primary-button" type="button" data-open="contacts"><svg aria-hidden="true"><use href="#documents"/></svg>Find me online<span aria-hidden="true">→</span></button><button class="text-button" type="button" data-open="readme">About this project <span aria-hidden="true">↗</span></button></div>
+          </div>
+          <footer class="window-status"><span>1 person, a lot of key presses</span><span>AE64 Pro Reloaded</span></footer>
+        </section>
+        <section class="xp-window contacts-window" id="contacts" aria-labelledby="contactsTitle" data-window data-task-label="My contacts">
+          <header class="titlebar" data-drag><h2 id="contactsTitle"><svg aria-hidden="true"><use href="#documents"/></svg>My contacts</h2><div class="window-controls"><button type="button" data-minimize aria-label="Minimize My contacts"><span class="minimize-symbol"></span></button><button type="button" data-maximize aria-label="Maximize My contacts"><span class="maximize-symbol"></span></button><button class="close-control" type="button" data-close aria-label="Close My contacts">×</button></div></header>
+          <div class="contacts-body"><div class="contacts-heading"><svg aria-hidden="true"><use href="#documents"/></svg><div><h3>Let's connect.</h3><p>Good conversations start with a hello.</p></div></div>
+            <div class="contact-entry"><img class="contact-icon" src="v2/about/discord.svg" alt="" width="36" height="36"><div><span class="little-label">DISCORD</span><strong>hmtchokeking</strong><span class="contact-hint" id="copyHint">Click to copy my username</span></div><button class="copy-button" id="copyDiscord" type="button" aria-label="Copy Discord username hmtchokeking" title="Copy Discord username"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="1"/><path d="M15 8V3H3v13h5"/></svg></button></div>
+            <a class="contact-entry steam-entry" href="https://steamcommunity.com/profiles/76561198317725930/" target="_blank" rel="noopener noreferrer"><img class="contact-icon" src="v2/about/steam.ico" alt="" width="36" height="36"><div><span class="little-label">STEAM</span><strong>My Steam profile</strong><span class="contact-hint">76561198317725930</span></div><span class="contact-arrow" aria-hidden="true">↗</span></a>
+            <a class="contact-entry github-entry" href="https://github.com/z750sasr" target="_blank" rel="noopener noreferrer"><img class="contact-icon" src="v2/about/github.svg" alt="" width="36" height="36"><div><span class="little-label">GITHUB</span><strong>z750sasr</strong><span class="contact-hint">Code, projects &amp; experiments</span></div><span class="contact-arrow" aria-hidden="true">↗</span></a>
+            <p class="contacts-note">See you on the other side of the screen.</p>
+          </div>
+          <footer class="window-status"><span>3 contacts</span><span>Ready</span></footer>
+        </section>
+        <section class="xp-window readme-window" id="readme" aria-labelledby="readmeTitle" data-window data-task-label="Read me.txt">
+          <header class="titlebar" data-drag><h2 id="readmeTitle"><svg aria-hidden="true"><use href="#notepad"/></svg>Read me.txt — Notepad</h2><div class="window-controls"><button type="button" data-minimize aria-label="Minimize Read me.txt"><span class="minimize-symbol"></span></button><button type="button" data-maximize aria-label="Maximize Read me.txt"><span class="maximize-symbol"></span></button><button class="close-control" type="button" data-close aria-label="Close Read me.txt">×</button></div></header>
+          <div class="notepad-menu"><span>AE64 Pro</span><span>Reloaded</span><span>README.txt</span></div>
+          <div class="notepad-body"><p class="notepad-heading">A little project for a better keyboard.</p><p>An independent WebHID driver for the Everglide AE64 Pro.<br>Made to give every key a little more possibility.</p><ul><li>Dial in actuation &amp; Rapid Trigger</li><li>Remap keys, tune RGB, make it yours</li><li>Explore gamepad controls with custom firmware</li></ul><p class="notepad-signoff">Thanks for stopping by. Happy tinkering! <span aria-hidden="true">:)</span></p><button class="xp-button" type="button" id="backToKeyboard"><svg aria-hidden="true"><use href="#keyboard"/></svg>Back to the keyboard <span aria-hidden="true">→</span></button></div>
+          <footer class="window-status"><span>Plain text, good intentions.</span><span>UTF-8</span></footer>
+        </section>
+      </div>
+    </div>
+    <aside class="start-menu" id="startMenu" aria-label="Start menu" hidden>
+      <div class="start-user"><svg aria-hidden="true"><use href="#user"/></svg><strong>fat dog</strong></div>
+      <div class="start-apps"><button type="button" data-open="profile"><svg aria-hidden="true"><use href="#computer"/></svg><span><strong>About me</strong><small>A little introduction</small></span></button><button type="button" data-open="contacts"><svg aria-hidden="true"><use href="#documents"/></svg><span><strong>My contacts</strong><small>Discord, Steam &amp; GitHub</small></span></button><button type="button" data-open="readme"><svg aria-hidden="true"><use href="#notepad"/></svg><span><strong>Read me.txt</strong><small>About AE64 Pro Reloaded</small></span></button></div>
+      <div class="start-footer"><button type="button" id="restoreDesktop">Restore desktop <span aria-hidden="true">↗</span></button></div>
+    </aside>
+    <footer class="taskbar" aria-label="Desktop taskbar"><button class="start-button" id="startButton" type="button" aria-controls="startMenu" aria-expanded="false"><svg aria-hidden="true"><use href="#flag"/></svg><span>start</span></button><button class="show-desktop" id="showDesktop" type="button" aria-label="Show desktop" title="Show desktop"><svg aria-hidden="true"><use href="#computer"/></svg></button><div class="task-buttons" aria-label="Open windows"><button class="task-button active" type="button" data-task="profile" aria-pressed="true"><svg aria-hidden="true"><use href="#computer"/></svg><span>About me</span></button><button class="task-button" type="button" data-task="contacts" aria-pressed="false"><svg aria-hidden="true"><use href="#documents"/></svg><span>My contacts</span></button><button class="task-button" type="button" data-task="readme" aria-pressed="false"><svg aria-hidden="true"><use href="#notepad"/></svg><span>Read me.txt</span></button></div><div class="system-tray"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z" fill="#f4f6e7" stroke="#1f648e"/><path d="M15 8q5 4 0 8m3-11q8 7 0 14" fill="none" stroke="#f4f6e7" stroke-width="1.6"/></svg><time id="desktopClock"></time></div></footer>
+    <p class="sr-only" id="desktopAnnouncement" role="status" aria-live="polite"></p>
+  </main>
+  <noscript><p class="noscript-note">Find me on Discord as <strong>hmtchokeking</strong> or <a href="https://steamcommunity.com/profiles/76561198317725930/" target="_blank" rel="noopener noreferrer">visit my Steam profile</a>. Enable JavaScript to move and reopen windows.</p></noscript>
 </body>
 </html>

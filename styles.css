@@ -337,8 +337,9 @@ button { color: inherit; }
 .axis-metadata-note span { color: var(--muted); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; }
 .axis-metadata-note b { font-size: 12px; }
 .axis-metadata-note small { color: var(--muted); font-size: 10px; line-height: 1.45; }
-.about-shell { min-height: calc(100svh - 175px); }
-.about-frame { width: 100%; min-height: calc(100svh - 275px); border: 1px solid var(--line-soft); border-radius: 12px; background: #081521; }
+.about-shell { min-width: 0; container-type: inline-size; }
+.about-frame { display: block; width: 100%; height: max(920px, calc(100svh - 145px)); border: 1px solid var(--line-soft); border-radius: 9px; background: #4389cc; }
+@container (max-width: 640px) { .about-frame { height: 1460px; } }
 .selected-key-card span { color: var(--muted); font-size: 10px; letter-spacing: .08em; }
 .selected-key-card strong { margin-top: 4px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }

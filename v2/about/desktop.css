@@ -1,0 +1,159 @@
+/* XP's Luna desktop, with the personal-window layout of girlglock.com. */
+:root { font-family: Tahoma, "Segoe UI", sans-serif; color: #202a3a; color-scheme: light; background: #4389cc; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 2px dotted #172843; outline-offset: 3px; }
+button svg, a svg { flex: none; }
+[hidden] { display: none !important; }
+.icon-library { position: absolute; width: 0; height: 0; overflow: hidden; }
+.desktop { position: relative; width: 100%; height: 100svh; min-height: 710px; overflow: hidden; background: #4389cc url("bliss.jpg") center / cover no-repeat; }
+.desktop-stage { position: absolute; inset: 0 0 39px; overflow: hidden; }
+.desktop-icons { position: absolute; z-index: 2; top: 25px; left: 13px; display: grid; gap: 24px; }
+.desktop-icon { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 83px; padding: 5px; border: 1px solid transparent; background: none; color: white; text-decoration: none; font-size: 11px; line-height: 1.4; text-align: center; text-shadow: 1px 2px 2px #0e376a, 0 0 5px #244a70; }
+.desktop-icon svg, .desktop-icon img { width: 39px; height: 39px; object-fit: contain; filter: drop-shadow(1px 2px 1px #0b327d66); }
+.desktop-icon:hover, .desktop-icon:focus-visible { border: 1px dotted #fff; background: #2264c340; outline-color: white; }
+.desktop-caption { position: absolute; top: 34px; right: 37px; display: grid; gap: 6px; text-align: right; color: #fff; text-shadow: 1px 2px 5px #143e6a88; }
+.desktop-caption span { font-size: 9px; font-weight: 700; letter-spacing: 2.3px; }
+.desktop-caption strong { font-size: clamp(17px, 2vw, 23px); font-weight: 400; letter-spacing: -.5px; }
+.windows { position: absolute; inset: 46px 28px 22px 119px; }
+.xp-window { position: absolute; display: flex; flex-direction: column; min-width: 240px; border: 3px solid #0758dc; border-top: 0; border-radius: 8px 8px 2px 2px; background: #ece9d8; box-shadow: 3px 9px 20px #08284b48, 1px 1px 0 #003b95; overflow: hidden; }
+.profile-window { top: 0; left: 0; width: min(590px, 65%); z-index: 4; }
+.contacts-window { top: 117px; right: 0; width: min(336px, 37%); z-index: 6; }
+.readme-window { top: 475px; left: 20%; width: min(465px, 61%); z-index: 5; }
+.titlebar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 31px; padding: 3px 4px 3px 5px; border-radius: 7px 7px 0 0; background: linear-gradient(#85b3f0 0%, #4b8fe5 7%, #3473d2 15%, #427fd9 88%, #6da1e7 97%); user-select: none; touch-action: none; cursor: grab; }
+.xp-window.active .titlebar { background: linear-gradient(#a2cbff 0%, #3e99ff 5%, #0875ff 13%, #0057e5 39%, #0969f7 87%, #0055d9 96%); }
+.titlebar:active { cursor: grabbing; }
+.titlebar h1, .titlebar h2 { display: flex; align-items: center; gap: 5px; margin: 0; min-width: 0; font: 700 12px/1.3 "Trebuchet MS", Tahoma, sans-serif; color: #fff; text-shadow: 1px 1px 1px #15438c; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.titlebar h1 svg, .titlebar h2 svg { width: 19px; height: 19px; flex: none; }
+.window-controls { display: flex; gap: 2px; flex: none; }
+.window-controls button { position: relative; display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid white; border-radius: 3px; color: #fff; background: linear-gradient(125deg, #99bcf4, #3977df 47%, #2360cc); box-shadow: inset 1px 1px 1px #c3dcff, 0 0 0 1px #194491; }
+.window-controls button:hover { filter: brightness(1.17); }
+.window-controls button:active { filter: brightness(.88); }
+.window-controls .close-control { background: linear-gradient(125deg, #f5a28b, #df654b 43%, #c82f16); box-shadow: inset 1px 1px 1px #ffd1af, 0 0 0 1px #194491; font: 25px/17px Arial, sans-serif; padding: 0 0 3px; }
+.minimize-symbol { width: 9px; height: 3px; background: white; align-self: end; margin-bottom: 4px; }
+.maximize-symbol { width: 12px; height: 11px; border: 1px solid #fff; border-top-width: 3px; }
+.xp-window.maximized { position: fixed; inset: 8px 8px 47px !important; width: auto !important; height: auto !important; }
+.explorer-toolbar { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-bottom: 1px solid #c7c5b4; font-size: 10px; }
+.explorer-toolbar > span:first-child { color: #646464; }
+.explorer-toolbar > div { display: flex; align-items: center; gap: 5px; flex: 1; min-height: 22px; background: #fff; border: 1px solid #9eafc0; padding: 1px 5px; }
+.explorer-toolbar svg { width: 16px; height: 16px; }
+.breadcrumb-arrow { margin-inline: 4px; color: #7b8b9d; font-size: 16px; }
+.go-arrow { display: grid; place-items: center; width: 20px; height: 20px; color: #fff; background: linear-gradient(#8dcc74, #3b9429); border: 1px solid #338225; border-radius: 3px; font-size: 18px; }
+.profile-banner { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 8px 27px; color: #6787a8; background: linear-gradient(110deg, #eff7ff, #fff); border-bottom: 1px solid #d6e4ed; }
+.profile-banner > span { font-size: 8px; font-weight: 700; letter-spacing: 1.6px; }
+.profile-banner svg { width: 29px; height: 29px; }
+.profile-body { flex: 1; padding: 26px 28px 24px; background: #fff; }
+.profile-identity { display: flex; gap: 13px; align-items: center; }
+.user-tile { width: 64px; height: 64px; flex: none; filter: drop-shadow(1px 2px 2px #1c44702b); }
+.little-label { display: block; margin: 0 0 4px; color: #737b87; font-size: 9px; letter-spacing: 1.1px; }
+.profile-identity h2 { margin: 0; font: 700 clamp(20px, 2.8vw, 35px)/1.1 "Trebuchet MS", Tahoma, sans-serif; letter-spacing: -1.5px; color: #153c72; overflow-wrap: anywhere; }
+.profile-identity h2 > span { color: #69aa32; }
+.profile-story { max-width: 430px; margin: 22px 0 0; font-size: 13px; line-height: 1.8; color: #607086; }
+.profile-story + .profile-story { margin-top: 13px; }
+.profile-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 21px; }
+.xp-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 31px; padding: 5px 12px; background: linear-gradient(#fff, #f2f1e6 75%, #dddac5); color: #263747; border: 1px solid #727c8f; border-radius: 3px; box-shadow: inset 1px 1px #fff, inset -1px -1px #e3dfc9; font-size: 10px; text-decoration: none; }
+.xp-button:hover { box-shadow: inset 0 0 0 2px #ffcb62; }
+.xp-button:active { background: #dfdfd4; box-shadow: inset 1px 1px 2px #9c9b8e; }
+.xp-button svg { width: 19px; height: 19px; }
+.primary-button { border-color: #1853a2; box-shadow: inset 0 0 0 1px #97b9e7; }
+.primary-button > span { margin-left: 8px; font-size: 15px; color: #4d76a0; }
+.text-button { border: 0; padding: 5px 0; color: #5a6d83; background: none; font-size: 10px; text-decoration: underline; text-underline-offset: 3px; }
+.text-button:hover { color: #1458a9; }
+.window-status { display: flex; justify-content: space-between; gap: 10px; padding: 5px 9px; border-top: 1px solid #ceccbd; background: #efeddf; color: #767b7a; font-size: 9px; }
+.window-status span:last-child { padding-left: 10px; border-left: 1px solid #d0cebd; }
+.contacts-body { flex: 1; padding: 20px 17px 17px; }
+.contacts-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 19px; }
+.contacts-heading > svg { width: 44px; height: 44px; flex: none; }
+.contacts-heading h3 { margin: 0 0 5px; font: 700 20px/1.2 "Trebuchet MS", Tahoma, sans-serif; letter-spacing: -.7px; color: #2a4261; }
+.contacts-heading p { margin: 0; max-width: 175px; font-size: 10px; line-height: 1.5; color: #797d7e; }
+.contact-entry { display: flex; align-items: center; gap: 10px; min-height: 79px; padding: 13px 11px; border: 1px solid #cfcec0; background: #fffffa; color: #253752; text-decoration: none; }
+.contact-entry + .contact-entry { margin-top: 9px; }
+.contact-icon { width: 36px; height: 36px; flex: none; object-fit: contain; }
+.contact-entry > div { flex: 1; min-width: 0; }
+.contact-entry .little-label { font-size: 8px; }
+.contact-entry strong { display: block; font-size: 12px; overflow-wrap: anywhere; }
+.contact-hint { display: block; margin-top: 6px; color: #828994; font-size: 9px; }
+.copy-button { display: grid; place-items: center; flex: none; width: 28px; height: 30px; border: 1px solid #c1c7cb; border-radius: 3px; background: linear-gradient(#fff, #efefe7); color: #65778c; }
+.copy-button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.copy-button:hover { color: #175ec7; border-color: #7496c5; }
+.contact-entry[href]:hover { border-color: #6f9aca; background: #f3f9ff; }
+.contact-arrow { color: #8596a7; font-size: 19px; }
+.contacts-note { margin: 18px 0 0; text-align: center; color: #929283; font-size: 9px; }
+.notepad-menu { display: flex; gap: 17px; padding: 5px 9px; border-bottom: 1px solid #d0cebc; color: #6c6d64; font-size: 10px; }
+.notepad-menu span:last-child { margin-left: auto; color: #9a998f; font-size: 9px; }
+.notepad-body { flex: 1; padding: 19px 22px; background: #fffef7; font: 10px/1.8 "Lucida Console", Consolas, monospace; }
+.notepad-body p { margin: 0 0 13px; }
+.notepad-body .notepad-heading { font-weight: 700; color: #1d4c82; }
+.notepad-body ul { margin: 0 0 15px; padding-left: 17px; color: #71746b; }
+.notepad-signoff { color: #8b9279; }
+.notepad-signoff span { color: #559831; }
+.notepad-body .xp-button { margin-top: 1px; font-family: Tahoma, sans-serif; }
+.taskbar { position: absolute; bottom: 0; inset-inline: 0; z-index: 10001; display: flex; align-items: center; height: 39px; background: linear-gradient(#378aff, #2367da 12%, #205bd0 75%, #1848ad); border-top: 1px solid #9ec9ff; box-shadow: 0 -2px 3px #0b367e30; color: #fff; }
+.start-button { display: flex; align-items: center; justify-content: center; gap: 5px; height: 38px; width: 103px; flex: none; padding: 0 14px 1px 9px; border: 0; border-radius: 0 12px 12px 0; background: linear-gradient(#8ac280, #4b9d39 10%, #32812b 55%, #2c7728 80%, #49a13b); box-shadow: inset 0 2px 3px #c1e9b6, inset -3px 0 4px #225b1b; color: #fff; font: italic 700 22px/1 "Trebuchet MS", sans-serif; text-shadow: 1px 2px #235b23; }
+.start-button svg { width: 25px; height: 25px; filter: drop-shadow(1px 2px 1px #18451f); transform: rotate(-8deg); }
+.start-button:hover, .start-button[aria-expanded="true"] { filter: brightness(1.13); }
+.show-desktop { display: grid; place-items: center; flex: none; width: 40px; height: 27px; margin-left: 3px; margin-right: 4px; padding: 0; border: 0; border-right: 1px solid #8eb4f066; background: transparent; }
+.show-desktop svg { width: 21px; height: 21px; }
+.show-desktop:hover { background: #ffffff1c; }
+.task-buttons { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; padding: 0 5px 0 0; }
+.task-button { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; max-width: 165px; height: 29px; border: 1px solid #1b4ca9; border-radius: 3px; background: #3d7eeb; box-shadow: inset 1px 1px #81aeff, 1px 1px 1px #0c3a9a; padding: 3px 9px; color: #fff; font-size: 10px; text-align: left; }
+.task-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-button svg { width: 19px; height: 19px; }
+.task-button:hover { background: #5590f4; }
+.task-button.active { background: #164eac; box-shadow: inset 1px 1px 2px #123a86; font-weight: 700; }
+.system-tray { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 97px; height: 38px; padding: 0 13px; border-left: 1px solid #1567b1; box-shadow: inset 1px 1px 2px #74cafa; background: linear-gradient(#28b2ee, #0c93d4 16%, #0e9cde 90%, #1591cc); }
+.system-tray svg { width: 18px; height: 18px; }
+.system-tray time { font-size: 10px; white-space: nowrap; }
+.start-menu { position: absolute; z-index: 10000; bottom: 39px; left: 0; width: 300px; border: 2px solid #1763d6; border-radius: 7px 7px 0 0; overflow: hidden; box-shadow: 4px -3px 18px #123c6755; background: #fff; }
+.start-user { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(#2370d9, #529aef); border-bottom: 2px solid #e5b779; color: #fff; text-shadow: 1px 1px #2b619b; font-size: 15px; }
+.start-user svg { width: 44px; height: 44px; }
+.start-apps { padding: 8px; }
+.start-apps button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px; border: 0; background: white; text-align: left; }
+.start-apps button:hover { background: #d7e9fb; }
+.start-apps svg { width: 35px; height: 35px; }
+.start-apps strong, .start-apps small { display: block; }
+.start-apps strong { margin-bottom: 4px; font-size: 12px; }
+.start-apps small { color: #737c8a; font-size: 10px; }
+.start-footer { padding: 9px 12px; background: linear-gradient(#428ce1, #1a68d2); text-align: right; }
+.start-footer button { border: 0; padding: 6px; color: white; background: transparent; font-size: 11px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.noscript-note { position: absolute; z-index: 10002; bottom: 0; margin: 0; padding: 12px; background: #ffffda; font-size: 12px; }
+@media (min-width: 1350px) { .windows { left: 14%; right: 9%; top: 61px; } .contacts-window { top: 109px; } .readme-window { top: 475px; left: 28%; } }
+@media (max-width: 900px) and (min-width: 641px) { .windows { left: 102px; right: 18px; top: 69px; } .profile-window { width: 73%; } .profile-body { padding: 23px 20px; } .profile-banner { padding-inline: 20px; } .profile-identity { gap: 9px; } .user-tile { width: 52px; height: 52px; } .contacts-window { top: 223px; width: 47%; } .contacts-body { padding: 16px 12px; } .contacts-heading p { max-width: 135px; } .readme-window { top: 475px; left: 2%; width: 70%; } .desktop { min-height: 850px; } }
+@media (max-width: 640px) {
+  .desktop { min-height: 1440px; background-position: 38% center; }
+  .desktop-icons { inset: 14px 10px auto; display: flex; justify-content: space-around; gap: 3px; }
+  .desktop-icon { flex: 1; width: auto; max-width: 71px; min-width: 0; font-size: 10px; }
+  .desktop-icon svg, .desktop-icon img { width: 33px; height: 33px; }
+  .desktop-caption { display: none; }
+  .windows { display: flex; flex-direction: column; gap: 14px; inset: 105px 12px 16px; }
+  .xp-window { position: relative; top: auto; right: auto; left: auto; width: 100%; min-width: 0; flex: none; }
+  .titlebar { min-height: 34px; cursor: default; touch-action: auto; }
+  .window-controls button { width: 24px; height: 24px; }
+  .profile-body { padding: 20px; }
+  .profile-banner { min-height: 40px; padding: 6px 17px; }
+  .profile-banner > span { font-size: 7px; letter-spacing: .9px; }
+  .profile-banner svg { width: 24px; height: 24px; }
+  .profile-identity { gap: 8px; }
+  .user-tile { width: 51px; height: 51px; }
+  .profile-identity h2 { font-size: clamp(20px, 5.5vw, 31px); letter-spacing: -1px; }
+  .profile-story { margin-top: 19px; font-size: 12px; }
+  .profile-actions { gap: 10px; margin-top: 16px; }
+  .contacts-body { padding: 15px; }
+  .contacts-heading { margin-bottom: 13px; }
+  .contact-entry { min-height: 70px; padding-block: 10px; }
+  .contacts-note { margin-top: 13px; }
+  .notepad-body { padding: 17px; font-size: 9px; }
+  .notepad-body p { margin-bottom: 11px; }
+  .notepad-body ul { margin-bottom: 12px; }
+  .start-button { width: 82px; padding-right: 9px; font-size: 20px; }
+  .show-desktop { width: 31px; margin-inline: 0 3px; }
+  .task-button { justify-content: center; padding: 3px; }
+  .task-button span { display: none; }
+  .task-button svg { width: 23px; height: 23px; }
+  .system-tray { gap: 4px; min-width: 79px; padding-inline: 8px; }
+  .system-tray svg { width: 15px; }
+}
+@media (prefers-reduced-motion: no-preference) { .xp-window { animation: window-in 260ms ease-out both; } .contacts-window { animation-delay: 75ms; } .readme-window { animation-delay: 150ms; } @keyframes window-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } } }
