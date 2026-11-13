@@ -255,7 +255,8 @@ function calibrationRecommendation() {
   };
 }
 function maybeShowCalibrationRecommendation() {
-  if (!connected() || state.calibrationActive || state.calibrationBusy) return false;
+  if (!connected() || state.calibrationActive || state.calibrationBusy ||
+      document.querySelector("#firmwareShowcaseDialog")?.open) return false;
   const profile = Number(state.profile.profileIndex),
     result = calibrationRecommendation();
   if (!result.needed || state.calibrationPromptedProfiles.has(profile)) return false;

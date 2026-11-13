@@ -31,9 +31,14 @@ function fixture() {
     return nodes.get(selector);
   }
   const no = () => {}, state = { transport: null, knownDevice: null, page: "overview", timers: {}, hardware: { info: null }, profile: {} };
+  const storage = new Map();
+  let showcase;
   const c = { state, console, URL, TextDecoder, Uint8Array, ArrayBuffer, DataView, queueMicrotask, clearTimeout,
     setTimeout: (fn, ms) => { const timer = setTimeout(fn, ms);timer.unref?.();pendingTimers.add(timer);return timer; },
-    document: { baseURI: "https://example.test/driver/", querySelector: node, querySelectorAll: () => [], addEventListener: no },
+    document: { baseURI: "https://example.test/driver/", querySelector: node, querySelectorAll: () => [], addEventListener: no,
+      createElement: () => ({ addEventListener: no, setAttribute: no }), body: { append: (element) => { showcase = element; } } },
+    localStorage: { getItem: (key) => storage.get(key), setItem: (key, value) => storage.set(key, value) },
+    openDialog: (dialog) => { dialog.open = true; },
     navigator: { hid: { getDevices: async () => authorized, requestDevice: async (options) => { requests.push(options);return selected ? [selected] : []; }, addEventListener: (type, fn) => hidListeners.set(type, fn) } },
     window: null, stopPolling: no, stopTravelPolling: no, stopLightingPolling: no, resetCalibrationSession: no, resetFnLightingCapability: no,
     render: () => { renders++; }, renderStatus: no, log: (...args) => logs.push(args), dirtyCount: () => 0, esc: String,
@@ -46,7 +51,7 @@ function fixture() {
   c.window = c;vm.createContext(c);
   for (const file of ["protocol.js", "js/firmware/flasher.js", "js/firmware/reconnect.js", "js/app/gamepad-page.js", "js/app/firmware-page.js", "js/app/device.js", "app.js"]) vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), c);
   return { c, state, node, logs, run: (code) => vm.runInContext(code, c), choose: (d) => { selected = d; }, authorize: (d) => { authorized = d; }, requests,
-    event: (type, device) => hidListeners.get(type)({ device }), dispose: () => pendingTimers.forEach(clearTimeout), renders: () => renders };
+    event: (type, device) => hidListeners.get(type)({ device }), dispose: () => pendingTimers.forEach(clearTimeout), renders: () => renders, showcase: () => showcase };
 }
 async function main() {
   const f = fixture();
@@ -86,6 +91,7 @@ async function main() {
     f.event("disconnect", replugged);await assert.rejects(pending, /connection closed/i);
     f.state.knownDevice = null;f.state.bootloaderConnected = false;f.run("firmwareView.recoveryRequired=false");
     const wrong = new Device({ board: 123 });f.choose(wrong);assert.equal(await f.run("connectKeyboard()"), false);assert.equal(wrong.opened, false);assert.equal(wrong.sent.length, 1);
+    assert.equal(f.showcase(), undefined, "Failed and recovery connections leave the firmware showcase unseen.");
     // Normal application connections still load settings after the identity preflight.
     Object.assign(f.c, { clone: (v) => JSON.parse(JSON.stringify(v)), rgbToHex: () => "#000000", firmwareKeyPositions: () => new Map(), defaultSocdDraft: () => ({}),
       keys: [], clearDirty() {}, maybeShowCalibrationRecommendation() {}, readKeymapLayer: async () => 0, readFnLayerTarget: async () => {}, readSelectedKey: async () => {},
@@ -93,6 +99,11 @@ async function main() {
     Object.assign(f.state.hardware, { performance: new Map(), keycodes: new Map(), advancedByKey: new Map() });f.state.profile = { layer: 0, lighting: { customEnabled: [], decorative: { customEnabled: [] } } };
     const app = new Device({ mode: 0, bootCollection: false });f.choose(app);assert.equal(await f.run("connectKeyboard()"), true, JSON.stringify(f.logs.slice(-3)));
     assert.equal(f.state.bootloaderConnected, false);assert.ok(app.sent.length > 1);assert.deepEqual(app.sent[0].slice(0, 2), [1, 2]);
+    const showcase = f.showcase();
+    assert.ok(showcase?.open);
+    assert.equal(f.run("localStorage.getItem(FIRMWARE_SHOWCASE_SEEN_KEY)"), "true");
+    assert.equal(await f.run("connectKeyboard()"), true);
+    assert.equal(f.showcase(), showcase, "Another successful connection does not reopen the showcase.");
     console.log("PASS: recovery connects through normal chooser, unplug/replug/startup recovery, fresh image requirement, identity-only preflight and error-only reconnect prompt. No hardware accessed.");
   } finally { if (f.state.transport) await f.state.transport.close();f.dispose(); }
 }

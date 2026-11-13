@@ -279,7 +279,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
     if (recovering && firmwareView.phase === "error") firmwareProgress({ phase: "idle", percent: 0, detail: "Keyboard application reconnected." });
     openWorkspace();
     startProfilePolling();
-    maybeShowCalibrationRecommendation();
+    if (silent || !maybeShowFirmwareShowcase()) maybeShowCalibrationRecommendation();
     showToast(`AE64 Pro connected · firmware ${info.firmwareDisplay || info.firmware}`);
     return true;
   } catch (error) {

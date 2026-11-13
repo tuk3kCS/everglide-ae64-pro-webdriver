@@ -96,7 +96,31 @@ The AE64 tuning editor offers mode `0` (standard) and `1` (Rapid Trigger). The [
 
 Raw data uses `04 03 type row`, where `type` is `0` ADC, `1` route/travel, `2` calibration, or `3` key status. Ordinary tuning writes preserve axis/calibration metadata from a fresh hardware read.
 
-The captured `getAxisListV3` response for board `0030000a`, VID `1ca6`, PID `300a` contains 82 switch profiles in five brand groups. In the original driver, choosing a switch copies `aixsDetail[0].axis_id`, `axis_range_max`, and `axis_coefficient` into `axisV2Id`, `axisRangeMax`, and `axisCoefficient` for every selected key, while preserving `calibrate` and every trigger/dead-zone value. The alternative selector follows that exact three-field update. Captured data lives in `assets/hall-effect-switches/supported-switches.json`; English names, aliases, colors, and local images are separate in `catalog-overrides.json` so the capture can be regenerated without losing editorial work.
+The captured `getAxisListV3` response for board `0030000a`, VID `1ca6`, PID `300a` contains 82 switch profiles in five brand groups. Both drivers copy `aixsDetail[0].axis_id`, `axis_range_max`, and `axis_coefficient` into `axisV2Id`, `axisRangeMax`, and `axisCoefficient` for every selected key. They keep the existing trigger and dead-zone values in the request. The firmware controls the resulting calibration status. Captured data lives in `assets/hall-effect-switches/supported-switches.json`. English names, aliases, colors, and local images live in `catalog-overrides.json`.
+
+### Hall travel conversion and switch storage
+
+Factory v0.1.0.0 and custom v0.9 use byte-identical native switch-write, calibration, and Hall scan routines. Offsets below are relative to the application payload. The switch settings live in a 10-byte record at `0x000865CC + row × 0xD2 + column × 10`. Its fields are the 16-bit axis ID, maximum travel in micrometers, curve coefficient, learned bottom ADC reference, and an 8-bit calibration status followed by padding. The Hall scan selects the ADC channel from the physical matrix table at `0x8003B638` (`0x5FE6–0x6018`). It filters the samples and maintains a separate released reference in the live key record at offset `0x20`.
+
+The calibrated path (`0x62AE–0x63EE`) normalizes the drop from released ADC to current filtered ADC against the released-to-bottom span. For a sample between those endpoints, `q = floor(65536 × (released − sample) / (released − bottom))`. With catalog coefficient `C`, define `F(x) = 1 − sqrt(C / (C + x))`. The interior route estimate is `maxTravel × F(q) / F(65535)`, evaluated with floating-point arithmetic and stored as integer micrometers. The released boundary yields zero and the bottom boundary yields the configured maximum. The uncalibrated branch (`0x6414`) constructs provisional endpoints from the released ADC reference. The route is exposed by `04 03 01` and feeds the scanner's actuation, Rapid Trigger and dead-zone decisions.
+
+The `04 02` handler (`0xCB0A–0xCDFC`) updates the selected switch data. It clears calibration status when the ID changes (`0xCCA8–0xCCAC`) and recomputes the cached `F(65535)` when the coefficient changes (`0xCCF8–0xCD5E`). A range or coefficient change with the same ID preserves calibration status. The curve uses the coefficient and range directly. The catalog's `magnetic_flux` field is absent from the HID packet, and the axis ID does not select a per-brand curve table on this path.
+
+The native scan learns the bottom reference and marks the key calibrated at `0x6258–0x62AA`. The common key-parameter save/load routines (`0xB170` and `0xB07A`) store all 126 matrix records starting at `0x800A1008`, after an 8-byte header. Changing switch data sets the dirty bit for this common page. The normal profile-switch path at `0xB652–0xB65A` loads profile settings, macros, and keymaps/actions. A physical key therefore shares its switch assignment and calibration across profiles, with separate trigger tuning in each profile.
+
+Offline execution of the actual RV32 instructions in both builds produced the following Route values. The input is the fraction of the calibrated **ADC span** traversed, with identical synthetic endpoints in both runs.
+
+| ADC span | UR Ice Magnetic (`12432`, `3310`, `20500`) | Ink Jade (`13168`, `3605`, `18900`) |
+| --- | ---: | ---: |
+| 0% | 0.000 mm | 0.000 mm |
+| 25% | 1.645 mm | 1.834 mm |
+| 50% | 2.454 mm | 2.703 mm |
+| 75% | 2.958 mm | 3.236 mm |
+| 100% | 3.310 mm | 3.605 mm |
+
+Custom v0.9 runs the stock Hall scan before its gamepad mapping. Analog controller bindings consume the same native route and configured maximum. The custom adapter requires valid native calibration before using these readings for a controller mapping. The examples above use synthetic ADC input, so they establish the firmware math without measuring either switch's physical accuracy.
+
+### Calibration session
 
 Calibration is a device-wide live session rather than a normal staged performance write:
 

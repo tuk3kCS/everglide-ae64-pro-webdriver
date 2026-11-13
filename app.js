@@ -14,6 +14,67 @@ function mountHero() {
   });
 }
 
+const FIRMWARE_SHOWCASE_SEEN_KEY = "ae64-control-firmware-showcase-seen";
+let firmwareShowcaseSeen = false;
+
+function maybeShowFirmwareShowcase() {
+  if (firmwareShowcaseSeen) return false;
+  try {
+    if (localStorage.getItem(FIRMWARE_SHOWCASE_SEEN_KEY) === "true") return false;
+  } catch {
+    // Keep the in-page preference if browser storage is unavailable.
+  }
+
+  const dialog = document.createElement("dialog");
+  dialog.id = "firmwareShowcaseDialog";
+  dialog.className = "app-dialog firmware-showcase-dialog";
+  dialog.setAttribute("aria-labelledby", "firmwareShowcaseTitle");
+  dialog.setAttribute("data-keyboard-input", "allow");
+  dialog.innerHTML = `
+    <form method="dialog">
+      <div class="dialog-heading-row">
+        <div class="dialog-copy">
+          <h2 id="firmwareShowcaseTitle">Unleashing AE64 Pro's full potential using custom firmware</h2>
+        </div>
+        <button class="dialog-close-button" type="submit" value="close" aria-label="Close firmware showcase" autofocus>×</button>
+      </div>
+      <div class="firmware-showcase-content">
+        <section>
+          <h3>Controller emulation mode</h3>
+          <img src="assets/showcase/gamepad.gif" width="664" height="412" alt="Assigning keyboard keys to controller inputs in the Gamepad editor">
+        </section>
+        <section>
+          <h3>Per-key FN layer RGB effect (from Wooting)</h3>
+          <img src="assets/showcase/fn_rgb1.png" width="1909" height="643" loading="lazy" alt="The keyboard preview with custom colors assigned on an Fn layer">
+          <img src="assets/showcase/fn_rgb2.gif" width="800" height="349" loading="lazy" alt="Lighting changes when an Fn layer is active">
+        </section>
+        <section>
+          <h3>Independent per-key LED effect for each profile</h3>
+          <img src="assets/showcase/profile_rgb.gif" width="600" height="447" loading="lazy" alt="Switching onboard profiles restores each profile's per-key colors">
+        </section>
+      </div>
+      <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="close">Continue to driver</button>
+        <button class="button primary" type="submit" value="firmware">View firmware</button>
+      </div>
+    </form>`;
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (dialog.returnValue === "firmware")
+      document.querySelector('#sideNav button[data-page="firmware"]')?.click();
+    maybeShowCalibrationRecommendation();
+  });
+  document.body.append(dialog);
+  openDialog(dialog);
+  firmwareShowcaseSeen = true;
+  try {
+    localStorage.setItem(FIRMWARE_SHOWCASE_SEEN_KEY, "true");
+  } catch {
+    // The prompt has already been shown in this page.
+  }
+  return true;
+}
+
 function keyboardInputAllowed(target) {
   return Boolean(
     target?.closest?.('input[type="search"], [data-keyboard-input="allow"]'),

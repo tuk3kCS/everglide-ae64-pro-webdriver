@@ -1083,6 +1083,20 @@ button { color: inherit; }
 .socd-tutorial-grid strong { color: var(--mint); font-size: 12px; }
 .socd-tutorial-grid p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
 .calibration-recommendation-dialog .dialog-copy p + p { margin-top: 7px; color: var(--amber); }
+.app-dialog.firmware-showcase-dialog { width: min(50rem, calc(100% - 2rem)); }
+.firmware-showcase-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: min(48rem, calc(100dvh - 2rem));
+  padding: clamp(14px, 3vw, 24px);
+}
+.firmware-showcase-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-block: 1px solid var(--line-soft); padding: 12px 6px; }
+.firmware-showcase-content h3 { margin: 0 0 10px; font-size: 16px; }
+.firmware-showcase-content section + section { margin-top: 22px; }
+.firmware-showcase-content img { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; }
+.firmware-showcase-content img + img { margin-top: 10px; }
+.firmware-showcase-dialog .dialog-actions { flex-wrap: wrap; margin: 0; }
 .progress-card { width: min(390px, calc(100vw - 35px)); padding: 28px; border: 1px solid #35556b; border-radius: 16px; background: #0d1d2b; box-shadow: var(--shadow); text-align: center; }
 .progress-card strong, .progress-card p { display: block; }
 .progress-card p { margin-bottom: 0; color: var(--muted); font-size: 12px; }

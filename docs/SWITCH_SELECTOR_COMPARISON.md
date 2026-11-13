@@ -16,7 +16,7 @@ Wooting treats installed switches as a device-wide **sensor configuration profil
 | Per-key model | Builds a full key matrix. Keys with the same switch are compressed into a base switch plus exception `switchGroup` records containing key coordinates. | Selecting a switch writes `axisV2Id`, `axisRangeMax`, and `axisCoefficient` into each selected key's performance record. |
 | Stored metadata | Generic switch `type`, steps per millimeter, supported min/max range, sort order, and an optional per-switch `spacer` adjustment. | Detailed axis ID, maximum range, and magnetic-response coefficient. The API also supplies brand, color, flux, and display metadata. |
 | Relationship to actuation | Sensor configuration is separate from the normal actuation/profile controller. | Switch identity and actuation/RT/dead-zone values share the same per-key performance packet. The original UI preserves tuning and calibration fields while replacing the three switch fields. |
-| Persistence | `saveProfile()` for the sensor controller is empty; `save()` writes a global `SensorConfigProfile` to the device. The captured public profile upload contains no switch-selection field. | Switch assignment follows the normal per-key performance save path and is therefore part of the AE64 onboard profile state. |
+| Persistence | `saveProfile()` for the sensor controller is empty; `save()` writes a global `SensorConfigProfile` to the device. The captured public profile upload contains no switch-selection field. | Switch assignment and Hall calibration are per physical key and shared across onboard profiles. The same write packet also carries profile-specific trigger settings. |
 | Compatibility behavior | Uses only the switch types reported as supported by the connected keyboard. The bundle has default switch types per device family, `Unknown`/`UnknownStem` artwork, and validates unsupported types. | The server returns a board-specific list. The original driver does not provide an equivalent explicit unknown-switch choice in the captured 82-profile response. |
 | Images | The capture requests 48 switch image assets: 24 unique top-view files, 23 unique side-view files, and one Flaretech image. Several product variants have separate artwork. | All 82 captured AE64 entries use `image_url: "#"`; the original selector reuses a generic image. This alternative driver therefore provides local image overrides. |
 | Offline behavior | Names/graphics and generic metadata are bundled, while the connected device determines its supported subset. | The original UI depends on a remote board-specific catalog request. This project snapshots that response locally to remove the runtime latency and dependency. |
@@ -43,7 +43,7 @@ axis_range_max   -> axisRangeMax
 axis_coefficient -> axisCoefficient
 ```
 
-It does this separately for every selected key, while retaining that key's actuation, RT, dead-zone, and calibration values. The write packet therefore couples switch calibration metadata and key tuning. It is simpler than Wooting's base-plus-exception structure, but it repeats the switch metadata and makes verification sensitive to firmware-normalized fields.
+It does this separately for every selected key, while copying the current actuation, RT, dead-zone, and calibration fields into the packet. The firmware clears the calibration status when the axis ID changes. See the [AE64 Hall conversion](AE64_PROTOCOL.md#hall-travel-conversion-and-switch-storage) for the role of each field and its flash location.
 
 ## Design consequence for this project
 

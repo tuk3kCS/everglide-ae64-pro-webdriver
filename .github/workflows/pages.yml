@@ -70,8 +70,9 @@ jobs:
           cp js/gamepad/*.js js/gamepad/*.css _site/js/gamepad/
           cp js/firmware/*.js _site/js/firmware/
           node scripts/package-firmware.cjs _site
-          mkdir -p _site/assets/controller_icons
+          mkdir -p _site/assets/controller_icons _site/assets/showcase
           cp assets/controller_icons/*.png _site/assets/controller_icons/
+          cp assets/showcase/{gamepad.gif,fn_rgb1.png,fn_rgb2.gif,profile_rgb.gif} _site/assets/showcase/
           cp assets/images/axis.png _site/assets/images/
           cp -R assets/images/he_switch_images _site/assets/images/
           node scripts/build-switch-image-manifest.cjs assets/images/he_switch_images _site/assets/images/he_switch_images/manifest.json
