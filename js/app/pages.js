@@ -302,6 +302,7 @@ function pageCopy() {
     ],
     gamepad: [t("gamepadMode"), "Native controller firmware or a Windows software mapper."],
     firmware: [t("firmwareUpdate"), "Choose and flash a local firmware image."],
+    recovery: ["Firmware recovery", "Flash or recover an AE64 Pro."],
     about: [
       t("about"),
       "Project background, credits, links, and other author-written content.",
@@ -556,18 +557,8 @@ function lightingPalettePanel(base, palette, target) {
     rainbow = paletteIndex === 0,
     colorId = target === "main" ? "paletteColor" : "stripPaletteColor",
     hexId = target === "main" ? "paletteHex" : "stripPaletteHex",
-    rgbPrefix = target === "main" ? "paletteRgb" : "stripPaletteRgb",
-    presets = [
-      "#ff3b30",
-      "#ff9500",
-      "#ffcc00",
-      "#34c759",
-      "#00c7be",
-      "#007aff",
-      "#af52de",
-      "#ff2d55",
-    ];
-  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor enhanced-palette-editor ${rainbow ? "rainbow-selected" : ""}" style="--active-color:${esc(activeColor)}"><div class="color-preview-stack"><div class="${rainbow ? "rainbow-chip " : ""}color-preview ${rainbow ? "rainbow" : ""}" aria-hidden="true">${rainbow ? `<input id="${colorId}" type="color" value="${esc(activeColor)}" disabled>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}</div><span>${rainbow ? "Firmware spectrum" : esc(activeColor.toUpperCase())}</span></div><div class="palette-edit-fields"><label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" data-keyboard-input="allow" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `Firmware index ${paletteIndex}. Type HEX or RGB, use the color tile, or tap a preset.`}</small></label>${colorChannelInputs(rgbPrefix, activeColor, rainbow)}<div class="preset-color-row" aria-label="Quick color presets">${presets.map((preset) => `<button type="button" data-palette-preset="${preset}" data-lighting-target="${target}" style="--preset:${preset}" title="Set ${preset}" ${rainbow ? "disabled" : ""}></button>`).join("")}</div></div><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
+    rgbPrefix = target === "main" ? "paletteRgb" : "stripPaletteRgb";
+  return `<section class="panel full-span lighting-palette-panel"><div class="panel-head"><div><h2>${t("lightingPalette")}</h2><p>Eight firmware choices. The first entry is the original driver's rainbow palette; the remaining seven are editable RGB colors.</p></div><span class="badge ${rainbow ? "experimental" : "ready"}">${rainbow ? "RAINBOW" : `COLOR ${paletteIndex}`}</span></div><div class="palette palette-large">${palette.map((swatch, index) => `<button type="button" data-palette="${index}" data-lighting-target="${target}" class="${index === paletteIndex ? "active " : ""}${index === 0 ? "rainbow" : ""}" style="--swatch:${esc(swatch)}" aria-label="${index === 0 ? "Select firmware rainbow palette" : `Select palette color ${index}`}" title="${index === 0 ? "Rainbow · firmware index 0" : esc(swatch)}"><span>${index === 0 ? "RGB" : String(index).padStart(2, "0")}</span></button>`).join("")}</div><div class="palette-editor enhanced-palette-editor ${rainbow ? "rainbow-selected" : ""}" style="--active-color:${esc(activeColor)}"><div class="color-preview-stack"><div class="${rainbow ? "rainbow-chip " : ""}color-preview ${rainbow ? "rainbow" : ""}" aria-hidden="true">${rainbow ? `<input id="${colorId}" type="color" value="${esc(activeColor)}" disabled>` : `<input id="${colorId}" type="color" value="${esc(activeColor)}" aria-label="${t("lightingActiveColor")}">`}</div><span>${rainbow ? "Firmware spectrum" : esc(activeColor.toUpperCase())}</span></div><div class="palette-edit-fields"><label class="field"><span>${rainbow ? "Firmware palette" : t("lightingActiveColor")}</span><input id="${hexId}" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${rainbow ? "RAINBOW" : esc(activeColor.toUpperCase())}" data-keyboard-input="allow" ${rainbow ? "disabled" : ""}><small>${rainbow ? "Index 0 is rendered as a moving spectrum by firmware. Its captured seed RGB is red and all hue bytes are 0." : `Firmware index ${paletteIndex}. Type HEX or RGB, use the color tile, or tap a preset.`}</small></label>${colorChannelInputs(rgbPrefix, activeColor, rainbow)}${recentColorSwatches("data-palette-preset", rainbow, target)}</div><div class="palette-note"><strong>${rainbow ? "Original rainbow behavior" : "Stored on the keyboard"}</strong><span>${rainbow ? "This is a selector value, not an extra editable color or a hidden H-byte flag." : `This palette belongs only to ${target === "main" ? "the key LEDs" : "Decorative1"}.`}</span></div></div></section>`;
 }
 function mainLightingPage() {
   const lighting = state.profile.lighting,
@@ -662,7 +653,7 @@ function decorativeLightingPage() {
       !enabled &&
       ids.some((index) => Boolean(lighting.customEnabled[index])),
     customCount = lighting.customEnabled.filter(Boolean).length;
-  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingDecorative"), "Controls the independent 38-LED perimeter area.")}${lightingModePanel(base, count, "strip", 1)}${lightingTunePanel(base, "strip", 1)}${lightingPalettePanel(base, lighting.palette, "strip")}<section class="panel full-span strip-editor"><div class="panel-head"><div><h2>${hasSelection ? `${ids.length} light strip LED${ids.length === 1 ? "" : "s"} selected` : "Select LEDs on the four sides"}</h2><p>Drag a rectangular marquee over any of the four sides. Hold Ctrl to toggle the enclosed LEDs.</p></div><span class="badge ${enabled ? "ready" : mixed ? "experimental" : ""}">${ids.length} SELECTED</span></div><div class="strip-editor-grid"><label class="switch-row"><span><b>${t("lightingCustomOverride")}</b><small>The setting is applied to every selected light-strip LED.</small></span><input id="stripCustomEnabled" class="toggle" type="checkbox" ${enabled ? "checked" : ""} ${hasSelection ? "" : "disabled"}></label><div class="key-color-editor strip-color-editor"><input id="stripColor" type="color" value="${esc(color)}" aria-label="Selected strip LED color" ${hasSelection ? "" : "disabled"}><div class="strip-color-summary"><span>Selected strip color</span><strong>${esc(color.toUpperCase())}</strong><small>${customCount} of 38 overrides enabled.</small></div><div class="strip-color-fields"><label class="field"><span>HEX</span><input id="stripColorHex" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${esc(color.toUpperCase())}" data-keyboard-input="allow" ${hasSelection ? "" : "disabled"}></label>${colorChannelInputs("stripColorChannel", color, !hasSelection)}</div></div></div><div class="apply-row"><button class="button ghost" id="loadStripLighting" type="button">${t("lightingReadMatrix")}</button><button class="button ghost" id="clearStripColor" type="button" ${hasSelection ? "" : "disabled"}>Clear selected overrides</button><button class="button ghost" id="clearAllStripColors" type="button">${t("lightingClearStrip")}</button><button class="button primary" id="copyStripColor" type="button" ${hasSelection ? "" : "disabled"}>${t("lightingCopyStrip")}</button></div></section></div>`;
+  return `<div class="lighting-layout">${lightingPowerPanel(base, t("lightingDecorative"), "Controls the independent 38-LED perimeter area.")}${lightingModePanel(base, count, "strip", 1)}${lightingTunePanel(base, "strip", 1)}${lightingPalettePanel(base, lighting.palette, "strip")}<section class="panel full-span strip-editor"><div class="panel-head"><div><h2>${hasSelection ? `${ids.length} light strip LED${ids.length === 1 ? "" : "s"} selected` : "Select LEDs on the four sides"}</h2><p>Drag a rectangular marquee over any of the four sides. Hold Ctrl to toggle the enclosed LEDs.</p></div><span class="badge ${enabled ? "ready" : mixed ? "experimental" : ""}">${ids.length} SELECTED</span></div><div class="strip-editor-grid"><label class="switch-row"><span><b>${t("lightingCustomOverride")}</b><small>The setting is applied to every selected light-strip LED.</small></span><input id="stripCustomEnabled" class="toggle" type="checkbox" ${enabled ? "checked" : ""} ${hasSelection ? "" : "disabled"}></label><div class="key-color-editor strip-color-editor"><input id="stripColor" type="color" value="${esc(color)}" aria-label="Selected strip LED color" ${hasSelection ? "" : "disabled"}><div class="strip-color-summary"><span>Selected strip color</span><strong>${esc(color.toUpperCase())}</strong><small>${customCount} of 38 overrides enabled.</small></div><div class="strip-color-fields"><label class="field"><span>HEX</span><input id="stripColorHex" type="text" maxlength="7" pattern="#[0-9A-Fa-f]{6}" value="${esc(color.toUpperCase())}" data-keyboard-input="allow" ${hasSelection ? "" : "disabled"}></label>${colorChannelInputs("stripColorChannel", color, !hasSelection)}${recentColorSwatches("data-strip-color-preset", !hasSelection)}</div></div></div><div class="apply-row"><button class="button ghost" id="loadStripLighting" type="button">${t("lightingReadMatrix")}</button><button class="button ghost" id="clearStripColor" type="button" ${hasSelection ? "" : "disabled"}>Clear selected overrides</button><button class="button ghost" id="clearAllStripColors" type="button">${t("lightingClearStrip")}</button><button class="button primary" id="copyStripColor" type="button" ${hasSelection ? "" : "disabled"}>${t("lightingCopyStrip")}</button></div></section></div>`;
 }
 function lightingPage() {
   if (fnLightingEditing()) return fnLightingLayout();
@@ -908,7 +899,7 @@ function aboutPage() {
 
 function render() {
   if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return;
-  if (state.bootloaderConnected) state.page = "firmware";
+  if (state.bootloaderConnected && !isFirmwarePage()) state.page = "firmware";
   disposeGamepadPage();
   stopPolling();
   if (state.page !== "lighting" || !state.liveLighting) {
@@ -935,6 +926,7 @@ function render() {
     about: aboutPage,
     gamepad: gamepadPage,
     firmware: firmwarePage,
+    recovery: firmwarePage,
   };
   document.querySelector("#pageContent").innerHTML = pages[state.page]();
   renderToolbar();
@@ -943,7 +935,7 @@ function render() {
   bindPage();
   if (state.page === "lighting" && !isFnLightingTab()) syncLightingEffectPreviewStatus();
   if (state.page === "gamepad") bindGamepadPage();
-  if (state.page === "firmware") bindFirmwarePage();
+  if (isFirmwarePage()) bindFirmwarePage();
 }
 function renderToolbar() {
   const profiles = state.hardware.configIndexes
@@ -961,7 +953,9 @@ function renderToolbar() {
   });
 }
 function renderStatus() {
-  const count = dirtyCount(),
+  const count = pendingChangeCount(),
+    writable = pendingChangeCount({ writable: true }),
+    queued = Boolean(state.autoApply && connected() && pendingChangeCount({ writable: true, automatic: true })),
     autoApply = Boolean(state.autoApply),
     writing = Boolean(state.writeInFlight);
   document.querySelector("#connectionStatus").textContent = state.bootloaderConnected ? (state.transport?.connected ? "Recovery mode · select firmware" : "Recovery keyboard disconnected") : connected()
@@ -977,14 +971,14 @@ function renderStatus() {
       : writing
     ? "Writing to keyboard…"
     : count
-      ? `${count} ${autoApply ? "queued" : "staged"} change${count === 1 ? "" : "s"}`
+      ? `${count} ${queued ? "queued" : "staged"} change${count === 1 ? "" : "s"}`
       : autoApply
         ? t("autoApplyActive")
         : t("noPendingChanges");
-  document.querySelector("#applyButton").disabled = count === 0 || autoApply || toolOperationBusy() || state.profileNeedsReload;
+  document.querySelector("#applyButton").disabled = !writable || !connected() || queued || toolOperationBusy() || state.profileNeedsReload || state.calibrationActive || state.calibrationBusy;
   const pageContent = document.querySelector("#pageContent");
-  if (pageContent) pageContent.inert = Boolean(state.connecting || state.profileSyncInFlight || state.profileNeedsReload && connected() && state.page !== "firmware");
-  document.querySelector("#revertButton").disabled = count === 0 || writing || state.fnLightingBusy;
+  if (pageContent) pageContent.inert = Boolean(writing || state.connecting || state.profileSyncInFlight || state.profileNeedsReload && connected() && !isFirmwarePage());
+  document.querySelector("#revertButton").disabled = count === 0 || toolOperationBusy();
   const autoApplyToggle = document.querySelector("#autoApplyToggle");
   autoApplyToggle.checked = autoApply;
   autoApplyToggle.disabled = writing || state.fnLightingBusy;

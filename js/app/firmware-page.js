@@ -6,6 +6,8 @@ const firmwareView = {
   written: 0, total: 0, waiting: null, updater: null, recoveryRequired: false, recoveryMessage: "", detecting: false,
 };
 const FIRMWARE_FILTERS = [{ vendorId: 0x1ca6, usagePage: 0xffb0, usage: 1 }, { vendorId: 0x1ca6, usagePage: 0xff80 }];
+const isFirmwarePage = () => state.page === "firmware" || state.page === "recovery";
+const firmwareHasPendingChanges = () => typeof pendingChangeCount === "function" ? pendingChangeCount() : dirtyCount();
 function firmwareFileUrl(file) {
   if (typeof file !== "string" || !file.toLowerCase().endsWith(".bin") || file.split(/[\\/]/).some((part) => !part || part === "." || part === "..") || /[:?#]/.test(file)) throw new Error("The catalog contains an invalid firmware path.");
   return new URL("firmware/" + file.split("/").map(encodeURIComponent).join("/"), document.baseURI).href;
@@ -26,8 +28,8 @@ function firmwarePage() {
       </section>
       <section class="panel"><div class="panel-head"><div><h2>2. Flash the keyboard</h2><p>Keep the keyboard connected until writing, validation and restart finish.</p></div></div>
         <div class="firmware-device"><span class="badge ${state.transport?.connected ? "ready" : ""}">${state.bootloaderConnected ? state.transport?.connected ? "RECOVERY MODE" : "RECOVERY · DISCONNECTED" : state.transport?.connected ? "KEYBOARD CONNECTED" : "CONNECT A KEYBOARD"}</span><p>${state.bootloaderConnected ? "Choose firmware to finish recovery. Normal keyboard settings are unavailable in recovery mode." : state.hardware.info ? `Current firmware: ${esc(state.hardware.info.firmwareDisplay || state.hardware.info.firmware)}` : "Connect the keyboard you intend to update. Mode changes reconnect automatically."}</p><button class="button ghost" type="button" id="firmwareConnect" ${state.firmwareBusy ? "disabled" : ""}>${state.transport?.connected ? "Choose another keyboard" : "Reconnect keyboard"}</button></div>
-        ${dirtyCount() && !state.bootloaderConnected ? '<p class="firmware-note">Keyboard edits are still staged. Apply or revert them before flashing. <button class="text-button" data-goto="settings" type="button">Review device settings →</button></p>' : ""}
-        <button class="button primary firmware-start" type="button" id="reviewFirmware" ${!p || !state.transport?.connected || v.loading || toolOperationBusy() || (dirtyCount() && !state.bootloaderConnected) ? "disabled" : ""}>Review and flash firmware →</button>
+        ${firmwareHasPendingChanges() && !state.bootloaderConnected ? '<p class="firmware-note">Keyboard edits are still staged. Apply or revert them before flashing. <button class="text-button" data-goto="settings" type="button">Review device settings →</button></p>' : ""}
+        <button class="button primary firmware-start" type="button" id="reviewFirmware" ${!p || !state.transport?.connected || v.loading || toolOperationBusy() || (firmwareHasPendingChanges() && !state.bootloaderConnected) ? "disabled" : ""}>Review and flash firmware →</button>
         <div class="firmware-progress" aria-live="polite"><strong id="firmwarePhase"></strong><progress id="firmwareProgress" max="100" value="${v.percent}" aria-label="Firmware update progress"></progress><p id="firmwareDetail"></p><button class="button primary hidden" type="button" id="authorizeFirmware">Allow recovery keyboard</button><button class="button ghost hidden" type="button" id="reconnectFirmware">Reconnect keyboard</button></div>
         <p class="form-hint">A failed validation leaves the keyboard in bootloader mode. Select an intact image and start a fresh update. USB recovery is not guaranteed if the bootloader is unavailable.</p>
       </section>
@@ -64,13 +66,13 @@ async function loadFirmwareCatalog() {
     if (catalog.schema !== 1 || catalog.boardId !== "0030000A" || !Array.isArray(catalog.firmwares)) throw new Error("Unsupported firmware catalog.");
     catalog.firmwares.forEach((e) => firmwareFileUrl(e.file)); firmwareView.catalog = catalog;
   } catch (error) { firmwareView.catalogError = error.message; }
-  finally { firmwareView.catalogLoading = false; if (state.page === "firmware" && !state.firmwareBusy) render(); }
+  finally { firmwareView.catalogLoading = false; if (isFirmwarePage() && !state.firmwareBusy) render(); }
 }
 async function selectCatalogFirmware(id) {
   const entry = firmwareView.catalog?.firmwares.find((e) => e.id === id);
   firmwareView.selectedId = id; firmwareView.prepared = null; firmwareView.selectionError = "";
-  if (!entry) { render(); return; }
   const generation = ++firmwareView.loadGeneration;
+  if (!entry) { firmwareView.loading = false; render(); return; }
   firmwareView.loading = true; render();
   try {
     const response = await fetch(firmwareFileUrl(entry.file), { cache: "no-store" });
@@ -78,7 +80,7 @@ async function selectCatalogFirmware(id) {
     const prepared = await window.AE64Firmware.prepare(await response.arrayBuffer(), entry);
     if (generation === firmwareView.loadGeneration) firmwareView.prepared = prepared;
   } catch (error) { if (generation === firmwareView.loadGeneration) firmwareView.selectionError = error.message; }
-  finally { if (generation === firmwareView.loadGeneration) firmwareView.loading = false; if (state.page === "firmware" && !state.firmwareBusy) render(); }
+  finally { if (generation === firmwareView.loadGeneration) firmwareView.loading = false; if (isFirmwarePage() && !state.firmwareBusy) render(); }
 }
 async function inspectFirmwareDevice(device) {
   const transport = new AE64HidTransport(device, { allowBootloader: true }); let lease;
@@ -91,18 +93,19 @@ function enterFirmwareRecovery(transport, info) {
   clearTimeout(state.timers.autoApply);
   state.transport = transport; state.knownDevice = transport.device; state.bootloaderConnected = true;
   state.hardware.info = { ...info, boardIdHex: "0030000A" };
-  if (state.page !== "firmware") {
+  if (!isFirmwarePage()) {
     firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null;
     firmwareView.selectedId = ""; firmwareView.selectionError = "";
+    state.page = "firmware";
   }
-  state.page = "firmware";
   firmwareView.recoveryRequired = true;
   firmwareView.recoveryMessage = "The keyboard is connected in recovery mode. Choose firmware below to complete recovery.";
   firmwareProgress({ phase: "recovery", percent: 0, written: 0, total: 0, detail: firmwareView.recoveryMessage });
   openWorkspace(); showToast("Recovery keyboard connected. Select firmware to finish recovery.");
 }
 function noteFirmwareRecoveryDisconnect() {
-  firmwareView.recoveryRequired = true; state.bootloaderConnected = true; state.page = "firmware";
+  firmwareView.recoveryRequired = true; state.bootloaderConnected = true;
+  if (!isFirmwarePage()) state.page = "firmware";
   firmwareView.recoveryMessage = "The recovery keyboard disconnected. Reconnect it, then choose firmware to complete recovery.";
   firmwareProgress({ phase: "error", percent: 0, detail: firmwareView.recoveryMessage });
 }
@@ -166,7 +169,7 @@ async function reconnectFirmwareDevice(expected) {
   } finally { firmwareView.waiting = null; firmwareProgress({}); }
 }
 async function startFirmwareUpdate(reviewed = firmwareView.prepared) {
-  if (toolOperationBusy() || !firmwareView.prepared || !state.transport?.connected || (dirtyCount() && !state.bootloaderConnected)) return;
+  if (toolOperationBusy() || !firmwareView.prepared || !state.transport?.connected || (firmwareHasPendingChanges() && !state.bootloaderConnected)) return;
   if (reviewed !== firmwareView.prepared) return showToast("The selected image changed. Review it again before starting.", true);
   const selected = firmwareView.prepared, transport = state.transport;
   state.firmwareBusy = true; stopPolling(); stopProfilePolling(); clearTimeout(state.timers.autoApply); disposeGamepadPage();
@@ -188,7 +191,7 @@ async function startFirmwareUpdate(reviewed = firmwareView.prepared) {
     firmwareProgress({ phase: "error", detail: error.message }); log("Firmware update stopped", error.message); showToast(error.message, true);
   } finally {
     state.firmwareBusy = false; firmwareView.waiting = null; firmwareView.updater = null;
-    if (state.page === "firmware") render(); else renderStatus();
+    if (isFirmwarePage()) render(); else renderStatus();
   }
 }
 function bindFirmwarePage() {
@@ -203,7 +206,7 @@ function bindFirmwarePage() {
     const generation = ++firmwareView.loadGeneration; firmwareView.prepared = null; firmwareView.selectedId = "local"; firmwareView.loading = true; firmwareView.selectionError = ""; render();
     try { const prepared = await window.AE64Firmware.prepare(await file.arrayBuffer(), { name: file.name, file: file.name, experimental: true }); if (generation === firmwareView.loadGeneration) firmwareView.prepared = prepared; }
     catch (error) { if (generation === firmwareView.loadGeneration) firmwareView.selectionError = error.message; }
-    finally { if (generation === firmwareView.loadGeneration) firmwareView.loading = false; if (state.page === "firmware") render(); }
+    finally { if (generation === firmwareView.loadGeneration) firmwareView.loading = false; if (isFirmwarePage()) render(); }
   });
   const dialog = document.querySelector("#firmwareReviewDialog");
   document.querySelector("#reviewFirmware")?.addEventListener("click", () => dialog.showModal());

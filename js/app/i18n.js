@@ -136,7 +136,7 @@ function translateStaticPage() {
 function setLanguage(language) {
   if (!state.translations[language]) return;
   state.language = language;
-  localStorage.setItem(LANGUAGE_KEY, language);
+  driverStorage.setItem(LANGUAGE_KEY, language);
   populateLanguageSelectors();
   translateStaticPage();
   if (!document.querySelector("#workspace").classList.contains("hidden")) render();

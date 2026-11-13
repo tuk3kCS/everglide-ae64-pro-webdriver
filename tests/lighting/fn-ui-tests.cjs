@@ -10,6 +10,7 @@ const context = vm.createContext({
   connected: () => Boolean(state.transport),
   normalizeHex: (value) => /^#[a-f\d]{6}$/i.test(value || "") ? value.toLowerCase() : null,
   lightingMatrixIndexes: (key) => key.id === 1 ? [109, 110, 111, 112, 113] : [42],
+  recentColorSwatches: () => "",
   window: { AE64FnRgb: { Client: class { capabilities() { return pending || Promise.resolve(caps); } } } },
 });
 vm.runInContext(source, context);
@@ -43,9 +44,10 @@ const run = (code) => vm.runInContext(code, context);
   for (const index of [109, 110, 111, 112, 113]) assert.equal(run(`fnLightingDraft().colors[${index}]`), "#12ab34");
   assert.equal(run("fnLightingDraft().dirty"), true);
   assert.equal(run("fnLightingDraft().revision"), 8);
-  assert.match(run("fnLightingPage()"), /id="fnLightingApply" >Apply Fn 1 colors/);
+  assert.doesNotMatch(run("fnLightingPage()"), /id="fnLightingApply"/);
+  assert.deepEqual([...run("pendingFnLighting()")], [1]);
   state.profile.profileIndex = 1;
-  assert.match(run("fnLightingPage()"), /id="fnLightingApply" disabled/);
+  assert.deepEqual([...run("pendingFnLighting()")], []);
   assert.ok(!run("fnLightingPage()").includes('id="fnLightingProfile"'));
   assert.ok(!run("fnLightingPage()").includes('id="fnLightingLayer"'));
   assert.ok(!run("fnLightingPage()").includes("data-fn-lighting-key"));

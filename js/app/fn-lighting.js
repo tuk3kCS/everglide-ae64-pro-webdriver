@@ -36,7 +36,7 @@ function fnTargetLayer() {
 const fnLightingView = {
   transport: null, client: null, caps: null, mainCaps: null, generation: 0, busy: false,
   selected: new Set([0]), color: "#73f0c0", selectionScope: "",
-  drafts: new Map(), errors: new Map(),
+  drafts: new Map(), errors: new Map(), suspended: null,
 };
 function isFnLightingTab(tab = state.lightingTab) { return /^fn[123]$/.test(tab); }
 function fnLightingLayer() { return isFnLightingTab() ? Number(state.lightingTab.slice(2)) : 1; }
@@ -63,6 +63,10 @@ async function readMainRgbMatrix(transport) {
   return transport.readCustomLighting(MATRIX_ROWS, MATRIX_COLS, 0);
 }
 function resetFnLightingCapability() {
+  if ([...fnLightingView.drafts.values()].some((draft) => draft.dirty)) {
+    fnLightingView.suspended = { device: fnLightingView.transport?.device, serial: state.hardware.info?.serial,
+      drafts: new Map([...fnLightingView.drafts].filter(([, draft]) => draft.dirty)) };
+  }
   fnLightingView.generation++;
   fnLightingView.transport = null; fnLightingView.client = null; fnLightingView.caps = null; fnLightingView.mainCaps = null;
   fnLightingView.drafts.clear(); fnLightingView.errors.clear();
@@ -77,6 +81,11 @@ async function probeFnLighting(transport) {
     if (generation !== fnLightingView.generation || state.transport !== transport) return false;
     if (!caps?.verified || caps.profiles !== 4 || caps.layers !== 3 || caps.rows !== 6 || caps.cols !== 21) return false;
     fnLightingView.transport = transport; fnLightingView.client = client; fnLightingView.caps = caps;
+    const suspended = fnLightingView.suspended;
+    if (suspended && (suspended.serial ? suspended.serial === state.hardware.info?.serial : suspended.device && suspended.device === transport.device)) {
+      fnLightingView.drafts = suspended.drafts;
+      fnLightingView.suspended = null;
+    }
     if (expectsProfileMainRgb()) {
       try {
         const mainCaps = await client.capabilities(fnLightingProfile(), 0);
@@ -98,7 +107,68 @@ function fnLightingNormalizeProfile(value) {
     if (!normalized) throw new Error("Every Fn color must use a six-digit HEX value.");
     return normalized;
   });
-  return { enabled: value.enabled, colors, revision: Number(value.revision) >>> 0, dirty: false };
+  return { enabled: value.enabled, originalEnabled: value.enabled, colors, originalColors: [...colors], revision: Number(value.revision) >>> 0, dirty: false };
+}
+
+function pendingFnLighting() {
+  const profile = fnLightingProfile();
+  return [1, 2, 3].filter((layer) => fnLightingView.drafts.get(`${profile}:${layer}`)?.dirty);
+}
+
+function revertFnLighting() {
+  let needsRead = false;
+  fnLightingView.suspended = null;
+  for (const layer of pendingFnLighting()) {
+    const key = `${fnLightingProfile()}:${layer}`, draft = fnLightingView.drafts.get(key);
+    if (draft.originalColors.length === 126 && !draft.needsRecheck)
+      fnLightingView.drafts.set(key, fnLightingNormalizeProfile({ ...draft, enabled: draft.originalEnabled, colors: draft.originalColors }));
+    else { fnLightingView.drafts.delete(key); needsRead = true; }
+    fnLightingView.errors.delete(key);
+  }
+  if (isFnLightingTab()) commitFnLightingSelection(fnLightingView.selected, [...fnLightingView.selected].at(-1));
+  return needsRead;
+}
+
+function acceptFnLightingSave(profile, layer, value, previous) {
+  const key = `${profile}:${layer}`, verified = fnLightingNormalizeProfile(value);
+  if (previous?.dirty) {
+    const cells = new Set(keys.flatMap(fnLightingCellIndexes));
+    rememberAppliedColors([...cells].filter((index) => verified.colors[index] !== previous.originalColors[index])
+      .map((index) => verified.colors[index]));
+  }
+  fnLightingView.drafts.set(key, verified);
+  fnLightingView.errors.delete(key);
+  // Fn 1–3 share a revision on the keyboard. Advance only drafts based on this save's revision.
+  for (const [otherKey, draft] of fnLightingView.drafts)
+    if (otherKey.startsWith(`${profile}:`) && draft.revision === previous?.revision) draft.revision = verified.revision;
+  if (fnLightingDraftKey() === key)
+    commitFnLightingSelection(fnLightingView.selected, [...fnLightingView.selected].at(-1));
+}
+
+async function applyFnLighting(transport, profile, layers) {
+  if (!layers.length) return;
+  if (!fnLightingAvailable() || transport !== fnLightingView.transport)
+    throw new Error("Reconnect a keyboard with compatible Fn lighting firmware before applying Fn colors.");
+  for (const layer of layers) {
+    if (transport !== state.transport || await transport.getCurrentConfig() !== profile)
+      throw new Error("The onboard profile changed before saving Fn colors.");
+    const draft = fnLightingView.drafts.get(`${profile}:${layer}`);
+    if (draft.needsRecheck) {
+      const observed = fnLightingNormalizeProfile(await fnLightingView.client.read(profile, layer));
+      if (observed.enabled === draft.enabled && observed.colors.every((color, index) => color === draft.colors[index])) {
+        acceptFnLightingSave(profile, layer, observed, draft);
+        continue;
+      }
+      if (observed.enabled !== draft.originalEnabled || !observed.colors.every((color, index) => color === draft.originalColors[index]))
+        throw new Error(`Fn ${layer} colors changed on the keyboard. Revert the draft and read the layer again.`);
+      draft.revision = observed.revision;
+      draft.needsRecheck = false;
+    }
+    draft.needsRecheck = true;
+    const saved = await fnLightingView.client.write(profile, layer, draft);
+    if (transport !== state.transport) throw new Error("The keyboard disconnected while saving Fn colors.");
+    acceptFnLightingSave(profile, layer, saved, draft);
+  }
 }
 function fnLightingTabButton() {
   return fnLightingAvailable() ? [1, 2, 3].map((layer) => `<button type="button" role="tab" data-lighting-tab="fn${layer}" aria-selected="${state.lightingTab === `fn${layer}`}" class="${state.lightingTab === `fn${layer}` ? "active" : ""}"><span>0${layer + 3}</span>Fn ${layer}</button>`).join("") : "";
@@ -141,8 +211,8 @@ function fnLightingPage() {
     <label class="switch-row"><span><b>Use custom colors for Fn ${layer}</b><small>When disabled, this layer uses the factory action-group colors. Black turns an individual key off.</small></span><input id="fnLightingEnabled" class="toggle" type="checkbox" ${draft?.enabled ? "checked" : ""} ${disabled ? "disabled" : ""}></label>
     <div class="panel-head"><div><h2>Selected key colors</h2><p>${selected} key${selected === 1 ? "" : "s"} selected in the preview. Apply writes this Fn layer to the active profile.</p></div><div class="apply-row"><button class="button ghost" id="fnLightingSelectAll" ${disabled ? "disabled" : ""}>Select all keys</button><button class="button ghost" id="fnLightingClearSelection" ${disabled ? "disabled" : ""}>Clear selection</button></div></div>
     <div class="fn-lighting-color-row"><label class="field"><span>Color</span><input id="fnLightingColor" type="color" value="${fnLightingView.color}" ${disabled || !selected ? "disabled" : ""}></label><label class="field"><span>HEX</span><input id="fnLightingHex" type="text" value="${fnLightingView.color.toUpperCase()}" maxlength="7" data-keyboard-input="allow" ${disabled || !selected ? "disabled" : ""}></label><button class="button ghost" id="fnLightingBlack" ${disabled || !selected ? "disabled" : ""}>Turn selected keys off</button></div>
-    <div class="preset-color-row">${["#ff3b30", "#ff9500", "#ffd60a", "#34c759", "#00c7be", "#32ade6", "#5856d6", "#af52de", "#ff2d55", "#ffffff"].map((color) => `<button type="button" data-fn-lighting-color="${color}" style="--preset:${color}" title="Set ${color}" ${disabled || !selected ? "disabled" : ""}></button>`).join("")}</div>
-    <div class="apply-row fn-lighting-actions"><button class="button ghost" id="fnLightingRead" ${fnLightingView.busy ? "disabled" : ""}>Read Fn ${layer} colors</button><button class="button ghost" id="fnLightingExport" ${disabled ? "disabled" : ""}>Export Fn ${layer} colors</button><button class="button ghost" id="fnLightingImport" ${disabled ? "disabled" : ""}>Import Fn colors</button><input type="file" id="fnLightingImportFile" accept=".json,application/json" hidden><button class="button primary" id="fnLightingApply" ${disabled || !draft?.dirty ? "disabled" : ""}>Apply Fn ${layer} colors</button></div>
+    ${recentColorSwatches("data-fn-lighting-color", disabled || !selected)}
+    <div class="apply-row fn-lighting-actions"><button class="button ghost" id="fnLightingRead" ${fnLightingView.busy || draft?.dirty ? "disabled" : ""}>Read Fn ${layer} colors</button><button class="button ghost" id="fnLightingExport" ${disabled ? "disabled" : ""}>Export Fn ${layer} colors</button><button class="button ghost" id="fnLightingImport" ${disabled ? "disabled" : ""}>Import Fn colors</button><input type="file" id="fnLightingImportFile" accept=".json,application/json" hidden></div>
   </section></div>`;
 }
 function fnLightingStageColor(value) {
@@ -156,10 +226,10 @@ function fnLightingStageColor(value) {
   if (fnLightingView.selected.size) draft.dirty = true;
   return true;
 }
-async function fnLightingOperation(operation, saving = false) {
+async function fnLightingOperation(operation) {
   if (!fnLightingAvailable() || fnLightingView.busy || state.writeInFlight || state.firmwareBusy || state.gamepadBusy) return;
   const generation = fnLightingView.generation, key = fnLightingDraftKey(),
-    profile = fnLightingProfile(), layer = fnLightingLayer(), previousRevision = fnLightingDraft()?.revision;
+    profile = fnLightingProfile(), layer = fnLightingLayer();
   fnLightingView.busy = true; state.fnLightingBusy = true;
   stopPolling(); stopProfilePolling(); clearTimeout(state.timers.autoApply);
   document.querySelectorAll(".fn-lighting-editor input,.fn-lighting-editor select,.fn-lighting-editor button,[data-lighting-tab],[data-fn-lighting-key]").forEach((node) => { node.disabled = true; });
@@ -169,9 +239,6 @@ async function fnLightingOperation(operation, saving = false) {
     if (generation !== fnLightingView.generation) return;
     fnLightingView.drafts.set(key, fnLightingNormalizeProfile(value)); fnLightingView.errors.delete(key);
     if (fnLightingDraftKey() === key) commitFnLightingSelection(fnLightingView.selected, [...fnLightingView.selected].at(-1));
-    if (saving) for (const [otherKey, draft] of fnLightingView.drafts) {
-      if (otherKey.startsWith(`${profile}:`) && draft.revision === previousRevision) draft.revision = Number(value.revision) >>> 0;
-    }
   } catch (error) {
     if (generation === fnLightingView.generation) {
       fnLightingView.errors.set(key, error.message || String(error)); showToast(error.message || String(error), true);
@@ -183,6 +250,7 @@ async function fnLightingOperation(operation, saving = false) {
   }
 }
 function fnLightingRead() {
+  if (fnLightingDraft()?.dirty) return;
   return fnLightingOperation(async (client, profile, layer) => {
     if (typeof readKeymapLayer === "function") for (let current = 0; current <= layer; current++) {
       if (typeof hardwareLayerReady !== "function" || !hardwareLayerReady(current)) await readKeymapLayer(current);
@@ -206,14 +274,6 @@ function bindFnLightingPage() {
   on("#fnLightingBlack", "click", () => { fnLightingStageColor("#000000"); render(); });
   document.querySelectorAll("[data-fn-lighting-color]").forEach((button) => button.addEventListener("click", () => { fnLightingStageColor(button.dataset.fnLightingColor); render(); }));
   on("#fnLightingRead", "click", fnLightingRead);
-  on("#fnLightingApply", "click", () => {
-    const draft = fnLightingDraft();
-    if (!draft?.dirty) return;
-    fnLightingOperation(async (client, profile, layer) => {
-      const result = await client.write(profile, layer, { enabled: draft.enabled, colors: [...draft.colors], revision: draft.revision });
-      return result || client.read(profile, layer);
-    }, true);
-  });
   on("#fnLightingExport", "click", () => {
     const draft = fnLightingDraft(); if (!draft) return;
     downloadJson(`ae64-profile-${fnLightingProfile() + 1}-fn-${fnLightingLayer()}.json`, {
@@ -231,9 +291,12 @@ function bindFnLightingPage() {
       const value = JSON.parse(await file.text());
       if (value.format !== "ae64-fn-rgb" || value.version !== 1 || value.rows !== 6 || value.cols !== 21)
         throw new Error("Choose an AE64 Fn color profile exported by this editor.");
-      if (generation !== fnLightingView.generation || key !== fnLightingDraftKey()) return;
+      if (generation !== fnLightingView.generation || key !== fnLightingDraftKey() || state.writeInFlight || fnLightingView.busy) return;
       const draft = fnLightingNormalizeProfile(value);
-      draft.revision = fnLightingDraft()?.revision || 0; draft.dirty = true;
+      const previous = fnLightingDraft();
+      draft.originalColors = previous?.originalColors || [];
+      draft.originalEnabled = previous?.originalEnabled ?? false;
+      draft.revision = previous?.revision || 0; draft.dirty = true;
       fnLightingView.drafts.set(key, draft); fnLightingView.errors.delete(key); render();
     } catch (error) { showToast(error.message || String(error), true); }
   });

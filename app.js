@@ -14,13 +14,16 @@ function mountHero() {
   });
 }
 
-const FIRMWARE_SHOWCASE_SEEN_KEY = "ae64-control-firmware-showcase-seen";
+const FIRMWARE_SHOWCASE_RELEASE_KEY = "ae64-control-firmware-showcase-last-release";
+const FIRMWARE_SHOWCASE_OPT_OUT_KEY = "ae64-control-firmware-showcase-opt-out";
 let firmwareShowcaseSeen = false;
 
 function maybeShowFirmwareShowcase() {
   if (firmwareShowcaseSeen) return false;
+  const release = globalThis.AE64_PAGES_RELEASE?.id ?? "local";
   try {
-    if (localStorage.getItem(FIRMWARE_SHOWCASE_SEEN_KEY) === "true") return false;
+    if (localStorage.getItem(FIRMWARE_SHOWCASE_OPT_OUT_KEY) === "true" ||
+        localStorage.getItem(FIRMWARE_SHOWCASE_RELEASE_KEY) === release) return false;
   } catch {
     // Keep the in-page preference if browser storage is unavailable.
   }
@@ -54,12 +57,20 @@ function maybeShowFirmwareShowcase() {
         </section>
       </div>
       <div class="dialog-actions">
+        <button class="button ghost" type="submit" value="opt-out">Understand and do not show again</button>
         <button class="button ghost" type="submit" value="close">Continue to driver</button>
         <button class="button primary" type="submit" value="firmware">View firmware</button>
       </div>
     </form>`;
   dialog.addEventListener("close", () => {
     dialog.remove();
+    if (dialog.returnValue === "opt-out") {
+      try {
+        localStorage.setItem(FIRMWARE_SHOWCASE_OPT_OUT_KEY, "true");
+      } catch {
+        showToast("This browser could not save your preference.", true);
+      }
+    }
     if (dialog.returnValue === "firmware")
       document.querySelector('#sideNav button[data-page="firmware"]')?.click();
     maybeShowCalibrationRecommendation();
@@ -68,7 +79,7 @@ function maybeShowFirmwareShowcase() {
   openDialog(dialog);
   firmwareShowcaseSeen = true;
   try {
-    localStorage.setItem(FIRMWARE_SHOWCASE_SEEN_KEY, "true");
+    localStorage.setItem(FIRMWARE_SHOWCASE_RELEASE_KEY, release);
   } catch {
     // The prompt has already been shown in this page.
   }
@@ -94,6 +105,20 @@ function suppressPageKeyboardInput(event) {
 ["keydown", "keypress", "keyup"].forEach((type) =>
   document.addEventListener(type, suppressPageKeyboardInput, true),
 );
+
+document.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0 || !event.target.closest('#pageContent input[type="range"], #keyColorSurface')) return;
+  autoApplyPointer = event.pointerId;
+  scheduleAutoApply();
+}, true);
+for (const type of ["pointerup", "pointercancel"]) {
+  document.addEventListener(type, (event) => {
+    if (autoApplyPointer !== event.pointerId) return;
+    autoApplyPointer = null;
+    scheduleAutoApply();
+  }, true);
+}
+document.addEventListener("close", () => scheduleAutoApply(), true);
 
 document
   .querySelectorAll("#connectButton,#heroConnect")
@@ -204,8 +229,41 @@ Promise.allSettled([loadLanguages(), loadSwitchCatalog()]).finally(
   detectKnownKeyboard,
 );
 
-document.querySelector("#openGamepadTools").addEventListener("click", () => { state.page = "gamepad"; openWorkspace(); });
-document.querySelector("#openFirmwareTools").addEventListener("click", () => { state.page = "firmware"; openWorkspace(); });
-window.addEventListener("beforeunload", (event) => { if (state.firmwareBusy || state.fnLightingBusy) { event.preventDefault(); event.returnValue = ""; } });
+document.querySelector("#openFirmwareTools")?.addEventListener("click", () => { state.page = "firmware"; openWorkspace(); });
+window.addEventListener("beforeunload", (event) => { if (state.firmwareBusy || state.fnLightingBusy || state.writeInFlight) { event.preventDefault(); event.returnValue = ""; } });
 const toolRoute = window.location?.hash?.slice(1);
 if (["overview", "keymap", "performance", "advanced", "lighting", "settings", "diagnostics", "about", "gamepad", "firmware"].includes(toolRoute)) { state.page = toolRoute; openWorkspace(); }
+
+function watchPagesRelease(current) {
+  let checking = false;
+  let warnedAboutDraft = false;
+  async function check() {
+    if (document.hidden || checking) return;
+    checking = true;
+    try {
+      const manifest = new URL(current.manifest);
+      manifest.searchParams.set("check", Date.now().toString(36));
+      const response = await fetch(manifest, { cache: "no-store", signal: AbortSignal.timeout(10000) });
+      if (!response.ok) return;
+      const { release } = await response.json();
+      if (typeof release !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9-]{0,95}$/.test(release) || release === current.id) return;
+      const hasDraft = pendingChangeCount();
+      if (hasDraft || toolOperationBusy() || state.calibrationActive || state.calibrationBusy || document.querySelector("dialog[open]")) {
+        if (hasDraft && !warnedAboutDraft) {
+          showToast("A driver update is ready. Apply or export your changes before refreshing.");
+          warnedAboutDraft = true;
+        }
+        return;
+      }
+      window.location.reload();
+    } catch {
+      // Keep the running release available if the update check fails.
+    } finally {
+      checking = false;
+    }
+  }
+  window.addEventListener("pageshow", (event) => { if (event.persisted) check(); });
+  document.addEventListener("visibilitychange", check);
+  setInterval(check, 60_000);
+}
+if (globalThis.AE64_PAGES_RELEASE) watchPagesRelease(globalThis.AE64_PAGES_RELEASE);

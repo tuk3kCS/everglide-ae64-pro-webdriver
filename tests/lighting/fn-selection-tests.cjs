@@ -12,7 +12,10 @@ const summary = { innerHTML: "" }, marquee = { style: {}, classList: { add() {},
   scrollLeft: 0, scrollTop: 0, getBoundingClientRect: () => ({ left: 0, top: 0 }),
   querySelector: () => marquee, querySelectorAll: (selector) => selector === "[data-fn-lighting-key]" ? fnNodes : normalNodes,
 };
+const appliedColors = [];
 const c = { state, keys, layout: [[{}, {}], [{}]], console, clearTimeout, esc: String, displayedKeycode: () => 1, keycodeLabel: () => "Transparent",
+  rememberAppliedColors: (colors) => appliedColors.push(...colors),
+  recentColorSwatches: () => "",
   connected: () => Boolean(state.transport), normalizeHex: (s) => /^#[\da-f]{6}$/i.test(s) ? s.toLowerCase() : null,
   lightingMatrixIndexes: (key) => key.id === 2 ? [109, 110, 111, 112, 113] : [key.id],
   document: { querySelectorAll: (selector) => selector.includes("unified-lighting-preview") ? selector.includes("strip-led") ? [] : state.lightingTab.startsWith("fn") ? fnNodes : normalNodes : [],
@@ -51,9 +54,14 @@ async function main() {
   // A successful own save advances the shared profile revision without discarding other layer drafts.
   c.savedValue = { enabled: true, colors: Array(126).fill("#ffffff"), revision: 9 };
   run("fnLightingView.drafts.set('2:3',fnLightingNormalizeProfile({enabled:true,colors:Array(126).fill('#000000'),revision:7}))");
-  await run("fnLightingOperation(async()=>savedValue,true)");assert.equal(run("fnLightingView.drafts.get('2:1').revision"), 9);assert.equal(run("fnLightingView.drafts.get('2:1').colors[109]"), "#123456");
+  run("commitFnLightingSelection(new Set([0]),0);fnLightingStageColor('#0000ff')");
+  run("acceptFnLightingSave(2,2,savedValue,fnLightingDraft())");assert.equal(run("fnLightingView.drafts.get('2:1').revision"), 9);assert.equal(run("fnLightingView.drafts.get('2:1').colors[109]"), "#123456");
+  assert.ok(appliedColors.length === 0, "Unchanged Fn colors do not enter history.");
+  run("fnLightingStageColor('#112233')");
+  run("acceptFnLightingSave(2,2,{...fnLightingDraft(),revision:10},fnLightingDraft())");
+  assert.deepEqual(appliedColors, ["#112233"], "Only successfully applied Fn colors enter history.");
   assert.equal(run("fnLightingView.drafts.get('2:3').revision"), 7, "A stale layer must still conflict after an external change");
-  run("fnLightingLayout()");assert.equal(run("fnLightingView.color"), "#ffffff");state.lightingTab = "fn1";run("fnLightingLayout()");assert.equal(run("fnLightingView.color"), "#123456");
+  run("fnLightingLayout()");assert.equal(run("fnLightingView.color"), "#112233");state.lightingTab = "fn1";run("commitFnLightingSelection(new Set([2]),2);fnLightingLayout()");assert.equal(run("fnLightingView.color"), "#123456");
   state.lightingTab = "perKey";down(1);run("stopLightingSelection()");assert.deepEqual([...state.lightingSelectedKeys], [1]);
   console.log("PASS: Fn drag/click/Ctrl/Meta selection, cancel/cleanup, single preview, Space LEDs, active profile isolation and cross-layer save revisions; normal per-key selection retained.");
 }

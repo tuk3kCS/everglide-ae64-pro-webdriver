@@ -51,12 +51,9 @@
       <div class="welcome-actions">
         <button id="tryWorkspace" class="button ghost" type="button">Try out Reloaded</button>
         <button id="startInitialization" class="button primary" type="button">Initialize a device</button>
-        <button id="openFirmwareTools" class="button ghost" type="button">Flash or recover firmware</button>
+        <a id="openRecoveryTools" class="button ghost" href="#recovery">Flash or recover firmware</a>
       </div>
       <div id="heroKeyboard" class="hero-keyboard" aria-hidden="true"></div>
-      <div class="welcome-links">
-        <button id="openGamepadTools" class="panel" type="button"><strong>Gamepad</strong><small>Explore controller mappings and travel settings.</small></button>
-      </div>
     </div>
     <section id="initializeDevice" class="initialize-device" aria-labelledby="initializeTitle" hidden>
       <button id="cancelInitialization" class="button ghost" type="button">Cancel and exit</button>
@@ -121,7 +118,7 @@
           </div>
           <div class="header-actions">
             <div class="work-actions">
-              <label class="auto-apply-control" title="Experimental automatic writes"><span><b>Auto apply</b></span><input class="toggle" id="autoApplyToggle" type="checkbox" aria-label="Auto apply"></label>
+              <label class="auto-apply-control" title="Save completed edits automatically"><span><b>Auto apply</b></span><input class="toggle" id="autoApplyToggle" type="checkbox" aria-label="Auto apply"></label>
               <button class="button ghost" id="revertButton" type="button">Revert</button>
               <button class="button primary" id="applyButton" type="button">Apply changes</button>
             </div>

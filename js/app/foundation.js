@@ -8,6 +8,11 @@ const {
 } = window.AE64Protocol;
 const STORAGE_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-workspace-v3";
 const LANGUAGE_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-language";
+// Hosted driver data belongs to the running release. Local installs keep their existing storage.
+const driverStorage = globalThis.AE64_PAGES_RELEASE ? (() => {
+  const values = new Map();
+  return { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)) };
+})() : localStorage;
 
 const layout = [
   [
@@ -788,7 +793,7 @@ function mergeDecorative(base, saved = {}) {
 function loadSavedProfile() {
   const base = defaultProfile();
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const saved = JSON.parse(driverStorage.getItem(STORAGE_KEY));
     if (!saved || ![3, 4].includes(saved.schema)) return base;
     return {
       ...base,
@@ -847,7 +852,7 @@ const state = {
   transport: null,
   knownDevice: null,
   translations: clone(FALLBACK_TRANSLATIONS),
-  language: localStorage.getItem(LANGUAGE_KEY) || "en",
+  language: driverStorage.getItem(LANGUAGE_KEY) || "en",
   hardware: {
     info: null,
     feature: null,

@@ -12,10 +12,11 @@ function fixture() {
     writes = [], stored = new Map(), nodes = new Map(), notices = [];
   let isConnected = false;
   const context = { state, keys, KEYCODE_GROUPS: { keyboard: [{ code: 4, label: "A" }] },
-    localStorage: { getItem: () => null, setItem: (...args) => stored.set(...args) },
+    driverStorage: { getItem: () => null, setItem: (...args) => stored.set(...args) },
     document: { querySelector: (selector) => { if (!nodes.has(selector)) nodes.set(selector, { innerHTML: "", textContent: "", showModal() {}, close() {} }); return nodes.get(selector); } },
     defaultProfile: profile, clone: (value) => JSON.parse(JSON.stringify(value)), mergeDecorative: (base, saved) => ({ ...base, ...saved }),
-    connected: () => isConnected, render() {}, renderStatus() {}, stopPolling() {}, showProgress() {}, hideProgress() {}, log() {},
+    connected: () => isConnected, toolOperationBusy: () => false, render() {}, renderStatus() {}, stopPolling() {}, showProgress() {}, hideProgress() {}, log() {},
+    startProfilePolling() {}, stopProfilePolling() {},
     showToast: (message) => notices.push(message), position: (key) => ({ row: 1, col: key.id }),
     STORAGE_KEY: "test-profile", SAVE_GROUP: { LAYOUT: 4 }, DECORATIVE_COLS: 0,
     dirtyCount: () => state.dirty.mapping.size + state.dirty.performance.size,

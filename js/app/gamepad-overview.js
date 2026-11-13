@@ -1,8 +1,71 @@
 "use strict";
 
 const gamepadOverview = { transport: null, profileIndex: null, config: null, pending: false, generation: 0, error: "" };
+const gamepadDraftKey = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1";
+let pendingGamepad = null;
+
+function stageGamepadChange(config, previous, { automatic = true } = {}) {
+  if (gamepadConfigurationEqual(config, previous)) return;
+  const current = gamepadOverview.transport === state.transport && gamepadOverview.profileIndex === Number(state.profile.profileIndex) ? gamepadOverview.config : null;
+  if (!pendingGamepad) {
+    pendingGamepad = { original: current || previous, profile: connected() ? Number(state.profile.profileIndex) : null,
+      serial: connected() ? state.hardware.info?.serial || null : null, device: state.transport?.device, auto: false };
+  }
+  pendingGamepad.auto ||= automatic;
+  if (gamepadConfigurationEqual(config, current || pendingGamepad.original)) pendingGamepad = null;
+  renderStatus();
+}
+
+function matchesGamepadDraftTarget() {
+  return Boolean(pendingGamepad && connected() &&
+    (pendingGamepad.profile === null || pendingGamepad.profile === Number(state.profile.profileIndex)) &&
+    (pendingGamepad.serial ? pendingGamepad.serial === state.hardware.info?.serial :
+      !pendingGamepad.device || pendingGamepad.device === state.transport.device));
+}
+
+function canApplyGamepadChange() {
+  return Boolean(matchesGamepadDraftTarget() && gamepadOverview.transport === state.transport && gamepadOverview.config &&
+    gamepadOverview.profileIndex === Number(state.profile.profileIndex) &&
+    !gamepadOverview.pending);
+}
+
+function saveGamepadBaseline(config) {
+  try {
+    const saved = JSON.parse(driverStorage.getItem(gamepadDraftKey));
+    driverStorage.setItem(gamepadDraftKey, JSON.stringify({ ...saved, ...config, keyboardFingerprint: JSON.stringify([config.mode, config.transport, config.bindings, config.sticks]) }));
+  } catch (error) { log("Gamepad draft storage unavailable", error.message); }
+  pendingGamepad = null;
+}
+
+function revertGamepadChange() {
+  if (pendingGamepad) saveGamepadBaseline(canApplyGamepadChange() ? gamepadOverview.config : pendingGamepad.original);
+}
+
+function offerSavedGamepadDraft() {
+  if (pendingGamepad) return;
+  const draft = gamepadDraft();
+  if (gamepadDraftHasChanges(draft) && !gamepadConfigurationEqual(draft, window.AE64GamepadModel.emptyProfile()))
+    pendingGamepad = { original: window.AE64GamepadModel.emptyProfile(), profile: null, serial: null, device: null, auto: false };
+}
+
+function gamepadDraftCanBeEdited() {
+  return !pendingGamepad || !connected() || matchesGamepadDraftTarget();
+}
+
+async function applyGamepadChange(transport, profile) {
+  if (!canApplyGamepadChange()) return;
+  const config = gamepadDraft();
+  if (!config) throw new Error("The staged gamepad profile is unavailable.");
+  const result = await window.AE64GamepadProtocol.upload(transport, config, {
+    profileIndex: profile, resolvePosition: (key) => position(gamepadPhysicalKey(key)),
+  });
+  if (!result?.verified || transport !== state.transport) throw new Error("The gamepad save could not be verified.");
+  rememberGamepadProfile(config, transport);
+  saveGamepadBaseline(config);
+}
+
 function gamepadDraft() {
-  try { const value = localStorage.getItem((globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1");return value ? window.AE64GamepadModel.validate(JSON.parse(value)) : null; }
+  try { const value = driverStorage.getItem(gamepadDraftKey);return value ? window.AE64GamepadModel.validate(JSON.parse(value)) : null; }
   catch (_) { return null; }
 }
 function gamepadConfigurationEqual(a, b) {
@@ -13,7 +76,7 @@ function gamepadConfigurationEqual(a, b) {
 function gamepadDraftHasChanges(draft) {
   if (!draft) return false;
   try {
-    const saved = JSON.parse(localStorage.getItem((globalThis.AE64_STORAGE_PREFIX || "") + "ae64-gamepad-studio-v1"));
+    const saved = JSON.parse(driverStorage.getItem(gamepadDraftKey));
     return saved.keyboardFingerprint !== JSON.stringify([draft.mode, draft.transport, draft.bindings, draft.sticks]);
   } catch (_) { return true; }
 }
@@ -28,6 +91,16 @@ function rememberGamepadProfile(config, transport) {
   gamepadOverview.generation++;gamepadOverview.pending = false;gamepadOverview.transport = transport;
   gamepadOverview.profileIndex = Number(state.profile?.profileIndex || 0);
   gamepadOverview.config = window.AE64GamepadModel.validate(config);gamepadOverview.error = "";
+  bindGamepadDraftTarget(transport);
+}
+function bindGamepadDraftTarget(transport) {
+  if (pendingGamepad?.profile === null) {
+    pendingGamepad.profile = gamepadOverview.profileIndex;
+    pendingGamepad.serial = state.hardware.info?.serial || null;
+    pendingGamepad.device = transport.device;
+  }
+  if (matchesGamepadDraftTarget() && gamepadConfigurationEqual(gamepadDraft(), gamepadOverview.config))
+    pendingGamepad = null;
 }
 async function refreshGamepadOverview(force = false) {
   const transport = state.transport, profileIndex = Number(state.profile?.profileIndex || 0);
@@ -37,13 +110,16 @@ async function refreshGamepadOverview(force = false) {
   gamepadOverview.profileIndex = profileIndex;
   try {
     const result = await window.AE64GamepadProtocol.read(transport);
-    if (generation === gamepadOverview.generation && transport === state.transport && transport.connected && profileIndex === Number(state.profile?.profileIndex || 0))
+    if (generation === gamepadOverview.generation && transport === state.transport && transport.connected && profileIndex === Number(state.profile?.profileIndex || 0)) {
       gamepadOverview.config = window.AE64GamepadModel.validate(result.config);
+      bindGamepadDraftTarget(transport);
+    }
   } catch (error) { if (generation === gamepadOverview.generation) gamepadOverview.error = error.message; }
   finally {
     if (generation === gamepadOverview.generation) {
       gamepadOverview.pending = false;
       if (state.page === "overview" && transport === state.transport) render();
+      else if (pendingGamepad && transport === state.transport) renderStatus();
     }
   }
 }

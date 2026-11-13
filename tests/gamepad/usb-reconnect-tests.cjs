@@ -54,6 +54,7 @@ function fixture(options = {}) {
     connected: () => Boolean(state.transport?.connected), localStorage: { getItem: () => null }, esc: String,
   };
   c.window = c; vm.createContext(c);
+  c.driverStorage = c.localStorage;
   vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-overview.js"), "utf8"), c);
   vm.runInContext("gamepadOverview.transport = state.transport; gamepadOverview.config = AE64GamepadModel.defaults();", c);
   vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-usb.js"), "utf8"), c);

@@ -43,6 +43,7 @@ const returnToWelcome = returnHome;
 returnHome = async () => {
   await returnToWelcome();
   if (!document.querySelector("#workspace").classList.contains("hidden")) return;
+  if (state.page === "recovery") state.page = "performance";
   history.replaceState(null, "", location.pathname + location.search);
   showInitialization(false);
 };
@@ -53,6 +54,30 @@ document.querySelector("#tryWorkspace").addEventListener("click", () => {
   openWorkspace();
   document.querySelector('.sidebar [data-view="quick"]').click();
 });
+
+function openRecoveryRoute() {
+  if (location.hash !== "#recovery" || toolOperationBusy()) return;
+  state.page = "recovery";
+  openWorkspace();
+}
+
+const recoveryLink = document.querySelector("#openRecoveryTools");
+recoveryLink.href = location.pathname + location.search + "#recovery";
+recoveryLink.addEventListener("click", (event) => {
+  if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  if (toolOperationBusy()) return;
+  if (location.hash !== "#recovery") history.pushState(null, "", "#recovery");
+  openRecoveryRoute();
+});
+window.addEventListener("hashchange", () => {
+  if (location.hash === "#recovery") openRecoveryRoute();
+  else if (state.page === "recovery") {
+    if (toolOperationBusy()) history.replaceState(null, "", "#recovery");
+    else returnHome();
+  }
+});
+openRecoveryRoute();
 
 if (document.querySelector("#workspace").classList.contains("hidden")) {
   state.page = toolRoute === "profiles" ? "settings" : "performance";

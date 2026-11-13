@@ -126,7 +126,7 @@ const reloadedProfileOrderKey = globalThis.AE64_STORAGE_PREFIX + "onboard-profil
 const reloadedProfileDragType = "application/x-ae64-onboard-profile";
 let reloadedProfileOrder = [];
 try {
-  const savedOrder = JSON.parse(localStorage.getItem(reloadedProfileOrderKey));
+  const savedOrder = JSON.parse(driverStorage.getItem(reloadedProfileOrderKey));
   if (Array.isArray(savedOrder)) reloadedProfileOrder = savedOrder;
 } catch {
   // The default slot order also works if saved preferences cannot be read.
@@ -139,6 +139,8 @@ function reloadedProfileSlots() {
 
 function paintReloadedProfiles(page) {
   const panel = page.querySelector(".settings-profile");
+  panel.querySelector("#profileName")?.closest("label").remove();
+  panel.querySelector("#saveProfileName")?.closest(".apply-row").remove();
   const list = panel.querySelector(".profile-slot-row");
   const slots = reloadedProfileSlots();
   const active = Number(state.profile.profileIndex);
@@ -171,7 +173,7 @@ function paintReloadedProfiles(page) {
     [order[from], order[to]] = [order[to], order[from]];
     reloadedProfileOrder = order;
     try {
-      localStorage.setItem(reloadedProfileOrderKey, JSON.stringify(order));
+      driverStorage.setItem(reloadedProfileOrderKey, JSON.stringify(order));
       showToast(`Swapped ${name(source)} and ${name(target)} in My Profiles.`);
     } catch {
       showToast("Profile order changed for this session. Browser storage is unavailable.", true);
@@ -239,6 +241,29 @@ function paintReloadedFirmware(page) {
   }
   connect.append(device);
   grid.before(connect);
+}
+
+function paintReloadedRecovery(page) {
+  const recovery = page.querySelector(".firmware-page");
+  const intro = recovery.querySelector(".firmware-intro");
+  intro.outerHTML = `<header class="recovery-header">
+    <button id="exitRecovery" type="button" class="button ghost">← Back to welcome</button>
+    <h1>Flash or recover firmware</h1>
+    <p>Connect your AE64 Pro in normal or recovery mode, then choose a factory or custom firmware image.</p>
+  </header>`;
+  const grid = recovery.querySelector(".page-grid");
+  const [image, flash] = grid.children;
+  image.querySelector("h2").textContent = "2. Choose firmware";
+  flash.querySelector("h2").textContent = "3. Review and flash";
+  const connect = document.createElement("section");
+  connect.className = "panel recovery-connection";
+  connect.innerHTML = "<h2>1. Connect keyboard</h2>";
+  const device = flash.querySelector(".firmware-device");
+  if (!state.transport?.connected && !state.bootloaderConnected)
+    device.querySelector("#firmwareConnect").textContent = "Connect keyboard";
+  connect.append(device);
+  grid.prepend(connect);
+  recovery.querySelector("#exitRecovery").addEventListener("click", returnHome);
 }
 
 let reloadedGamepadView = "setup";
@@ -363,8 +388,7 @@ function paintReloadedGamepad(page) {
   showView();
 }
 
-function bindReloadedPalette(palette) {
-  const native = palette.querySelector('input[type="color"]');
+function bindReloadedColorPlane(container, native, eventType = "change") {
   if (!native) return;
   const hsv = rgbToHsv(hexToRgb(native.value));
   const picker = document.createElement("div");
@@ -374,7 +398,7 @@ function bindReloadedPalette(palette) {
     data-keyboard-input="allow"><i></i></div>
     <input type="range" class="reloaded-hue" aria-label="Hue" min="0" max="360" step="1"
     value="${Math.round(hsv.h)}" data-keyboard-input="allow" ${native.disabled ? "disabled" : ""}>`;
-  palette.querySelector(".palette-editor").prepend(picker);
+  container.prepend(picker);
   const surface = picker.querySelector(".reloaded-color-plane");
   const hue = picker.querySelector(".reloaded-hue");
   function preview() {
@@ -386,7 +410,7 @@ function bindReloadedPalette(palette) {
   }
   function commit() {
     native.value = hsvToHex(Number(hue.value), hsv.s, hsv.v);
-    native.dispatchEvent(new Event("change", { bubbles: true }));
+    native.dispatchEvent(new Event(eventType, { bubbles: true }));
   }
   preview();
   if (native.disabled) return;
@@ -421,6 +445,90 @@ function bindReloadedPalette(palette) {
   });
   hue.addEventListener("input", preview);
   hue.addEventListener("change", commit);
+  return () => {
+    Object.assign(hsv, rgbToHsv(hexToRgb(native.value)));
+    hue.value = Math.round(hsv.h);
+    preview();
+  };
+}
+
+let stripColorWindowOpen = false;
+let stripColorWindowPosition = null;
+
+function positionStripColorWindow(panel, left, top) {
+  const viewport = document.documentElement;
+  stripColorWindowPosition = {
+    left: clamp(left, 8, Math.max(8, viewport.clientWidth - panel.offsetWidth - 8)),
+    top: clamp(top, 8, Math.max(8, viewport.clientHeight - panel.offsetHeight - 8)),
+  };
+  panel.style.inset = `${stripColorWindowPosition.top}px auto auto ${stripColorWindowPosition.left}px`;
+}
+
+window.addEventListener("resize", () => {
+  const panel = document.querySelector("#stripColorWindow:not([hidden])");
+  if (panel && stripColorWindowPosition)
+    positionStripColorWindow(panel, stripColorWindowPosition.left, stripColorWindowPosition.top);
+});
+
+function paintStripColorWindow(layout) {
+  const editor = layout.querySelector(".strip-editor");
+  const colors = editor.querySelector(".strip-color-editor");
+  const native = colors.querySelector("#stripColor");
+  const windowPanel = document.createElement("section");
+  windowPanel.id = "stripColorWindow";
+  windowPanel.className = "panel strip-color-window";
+  windowPanel.setAttribute("aria-label", "Light strip color picker");
+  windowPanel.hidden = true;
+  windowPanel.innerHTML = `<header>
+    <button type="button" class="live-press-handle" data-keyboard-input="allow" title="Drag or use arrow keys to move">⠿ Light strip color</button>
+    <button type="button" class="dialog-close-button" aria-label="Close light strip color picker" data-keyboard-input="allow">×</button>
+  </header>`;
+  const header = windowPanel.firstElementChild;
+  const [handle, close] = header.children;
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "button ghost strip-color-toggle";
+  toggle.textContent = "Choose LED color";
+  toggle.setAttribute("aria-controls", windowPanel.id);
+  toggle.setAttribute("data-keyboard-input", "allow");
+  toggle.disabled = native.disabled;
+  colors.before(toggle);
+  windowPanel.append(colors);
+  const apply = document.createElement("button");
+  apply.type = "button";
+  apply.className = "button primary strip-color-apply";
+  apply.textContent = "Apply changes";
+  apply.setAttribute("data-keyboard-input", "allow");
+  apply.addEventListener("click", () => {
+    if (!toolOperationBusy()) requestApplyChanges();
+  });
+  windowPanel.append(apply);
+  layout.append(windowPanel);
+
+  const move = ({ left, top }, dx, dy) => positionStripColorWindow(windowPanel, left + dx, top + dy);
+  bindLivePressPointer(header, (event) => close.contains(event.target) ? null : windowPanel.getBoundingClientRect(), move);
+  bindLivePressArrows(handle, (dx, dy) => move(windowPanel.getBoundingClientRect(), dx, dy));
+  const syncPlane = bindReloadedColorPlane(colors, native, "input");
+  colors.addEventListener("change", () => syncPlane?.());
+  colors.addEventListener("click", (event) => {
+    if (event.target.closest("[data-strip-color-preset]")) syncPlane?.();
+  });
+  function show(open, focus = false) {
+    stripColorWindowOpen = open && !native.disabled;
+    windowPanel.hidden = !stripColorWindowOpen;
+    toggle.setAttribute("aria-expanded", String(stripColorWindowOpen));
+    if (stripColorWindowOpen) {
+      const position = stripColorWindowPosition || { left: innerWidth - windowPanel.offsetWidth - 24, top: 90 };
+      positionStripColorWindow(windowPanel, position.left, position.top);
+      if (focus) handle.focus();
+    } else if (focus) toggle.focus();
+  }
+  toggle.addEventListener("click", () => show(!stripColorWindowOpen, true));
+  close.addEventListener("click", () => show(false, true));
+  windowPanel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") show(false, true);
+  });
+  show(stripColorWindowOpen);
 }
 
 function paintReloadedLighting(page) {
@@ -444,10 +552,22 @@ function paintReloadedLighting(page) {
   const title = document.createElement("h2");
   title.className = "reloaded-rgb-title";
   title.textContent = "RGB Settings";
-  top.after(title);
-  layout.append(command, nav);
+  top.before(title, command);
+  layout.append(nav);
   command.querySelector(".lighting-command-copy h2").textContent =
     layout.classList.contains("fn-lighting-context") ? labels[state.lightingTab] : "Lighting controls";
+  const strip = layout.querySelector(".strip-editor");
+  if (strip) {
+    top.after(strip);
+    paintStripColorWindow(layout);
+    const stripPower = layout.querySelector(".area-power-panel");
+    const stripToggle = stripPower.querySelector(".lighting-power");
+    stripToggle.querySelector("b").textContent = "Light strip power";
+    command.querySelector(".lighting-command-controls").append(stripToggle);
+    stripPower.remove();
+  } else {
+    stripColorWindowOpen = false;
+  }
 
   const palette = layout.querySelector(".lighting-palette-panel");
   const modes = layout.querySelector(".lighting-mode-panel");
@@ -456,26 +576,29 @@ function paintReloadedLighting(page) {
   const editor = palette.parentElement;
   editor.classList.add("reloaded-rgb-editors");
   palette.querySelector("h2").textContent = "Colours";
-  bindReloadedPalette(palette);
+  bindReloadedColorPlane(palette.querySelector(".palette-editor"), palette.querySelector('input[type="color"]'));
   const effects = document.createElement("section");
   effects.className = "panel reloaded-effects";
   effects.innerHTML = `<h2>Effects</h2><div class="reloaded-effect-header">
       <label class="field"><span>Effect preset</span><select aria-label="Effect preset" data-keyboard-input="allow"></select></label>
-    </div><div class="reloaded-effect-columns"><div class="reloaded-base-effect"><h3>Base Layer</h3><strong></strong></div></div>`;
+    </div>`;
   palette.after(effects);
   const modeButtons = Array.from(modes.querySelectorAll("[data-lighting-mode]"));
   const active = modeButtons.find((button) => button.classList.contains("active"));
   const preset = effects.querySelector("select");
+  if (!active) {
+    const current = new Option("Current firmware effect", "", true, true);
+    current.disabled = true;
+    preset.add(current);
+  }
   for (const button of modeButtons)
     preset.add(new Option(button.querySelector("span").textContent, button.dataset.lightingMode, false, button === active));
-  preset.addEventListener("change", () => modeButtons.find((button) => button.dataset.lightingMode === preset.value)?.click());
-  effects.querySelector(".reloaded-base-effect strong").textContent = active?.querySelector("span").textContent || "Custom effect";
-  modes.querySelector("h2").textContent = "Effect Selection";
-  tune.querySelector("h2").textContent = "Effect Parameters";
-  const brightness = tune.querySelector('[id$="Brightness"]')?.closest("label");
-  if (brightness) {
-    if (state.lightingTab === "main") brightness.querySelector("b").textContent = "Global Brightness";
-    effects.querySelector(".reloaded-effect-header").append(brightness);
-  }
-  effects.querySelector(".reloaded-effect-columns").append(modes, tune);
+  const target = state.lightingTab === "strip" ? "strip" : "main";
+  preset.addEventListener("change", () => stageLightingMode(preset.value, target));
+  const warning = modes.querySelector(".lighting-mode-warning");
+  if (warning) effects.append(warning);
+  modes.remove();
+  tune.classList.add("reloaded-effect-parameters");
+  tune.querySelector(".panel-head").remove();
+  effects.append(tune);
 }

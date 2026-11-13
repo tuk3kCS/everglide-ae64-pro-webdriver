@@ -6,7 +6,7 @@
     quick: "Quick Settings", actuation: "Actuation Point", rapid: "Rapid Trigger",
     switches: "Magnetic Switches", keymap: "Remap", lighting: "RGB Settings",
     advanced: "Advanced Keys", gamepad: "Gamepad", settings: "Device Settings", profiles: "My Profiles",
-    overview: "Device Overview", firmware: "Firmware", diagnostics: "Diagnostics",
+    overview: "Device Overview", firmware: "Firmware", recovery: "Firmware recovery", diagnostics: "Diagnostics",
     about: "Help",
   };
   const navigation = document.querySelector("#sideNav");
@@ -20,11 +20,11 @@
     sidebarToggle.setAttribute("aria-expanded", String(!compact));
     sidebarToggle.title = label;
   }
-  setSidebarCompact(localStorage.getItem(sidebarPreference) === "true");
+  setSidebarCompact(driverStorage.getItem(sidebarPreference) === "true");
   sidebarToggle.addEventListener("click", () => {
     const compact = document.documentElement.dataset.sidebar !== "compact";
     setSidebarCompact(compact);
-    localStorage.setItem(sidebarPreference, String(compact));
+    driverStorage.setItem(sidebarPreference, String(compact));
   });
   for (const button of navigation.querySelectorAll(".sidebar button[data-page]")) {
     const label = button.querySelector("b").textContent;
@@ -172,6 +172,7 @@
     if (state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy) return;
     paint();
     const view = state.page === "performance" ? performanceView : state.page === "settings" ? settingsView : state.page;
+    document.querySelector("#workspace").classList.toggle("standalone-recovery", view === "recovery");
     content.dataset.view = view;
     document.querySelector("#pageTitle").textContent = titles[view];
     navigation.querySelectorAll("button[data-page]").forEach((button) => {
@@ -186,6 +187,7 @@
     if (state.page === "lighting") paintReloadedLighting(content);
     if (state.page === "gamepad") paintReloadedGamepad(content);
     if (state.page === "firmware") paintReloadedFirmware(content);
+    if (state.page === "recovery") paintReloadedRecovery(content);
     if (view === "profiles") paintReloadedProfiles(content);
   };
 })();

@@ -48,6 +48,8 @@ python -m http.server 4173 --bind 127.0.0.1
 
 Open [localhost:4173](http://localhost:4173), then choose **Initialize a device**. Serve the files over HTTPS or localhost. Running the driver needs no bundler or npm installation. Node.js is used for maintenance scripts and offline tests.
 
+GitHub Pages loads assets from a unique URL for each deployment. Open tabs check for updates when they become visible and once a minute while visible. A tab with unapplied edits or an active keyboard operation waits to reload. Hosted drafts and interface settings last for the current page, so export any draft you want to keep. The browser retains the eight recently applied RGB colors and the custom firmware showcase preference. The showcase appears on the first successful connection for each release unless you choose **Understand and do not show again**.
+
 The supported AE64 Pro identifies as USB **1CA6:300A**, board **0030000A**. Firmware files and commands for other keyboards are not interchangeable.
 
 ### Stock and custom firmware
@@ -71,7 +73,7 @@ The driver displays **v0.9.0.0 custom based on v0.1.0.0** when it reads the v0.9
 2. Select the active onboard profile in the sidebar. Each of the four profiles has Main, Fn1, Fn2, and Fn3 keymap layers.
 3. Make changes, review the staged edits, then use **Apply changes** to write and verify them. **Revert** discards ordinary staged keyboard edits.
 
-Optional **Auto apply** writes completed ordinary keyboard edits after a short debounce and remains experimental. Gamepad mappings and custom Fn colors have their own Apply buttons. Selecting a firmware file never starts flashing.
+**Apply changes** and **Revert** cover keyboard settings, Gamepad mappings, and custom Fn colors. **Auto apply** saves completed edits as soon as the keyboard is ready. Firmware flashing and the Xbox USB device toggle use their own controls.
 
 ## Implemented features
 
@@ -106,7 +108,7 @@ The experimental **XInput + Fn RGB** firmware adds independent static per-key co
 - Keyboard and light-strip settings, per-key colors, and all three supported Fn color profiles are read automatically on connection and profile changes. A Refresh lighting button retries failed reads without replacing staged colors.
 - Choose the active profile in the sidebar, then select a Fn lighting button. There is no additional profile or layer dropdown inside the editor.
 - The shared keyboard switches to that Fn layer’s color draft. Drag on it to select keys, then choose a color; black turns a selected key off.
-- Enable the layer’s custom colors and use its Apply button to save and read them back. There is no second keyboard preview below the main one.
+- Enable the layer’s custom colors and use **Apply changes** in the top bar to save them, or enable **Auto apply**.
 - Holding a key mapped to that Fn layer displays the saved static colors on the keyboard. Releasing Fn restores the normal effect. Disabling custom colors restores the factory Fn action-group colors.
 
 Fn colors persist in the keyboard’s profile storage. They use the factory Fn intensity convention rather than the normal effect’s brightness slider. During editing, the preview shows the selected color draft, not a live reading of the physical Fn overlay. The perimeter strip keeps its normal settings and is not selectable in the Fn editor.
@@ -133,7 +135,7 @@ Controller icons appear in the assignment picker, mapped keys, and Overview. Ove
 | Keyboard + Controller | Send both inputs, each according to its own travel/actuation settings. | Work as keyboard keys. |
 | Gamepad off | Send normal keyboard input; controller output is neutral and mappings are preserved. | Work as keyboard keys. |
 
-Use **Apply to keyboard** after changing modes or mappings. Gamepad off does not remove the controller device from Windows.
+Use the top-bar **Apply changes** after changing modes or mappings, or enable **Auto apply**. Gamepad off mutes controller output. The Xbox USB device switch controls whether Windows sees the controller.
 
 From **v0.3** onward, the separate **Xbox controller device** switch removes or restores the controller interface through a brief USB reconnect. The driver verifies the same keyboard and requested state before reporting success. In v0.8.1 and newer, this choice is saved across power loss and applies across onboard profiles. After upgrading from v0.8, turn it off once to save the disabled preference. Earlier builds keep the choice until power loss. A keyboard without a saved preference starts enabled. Windows may retain historical hidden device entries. v0.2 keeps the switch disabled. See the [USB persistence report](docs/firmware-research/gamepad/USB_PERSISTENCE_V081.md).
 

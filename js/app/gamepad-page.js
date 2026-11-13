@@ -9,7 +9,7 @@ function updateToolShell() {
   const busy = toolOperationBusy();
   document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename,#backHomeButton,#sidebarThemeSelect,.language-select,#connectButton,#heroConnect").forEach((node) => { node.disabled = busy; });
   if (state.bootloaderConnected) document.querySelectorAll("#sideNav button,#quickProfileSelect,#quickProfileRename").forEach((node) => { node.disabled = busy || node.dataset?.page !== "firmware"; });
-  document.querySelector(".work-actions")?.classList.toggle("hidden", ["gamepad", "firmware"].includes(state.page));
+  document.querySelector(".work-actions")?.classList.toggle("hidden", ["recovery", "firmware"].includes(state.page));
   const route = window.AE64_ROUTE_FOR_PAGE?.(state.page) || state.page;
   if (!document.querySelector("#workspace")?.classList.contains?.("hidden") && window.location && window.location.hash !== `#${route}`)
     window.history?.replaceState(null, "", `${window.location.pathname || ""}${window.location.search || ""}#${route}`);
@@ -43,13 +43,19 @@ function updateHardwareSolutionInfo(capabilities) {
   if (panel) { panel.hidden = supported; panel.classList.toggle("hidden", supported); }
 }
 function bindGamepadPage() {
+  if (typeof offerSavedGamepadDraft === "function") offerSavedGamepadDraft();
   document.querySelector("[data-gamepad-hardware]")?.addEventListener("click", () => document.querySelector("#gamepadHardware")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   document.querySelector("#openHardwareFirmware")?.addEventListener("click", () => {
-    firmwareView.selectedId = "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.8.1.1.bin";
+    firmwareView.selectedId = "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.9.bin";
     firmwareView.loadGeneration++; firmwareView.loading = false; firmwareView.prepared = null; firmwareView.selectionError = "";
     state.page = "firmware"; render();
   });
   activeGamepadStudio = window.AE64GamepadStudio.mount(document.querySelector("#gamepadHardware"), {
+    storage: driverStorage,
+    sharedApply: true,
+    onDraft: (config, previous, options) => stageGamepadChange(config, previous, options),
+    canEdit: () => !state.writeInFlight && gamepadDraftCanBeEdited(),
+    onDiscardDraft: () => { pendingGamepad = null; },
     getTransport: () => state.firmwareBusy || state.bootloaderConnected || state.profileNeedsReload || state.profileSyncInFlight ? null : state.transport,
     getKeyTravel: gamepadSwitchTravel,
     onRead: rememberGamepadProfile, onApplied: rememberGamepadProfile,

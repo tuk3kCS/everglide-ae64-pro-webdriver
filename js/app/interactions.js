@@ -249,6 +249,12 @@ function refreshLightingSelection() {
     summary.innerHTML = fnLightingEditing() ? `Selected: <b>${count}</b> ${label}` : `Selected: <b>${count} ${label}</b>`;
   }
 }
+function stageLightingMode(mode, target) {
+  const strip = target === "strip", lighting = state.profile.lighting;
+  (strip ? lighting.decorative.base : lighting.base).mode = Number(mode);
+  state.dirty[strip ? "decorativeBase" : "lightingBase"] = true;
+  render();
+}
 function refreshKeySelection() {
   document.querySelectorAll(".layout-board [data-key]").forEach((node) => {
     const selected = state.selectedKeys.has(Number(node.dataset.key));
@@ -739,14 +745,7 @@ function bindPage() {
         stageDoubleLighting(LIGHTING_OPEN_MODE.LOWER, event.target.checked),
       );
     document.querySelectorAll("[data-lighting-mode]").forEach((button) =>
-      button.addEventListener("click", () => {
-        const strip = button.dataset.lightingTarget === "strip",
-          base = strip ? stripLighting.base : lighting.base;
-        base.mode = Number(button.dataset.lightingMode);
-        if (strip) state.dirty.decorativeBase = true;
-        else state.dirty.lightingBase = true;
-        render();
-      }),
+      button.addEventListener("click", () => stageLightingMode(button.dataset.lightingMode, button.dataset.lightingTarget)),
     );
     [
       ["lightingBrightness", "brightness", lighting.base, "main"],

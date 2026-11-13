@@ -10,10 +10,22 @@
 
 const AUTO_APPLY_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-auto-apply-v1";
 Object.assign(state, {
-  autoApply: localStorage.getItem(AUTO_APPLY_KEY) === "true",
+  autoApply: driverStorage.getItem(AUTO_APPLY_KEY) === "true",
   writeInFlight: false,
 });
 state.timers.autoApply = null;
+let autoApplyPointer = null;
+
+function pendingChangeCount({ writable = false, automatic = false } = {}) {
+  const fn = typeof pendingFnLighting === "function" ? pendingFnLighting().length : 0;
+  const gamepad = typeof pendingGamepad !== "undefined" && pendingGamepad && (!writable || canApplyGamepadChange()) && (!automatic || pendingGamepad.auto);
+  return dirtyCount() + fn + Number(Boolean(gamepad));
+}
+function autoApplyReady() {
+  return state.autoApply && connected() && pendingChangeCount({ writable: true, automatic: true }) &&
+    !toolOperationBusy() && !state.calibrationActive && !state.calibrationBusy &&
+    !state.profileNeedsReload && autoApplyPointer === null && !document.querySelector("dialog[open]")?.open;
+}
 
 function toggleAdvancedRemoval(value) {
   const ids = String(value).split(",").map(Number)
@@ -52,29 +64,17 @@ function toggleAdvancedRemoval(value) {
 function scheduleAutoApply() {
   clearTimeout(state.timers.autoApply);
   state.timers.autoApply = null;
-  if (
-    !state.autoApply ||
-    state.writeInFlight || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy ||
-    !connected() ||
-    !dirtyCount()
-  )
-    return;
-  state.timers.autoApply = setTimeout(flushAutoApply, 350);
+  if (!autoApplyReady()) return;
+  state.timers.autoApply = setTimeout(flushAutoApply, 100);
 }
 async function flushAutoApply() {
   state.timers.autoApply = null;
-  if (
-    !state.autoApply ||
-    state.writeInFlight || state.firmwareBusy || state.gamepadBusy || state.fnLightingBusy ||
-    !connected() ||
-    !dirtyCount()
-  )
-    return false;
+  if (!autoApplyReady()) return false;
   return applyChanges({ automatic: true });
 }
 function setAutoApply(enabled) {
   state.autoApply = Boolean(enabled);
-  localStorage.setItem(AUTO_APPLY_KEY, String(state.autoApply));
+  driverStorage.setItem(AUTO_APPLY_KEY, String(state.autoApply));
   if (!state.autoApply) {
     clearTimeout(state.timers.autoApply);
     state.timers.autoApply = null;
@@ -83,8 +83,8 @@ function setAutoApply(enabled) {
   showToast(
     state.autoApply
       ? connected()
-        ? "Experimental auto apply enabled. Completed edits will write automatically."
-        : "Experimental auto apply enabled. Connect the keyboard before editing."
+        ? "Auto apply enabled. Completed edits are saved automatically."
+        : "Auto apply enabled. Connect the keyboard to save edits."
       : "Auto apply disabled. Changes will remain staged until Apply.",
   );
 }
@@ -183,6 +183,9 @@ function summarizeChanges() {
     if (field === "shake")
       changes.push(`Shake optimization: ${value ? "on" : "off"}`);
   }
+  if (typeof pendingFnLighting === "function")
+    for (const layer of pendingFnLighting()) changes.push(`Fn ${layer} per-key RGB`);
+  if (typeof canApplyGamepadChange === "function" && canApplyGamepadChange()) changes.push("Gamepad assignments and tuning");
   return changes;
 }
 function openDialog(dialog) {
@@ -194,8 +197,9 @@ function closeDialog(dialog) {
   else dialog?.removeAttribute?.("open");
 }
 function requestApplyChanges() {
+  if (toolOperationBusy()) return;
   stageFnReleaseMappings();
-  if (!dirtyCount()) return;
+  if (!pendingChangeCount({ writable: true })) return;
   if (!connected())
     return showToast(
       "Connect the AE64 Pro before applying changes. Staged changes have not been cleared.",
@@ -210,10 +214,11 @@ function requestApplyChanges() {
 }
 
 async function applyChanges({ automatic = false } = {}) {
-  if (state.fnLightingBusy || state.profileSyncInFlight || state.profileNeedsReload || state.connecting ||
-      state.gamepadBusy || state.usbSwitchBusy || state.writeInFlight) return false;
+  if (toolOperationBusy() || state.profileNeedsReload || state.calibrationActive || state.calibrationBusy) return false;
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
   stageFnReleaseMappings();
-  if (!dirtyCount()) return false;
+  if (!pendingChangeCount({ writable: true, automatic })) return false;
   if (!connected()) {
     showToast(
       "The keyboard disconnected before writing. Staged changes are still available.",
@@ -224,14 +229,15 @@ async function applyChanges({ automatic = false } = {}) {
   state.writeInFlight = true;
   renderStatus();
   stopPolling();
+  stopProfilePolling();
   showProgress(
     automatic ? "Auto applying changes" : "Applying staged changes",
     "Reading existing records and preserving firmware-owned fields.",
   );
   try {
-    const transport = state.transport;
+    const transport = state.transport, profileIndex = Number(state.profile.profileIndex);
     if (state.dirty.customLighting.size && expectsProfileMainRgb()) requireProfileMainRgb();
-    if (await transport.getCurrentConfig() !== Number(state.profile.profileIndex) || transport !== state.transport)
+    if (await transport.getCurrentConfig() !== profileIndex || transport !== state.transport)
       throw new Error("The onboard profile changed. Return to the staged profile on the keyboard or revert the edits.");
     const performanceIds = [...state.dirty.performance],
       performanceNormalizations = [];
@@ -471,12 +477,14 @@ async function applyChanges({ automatic = false } = {}) {
           0,
         );
       await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
+      await rememberAppliedPalette(transport, 0, state.profile.lighting, state.original.lighting, state.dirty.lightingPalette);
     }
     if (state.dirty.customLighting.size) {
       const profile = Number(state.profile.profileIndex),
         client = expectsProfileMainRgb() ? requireProfileMainRgb() : null,
         scoped = client ? await client.read(profile, 0) : null,
         matrix = scoped?.matrix || (state.hardware.customMatrix || await readMainRgbMatrix(transport)).slice();
+      const cells = new Set();
       for (const id of state.dirty.customLighting) {
         const key = keys[id],
           matrixIndexes = lightingMatrixIndexes(key),
@@ -487,6 +495,7 @@ async function applyChanges({ automatic = false } = {}) {
           throw new Error(`This firmware has no Main RGB cell for ${key.n}.`);
         color.custom = Boolean(state.profile.lighting.customEnabled[id]);
         matrixIndexes.forEach((matrixIndex) => {
+          cells.add(matrixIndex);
           matrix[matrixIndex] = { ...color };
         });
       }
@@ -496,16 +505,10 @@ async function applyChanges({ automatic = false } = {}) {
       } else {
         await transport.writeCustomLighting(matrix, MATRIX_ROWS, MATRIX_COLS, 0);
         await transport.saveParameters(SAVE_GROUP.LIGHTING);
-        const id = [...state.dirty.customLighting][0], key = keys[id];
-        for (const matrixIndex of lightingMatrixIndexes(key)) {
-          const packet = await transport.getCustomLightingPacket(Math.floor(matrixIndex / 15), 0),
-            verified = packet[matrixIndex % 15];
-          if (rgbToHex(verified) !== state.profile.lighting.perKey[id].toLowerCase() ||
-              Boolean(verified.custom) !== Boolean(state.profile.lighting.customEnabled[id]))
-            throw new Error(`Custom lighting verification failed for ${key.n}.`);
-        }
+        await verifyLightingOverrides(transport, 0, cells, matrix);
         state.hardware.customMatrix = matrix;
       }
+      rememberAppliedColors([...cells].filter((cell) => matrix[cell].custom).map((cell) => rgbToHex(matrix[cell])));
     }
     if (state.dirty.decorativeBase || state.dirty.decorativePalette) {
       const decorative = state.profile.lighting.decorative;
@@ -522,6 +525,7 @@ async function applyChanges({ automatic = false } = {}) {
           1,
         );
       await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
+      await rememberAppliedPalette(transport, 1, decorative, state.original.lighting.decorative, state.dirty.decorativePalette);
     }
     if (state.dirty.decorativeLighting.size) {
       const decorative = state.profile.lighting.decorative;
@@ -532,44 +536,38 @@ async function applyChanges({ automatic = false } = {}) {
             DECORATIVE_COLS,
             1,
           );
+      const matrix = state.hardware.decorativeMatrix.slice();
       for (const index of state.dirty.decorativeLighting) {
         const color = hexToRgb(decorative.perLed[index]);
         color.custom = Boolean(decorative.customEnabled[index]);
-        state.hardware.decorativeMatrix[index] = color;
+        matrix[index] = color;
       }
       await state.transport.writeCustomLighting(
-        state.hardware.decorativeMatrix,
+        matrix,
         DECORATIVE_ROWS,
         DECORATIVE_COLS,
         1,
       );
       await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
-      const index = [...state.dirty.decorativeLighting][0],
-        packet = await state.transport.getCustomLightingPacket(
-          Math.floor(index / 15),
-          1,
-        ),
-        verified = packet[index % 15];
-      if (
-        rgbToHex(verified) !== decorative.perLed[index].toLowerCase() ||
-        Boolean(verified.custom) !== Boolean(decorative.customEnabled[index])
-      )
-        throw new Error(`Decorative1 verification failed for LED ${index}.`);
+      await verifyLightingOverrides(transport, 1, state.dirty.decorativeLighting, matrix);
+      state.hardware.decorativeMatrix = matrix;
+      rememberAppliedColors([...state.dirty.decorativeLighting].filter((index) => matrix[index].custom).map((index) => rgbToHex(matrix[index])));
     }
     const settingsToWrite = [...state.dirty.settings],
       pollingRateChanged = settingsToWrite.includes("reportRate"),
+      previousRate = state.original?.settings.reportRate,
       requestedRate = Number(state.profile.settings.reportRate);
     for (const field of settingsToWrite.filter((field) => field !== "reportRate")) {
-      if (field === "systemMode")
-        await state.transport.setSystemMode(state.profile.settings[field]);
-      if (field === "sleepTime")
-        await state.transport.setLightingSleepTime(
-          state.profile.settings[field],
-        );
-      if (field === "shake")
-        await state.transport.setShakeOptimization(
-          state.profile.settings[field],
-        );
+      const commands = {
+        systemMode: ["setSystemMode", "getSystemMode", Number],
+        sleepTime: ["setLightingSleepTime", "getLightingSleepTime", Number],
+        shake: ["setShakeOptimization", "getShakeOptimization", Boolean],
+      }[field];
+      if (!commands) continue;
+      const [write, read, normalize] = commands, value = normalize(state.profile.settings[field]);
+      await transport[write](value);
+      if (normalize(await transport[read]()) !== value)
+        throw new Error(`${field} did not match the keyboard's read-back.`);
     }
     // The controller restarts its HID interface immediately after this write.
     // Keep it last, then close our old session instead of issuing any stale
@@ -578,21 +576,29 @@ async function applyChanges({ automatic = false } = {}) {
     if (pollingRateChanged) {
       restartIdentity = window.AE64Firmware.decodeInfo(await transport.raw([1, 2]));
       window.AE64Firmware.checkIdentity(restartIdentity, 0);
-      await transport.setReportRate(requestedRate);
     }
     state.original = clone(state.profile);
+    if (pollingRateChanged) state.original.settings.reportRate = previousRate;
     clearDirty();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    if (pollingRateChanged) state.dirty.settings.add("reportRate");
+    driverStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    const pendingLayers = typeof pendingFnLighting === "function" ? pendingFnLighting() : [];
+    if (pendingLayers.length) await applyFnLighting(transport, profileIndex, pendingLayers);
+    if (typeof pendingGamepad !== "undefined" && pendingGamepad && (!automatic || pendingGamepad.auto))
+      await applyGamepadChange(transport, profileIndex);
     if (pollingRateChanged) {
+      await transport.setReportRate(requestedRate);
+      state.dirty.settings.delete("reportRate");
       if (state.transport === transport) state.transport = null;
       await transport.close().catch((error) =>
         log("Polling-rate session close failed", error.message),
       );
       log("Polling rate changed; reconnect required");
-      return await reconnectAfterPollingRateChange(restartIdentity, transport.device, requestedRate);
+      const reconnected = await reconnectAfterPollingRateChange(restartIdentity, transport.device, requestedRate);
+      if (!reconnected) throw new Error("The requested polling rate could not be verified after reconnecting.");
+      return true;
     }
     log("Staged changes applied and verified");
-    render();
     const normalizationNote = performanceNormalizations.length
       ? ` Firmware normalized ${performanceNormalizations.length} key${performanceNormalizations.length === 1 ? "" : "s"}: ${performanceNormalizations.slice(0, 2).join("; ")}${performanceNormalizations.length > 2 ? `; +${performanceNormalizations.length - 2} more` : ""}.`
       : "";
@@ -604,7 +610,7 @@ async function applyChanges({ automatic = false } = {}) {
     log("Apply failed", error.message);
     if (automatic) {
       state.autoApply = false;
-      localStorage.setItem(AUTO_APPLY_KEY, "false");
+      driverStorage.setItem(AUTO_APPLY_KEY, "false");
     }
     showToast(
       `${automatic ? "Auto apply was disabled" : "Apply stopped"}: ${error.message}`,
@@ -614,14 +620,13 @@ async function applyChanges({ automatic = false } = {}) {
   } finally {
     state.writeInFlight = false;
     hideProgress();
-    renderStatus();
-    if (state.page === "lighting" && state.liveLighting && connected())
-      startLightingLive();
+    if (connected()) startProfilePolling();
+    render();
   }
 }
 
 function revertChanges() {
-  if (state.fnLightingBusy) return;
+  if (toolOperationBusy()) return;
   clearTimeout(state.timers.autoApply);
   state.timers.autoApply = null;
   state.profile = clone(state.original);
@@ -656,7 +661,10 @@ function revertChanges() {
       };
   }
   clearDirty();
+  const refreshFn = typeof revertFnLighting === "function" && revertFnLighting();
+  if (typeof revertGamepadChange === "function") revertGamepadChange();
   render();
+  if (refreshFn && connected()) readLightingProfiles({ force: true });
   showToast("Staged changes reverted.");
 }
 async function reloadProfileFromDevice(index) {
@@ -703,7 +711,7 @@ async function reloadProfileFromDevice(index) {
 async function switchProfile(index) {
   if (toolOperationBusy()) return;
   if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
-  if (dirtyCount()) {
+  if (pendingChangeCount()) {
     showToast("Apply or revert changes before switching profiles.", true);
     renderToolbar();
     return;
@@ -807,15 +815,19 @@ function exportLog() {
   showToast("Session log exported.");
 }
 async function importProfile(file) {
+  if (toolOperationBusy()) return;
+  const transport = state.transport, profile = state.profile.profileIndex;
   try {
     const data = JSON.parse(await file.text()),
       imported = data.profile || data;
+    if (toolOperationBusy() || transport !== state.transport || profile !== state.profile.profileIndex) return;
     if (!imported.performance || !imported.keycodes || !imported.lighting)
       throw new Error("Not an AE64 Control profile.");
     const base = defaultProfile();
     state.profile = {
       ...base,
       ...imported,
+      profileIndex: profile,
       schema: base.schema,
       performance: { ...base.performance, ...imported.performance },
       keycodes: Object.fromEntries(
@@ -859,7 +871,7 @@ async function importProfile(file) {
     render();
     showToast(
       state.autoApply
-        ? "Profile imported. Experimental auto apply will write it now."
+        ? "Profile imported. Auto apply will save it when the keyboard is ready."
         : "Profile imported and staged. Review before applying.",
     );
   } catch (error) {

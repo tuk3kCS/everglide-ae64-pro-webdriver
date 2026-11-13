@@ -27,7 +27,7 @@ function applyTheme(value, { persist = false, announce = false } = {}) {
   if (document.documentElement.style) document.documentElement.style.colorScheme = theme === "light" ? "light" : "dark";
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = option.meta;
-  if (persist) localStorage.setItem(THEME_KEY, theme);
+  if (persist) driverStorage.setItem(THEME_KEY, theme);
   document.querySelectorAll("[data-theme-choice]").forEach((button) => {
     const active = button.dataset.themeChoice === theme;
     button.classList.toggle("active", active);
@@ -41,5 +41,5 @@ function setTheme(value) {
   applyTheme(value, { persist: true, announce: true });
 }
 
-state.theme = normalizeTheme(localStorage.getItem(THEME_KEY));
+state.theme = normalizeTheme(driverStorage.getItem(THEME_KEY));
 applyTheme(state.theme);

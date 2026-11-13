@@ -46,6 +46,7 @@ async function main() {
   node("#reviewFirmware").listeners.click();assert.equal(node("#firmwareReviewDialog").open, true);assert.equal(starts.length, 0);
   node("#cancelFirmwareReview").listeners.click();assert.equal(starts.length, 0);
   // The hardware shortcut must replace the prior stock selection, not keep it.
+  context.driverStorage = {};
   vm.runInContext("state.page = 'gamepad'; bindGamepadPage()", context);
   node("#openHardwareFirmware").listeners.click();
   assert.equal(vm.runInContext("firmwareView.prepared", context), null);

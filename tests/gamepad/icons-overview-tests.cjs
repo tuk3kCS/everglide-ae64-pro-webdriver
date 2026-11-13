@@ -17,7 +17,7 @@ const transport = { connected: true };let saved = M.defaults(), resolveRead;
 const c = { window: null, state: { transport, page: "overview" }, connected: () => c.state.transport?.connected,
   localStorage: { getItem: () => saved ? JSON.stringify(saved) : null }, esc: (value) => String(value).replace(/[&<>"]/g, ""),
   AE64GamepadModel: M, AE64ControllerIcons: Icons, AE64GamepadProtocol: { read: async () => new Promise((resolve) => { resolveRead = resolve; }) }, render() {} };
-c.window = c;vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-overview.js"), "utf8"), c);
+c.window = c;c.driverStorage = c.localStorage;vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-overview.js"), "utf8"), c);
 const run = (code) => vm.runInContext(code, c);
 async function main() {
   assert.equal(run("gamepadOverviewSnapshot().source"), "draft");

@@ -52,7 +52,7 @@ function launcher(html, { file, base }) {
 `;
 }
 
-function pinRuntime(html, { base, route }) {
+function pinRuntime(html, { base, route }, release) {
   return html.replace(/^[ \t]*<base\b[^>]*>\r?\n/gm, "")
     .replace("<head>", `<head>
   <base href="${base}">
@@ -62,6 +62,10 @@ function pinRuntime(html, { base, route }) {
     const runtimeRoot = new URL(${JSON.stringify(base)}, location.href);
     document.querySelector("base").href = runtimeRoot.href;
     const publicEntry = new URL(${JSON.stringify(`../../${route}`)}, runtimeRoot);
+    globalThis.AE64_PAGES_RELEASE = {
+      id: ${JSON.stringify(release)},
+      manifest: new URL("../../release.json", runtimeRoot).href,
+    };
     publicEntry.search = location.search;
     publicEntry.hash = location.hash;
     history.replaceState(null, "", publicEntry);
@@ -90,7 +94,7 @@ function versionPagesRelease(destination, release) {
   for (const name of runtime) fs.renameSync(path.join(site, name), path.join(target, name));
 
   for (const page of pages) {
-    fs.writeFileSync(path.join(target, page.file), pinRuntime(page.html, page));
+    fs.writeFileSync(path.join(target, page.file), pinRuntime(page.html, page, release));
     fs.mkdirSync(path.dirname(path.join(site, page.file)), { recursive: true });
     fs.writeFileSync(path.join(site, page.file), launcher(page.html, page));
   }

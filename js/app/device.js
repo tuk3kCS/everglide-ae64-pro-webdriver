@@ -32,10 +32,10 @@ function stopProfilePolling() {
   state.timers.profileGeneration += 1;
 }
 async function syncPhysicalProfile() {
-  if (!connected() || toolOperationBusy() || dirtyCount()) return false;
+  if (!connected() || toolOperationBusy() || pendingChangeCount()) return false;
   const transport = state.transport, generation = state.timers.profileGeneration;
   const index = Number(await transport.getCurrentConfig());
-  if (transport !== state.transport || generation !== state.timers.profileGeneration || toolOperationBusy() || dirtyCount()) return false;
+  if (transport !== state.transport || generation !== state.timers.profileGeneration || toolOperationBusy() || pendingChangeCount()) return false;
   if (index === Number(state.profile.profileIndex) && !state.profileNeedsReload) return false;
   if (!state.hardware.configIndexes.includes(index)) return false;
   state.profileSyncInFlight = true;
@@ -279,7 +279,9 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
     if (recovering && firmwareView.phase === "error") firmwareProgress({ phase: "idle", percent: 0, detail: "Keyboard application reconnected." });
     openWorkspace();
     startProfilePolling();
-    if (silent || !maybeShowFirmwareShowcase()) maybeShowCalibrationRecommendation();
+    if (typeof pendingGamepad !== "undefined" && pendingGamepad && state.page !== "gamepad")
+      refreshGamepadOverview(true);
+    if (state.page !== "recovery" && (silent || !maybeShowFirmwareShowcase())) maybeShowCalibrationRecommendation();
     showToast(`AE64 Pro connected · firmware ${info.firmwareDisplay || info.firmware}`);
     return true;
   } catch (error) {
@@ -295,7 +297,7 @@ async function connectKeyboard(device = null, { silent = false, choose = false }
   } finally {
     state.connecting = false;
     if (!silent) hideProgress();
-    if (state.page === "firmware") render();
+    if (isFirmwarePage()) render();
     else renderStatus();
   }
 }

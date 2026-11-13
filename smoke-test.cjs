@@ -57,6 +57,9 @@ class FakeDevice {
     this.currentConfig = 0;
     this.serialByte = 42;
     this.reportRate = 0;
+    this.systemMode = 0;
+    this.sleepTime = 10;
+    this.shake = 0;
     this.advanced = new Map();
     this.macroModes = new Map();
     this.macroData = new Map();
@@ -93,6 +96,18 @@ class FakeDevice {
     if (packet[0] === 2 && packet[1] === 5) {
       if (packet[2] === 2) this.reportRate = packet[3];
       reply[3] = this.reportRate;
+    }
+    if (packet[0] === 2 && packet[1] === 4 && packet[2] !== 0) {
+      if (packet[2] === 2) this.systemMode = packet[3];
+      reply[3] = this.systemMode;
+    }
+    if (packet[0] === 2 && packet[1] === 13) {
+      if (packet[2] === 0) this.sleepTime = packet[3] | packet[4] << 8;
+      reply[3] = this.sleepTime & 255; reply[4] = this.sleepTime >> 8;
+    }
+    if (packet[0] === 2 && packet[1] === 16) {
+      if (packet[2] === 0) this.shake = packet[3];
+      reply[3] = this.shake;
     }
     if (packet[0] === 4 && packet[1] === 1) {
       const stored = this.performance.get(`${packet[2]}:${packet[3]}`);
@@ -1089,8 +1104,14 @@ async function main() {
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting overhaul omitted ${required}.`);
   if ((lightingMarkup.match(/data-spacebar-led-index=/g) || []).length !== 5 || !lightingMarkup.includes('class="spacebar-lighting-leds"'))
     throw new Error("Lighting preview must expose Space as five RGB cells without adding mapping keys.");
-  for (const required of ['palette-editor enhanced-palette-editor', 'color-preview ', 'color-channel-grid editable-color-channels', 'id="paletteHex"', 'id="paletteRgbR" type="number"', 'id="paletteRgbG" type="number"', 'id="paletteRgbB" type="number"', 'class="preset-color-row"', 'data-palette-preset="#ff3b30"'])
+  for (const required of ['palette-editor enhanced-palette-editor', 'color-preview ', 'color-channel-grid editable-color-channels', 'id="paletteHex"', 'id="paletteRgbR" type="number"', 'id="paletteRgbG" type="number"', 'id="paletteRgbB" type="number"', 'Recently Used'])
     if (!lightingMarkup.includes(required)) throw new Error(`Lighting palette beautification omitted ${required}.`);
+  const colorHistory = vm.runInContext(`(() => {
+    rememberAppliedColors(Array.from({ length: 9 }, (_, index) => "#00000" + index));
+    rememberAppliedColors(["#000004", "#AA00FF", "invalid"]);
+    return [...readRecentLightingColors()];
+  })()`, browser);
+  equal(colorHistory, ["#000004", "#aa00ff", "#000000", "#000001", "#000002", "#000003", "#000005", "#000006"], "Recently Used must keep eight distinct normalized colors, moving reuse to the front.");
   if ((lightingMarkup.match(/data-keyboard-input="allow"/g) || []).length < 4) throw new Error("Palette HEX/RGB fields must remain typable while keyboard-test suppression is active.");
   if ((lightingMarkup.match(/class="decorative-frame"/g) || []).length !== 1) throw new Error("Lighting must render exactly one unified keyboard-and-strip preview.");
   const lightingCommand = lightingMarkup.match(/<section class="panel lighting-command">[\s\S]*?<\/section>/)?.[0] || "";
