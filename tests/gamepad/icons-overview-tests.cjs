@@ -1,0 +1,52 @@
+"use strict";
+const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
+const M = require("../../js/gamepad/model.js"), Icons = require("../../js/gamepad/icons.js"), { fixture } = require("./fixture.cjs");
+const root = path.resolve(__dirname, "../..");
+for (const control of M.CONTROLS) {
+  const filename = Icons.files[control.id];assert.ok(filename, `${control.id} has artwork`);assert.ok(fs.existsSync(path.join(root, "assets/controller_icons", filename)));
+  assert.match(Icons.html(control.id), /aria-hidden="true"/);assert.match(Icons.html(control.id), /controller_icons\//);
+}
+assert.equal(new Set(Object.values(Icons.files)).size, 24);
+assert.equal(Icons.files["LY+"], "12_left_stick_up.png");assert.equal(Icons.files["LY-"], "13_left_stick_down.png");
+assert.equal(Icons.files["RY+"], "17_right_stick_up.png");assert.equal(Icons.files["RX-"], "19_right_stick_left.png");
+const navigation = fs.readFileSync(path.join(root, "legacy", "index.html"), "utf8").match(/<nav id="sideNav"[\s\S]*?<\/nav>/)[0];
+assert.ok(navigation.indexOf('data-page="advanced"') < navigation.indexOf('data-page="gamepad"'));
+assert.ok(navigation.indexOf('data-page="gamepad"') < navigation.indexOf('data-page="lighting"'));
+assert.match(fs.readFileSync(path.join(root, ".github/workflows/pages.yml"), "utf8"), /cp assets\/controller_icons\/\*\.png _site\/assets\/controller_icons\//);
+const transport = { connected: true };let saved = M.defaults(), resolveRead;
+const c = { window: null, state: { transport, page: "overview" }, connected: () => c.state.transport?.connected,
+  localStorage: { getItem: () => saved ? JSON.stringify(saved) : null }, esc: (value) => String(value).replace(/[&<>"]/g, ""),
+  AE64GamepadModel: M, AE64ControllerIcons: Icons, AE64GamepadProtocol: { read: async () => new Promise((resolve) => { resolveRead = resolve; }) }, render() {} };
+c.window = c;c.driverStorage = c.localStorage;vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(root, "js/app/gamepad-overview.js"), "utf8"), c);
+const run = (code) => vm.runInContext(code, c);
+async function main() {
+  assert.equal(run("gamepadOverviewSnapshot().source"), "draft");
+  assert.match(run("gamepadOverviewPanel()"), /LOCAL DRAFT/);
+  assert.match(run("gamepadOverviewPanel()"), /gamepad-overview hidden/);
+  c.physicalQ = { uiRow: 1, col: 1 };assert.match(run("overviewGamepadKeyBadge(physicalQ)"), /23_left_trigger/);
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /Left trigger/);
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /0.50–3.50 mm/);
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /Local draft/);
+  run("rememberGamepadProfile(gamepadDraft(),state.transport)");assert.equal(run("gamepadOverviewSnapshot().source"), "active");
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /Read from keyboard/);
+  c.state.profile = { profileIndex: 1 };assert.equal(run("gamepadOverviewSnapshot().source"), "draft", "Another onboard profile cannot inherit a confirmed mapping badge");
+  c.state.profile.profileIndex = 0;assert.equal(run("gamepadOverviewSnapshot().source"), "active");
+  saved.name = "Local name only";assert.equal(run("gamepadOverviewSnapshot().source"), "active");
+  saved.mode = "off";assert.equal(run("gamepadOverviewSnapshot().source"), "draft");assert.match(run("gamepadOverviewPanel()"), /output disabled/);assert.match(run("overviewGamepadKeyBadge(physicalQ)"), /inactive/);
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /output disabled/);
+  const clean = M.emptyProfile();saved = { ...clean, keyboardFingerprint: JSON.stringify([clean.mode, clean.transport, clean.bindings, clean.sticks]) };
+  assert.equal(run("gamepadOverviewSnapshot().source"), "active", "A confirmed old profile does not override the newly read keyboard profile");
+  assert.match(run("overviewGamepadSelectedKey(physicalQ)"), /Left trigger/);
+  c.unassigned = { uiRow: 0, col: 0 };assert.equal(run("overviewGamepadSelectedKey(unassigned)"), "");
+  const read = run("refreshGamepadOverview(true)");c.state.transport = { connected: true };resolveRead({ config: M.defaults() });await read;
+  assert.notEqual(run("gamepadOverviewSnapshot().source"), "active", "Old session replies cannot mark the new connection active");
+  saved = null;c.state.transport = null;assert.equal(run("gamepadOverviewSnapshot().source"), "none");
+  const f = fixture();await f.component.ready;
+  assert.equal((f.nodes.get("controlPicker").innerHTML.match(/class="controller-icon"/g) || []).length, 24);
+  assert.equal((f.nodes.get("keyboard").innerHTML.match(/class="controller-icon"/g) || []).length, 0);
+  assert.ok(!f.nodes.has("previewButtons"), "The live/preview panel is removed");f.component.dispose();
+  const restored = fixture({ savedProfile: M.defaults() });await restored.component.ready;
+  assert.equal((restored.nodes.get("keyboard").innerHTML.match(/class="controller-icon"/g) || []).length, 6);restored.component.dispose();
+  console.log("PASS: all 24 icon files/directions, picker/key/preview artwork, Overview draft/active/off states, stale connections and sidebar order.");
+}
+main().catch((error) => { console.error(error);process.exitCode = 1; });

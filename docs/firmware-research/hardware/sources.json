@@ -1,0 +1,48 @@
+{
+  "source_snapshots": [
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/soc/HPM5300/HPM5301/toolchains/gcc/start.S",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\start.S",
+      "sha256": "90e369a0a4cd4f31854db718fe8fe8342a96bed913a13cb9713d65ee5cf4a7c8"
+    },
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/soc/HPM5300/HPM5361/toolchains/gcc/start.S",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\HPM5361_start.S",
+      "sha256": "5adcadc9c86adf4d61cab6652d15e071019cfbc005d46f90fa1705f2501910b4"
+    },
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/soc/HPM5300/HPM5361/hpm_soc_ip.h",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\hpm_soc_ip.h",
+      "sha256": "7fd0076b0f380abd3160485f4d27cfff365a72b60801a7f07b7c19dd9d1b0c9d"
+    },
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/soc/HPM5300/HPM5301/toolchains/gcc/flash_xip.ld",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\flash_xip.ld",
+      "sha256": "cf0524103096fb38b5c38787b1f0fc974efeb6838cc499f0d9fa8311c8a3b825"
+    },
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/soc/HPM5300/HPM5301/toolchains/gcc/flash_dfu.ld",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\flash_dfu.ld",
+      "sha256": "c4488df6fc85f473fee2f06ddfa9767b3b54198d0ca7a0ec23cfd2d23bc4122a"
+    },
+    {
+      "url": "https://github.com/hpmicro/hpm_sdk/blob/main/boards/hpm5300evk/hpm5300evk.yaml",
+      "retrieved_date": "2026-10-28",
+      "snapshot": "source-snapshots\\evk.yaml",
+      "sha256": "3dfe3de9d5c1b4392d257748295dc03c7deaf5a1b3fe94f3e954e82b3f4f63ac"
+    }
+  ],
+  "primary_reference_pages": [
+    "https://sparklinkplayjoy.github.io/keyboard-docs/keyboardv2/",
+    "https://hpm-sdk.readthedocs.io/en/latest/get_started.html",
+    "https://hpm-sdk.readthedocs.io/en/v1.12.0/cmake_user_guide.html",
+    "https://www.hpmicro.com/en/product-center/microcontroller/hpm5300",
+    "https://www.hpmicro.com/Public/Uploads/uploadfile/files/20250417/HPM5300UMV10.pdf",
+    "https://github.com/Punssama/AE64_PRO_WEB_DRIVER_CLONE"
+  ]
+}

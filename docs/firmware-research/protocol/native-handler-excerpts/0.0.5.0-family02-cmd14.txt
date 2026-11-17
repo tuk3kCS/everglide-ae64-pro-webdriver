@@ -1,0 +1,11 @@
+payload+0x00b7d0 container+0x00c7d0 VMA0x8002c7d0 03c72151 lbu        a4, 0x512(gp)
+payload+0x00b7d4 container+0x00c7d4 VMA0x8002c7d4 9387014d addi       a5, gp, 0x4d0
+payload+0x00b7d8 container+0x00c7d8 VMA0x8002c7d8 09c7     c.beqz     a4, 0xa
+payload+0x00b7da container+0x00c7da VMA0x8002c7da 7d57     c.li       a4, -1
+payload+0x00b7dc container+0x00c7dc VMA0x8002c7dc 2381e700 sb         a4, 2(a5)
+payload+0x00b7e0 container+0x00c7e0 VMA0x8002c7e0 8280     c.jr       ra
+payload+0x00b7e2 container+0x00c7e2 VMA0x8002c7e2 0567     c.lui      a4, 1
+payload+0x00b7e4 container+0x00c7e4 VMA0x8002c7e4 2391e700 sh         a4, 2(a5)
+payload+0x00b7e8 container+0x00c7e8 VMA0x8002c7e8 1307003c addi       a4, zero, 0x3c0
+payload+0x00b7ec container+0x00c7ec VMA0x8002c7ec 2392e700 sh         a4, 4(a5)
+payload+0x00b7f0 container+0x00c7f0 VMA0x8002c7f0 8280     c.jr       ra

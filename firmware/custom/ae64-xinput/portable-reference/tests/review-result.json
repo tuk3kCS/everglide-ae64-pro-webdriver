@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "checks": 120591,
+  "randomized_frames": 20000,
+  "compiler": "Zig cc, local toolchain directory zig-x86_64-windows-0.17.0",
+  "flags": [
+    "-std=c11",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-O2"
+  ],
+  "execution": "host executable, no USB or keyboard access",
+  "files": {
+    "include/ae64_gamepad.h": "66fbaf01190bfc73328541338d404ea1d69556a0bd39db3e15b608317525d32d",
+    "src/ae64_gamepad.c": "00cbc0fbd4ec32d96ce33e244fe24d45de0591e394683cc1ae81296307ee6a2b",
+    "tests/test_gamepad_review.c": "ed01e4d6e9e8711786ee2927967a820e205b416b08768d4007fb11c2ae006b3d"
+  }
+}

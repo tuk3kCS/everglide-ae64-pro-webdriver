@@ -1,0 +1,39 @@
+{
+  "offline_only": true,
+  "image_sha256": "fa97bcfef4cffe1fb8f2309ba537d2491dbc0fe7162eaec1db2c3d1ea220d69a",
+  "image_bytes": 131464,
+  "static_checks": "container, original-byte preservation, ELF sections, ABI, hook destinations, trampolines, heap boundaries, native flash helpers, packet round trip",
+  "board_test_stdout": "PASS: synthetic board integration, 7629 checks; no hardware exercised.",
+  "board_test_command": [
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+    "cc",
+    "-DAE64_HOST_TEST",
+    "-std=c11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad.c",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad_physical.c",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad_protocol.c",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_xusb.c",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\board_port.c",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\test_board.c",
+    "-o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\experimental-verification\\board-tests.exe"
+  ],
+  "flash_packets": 2348,
+  "hardware_boot": false,
+  "windows_xinput": false,
+  "bootloader_acceptance": false,
+  "flashed": false,
+  "reproduced_byte_for_byte_in_separate_directory": true,
+  "extension_disassembly": {
+    "instructions": 3992,
+    "decoded_bytes": 12240,
+    "linked_text_bytes": 12240,
+    "gp_dependencies": 0
+  }
+}

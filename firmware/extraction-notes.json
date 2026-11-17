@@ -1,0 +1,26 @@
+{
+  "static_analysis_evidence_id": "ev_409f8e2643b0d6e5bf8c130d16b1af04ba44f5c1a0a943602f94f0baac63a636",
+  "analysis_scope": "Initial downloaded JavaScript tree. Device-page chunk additionally inspected as inert text.",
+  "static_analysis_limitations": [
+    "The full application graph has incomplete coverage.",
+    "Static inspection does not demonstrate browser execution."
+  ],
+  "sources": [
+    {
+      "url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+      "sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+      "bytes": 797466
+    },
+    {
+      "url": "https://www.xsyd.top/v2-app/js/index-DZtPZg-9.js",
+      "sha256": "e99864930b6265852339c9990d122ec108e70de6498cdc0cec5f083493652396",
+      "bytes": 461501
+    }
+  ],
+  "direct_observations": [
+    "Connected HID vendor interface returned board_id 0030000a and appVersion 0.0.7.0 in response to device-info command 01 02.",
+    "Firmware endpoint returned name AE64 Pro, product C048P010, chip XS117, and five history entries.",
+    "All five original downloads have board ID 0030000A, matching declared lengths and CRC-32 checksums."
+  ],
+  "search_boundary": "All firmware records in the current driver response for this board and VID/PID. No assertion about unpublished or removed releases."
+}

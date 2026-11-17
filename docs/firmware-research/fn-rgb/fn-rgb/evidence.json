@@ -1,0 +1,47 @@
+{
+  "payload_sha256": "b0d7c8d6b5c8f9ca6dd0da74cc7873cc40fdb13e733a1ec58b0dd33087816a15",
+  "payload_base": "0x80021000",
+  "hook": {
+    "off": "0xA594",
+    "bytes": "ef90707d",
+    "native_target": "0x8003556A"
+  },
+  "ranges": {
+    "frame_merge_output": [
+      "0xa536",
+      "0xa6da"
+    ],
+    "frame_conversion": [
+      "0xa762",
+      "0xa880"
+    ],
+    "native_fn_renderer": [
+      "0x1456a",
+      "0x14906"
+    ],
+    "fn_press": [
+      "0x5906",
+      "0x5946"
+    ],
+    "fn_release": [
+      "0x5a56",
+      "0x5abe"
+    ],
+    "normal_action_resolve": [
+      "0x5b2c",
+      "0x5b9a"
+    ],
+    "led_cell_write": [
+      "0xa3b8",
+      "0xa3d8"
+    ],
+    "host_frame_read": [
+      "0xd300",
+      "0xd392"
+    ],
+    "os_handler": [
+      "0xbb14",
+      "0xbb94"
+    ]
+  }
+}

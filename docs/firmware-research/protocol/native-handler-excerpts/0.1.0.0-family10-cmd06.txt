@@ -1,0 +1,4 @@
+payload+0x00d440 container+0x00e440 VMA0x8002e440 9385e161 addi       a1, gp, 0x61e
+payload+0x00d444 container+0x00e444 VMA0x8002e444 1385e165 addi       a0, gp, 0x65e
+payload+0x00d448 container+0x00e448 VMA0x8002e448 6ff07fff j          -0xa
+payload+0x00d44c container+0x00e44c VMA0x8002e44c 8280     c.jr       ra

@@ -1,0 +1,1622 @@
+[
+  {
+    "firmware": "XS117_C048P010_AE64Pro_App_v0.0.5.0_20260305a.bin",
+    "matched_hpm_base_upper20": [
+      {
+        "name": "HPM_GPIO0_BASE",
+        "upper20_hex": "F00D0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d3a0",
+          "0x0d640",
+          "0x0d67a",
+          "0x0d68e",
+          "0x0d6bc",
+          "0x0d72c",
+          "0x0d782"
+        ]
+      },
+      {
+        "name": "HPM_PLIC_BASE",
+        "upper20_hex": "E4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0d40c",
+          "0x0dee6",
+          "0x0e28a",
+          "0x13ab2"
+        ]
+      },
+      {
+        "name": "HPM_MCHTMR_BASE",
+        "upper20_hex": "E6000000",
+        "lui_candidate_payload_offsets": [
+          "0x00d08",
+          "0x0d098",
+          "0x0fdf0"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR0_BASE",
+        "upper20_hex": "F0000000",
+        "lui_candidate_payload_offsets": [
+          "0x1355a"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR1_BASE",
+        "upper20_hex": "F0004000",
+        "lui_candidate_payload_offsets": [
+          "0x0d2e0",
+          "0x0d306",
+          "0x0d332",
+          "0x0d34a",
+          "0x0d44a",
+          "0x0d480"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR3_BASE",
+        "upper20_hex": "F000C000",
+        "lui_candidate_payload_offsets": [
+          "0x00632",
+          "0x0de9e",
+          "0x0decc",
+          "0x0ded4",
+          "0x0df0a"
+        ]
+      },
+      {
+        "name": "HPM_UART0_BASE",
+        "upper20_hex": "F0040000",
+        "lui_candidate_payload_offsets": [
+          "0x00bf4",
+          "0x0db9a",
+          "0x0dc34",
+          "0x0df1c"
+        ]
+      },
+      {
+        "name": "HPM_UART1_BASE",
+        "upper20_hex": "F0044000",
+        "lui_candidate_payload_offsets": [
+          "0x00c00",
+          "0x0dbb2",
+          "0x0dc4a",
+          "0x0df26"
+        ]
+      },
+      {
+        "name": "HPM_UART2_BASE",
+        "upper20_hex": "F0048000",
+        "lui_candidate_payload_offsets": [
+          "0x00c0c",
+          "0x0dbc4",
+          "0x0dc5a",
+          "0x0df30"
+        ]
+      },
+      {
+        "name": "HPM_UART3_BASE",
+        "upper20_hex": "F004C000",
+        "lui_candidate_payload_offsets": [
+          "0x00c18",
+          "0x0dbd6",
+          "0x0dc6a",
+          "0x0df3a"
+        ]
+      },
+      {
+        "name": "HPM_UART4_BASE",
+        "upper20_hex": "F0050000",
+        "lui_candidate_payload_offsets": [
+          "0x00c24",
+          "0x0dbe8",
+          "0x0dc7a",
+          "0x0df44"
+        ]
+      },
+      {
+        "name": "HPM_UART5_BASE",
+        "upper20_hex": "F0054000",
+        "lui_candidate_payload_offsets": [
+          "0x00c30",
+          "0x0dbfa",
+          "0x0dc8a",
+          "0x0df4e"
+        ]
+      },
+      {
+        "name": "HPM_UART6_BASE",
+        "upper20_hex": "F0058000",
+        "lui_candidate_payload_offsets": [
+          "0x00c3c",
+          "0x0dc0c",
+          "0x0dc9a",
+          "0x0df58"
+        ]
+      },
+      {
+        "name": "HPM_UART7_BASE",
+        "upper20_hex": "F005C000",
+        "lui_candidate_payload_offsets": [
+          "0x00c48",
+          "0x0dc1e",
+          "0x0dcaa",
+          "0x0df62"
+        ]
+      },
+      {
+        "name": "HPM_I2C0_BASE",
+        "upper20_hex": "F0060000",
+        "lui_candidate_payload_offsets": [
+          "0x0036a"
+        ]
+      },
+      {
+        "name": "HPM_I2C1_BASE",
+        "upper20_hex": "F0064000",
+        "lui_candidate_payload_offsets": [
+          "0x0037e"
+        ]
+      },
+      {
+        "name": "HPM_I2C2_BASE",
+        "upper20_hex": "F0068000",
+        "lui_candidate_payload_offsets": [
+          "0x00392"
+        ]
+      },
+      {
+        "name": "HPM_I2C3_BASE",
+        "upper20_hex": "F006C000",
+        "lui_candidate_payload_offsets": [
+          "0x003a6"
+        ]
+      },
+      {
+        "name": "HPM_SPI0_BASE",
+        "upper20_hex": "F0070000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcde",
+          "0x0dd6a"
+        ]
+      },
+      {
+        "name": "HPM_SPI1_BASE",
+        "upper20_hex": "F0074000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcf0",
+          "0x0dd72"
+        ]
+      },
+      {
+        "name": "HPM_SPI2_BASE",
+        "upper20_hex": "F0078000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcfe",
+          "0x0dd7a"
+        ]
+      },
+      {
+        "name": "HPM_SPI3_BASE",
+        "upper20_hex": "F007C000",
+        "lui_candidate_payload_offsets": [
+          "0x0dd08",
+          "0x0dd82"
+        ]
+      },
+      {
+        "name": "HPM_PEWDG_BASE",
+        "upper20_hex": "F4128000",
+        "lui_candidate_payload_offsets": [
+          "0x1381e"
+        ]
+      },
+      {
+        "name": "HPM_DMAMUX_BASE",
+        "upper20_hex": "F00C4000",
+        "lui_candidate_payload_offsets": [
+          "0x0d42a",
+          "0x0dda2"
+        ]
+      },
+      {
+        "name": "HPM_HDMA_BASE",
+        "upper20_hex": "F00C8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d394",
+          "0x0d3f8",
+          "0x0d42e",
+          "0x0ddc6",
+          "0x0dde8",
+          "0x0ddf8",
+          "0x0de08",
+          "0x0de42",
+          "0x0de60"
+        ]
+      },
+      {
+        "name": "HPM_GPIOM_BASE",
+        "upper20_hex": "F00D8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d624",
+          "0x0d6b6",
+          "0x0d726"
+        ]
+      },
+      {
+        "name": "HPM_TRGM0_BASE",
+        "upper20_hex": "F033C000",
+        "lui_candidate_payload_offsets": [
+          "0x0d2c6"
+        ]
+      },
+      {
+        "name": "HPM_USB0_BASE",
+        "upper20_hex": "F300C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e254",
+          "0x0e296",
+          "0x0e7fa"
+        ]
+      },
+      {
+        "name": "HPM_SYSCTL_BASE",
+        "upper20_hex": "F4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0db30",
+          "0x137ba",
+          "0x137ec",
+          "0x138f6",
+          "0x13938",
+          "0x13962"
+        ]
+      },
+      {
+        "name": "HPM_IOC_BASE",
+        "upper20_hex": "F4040000",
+        "lui_candidate_payload_offsets": [
+          "0x0d386",
+          "0x0d5c0",
+          "0x0d614",
+          "0x0d6a8",
+          "0x0d722",
+          "0x0dcc6",
+          "0x0dfde"
+        ]
+      },
+      {
+        "name": "HPM_PIOC_BASE",
+        "upper20_hex": "F4118000",
+        "lui_candidate_payload_offsets": [
+          "0x0d6b0"
+        ]
+      },
+      {
+        "name": "HPM_PLLCTLV2_BASE",
+        "upper20_hex": "F40C0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d864",
+          "0x0db3e",
+          "0x0db4c",
+          "0x0db5a",
+          "0x0db68",
+          "0x136cc"
+        ]
+      },
+      {
+        "name": "HPM_PPOR_BASE",
+        "upper20_hex": "F4100000",
+        "lui_candidate_payload_offsets": [
+          "0x0cd06",
+          "0x0cdfa",
+          "0x0ced6",
+          "0x0cf40",
+          "0x12272"
+        ]
+      },
+      {
+        "name": "HPM_PCFG_BASE",
+        "upper20_hex": "F4104000",
+        "lui_candidate_payload_offsets": [
+          "0x0db22"
+        ]
+      }
+    ]
+  },
+  {
+    "firmware": "XS117_C048P010_AE64Pro_App_v0.0.6.0_20260519a.bin",
+    "matched_hpm_base_upper20": [
+      {
+        "name": "HPM_GPIO0_BASE",
+        "upper20_hex": "F00D0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d3b6",
+          "0x0d656",
+          "0x0d690",
+          "0x0d6a4",
+          "0x0d6d2",
+          "0x0d742",
+          "0x0d798"
+        ]
+      },
+      {
+        "name": "HPM_PLIC_BASE",
+        "upper20_hex": "E4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0d422",
+          "0x0defc",
+          "0x0e2d4",
+          "0x13af8"
+        ]
+      },
+      {
+        "name": "HPM_MCHTMR_BASE",
+        "upper20_hex": "E6000000",
+        "lui_candidate_payload_offsets": [
+          "0x00d08",
+          "0x0d0ae",
+          "0x0fe22"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR0_BASE",
+        "upper20_hex": "F0000000",
+        "lui_candidate_payload_offsets": [
+          "0x135a0"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR1_BASE",
+        "upper20_hex": "F0004000",
+        "lui_candidate_payload_offsets": [
+          "0x0d2f6",
+          "0x0d31c",
+          "0x0d348",
+          "0x0d360",
+          "0x0d460",
+          "0x0d496"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR3_BASE",
+        "upper20_hex": "F000C000",
+        "lui_candidate_payload_offsets": [
+          "0x00632",
+          "0x0deb4",
+          "0x0dee2",
+          "0x0deea",
+          "0x0df20"
+        ]
+      },
+      {
+        "name": "HPM_UART0_BASE",
+        "upper20_hex": "F0040000",
+        "lui_candidate_payload_offsets": [
+          "0x006f6",
+          "0x0dbb0",
+          "0x0dc4a",
+          "0x0df32"
+        ]
+      },
+      {
+        "name": "HPM_UART1_BASE",
+        "upper20_hex": "F0044000",
+        "lui_candidate_payload_offsets": [
+          "0x00702",
+          "0x0dbc8",
+          "0x0dc60",
+          "0x0df3c"
+        ]
+      },
+      {
+        "name": "HPM_UART2_BASE",
+        "upper20_hex": "F0048000",
+        "lui_candidate_payload_offsets": [
+          "0x0070e",
+          "0x0dbda",
+          "0x0dc70",
+          "0x0df46"
+        ]
+      },
+      {
+        "name": "HPM_UART3_BASE",
+        "upper20_hex": "F004C000",
+        "lui_candidate_payload_offsets": [
+          "0x0071a",
+          "0x0dbec",
+          "0x0dc80",
+          "0x0df50"
+        ]
+      },
+      {
+        "name": "HPM_UART4_BASE",
+        "upper20_hex": "F0050000",
+        "lui_candidate_payload_offsets": [
+          "0x00726",
+          "0x0dbfe",
+          "0x0dc90",
+          "0x0df5a"
+        ]
+      },
+      {
+        "name": "HPM_UART5_BASE",
+        "upper20_hex": "F0054000",
+        "lui_candidate_payload_offsets": [
+          "0x00732",
+          "0x0dc10",
+          "0x0dca0",
+          "0x0df64"
+        ]
+      },
+      {
+        "name": "HPM_UART6_BASE",
+        "upper20_hex": "F0058000",
+        "lui_candidate_payload_offsets": [
+          "0x0073e",
+          "0x0dc22",
+          "0x0dcb0",
+          "0x0df6e"
+        ]
+      },
+      {
+        "name": "HPM_UART7_BASE",
+        "upper20_hex": "F005C000",
+        "lui_candidate_payload_offsets": [
+          "0x0074a",
+          "0x0dc34",
+          "0x0dcc0",
+          "0x0df78"
+        ]
+      },
+      {
+        "name": "HPM_I2C0_BASE",
+        "upper20_hex": "F0060000",
+        "lui_candidate_payload_offsets": [
+          "0x0036a"
+        ]
+      },
+      {
+        "name": "HPM_I2C1_BASE",
+        "upper20_hex": "F0064000",
+        "lui_candidate_payload_offsets": [
+          "0x0037e"
+        ]
+      },
+      {
+        "name": "HPM_I2C2_BASE",
+        "upper20_hex": "F0068000",
+        "lui_candidate_payload_offsets": [
+          "0x00392"
+        ]
+      },
+      {
+        "name": "HPM_I2C3_BASE",
+        "upper20_hex": "F006C000",
+        "lui_candidate_payload_offsets": [
+          "0x003a6"
+        ]
+      },
+      {
+        "name": "HPM_SPI0_BASE",
+        "upper20_hex": "F0070000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcf4",
+          "0x0dd80"
+        ]
+      },
+      {
+        "name": "HPM_SPI1_BASE",
+        "upper20_hex": "F0074000",
+        "lui_candidate_payload_offsets": [
+          "0x0dd06",
+          "0x0dd88"
+        ]
+      },
+      {
+        "name": "HPM_SPI2_BASE",
+        "upper20_hex": "F0078000",
+        "lui_candidate_payload_offsets": [
+          "0x0dd14",
+          "0x0dd90"
+        ]
+      },
+      {
+        "name": "HPM_SPI3_BASE",
+        "upper20_hex": "F007C000",
+        "lui_candidate_payload_offsets": [
+          "0x0dd1e",
+          "0x0dd98"
+        ]
+      },
+      {
+        "name": "HPM_PEWDG_BASE",
+        "upper20_hex": "F4128000",
+        "lui_candidate_payload_offsets": [
+          "0x13864"
+        ]
+      },
+      {
+        "name": "HPM_DMAMUX_BASE",
+        "upper20_hex": "F00C4000",
+        "lui_candidate_payload_offsets": [
+          "0x0d440",
+          "0x0ddb8"
+        ]
+      },
+      {
+        "name": "HPM_HDMA_BASE",
+        "upper20_hex": "F00C8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d3aa",
+          "0x0d40e",
+          "0x0d444",
+          "0x0dddc",
+          "0x0ddfe",
+          "0x0de0e",
+          "0x0de1e",
+          "0x0de58",
+          "0x0de76"
+        ]
+      },
+      {
+        "name": "HPM_GPIOM_BASE",
+        "upper20_hex": "F00D8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d63a",
+          "0x0d6cc",
+          "0x0d73c"
+        ]
+      },
+      {
+        "name": "HPM_TRGM0_BASE",
+        "upper20_hex": "F033C000",
+        "lui_candidate_payload_offsets": [
+          "0x0d2dc"
+        ]
+      },
+      {
+        "name": "HPM_USB0_BASE",
+        "upper20_hex": "F300C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e29e",
+          "0x0e2e0",
+          "0x0e844"
+        ]
+      },
+      {
+        "name": "HPM_SYSCTL_BASE",
+        "upper20_hex": "F4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0db46",
+          "0x13800",
+          "0x13832",
+          "0x1393c",
+          "0x1397e",
+          "0x139a8"
+        ]
+      },
+      {
+        "name": "HPM_IOC_BASE",
+        "upper20_hex": "F4040000",
+        "lui_candidate_payload_offsets": [
+          "0x0d39c",
+          "0x0d5d6",
+          "0x0d62a",
+          "0x0d6be",
+          "0x0d738",
+          "0x0dcdc",
+          "0x0e028"
+        ]
+      },
+      {
+        "name": "HPM_PIOC_BASE",
+        "upper20_hex": "F4118000",
+        "lui_candidate_payload_offsets": [
+          "0x0d6c6"
+        ]
+      },
+      {
+        "name": "HPM_PLLCTLV2_BASE",
+        "upper20_hex": "F40C0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d87a",
+          "0x0db54",
+          "0x0db62",
+          "0x0db70",
+          "0x0db7e",
+          "0x13712"
+        ]
+      },
+      {
+        "name": "HPM_PPOR_BASE",
+        "upper20_hex": "F4100000",
+        "lui_candidate_payload_offsets": [
+          "0x0cd1c",
+          "0x0ce10",
+          "0x0ceec",
+          "0x0cf56",
+          "0x122b8"
+        ]
+      },
+      {
+        "name": "HPM_PCFG_BASE",
+        "upper20_hex": "F4104000",
+        "lui_candidate_payload_offsets": [
+          "0x0db38"
+        ]
+      }
+    ]
+  },
+  {
+    "firmware": "XS117_C048P010_AE64Pro_App_v0.0.7.0_20260625a.bin",
+    "matched_hpm_base_upper20": [
+      {
+        "name": "HPM_GPIO0_BASE",
+        "upper20_hex": "F00D0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d520",
+          "0x0d7c0",
+          "0x0d7fa",
+          "0x0d80e",
+          "0x0d83c",
+          "0x0d8ac",
+          "0x0d902"
+        ]
+      },
+      {
+        "name": "HPM_PLIC_BASE",
+        "upper20_hex": "E4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0d58c",
+          "0x0e06a",
+          "0x0e442",
+          "0x13c66"
+        ]
+      },
+      {
+        "name": "HPM_MCHTMR_BASE",
+        "upper20_hex": "E6000000",
+        "lui_candidate_payload_offsets": [
+          "0x00d0c",
+          "0x0d218",
+          "0x0ff90"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR0_BASE",
+        "upper20_hex": "F0000000",
+        "lui_candidate_payload_offsets": [
+          "0x1370e"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR1_BASE",
+        "upper20_hex": "F0004000",
+        "lui_candidate_payload_offsets": [
+          "0x0d460",
+          "0x0d486",
+          "0x0d4b2",
+          "0x0d4ca",
+          "0x0d5ca",
+          "0x0d600"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR3_BASE",
+        "upper20_hex": "F000C000",
+        "lui_candidate_payload_offsets": [
+          "0x00636",
+          "0x0e022",
+          "0x0e050",
+          "0x0e058",
+          "0x0e08e"
+        ]
+      },
+      {
+        "name": "HPM_UART0_BASE",
+        "upper20_hex": "F0040000",
+        "lui_candidate_payload_offsets": [
+          "0x006fa",
+          "0x0dd1a",
+          "0x0ddb4",
+          "0x0e0a0"
+        ]
+      },
+      {
+        "name": "HPM_UART1_BASE",
+        "upper20_hex": "F0044000",
+        "lui_candidate_payload_offsets": [
+          "0x00706",
+          "0x0dd32",
+          "0x0ddca",
+          "0x0e0aa"
+        ]
+      },
+      {
+        "name": "HPM_UART2_BASE",
+        "upper20_hex": "F0048000",
+        "lui_candidate_payload_offsets": [
+          "0x00712",
+          "0x0dd44",
+          "0x0dddc",
+          "0x0e0b4"
+        ]
+      },
+      {
+        "name": "HPM_UART3_BASE",
+        "upper20_hex": "F004C000",
+        "lui_candidate_payload_offsets": [
+          "0x0071e",
+          "0x0dd56",
+          "0x0ddec",
+          "0x0e0be"
+        ]
+      },
+      {
+        "name": "HPM_UART4_BASE",
+        "upper20_hex": "F0050000",
+        "lui_candidate_payload_offsets": [
+          "0x0072a",
+          "0x0dd68",
+          "0x0ddfc",
+          "0x0e0c8"
+        ]
+      },
+      {
+        "name": "HPM_UART5_BASE",
+        "upper20_hex": "F0054000",
+        "lui_candidate_payload_offsets": [
+          "0x00736",
+          "0x0dd7a",
+          "0x0de0c",
+          "0x0e0d2"
+        ]
+      },
+      {
+        "name": "HPM_UART6_BASE",
+        "upper20_hex": "F0058000",
+        "lui_candidate_payload_offsets": [
+          "0x00742",
+          "0x0dd8c",
+          "0x0de1c",
+          "0x0e0dc"
+        ]
+      },
+      {
+        "name": "HPM_UART7_BASE",
+        "upper20_hex": "F005C000",
+        "lui_candidate_payload_offsets": [
+          "0x0074e",
+          "0x0dd9e",
+          "0x0de2c",
+          "0x0e0e6"
+        ]
+      },
+      {
+        "name": "HPM_I2C0_BASE",
+        "upper20_hex": "F0060000",
+        "lui_candidate_payload_offsets": [
+          "0x0036e"
+        ]
+      },
+      {
+        "name": "HPM_I2C1_BASE",
+        "upper20_hex": "F0064000",
+        "lui_candidate_payload_offsets": [
+          "0x00382"
+        ]
+      },
+      {
+        "name": "HPM_I2C2_BASE",
+        "upper20_hex": "F0068000",
+        "lui_candidate_payload_offsets": [
+          "0x00396"
+        ]
+      },
+      {
+        "name": "HPM_I2C3_BASE",
+        "upper20_hex": "F006C000",
+        "lui_candidate_payload_offsets": [
+          "0x003aa"
+        ]
+      },
+      {
+        "name": "HPM_SPI0_BASE",
+        "upper20_hex": "F0070000",
+        "lui_candidate_payload_offsets": [
+          "0x0de62",
+          "0x0deee"
+        ]
+      },
+      {
+        "name": "HPM_SPI1_BASE",
+        "upper20_hex": "F0074000",
+        "lui_candidate_payload_offsets": [
+          "0x0de74",
+          "0x0def6"
+        ]
+      },
+      {
+        "name": "HPM_SPI2_BASE",
+        "upper20_hex": "F0078000",
+        "lui_candidate_payload_offsets": [
+          "0x0de82",
+          "0x0defe"
+        ]
+      },
+      {
+        "name": "HPM_SPI3_BASE",
+        "upper20_hex": "F007C000",
+        "lui_candidate_payload_offsets": [
+          "0x0de8c",
+          "0x0df06"
+        ]
+      },
+      {
+        "name": "HPM_PEWDG_BASE",
+        "upper20_hex": "F4128000",
+        "lui_candidate_payload_offsets": [
+          "0x139d2"
+        ]
+      },
+      {
+        "name": "HPM_DMAMUX_BASE",
+        "upper20_hex": "F00C4000",
+        "lui_candidate_payload_offsets": [
+          "0x0d5aa",
+          "0x0df26"
+        ]
+      },
+      {
+        "name": "HPM_HDMA_BASE",
+        "upper20_hex": "F00C8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d514",
+          "0x0d578",
+          "0x0d5ae",
+          "0x0df4a",
+          "0x0df6c",
+          "0x0df7c",
+          "0x0df8c",
+          "0x0dfc6",
+          "0x0dfe4"
+        ]
+      },
+      {
+        "name": "HPM_GPIOM_BASE",
+        "upper20_hex": "F00D8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d7a4",
+          "0x0d836",
+          "0x0d8a6"
+        ]
+      },
+      {
+        "name": "HPM_TRGM0_BASE",
+        "upper20_hex": "F033C000",
+        "lui_candidate_payload_offsets": [
+          "0x0d446"
+        ]
+      },
+      {
+        "name": "HPM_USB0_BASE",
+        "upper20_hex": "F300C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e40c",
+          "0x0e44e",
+          "0x0e9b2"
+        ]
+      },
+      {
+        "name": "HPM_SYSCTL_BASE",
+        "upper20_hex": "F4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcb0",
+          "0x1396e",
+          "0x139a0",
+          "0x13aaa",
+          "0x13aec",
+          "0x13b16"
+        ]
+      },
+      {
+        "name": "HPM_IOC_BASE",
+        "upper20_hex": "F4040000",
+        "lui_candidate_payload_offsets": [
+          "0x0d506",
+          "0x0d740",
+          "0x0d794",
+          "0x0d828",
+          "0x0d8a2",
+          "0x0de4a",
+          "0x0e196"
+        ]
+      },
+      {
+        "name": "HPM_PIOC_BASE",
+        "upper20_hex": "F4118000",
+        "lui_candidate_payload_offsets": [
+          "0x0d830"
+        ]
+      },
+      {
+        "name": "HPM_PLLCTLV2_BASE",
+        "upper20_hex": "F40C0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d9e4",
+          "0x0dcbe",
+          "0x0dccc",
+          "0x0dcda",
+          "0x0dce8",
+          "0x13880"
+        ]
+      },
+      {
+        "name": "HPM_PPOR_BASE",
+        "upper20_hex": "F4100000",
+        "lui_candidate_payload_offsets": [
+          "0x0ce86",
+          "0x0cf7a",
+          "0x0d056",
+          "0x0d0c0",
+          "0x12426"
+        ]
+      },
+      {
+        "name": "HPM_PCFG_BASE",
+        "upper20_hex": "F4104000",
+        "lui_candidate_payload_offsets": [
+          "0x0dca2"
+        ]
+      }
+    ]
+  },
+  {
+    "firmware": "XS117_C048P010_AE64Pro_App_v0.0.8.0_20260901a.bin",
+    "matched_hpm_base_upper20": [
+      {
+        "name": "HPM_GPIO0_BASE",
+        "upper20_hex": "F00D0000",
+        "lui_candidate_payload_offsets": [
+          "0x0d9aa",
+          "0x0dc4a",
+          "0x0dc84",
+          "0x0dc98",
+          "0x0dcc6",
+          "0x0dd36",
+          "0x0dd8c"
+        ]
+      },
+      {
+        "name": "HPM_PLIC_BASE",
+        "upper20_hex": "E4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0da16",
+          "0x0e4f4",
+          "0x0e8cc",
+          "0x1410e"
+        ]
+      },
+      {
+        "name": "HPM_MCHTMR_BASE",
+        "upper20_hex": "E6000000",
+        "lui_candidate_payload_offsets": [
+          "0x00d0c",
+          "0x0d6a2",
+          "0x10438"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR0_BASE",
+        "upper20_hex": "F0000000",
+        "lui_candidate_payload_offsets": [
+          "0x13bb6"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR1_BASE",
+        "upper20_hex": "F0004000",
+        "lui_candidate_payload_offsets": [
+          "0x0d8ea",
+          "0x0d910",
+          "0x0d93c",
+          "0x0d954",
+          "0x0da54",
+          "0x0da8a"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR3_BASE",
+        "upper20_hex": "F000C000",
+        "lui_candidate_payload_offsets": [
+          "0x00636",
+          "0x0e4ac",
+          "0x0e4da",
+          "0x0e4e2",
+          "0x0e518"
+        ]
+      },
+      {
+        "name": "HPM_UART0_BASE",
+        "upper20_hex": "F0040000",
+        "lui_candidate_payload_offsets": [
+          "0x006fa",
+          "0x0e1a4",
+          "0x0e23e",
+          "0x0e52a"
+        ]
+      },
+      {
+        "name": "HPM_UART1_BASE",
+        "upper20_hex": "F0044000",
+        "lui_candidate_payload_offsets": [
+          "0x00706",
+          "0x0e1bc",
+          "0x0e254",
+          "0x0e534"
+        ]
+      },
+      {
+        "name": "HPM_UART2_BASE",
+        "upper20_hex": "F0048000",
+        "lui_candidate_payload_offsets": [
+          "0x00712",
+          "0x0e1ce",
+          "0x0e266",
+          "0x0e53e"
+        ]
+      },
+      {
+        "name": "HPM_UART3_BASE",
+        "upper20_hex": "F004C000",
+        "lui_candidate_payload_offsets": [
+          "0x0071e",
+          "0x0e1e0",
+          "0x0e276",
+          "0x0e548"
+        ]
+      },
+      {
+        "name": "HPM_UART4_BASE",
+        "upper20_hex": "F0050000",
+        "lui_candidate_payload_offsets": [
+          "0x0072a",
+          "0x0e1f2",
+          "0x0e286",
+          "0x0e552"
+        ]
+      },
+      {
+        "name": "HPM_UART5_BASE",
+        "upper20_hex": "F0054000",
+        "lui_candidate_payload_offsets": [
+          "0x00736",
+          "0x0e204",
+          "0x0e296",
+          "0x0e55c"
+        ]
+      },
+      {
+        "name": "HPM_UART6_BASE",
+        "upper20_hex": "F0058000",
+        "lui_candidate_payload_offsets": [
+          "0x00742",
+          "0x0e216",
+          "0x0e2a6",
+          "0x0e566"
+        ]
+      },
+      {
+        "name": "HPM_UART7_BASE",
+        "upper20_hex": "F005C000",
+        "lui_candidate_payload_offsets": [
+          "0x0074e",
+          "0x0e228",
+          "0x0e2b6",
+          "0x0e570"
+        ]
+      },
+      {
+        "name": "HPM_I2C0_BASE",
+        "upper20_hex": "F0060000",
+        "lui_candidate_payload_offsets": [
+          "0x0036e"
+        ]
+      },
+      {
+        "name": "HPM_I2C1_BASE",
+        "upper20_hex": "F0064000",
+        "lui_candidate_payload_offsets": [
+          "0x00382"
+        ]
+      },
+      {
+        "name": "HPM_I2C2_BASE",
+        "upper20_hex": "F0068000",
+        "lui_candidate_payload_offsets": [
+          "0x00396"
+        ]
+      },
+      {
+        "name": "HPM_I2C3_BASE",
+        "upper20_hex": "F006C000",
+        "lui_candidate_payload_offsets": [
+          "0x003aa"
+        ]
+      },
+      {
+        "name": "HPM_SPI0_BASE",
+        "upper20_hex": "F0070000",
+        "lui_candidate_payload_offsets": [
+          "0x0e2ec",
+          "0x0e378"
+        ]
+      },
+      {
+        "name": "HPM_SPI1_BASE",
+        "upper20_hex": "F0074000",
+        "lui_candidate_payload_offsets": [
+          "0x0e2fe",
+          "0x0e380"
+        ]
+      },
+      {
+        "name": "HPM_SPI2_BASE",
+        "upper20_hex": "F0078000",
+        "lui_candidate_payload_offsets": [
+          "0x0e30c",
+          "0x0e388"
+        ]
+      },
+      {
+        "name": "HPM_SPI3_BASE",
+        "upper20_hex": "F007C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e316",
+          "0x0e390"
+        ]
+      },
+      {
+        "name": "HPM_PEWDG_BASE",
+        "upper20_hex": "F4128000",
+        "lui_candidate_payload_offsets": [
+          "0x13e7a"
+        ]
+      },
+      {
+        "name": "HPM_DMAMUX_BASE",
+        "upper20_hex": "F00C4000",
+        "lui_candidate_payload_offsets": [
+          "0x0da34",
+          "0x0e3b0"
+        ]
+      },
+      {
+        "name": "HPM_HDMA_BASE",
+        "upper20_hex": "F00C8000",
+        "lui_candidate_payload_offsets": [
+          "0x0d99e",
+          "0x0da02",
+          "0x0da38",
+          "0x0e3d4",
+          "0x0e3f6",
+          "0x0e406",
+          "0x0e416",
+          "0x0e450",
+          "0x0e46e"
+        ]
+      },
+      {
+        "name": "HPM_GPIOM_BASE",
+        "upper20_hex": "F00D8000",
+        "lui_candidate_payload_offsets": [
+          "0x0dc2e",
+          "0x0dcc0",
+          "0x0dd30"
+        ]
+      },
+      {
+        "name": "HPM_TRGM0_BASE",
+        "upper20_hex": "F033C000",
+        "lui_candidate_payload_offsets": [
+          "0x0d8d0"
+        ]
+      },
+      {
+        "name": "HPM_USB0_BASE",
+        "upper20_hex": "F300C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e896",
+          "0x0e8d8",
+          "0x0ee5a"
+        ]
+      },
+      {
+        "name": "HPM_SYSCTL_BASE",
+        "upper20_hex": "F4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0e13a",
+          "0x13e16",
+          "0x13e48",
+          "0x13f52",
+          "0x13f94",
+          "0x13fbe"
+        ]
+      },
+      {
+        "name": "HPM_IOC_BASE",
+        "upper20_hex": "F4040000",
+        "lui_candidate_payload_offsets": [
+          "0x0d990",
+          "0x0dbca",
+          "0x0dc1e",
+          "0x0dcb2",
+          "0x0dd2c",
+          "0x0e2d4",
+          "0x0e620"
+        ]
+      },
+      {
+        "name": "HPM_PIOC_BASE",
+        "upper20_hex": "F4118000",
+        "lui_candidate_payload_offsets": [
+          "0x0dcba"
+        ]
+      },
+      {
+        "name": "HPM_PLLCTLV2_BASE",
+        "upper20_hex": "F40C0000",
+        "lui_candidate_payload_offsets": [
+          "0x0de6e",
+          "0x0e148",
+          "0x0e156",
+          "0x0e164",
+          "0x0e172",
+          "0x13d28"
+        ]
+      },
+      {
+        "name": "HPM_PPOR_BASE",
+        "upper20_hex": "F4100000",
+        "lui_candidate_payload_offsets": [
+          "0x0d30a",
+          "0x0d3fe",
+          "0x0d4da",
+          "0x0d544",
+          "0x128ce"
+        ]
+      },
+      {
+        "name": "HPM_PCFG_BASE",
+        "upper20_hex": "F4104000",
+        "lui_candidate_payload_offsets": [
+          "0x0e12c"
+        ]
+      }
+    ]
+  },
+  {
+    "firmware": "XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin",
+    "matched_hpm_base_upper20": [
+      {
+        "name": "HPM_GPIO0_BASE",
+        "upper20_hex": "F00D0000",
+        "lui_candidate_payload_offsets": [
+          "0x0dbb0",
+          "0x0de50",
+          "0x0de8a",
+          "0x0de9e",
+          "0x0decc",
+          "0x0df3c",
+          "0x0df92"
+        ]
+      },
+      {
+        "name": "HPM_PLIC_BASE",
+        "upper20_hex": "E4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0dc1c",
+          "0x0e6fa",
+          "0x0ead2",
+          "0x14314"
+        ]
+      },
+      {
+        "name": "HPM_MCHTMR_BASE",
+        "upper20_hex": "E6000000",
+        "lui_candidate_payload_offsets": [
+          "0x00d0c",
+          "0x0d8a8",
+          "0x1063e"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR0_BASE",
+        "upper20_hex": "F0000000",
+        "lui_candidate_payload_offsets": [
+          "0x13dbc"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR1_BASE",
+        "upper20_hex": "F0004000",
+        "lui_candidate_payload_offsets": [
+          "0x0daf0",
+          "0x0db16",
+          "0x0db42",
+          "0x0db5a",
+          "0x0dc5a",
+          "0x0dc90"
+        ]
+      },
+      {
+        "name": "HPM_GPTMR3_BASE",
+        "upper20_hex": "F000C000",
+        "lui_candidate_payload_offsets": [
+          "0x00636",
+          "0x0e6b2",
+          "0x0e6e0",
+          "0x0e6e8",
+          "0x0e71e"
+        ]
+      },
+      {
+        "name": "HPM_UART0_BASE",
+        "upper20_hex": "F0040000",
+        "lui_candidate_payload_offsets": [
+          "0x006fa",
+          "0x0e3aa",
+          "0x0e444",
+          "0x0e730"
+        ]
+      },
+      {
+        "name": "HPM_UART1_BASE",
+        "upper20_hex": "F0044000",
+        "lui_candidate_payload_offsets": [
+          "0x00706",
+          "0x0e3c2",
+          "0x0e45a",
+          "0x0e73a"
+        ]
+      },
+      {
+        "name": "HPM_UART2_BASE",
+        "upper20_hex": "F0048000",
+        "lui_candidate_payload_offsets": [
+          "0x00712",
+          "0x0e3d4",
+          "0x0e46c",
+          "0x0e744"
+        ]
+      },
+      {
+        "name": "HPM_UART3_BASE",
+        "upper20_hex": "F004C000",
+        "lui_candidate_payload_offsets": [
+          "0x0071e",
+          "0x0e3e6",
+          "0x0e47c",
+          "0x0e74e"
+        ]
+      },
+      {
+        "name": "HPM_UART4_BASE",
+        "upper20_hex": "F0050000",
+        "lui_candidate_payload_offsets": [
+          "0x0072a",
+          "0x0e3f8",
+          "0x0e48c",
+          "0x0e758"
+        ]
+      },
+      {
+        "name": "HPM_UART5_BASE",
+        "upper20_hex": "F0054000",
+        "lui_candidate_payload_offsets": [
+          "0x00736",
+          "0x0e40a",
+          "0x0e49c",
+          "0x0e762"
+        ]
+      },
+      {
+        "name": "HPM_UART6_BASE",
+        "upper20_hex": "F0058000",
+        "lui_candidate_payload_offsets": [
+          "0x00742",
+          "0x0e41c",
+          "0x0e4ac",
+          "0x0e76c"
+        ]
+      },
+      {
+        "name": "HPM_UART7_BASE",
+        "upper20_hex": "F005C000",
+        "lui_candidate_payload_offsets": [
+          "0x0074e",
+          "0x0e42e",
+          "0x0e4bc",
+          "0x0e776"
+        ]
+      },
+      {
+        "name": "HPM_I2C0_BASE",
+        "upper20_hex": "F0060000",
+        "lui_candidate_payload_offsets": [
+          "0x0036e"
+        ]
+      },
+      {
+        "name": "HPM_I2C1_BASE",
+        "upper20_hex": "F0064000",
+        "lui_candidate_payload_offsets": [
+          "0x00382"
+        ]
+      },
+      {
+        "name": "HPM_I2C2_BASE",
+        "upper20_hex": "F0068000",
+        "lui_candidate_payload_offsets": [
+          "0x00396"
+        ]
+      },
+      {
+        "name": "HPM_I2C3_BASE",
+        "upper20_hex": "F006C000",
+        "lui_candidate_payload_offsets": [
+          "0x003aa"
+        ]
+      },
+      {
+        "name": "HPM_SPI0_BASE",
+        "upper20_hex": "F0070000",
+        "lui_candidate_payload_offsets": [
+          "0x0e4f2",
+          "0x0e57e"
+        ]
+      },
+      {
+        "name": "HPM_SPI1_BASE",
+        "upper20_hex": "F0074000",
+        "lui_candidate_payload_offsets": [
+          "0x0e504",
+          "0x0e586"
+        ]
+      },
+      {
+        "name": "HPM_SPI2_BASE",
+        "upper20_hex": "F0078000",
+        "lui_candidate_payload_offsets": [
+          "0x0e512",
+          "0x0e58e"
+        ]
+      },
+      {
+        "name": "HPM_SPI3_BASE",
+        "upper20_hex": "F007C000",
+        "lui_candidate_payload_offsets": [
+          "0x0e51c",
+          "0x0e596"
+        ]
+      },
+      {
+        "name": "HPM_PEWDG_BASE",
+        "upper20_hex": "F4128000",
+        "lui_candidate_payload_offsets": [
+          "0x14080"
+        ]
+      },
+      {
+        "name": "HPM_DMAMUX_BASE",
+        "upper20_hex": "F00C4000",
+        "lui_candidate_payload_offsets": [
+          "0x0dc3a",
+          "0x0e5b6"
+        ]
+      },
+      {
+        "name": "HPM_HDMA_BASE",
+        "upper20_hex": "F00C8000",
+        "lui_candidate_payload_offsets": [
+          "0x0dba4",
+          "0x0dc08",
+          "0x0dc3e",
+          "0x0e5da",
+          "0x0e5fc",
+          "0x0e60c",
+          "0x0e61c",
+          "0x0e656",
+          "0x0e674"
+        ]
+      },
+      {
+        "name": "HPM_GPIOM_BASE",
+        "upper20_hex": "F00D8000",
+        "lui_candidate_payload_offsets": [
+          "0x0de34",
+          "0x0dec6",
+          "0x0df36"
+        ]
+      },
+      {
+        "name": "HPM_TRGM0_BASE",
+        "upper20_hex": "F033C000",
+        "lui_candidate_payload_offsets": [
+          "0x0dad6"
+        ]
+      },
+      {
+        "name": "HPM_USB0_BASE",
+        "upper20_hex": "F300C000",
+        "lui_candidate_payload_offsets": [
+          "0x0ea9c",
+          "0x0eade",
+          "0x0f060"
+        ]
+      },
+      {
+        "name": "HPM_SYSCTL_BASE",
+        "upper20_hex": "F4000000",
+        "lui_candidate_payload_offsets": [
+          "0x0e340",
+          "0x1401c",
+          "0x1404e",
+          "0x14158",
+          "0x1419a",
+          "0x141c4"
+        ]
+      },
+      {
+        "name": "HPM_IOC_BASE",
+        "upper20_hex": "F4040000",
+        "lui_candidate_payload_offsets": [
+          "0x0db96",
+          "0x0ddd0",
+          "0x0de24",
+          "0x0deb8",
+          "0x0df32",
+          "0x0e4da",
+          "0x0e826"
+        ]
+      },
+      {
+        "name": "HPM_PIOC_BASE",
+        "upper20_hex": "F4118000",
+        "lui_candidate_payload_offsets": [
+          "0x0dec0"
+        ]
+      },
+      {
+        "name": "HPM_PLLCTLV2_BASE",
+        "upper20_hex": "F40C0000",
+        "lui_candidate_payload_offsets": [
+          "0x0e074",
+          "0x0e34e",
+          "0x0e35c",
+          "0x0e36a",
+          "0x0e378",
+          "0x13f2e"
+        ]
+      },
+      {
+        "name": "HPM_PPOR_BASE",
+        "upper20_hex": "F4100000",
+        "lui_candidate_payload_offsets": [
+          "0x0d510",
+          "0x0d604",
+          "0x0d6e0",
+          "0x0d74a",
+          "0x12ad4"
+        ]
+      },
+      {
+        "name": "HPM_PCFG_BASE",
+        "upper20_hex": "F4104000",
+        "lui_candidate_payload_offsets": [
+          "0x0e332"
+        ]
+      }
+    ]
+  }
+]

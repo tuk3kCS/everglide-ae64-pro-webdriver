@@ -1,0 +1,134 @@
+[
+  {
+    "id": "P01",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 139003,
+    "end_character_offset_exclusive": 139576,
+    "start_utf8_byte_offset": 176096,
+    "end_utf8_byte_offset_exclusive": 176669,
+    "snippet_file": "P01.js.txt",
+    "snippet_sha256": "f9b88241688cd6fd157559958a5b2684cf6041d4d4678075b93fe4f73a446cab"
+  },
+  {
+    "id": "P02",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 141800,
+    "end_character_offset_exclusive": 141934,
+    "start_utf8_byte_offset": 178893,
+    "end_utf8_byte_offset_exclusive": 179027,
+    "snippet_file": "P02.js.txt",
+    "snippet_sha256": "f218116011a8531d0c50e6c15911ddf2f28d1de7c9da74b700748e6dfca9c058"
+  },
+  {
+    "id": "P03",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 146286,
+    "end_character_offset_exclusive": 146712,
+    "start_utf8_byte_offset": 183379,
+    "end_utf8_byte_offset_exclusive": 183805,
+    "snippet_file": "P03.js.txt",
+    "snippet_sha256": "96a4be6f4bbf1b9e263b1835a2b2497bfefb2792add4b6f621b12a36a1701020"
+  },
+  {
+    "id": "P04",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 200179,
+    "end_character_offset_exclusive": 200415,
+    "start_utf8_byte_offset": 237656,
+    "end_utf8_byte_offset_exclusive": 237892,
+    "snippet_file": "P04.js.txt",
+    "snippet_sha256": "74c9559596fb7de00735cb34505059d88eacdded08dcdc15f4399fda45e90e42"
+  },
+  {
+    "id": "P05",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 355041,
+    "end_character_offset_exclusive": 357634,
+    "start_utf8_byte_offset": 393110,
+    "end_utf8_byte_offset_exclusive": 395729,
+    "snippet_file": "P05.js.txt",
+    "snippet_sha256": "799f076043cf0a979163756ffbab288483b078c8d35fda8e3a56c37a6ea8ecd5"
+  },
+  {
+    "id": "P06",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 365378,
+    "end_character_offset_exclusive": 367767,
+    "start_utf8_byte_offset": 403517,
+    "end_utf8_byte_offset_exclusive": 405906,
+    "snippet_file": "P06.js.txt",
+    "snippet_sha256": "bb0b8532b5535bc400779d04fc4d47821b7e29894780f3cfb47f8c3b73efc891"
+  },
+  {
+    "id": "P07",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 358396,
+    "end_character_offset_exclusive": 362893,
+    "start_utf8_byte_offset": 396507,
+    "end_utf8_byte_offset_exclusive": 401032,
+    "snippet_file": "P07.js.txt",
+    "snippet_sha256": "3c9fffdb16fd0feac6c6f5aa95237546853ae6ae6967209e967c37875698bc86"
+  },
+  {
+    "id": "P08",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 381877,
+    "end_character_offset_exclusive": 382779,
+    "start_utf8_byte_offset": 420016,
+    "end_utf8_byte_offset_exclusive": 420918,
+    "snippet_file": "P08.js.txt",
+    "snippet_sha256": "54df329ed958e90d030a5cdffa93b157c895ac1bd12db7cf0087c94fb1537469"
+  },
+  {
+    "id": "P09",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-DZtPZg-9.js",
+    "source_sha256": "e99864930b6265852339c9990d122ec108e70de6498cdc0cec5f083493652396",
+    "start_character_offset": 274091,
+    "end_character_offset_exclusive": 275442,
+    "start_utf8_byte_offset": 277903,
+    "end_utf8_byte_offset_exclusive": 279254,
+    "snippet_file": "P09.js.txt",
+    "snippet_sha256": "590321ab7289d6e8d6dc168529cebdb545ab63ffd22c22f03b7bc8187a18b342"
+  },
+  {
+    "id": "P10",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-DZtPZg-9.js",
+    "source_sha256": "e99864930b6265852339c9990d122ec108e70de6498cdc0cec5f083493652396",
+    "start_character_offset": 275442,
+    "end_character_offset_exclusive": 278822,
+    "start_utf8_byte_offset": 279254,
+    "end_utf8_byte_offset_exclusive": 282634,
+    "snippet_file": "P10.js.txt",
+    "snippet_sha256": "b83566bb599775a231be0f4ff07d9ddebfa043ced06300d1e1740d49ddcaafaa"
+  },
+  {
+    "id": "P11",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-DZtPZg-9.js",
+    "source_sha256": "e99864930b6265852339c9990d122ec108e70de6498cdc0cec5f083493652396",
+    "start_character_offset": 35645,
+    "end_character_offset_exclusive": 37179,
+    "start_utf8_byte_offset": 36447,
+    "end_utf8_byte_offset_exclusive": 37981,
+    "snippet_file": "P11.js.txt",
+    "snippet_sha256": "3ad40bed99bf6a60452600599ce58572373e2b850a8cec50f81a0b6aa0741172"
+  },
+  {
+    "id": "P12",
+    "source_url": "https://www.xsyd.top/v2-app/js/index-D-Vi6Arc.js",
+    "source_sha256": "e1c6ddd640efb0a4c4859aa22ee32a6a426f2a8a983a45dcb4710ae5cf16d28c",
+    "start_character_offset": 185680,
+    "end_character_offset_exclusive": 186809,
+    "start_utf8_byte_offset": 223157,
+    "end_utf8_byte_offset_exclusive": 224286,
+    "snippet_file": "P12.js.txt",
+    "snippet_sha256": "e4d708cbe8df26620cb3cf632c079fbc262839e020d7d6c2bd9cbdf698e2c99d"
+  }
+]

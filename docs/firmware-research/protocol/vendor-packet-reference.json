@@ -1,0 +1,31 @@
+{
+  "scope": "Isolated vendor getFlash request builder; no hardware access",
+  "results": [
+    {
+      "filename": "XS117_C048P010_AE64Pro_App_v0.0.5.0_20260305a.bin",
+      "packet_count": 2080,
+      "packets_sha256": "817f57a75092c046270378681134e7853570a9bfc5831a8ce1072682ed222c72"
+    },
+    {
+      "filename": "XS117_C048P010_AE64Pro_App_v0.0.6.0_20260519a.bin",
+      "packet_count": 2083,
+      "packets_sha256": "61eb3c63f1c8d7c686f989db58a446600c0f96cb0d73f144f863d0d842be2308"
+    },
+    {
+      "filename": "XS117_C048P010_AE64Pro_App_v0.0.7.0_20260625a.bin",
+      "packet_count": 2090,
+      "packets_sha256": "a907207a82ff127787533d86c97c90667f1f400354500f224daf2a0e98b3d20b"
+    },
+    {
+      "filename": "XS117_C048P010_AE64Pro_App_v0.0.8.0_20260901a.bin",
+      "packet_count": 2112,
+      "packets_sha256": "03e65ac1d94c029e2a51bc919bbad2b03a02e6a8d14ddcae3d2bf3322dcbd484"
+    },
+    {
+      "filename": "XS117_C048P010_AE64Pro_App_v0.1.0.0_20260930a.bin",
+      "packet_count": 2121,
+      "packets_sha256": "65d4dc06ff06decf4ed2a7de39e13eef8cdcd5bd901f560752b95ec95ab7e3e6"
+    }
+  ],
+  "python_implementation_matches_all_vendor_packets": true
+}

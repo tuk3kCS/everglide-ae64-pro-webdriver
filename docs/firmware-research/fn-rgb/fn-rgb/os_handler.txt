@@ -1,0 +1,36 @@
+00bb14 1387c165 addi       a4, gp, 0x65c
+00bb18 83462700 lbu        a3, 2(a4)
+00bb1c 0946     c.li       a2, 2
+00bb1e 9387c161 addi       a5, gp, 0x61c
+00bb22 6376d600 bgeu       a2, a3, 0xc
+00bb26 7d57     c.li       a4, -1
+00bb28 2381e700 sb         a4, 2(a5)
+00bb2c 8280     c.jr       ra
+00bb2e 2381d700 sb         a3, 2(a5)
+00bb32 8545     c.li       a1, 1
+00bb34 6387b600 beq        a3, a1, 0xe
+00bb38 638cc600 beq        a3, a2, 0x18
+00bb3c a381c700 sb         a2, 3(a5)
+00bb40 8280     c.jr       ra
+00bb42 37370800 lui        a4, 0x83
+00bb46 034797ba lbu        a4, -0x457(a4)
+00bb4a a381e700 sb         a4, 3(a5)
+00bb4e 8280     c.jr       ra
+00bb50 03463700 lbu        a2, 3(a4)
+00bb54 7d57     c.li       a4, -1
+00bb56 e3eac5fe bltu       a1, a2, -0xc
+00bb5a b7360800 lui        a3, 0x83
+00bb5e 138786ba addi       a4, a3, -0x458
+00bb62 03471700 lbu        a4, 1(a4)
+00bb66 938686ba addi       a3, a3, -0x458
+00bb6a 6305c702 beq        a4, a2, 0x2a
+00bb6e b7d50800 lui        a1, 0x8d
+00bb72 03a7452d lw         a4, 0x2d4(a1)
+00bb76 a380c600 sb         a2, 1(a3)
+00bb7a 13678700 ori        a4, a4, 8
+00bb7e 23aae52c sw         a4, 0x2d4(a1)
+00bb82 b7d50800 lui        a1, 0x8d
+00bb86 03a7852c lw         a4, 0x2c8(a1)
+00bb8a 01ea     c.bnez     a2, 0x10
+00bb8c 13672700 ori        a4, a4, 2
+00bb90 23a4e52c sw         a4, 0x2c8(a1)

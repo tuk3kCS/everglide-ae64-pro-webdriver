@@ -1,0 +1,104 @@
+{
+  "retrieved_date": "2026-10-28",
+  "scope": "Windows PC full controller feature references and proposed independent specification; no hardware tests.",
+  "sources": [
+    {
+      "id": "wooting_modes",
+      "url": "https://help.wooting.io/article/100-how-to-change-your-keyboard-gamepad-mode",
+      "supports": "Output modes and OS limitations."
+    },
+    {
+      "id": "wooting_mixed_input",
+      "url": "https://help.wooting.io/article/148-use-wooting-keyboard-with-rewasd-for-controlling-the-right-joystick-with-a-mouse",
+      "supports": "Some games reject concurrent keyboard/mouse and controller input."
+    },
+    {
+      "id": "wooting_analog_curves",
+      "url": "https://wooting.io/wootility/changelogs/5.3.0",
+      "supports": "Analog gamepad curve settings differ from actuation and rapid-trigger settings."
+    },
+    {
+      "id": "wooting_profiles",
+      "url": "https://wooting.io/wootility/changelogs/5.0.0",
+      "supports": "Profile and keyboard override behavior."
+    },
+    {
+      "id": "keychron_launcher",
+      "url": "https://www.keychron.com/blogs/news/how-to-set-gamepad-analog-and-gamepad-curves-on-launcher",
+      "supports": "Gamepad mapping, typing toggle, profiles and linear/smooth response."
+    },
+    {
+      "id": "microsoft_state",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/xinput/ns-xinput-xinput_gamepad",
+      "supports": "Control set, ranges, directions and button masks."
+    },
+    {
+      "id": "microsoft_transports",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/xinput/xinput-and-directinput",
+      "supports": "HID/DirectInput is not automatically XInput; combined legacy trigger view."
+    },
+    {
+      "id": "microsoft_state_test",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/xinput/nf-xinput-xinputgetstate",
+      "supports": "Native-state verification and independent triggers."
+    },
+    {
+      "id": "microsoft_deadzone",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/xinput/getting-started-with-xinput",
+      "supports": "Game-side input filtering and controller layout."
+    },
+    {
+      "id": "valve_hid_fallback",
+      "url": "https://partner.steamgames.com/doc/features/steam_controller/device",
+      "supports": "DirectInput gamepad support in Steam Input."
+    },
+    {
+      "id": "keychron_game_controller_common.h",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/game_controller_common.h",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    },
+    {
+      "id": "keychron_game_controller_common.c",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/game_controller_common.c",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    },
+    {
+      "id": "keychron_action_xinput.c",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/action_xinput.c",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    },
+    {
+      "id": "keychron_action_joystick.c",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/action_joystick.c",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    },
+    {
+      "id": "keychron_usb_descriptor_override.c",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/usb_descriptor_override.c",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    },
+    {
+      "id": "keychron_xinput_keycodes.h",
+      "url": "https://github.com/Keychron/qmk_firmware/blob/2b493ff95f2665db719b1e95c91babb5036e72f3/keyboards/keychron/common/analog_matrix/xinput_keycodes.h",
+      "branch": "2025q3",
+      "commit": "2b493ff95f2665db719b1e95c91babb5036e72f3",
+      "license_notice": "GPL-2.0-or-later",
+      "use": "Static behavioral inspection only. No source text copied into the new standalone implementation."
+    }
+  ]
+}

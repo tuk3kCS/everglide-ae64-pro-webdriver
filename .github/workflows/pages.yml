@@ -1,0 +1,102 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Test and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Run offline regression tests
+        run: |
+          node scripts/build-firmware-catalog.cjs
+          node scripts/sync-switch-catalog.cjs --validate
+          node smoke-test.cjs
+          node tests/switch-catalog-tests.cjs
+          node tests/device-serial-tests.cjs
+          node tests/performance/live-gauge-tests.cjs
+          node tests/firmware/flasher-tests.cjs
+          node tests/firmware/ui-tests.cjs
+          node tests/firmware/reconnect-tests.cjs
+          node tests/firmware/recovery-tests.cjs
+          node tests/firmware/handoff-tests.cjs
+          node tests/gamepad/tests.cjs
+          node tests/gamepad/protocol-tests.cjs
+          node tests/gamepad/travel-limits-tests.cjs
+          node tests/gamepad/switch-defaults-tests.cjs
+          node tests/gamepad/icons-overview-tests.cjs
+          node tests/gamepad/auto-load-tests.cjs
+          node tests/gamepad/automatic-sync-tests.cjs
+          node tests/gamepad/overview-selection-tests.cjs
+          node tests/gamepad/usb-switch-tests.cjs
+          node tests/gamepad/usb-reconnect-tests.cjs
+          node tests/lighting/fn-ui-tests.cjs
+          node tests/lighting/automatic-read-tests.cjs
+          node tests/lighting/fn-selection-tests.cjs
+          node tests/lighting/fn-mapping-tests.cjs
+          node tests/lighting/fn-protocol-tests.cjs
+          node tests/lighting/effect-preview-tests.cjs
+
+      - name: Package public site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/js/app _site/assets/images _site/assets/hall-effect-switches _site/assets/tutorial-videos
+          cp index.html styles.css protocol.js app.js languages.xml about.html robots.txt sitemap.xml _site/
+          cp -R v2 _site/v2
+          cp -R legacy _site/legacy
+          cp js/app/*.js _site/js/app/
+          cp js/app/*.css _site/js/app/
+          mkdir -p _site/js/gamepad _site/js/firmware _site/js/lighting
+          cp js/lighting/*.js _site/js/lighting/
+          cp js/gamepad/*.js js/gamepad/*.css _site/js/gamepad/
+          cp js/firmware/*.js _site/js/firmware/
+          node scripts/package-firmware.cjs _site
+          mkdir -p _site/assets/controller_icons _site/assets/showcase
+          cp assets/controller_icons/*.png _site/assets/controller_icons/
+          cp assets/showcase/{gamepad.gif,fn_rgb1.png,fn_rgb2.gif,profile_rgb.gif} _site/assets/showcase/
+          cp assets/images/axis.png _site/assets/images/
+          cp -R assets/images/he_switch_images _site/assets/images/
+          cp assets/hall-effect-switches/catalog.json _site/assets/hall-effect-switches/
+          if [ -d assets/hall-effect-switches/images ]; then cp -R assets/hall-effect-switches/images _site/assets/hall-effect-switches/; fi
+          cp assets/tutorial-videos/*.webm _site/assets/tutorial-videos/
+          touch _site/.nojekyll
+          node scripts/version-pages-release.cjs _site "$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,923 @@
+"use strict";
+
+/**
+ * AE64 Pro Control — writes and profiles.
+ *
+ * Loaded as an ordered classic script. Top-level declarations are shared
+ * with the other application files; keep the order in index.html intact.
+ * Reviews staged changes, performs verified writes, switches profiles, and imports or exports JSON.
+ */
+
+const AUTO_APPLY_KEY = (globalThis.AE64_STORAGE_PREFIX || "") + "ae64-control-auto-apply-v1";
+Object.assign(state, {
+  autoApply: driverStorage.getItem(AUTO_APPLY_KEY) === "true",
+  writeInFlight: false,
+});
+state.timers.autoApply = null;
+let autoApplyPointer = null;
+
+function pendingChangeCount({ writable = false, automatic = false } = {}) {
+  const fn = typeof pendingFnLighting === "function" ? pendingFnLighting().length : 0;
+  const gamepad = typeof pendingGamepad !== "undefined" && pendingGamepad && (!writable || canApplyGamepadChange()) && (!automatic || pendingGamepad.auto);
+  return dirtyCount() + fn + Number(Boolean(gamepad)) + Number(Boolean(state.profileTransfer));
+}
+function autoApplyReady() {
+  return state.autoApply && connected() && pendingChangeCount({ writable: true, automatic: true }) &&
+    !toolOperationBusy() && !state.calibrationActive && !state.calibrationBusy &&
+    !state.profileNeedsReload && state.profileTransfer?.auto !== false && autoApplyPointer === null && !document.querySelector("dialog[open]")?.open;
+}
+
+function toggleAdvancedRemoval(value) {
+  const ids = String(value).split(",").map(Number)
+      .filter((id) => keys.some((key) => key.id === id)),
+    expanded = new Set(ids);
+  ids.forEach((id) => {
+    const record = state.hardware.advancedByKey.get(id);
+    if (![ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(record?.mode))) return;
+    const partner = keyAtFirmwarePosition(record.pairedRow, record.pairedCol);
+    if (partner) expanded.add(partner.id);
+  });
+  if (!expanded.size) return;
+  const resolved = [...expanded],
+    undo = resolved.every((id) => state.dirty.advancedRemovals.has(id));
+  if (undo) resolved.forEach((id) => state.dirty.advancedRemovals.delete(id));
+  else {
+    const stagedKeys = advancedDraftKeyIds(state.advancedDraft);
+    if (state.dirty.advanced && resolved.every((id) => stagedKeys.includes(id)) && stagedKeys.every((id) => resolved.includes(id))) {
+      state.dirty.advanced = false;
+      render();
+      showToast("Staged advanced assignment discarded.");
+      return;
+    }
+    resolved.forEach((id) => {
+      if (state.hardware.advancedByKey.has(id)) state.dirty.advancedRemovals.add(id);
+    });
+  }
+  render();
+  showToast(undo
+    ? "Advanced assignment removal canceled."
+    : state.dirty.advancedRemovals.size
+      ? "Advanced assignment removal staged. Apply changes to write it."
+      : "Staged advanced assignment discarded.");
+}
+
+function scheduleAutoApply() {
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
+  if (!autoApplyReady()) return;
+  state.timers.autoApply = setTimeout(flushAutoApply, 100);
+}
+async function flushAutoApply() {
+  state.timers.autoApply = null;
+  if (!autoApplyReady()) return false;
+  return applyChanges({ automatic: true });
+}
+function setAutoApply(enabled) {
+  state.autoApply = Boolean(enabled);
+  driverStorage.setItem(AUTO_APPLY_KEY, String(state.autoApply));
+  if (!state.autoApply) {
+    clearTimeout(state.timers.autoApply);
+    state.timers.autoApply = null;
+  }
+  renderStatus();
+  showToast(
+    state.autoApply
+      ? connected()
+        ? "Auto apply enabled. Completed edits are saved automatically."
+        : "Auto apply enabled. Connect the keyboard to save edits."
+      : "Auto apply disabled. Changes will remain staged until Apply.",
+  );
+}
+
+function summarizeChanges() {
+  const changes = [],
+    names = (ids) => {
+      const labels = [...ids]
+        .map((id) => keys[Number(String(id).split(":").at(-1))]?.n)
+        .filter(Boolean);
+      return labels.length <= 5
+        ? labels.join(", ")
+        : `${labels.slice(0, 5).join(", ")} +${labels.length - 5} more`;
+    };
+  if (state.dirty.performance.size)
+    changes.push(
+      `Performance settings: ${state.dirty.performance.size} key${state.dirty.performance.size === 1 ? "" : "s"} (${names(state.dirty.performance)})`,
+    );
+  if (state.switchAssignmentKeys.size) {
+    const assignments = new Map();
+    [...state.switchAssignmentKeys].forEach((id) => {
+      const performance = state.profile.performance[id],
+        profile = switchCatalogEntry(performance.axisV2Id),
+        label = profile?.name || `Axis ${performance.axisV2Id}`;
+      assignments.set(label, (assignments.get(label) || 0) + 1);
+    });
+    changes.push(
+      `Magnetic switch: ${[...assignments].map(([label, count]) => `${label} (${count} key${count === 1 ? "" : "s"})`).join(", ")}`,
+    );
+  }
+  if (state.dirty.mapping.size)
+    changes.push(
+      `Key assignments: ${state.dirty.mapping.size} mapping${state.dirty.mapping.size === 1 ? "" : "s"} (${names(state.dirty.mapping)})`,
+    );
+  if (state.dirty.lightingBase) {
+    const base = state.profile.lighting.base,
+      reported = lightingModeCount(0, AE64_MAIN_MODE_COUNT),
+      experimental = Number(base.mode) >= reported ? " · experimental" : "";
+    changes.push(
+      `Main RGB: L${Number(base.mode) + 1}${experimental}, ${base.brightness}% brightness, ${base.speed}% speed, north ${Number(base.openMode) & LIGHTING_OPEN_MODE.UPPER ? "on" : "off"}, south ${Number(base.openMode) & LIGHTING_OPEN_MODE.LOWER ? "on" : "off"}`,
+    );
+  }
+  if (state.dirty.lightingPalette)
+    changes.push("Main RGB: eight-color palette");
+  if (state.dirty.customLighting.size)
+    changes.push(
+      `Per-key RGB: ${state.dirty.customLighting.size} LED override${state.dirty.customLighting.size === 1 ? "" : "s"}`,
+    );
+  if (state.dirty.decorativeBase) {
+    const base = state.profile.lighting.decorative.base;
+    changes.push(
+      `Decorative1: L${Number(base.mode) + 1}, ${base.brightness}% brightness, ${base.speed}% speed`,
+    );
+  }
+  if (state.dirty.decorativePalette)
+    changes.push("Decorative1: eight-color palette");
+  if (state.dirty.decorativeLighting.size)
+    changes.push(
+      `Decorative1: ${state.dirty.decorativeLighting.size} perimeter LED override${state.dirty.decorativeLighting.size === 1 ? "" : "s"}`,
+    );
+  if (state.dirty.advanced) {
+    const draft = state.advancedDraft;
+    if (draft.feature === "MPT") changes.push(`MPT: ${keys[Number(draft.hostId)]?.n || "host key"}, ${multipointDraftDetails(draft)}`);
+    else if (draft.feature === "DKS") changes.push(`DKS: ${keys[Number(draft.hostId)]?.n || "host key"}, ${dksDraftDetails(draft)}`);
+    else if (["MT", "TGL", "END"].includes(draft.feature)) changes.push(`${simpleAdvancedSpec(draft.feature).title}: ${keys[Number(draft.hostId)]?.n || "host key"}, ${simpleAdvancedDraftDetails(draft)}`);
+    else {
+      const keyA = keys[draft.keyAId],
+      keyB = keys[draft.keyBId],
+      feature = draft.feature === "RS" ? "RS" : "SOCD",
+      behavior = feature === "RS" ? "deeper key wins" : SOCD_MODES[Number(draft.socdMode)]?.name || `mode ${draft.socdMode}`;
+      changes.push(`${feature}: ${keyA?.n || "Key A"} + ${keyB?.n || "Key B"}, ${behavior}, ${Number(draft.delay) || 0} ms delay`);
+    }
+  }
+  if (state.dirty.macro && state.macroDraft)
+    changes.push(state.macroDraft.removeSlot
+      ? `Macro ${Number(state.macroDraft.slot)}: clear onboard sequence (bindings remain)`
+      : `Macro: ${keys[Number(state.macroDraft.hostId)]?.n || "host key"}, ${macroDraftDetails(state.macroDraft)}`);
+  if (state.dirty.advancedRemovals.size)
+    changes.push(
+      `Remove advanced assignments from ${state.dirty.advancedRemovals.size} key${state.dirty.advancedRemovals.size === 1 ? "" : "s"} (${names(state.dirty.advancedRemovals)})`,
+    );
+  for (const field of state.dirty.settings) {
+    const value = state.profile.settings[field];
+    if (field === "systemMode")
+      changes.push(
+        `System mode: ${SYSTEM_MODE_OPTIONS.find((option) => option.value === Number(value))?.label || `value ${value}`}`,
+      );
+    if (field === "reportRate")
+      changes.push(
+        `Polling rate: ${(POLLING_RATE_OPTIONS.find((option) => option.value === Number(value))?.hz || value).toLocaleString()} Hz (keyboard reconnect required)`,
+      );
+    if (field === "sleepTime")
+      changes.push(
+        `RGB sleep: ${value} minute${Number(value) === 1 ? "" : "s"}`,
+      );
+    if (field === "shake")
+      changes.push(`Shake optimization: ${value ? "on" : "off"}`);
+  }
+  if (typeof pendingFnLighting === "function")
+    for (const layer of pendingFnLighting()) changes.push(`Fn ${layer} per-key RGB`);
+  if (typeof canApplyGamepadChange === "function" && canApplyGamepadChange()) changes.push("Gamepad assignments and tuning");
+  const transfer = state.profileTransfer;
+  if (transfer?.advanced) changes.push("Restore onboard advanced keys");
+  if (transfer?.macros) changes.push("Restore onboard macro sequences");
+  if (transfer?.mainRgb || transfer?.sharedMain) changes.push("Restore Main per-key RGB");
+  if (transfer?.name) changes.push(`Rename the onboard profile to ${transfer.name}`);
+  return changes;
+}
+function openDialog(dialog) {
+  if (typeof dialog?.showModal === "function") dialog.showModal();
+  else dialog?.setAttribute?.("open", "");
+}
+function closeDialog(dialog) {
+  if (typeof dialog?.close === "function") dialog.close();
+  else dialog?.removeAttribute?.("open");
+}
+function requestApplyChanges() {
+  if (toolOperationBusy()) return;
+  stageFnReleaseMappings();
+  if (!pendingChangeCount({ writable: true })) return;
+  if (!connected())
+    return showToast(
+      "Connect the AE64 Pro before applying changes. Staged changes have not been cleared.",
+      true,
+    );
+  const dialog = document.querySelector("#applyReviewDialog"),
+    list = document.querySelector("#applyReviewList");
+  list.innerHTML = summarizeChanges()
+    .map((change) => `<li>${esc(change)}</li>`)
+    .join("");
+  openDialog(dialog);
+}
+
+async function applyChanges({ automatic = false } = {}) {
+  if (toolOperationBusy() || state.profileNeedsReload || state.calibrationActive || state.calibrationBusy) return false;
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
+  stageFnReleaseMappings();
+  if (!pendingChangeCount({ writable: true, automatic })) return false;
+  if (!connected()) {
+    showToast(
+      "The keyboard disconnected before writing. Staged changes are still available.",
+      true,
+    );
+    return false;
+  }
+  state.writeInFlight = true;
+  renderStatus();
+  stopPolling();
+  stopProfilePolling();
+  showProgress(
+    automatic ? "Auto applying changes" : "Applying staged changes",
+    "Reading existing records and preserving firmware-owned fields.",
+  );
+  try {
+    const transport = state.transport, profileIndex = Number(state.profile.profileIndex), transfer = state.profileTransfer;
+    if (transfer && (transfer.transport !== transport || transfer.slot !== profileIndex))
+      throw new Error("The imported settings belong to a different keyboard session or onboard slot. Revert and import them again.");
+    if (transfer && typeof pendingGamepad !== "undefined" && pendingGamepad && !canApplyGamepadChange())
+      throw new Error("The keyboard's gamepad settings must be read again before applying this profile.");
+    if (state.dirty.customLighting.size && expectsProfileMainRgb()) requireProfileMainRgb();
+    if (await transport.getCurrentConfig() !== profileIndex || transport !== state.transport)
+      throw new Error("The onboard profile changed. Return to the staged profile on the keyboard or revert the edits.");
+    if (transfer) await applyProfileNativeRecords(transport, profileIndex, transfer);
+    const performanceIds = [...state.dirty.performance],
+      performanceNormalizations = [];
+    for (let index = 0; index < performanceIds.length; index += 1) {
+      const id = performanceIds[index],
+        key = keys[id];
+      document.querySelector("#progressDetail").textContent =
+        `Performance ${index + 1} of ${performanceIds.length}: ${key.n}`;
+      if (transfer) await assertProfileTransferTarget(transport, profileIndex);
+      const current =
+        state.hardware.performance.get(id) ||
+        (await state.transport.getPerformance(position(key)));
+      const desired = {
+        ...current,
+        ...state.profile.performance[id],
+        axis: current.axis,
+        calibrate: current.calibrate,
+        ...(state.switchAssignmentKeys.has(id)
+          ? {}
+          : {
+              axisV2Id: current.axisV2Id,
+              axisRangeMax: current.axisRangeMax,
+              axisCoefficient: current.axisCoefficient,
+            }),
+      };
+      await state.transport.setPerformance(position(key), desired);
+      const verified = await state.transport.getPerformance(position(key)),
+        comparison = performanceReadbackComparison(
+          desired,
+          verified,
+          state.switchAssignmentKeys.has(id),
+        );
+      if (!comparison.valid)
+        throw new Error(
+          `Performance verification failed for ${key.n}: ${comparison.hard.join(", ")}.`,
+        );
+      if (comparison.normalized.length) {
+        const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+        performanceNormalizations.push(warning);
+        log("Firmware normalized performance read-back", warning);
+      }
+      state.profile.performance[id] = verified;
+      state.hardware.performance.set(id, verified);
+    }
+    if (performanceIds.length)
+      await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+    // Write and verify the shared macro slot before publishing a layer mapping
+    // that can invoke it. A failed sequence therefore cannot leave a host key
+    // pointing at a partially written slot.
+    if (state.dirty.macro) await applyMacroDraft(state.macroDraft);
+    const mappingTokens = [...state.dirty.mapping];
+    for (let index = 0; index < mappingTokens.length; index += 1) {
+      const [layer, id] = mappingTokens[index].split(":").map(Number),
+        key = keys[id],
+        expected = state.profile.keycodes[layer][id];
+      document.querySelector("#progressDetail").textContent =
+        `Key mapping ${index + 1} of ${mappingTokens.length}: ${key.n}`;
+      if (transfer) await assertProfileTransferTarget(transport, profileIndex);
+      await state.transport.setKeyCode(position(key), expected, layer);
+      const verified = await state.transport.getKeyCode(position(key), layer);
+      if (verified.keycode !== expected)
+        throw new Error(`Mapping verification failed for ${key.n}.`);
+      state.hardware.keycodes.set(`${layer}:${id}`, expected);
+    }
+    if (mappingTokens.length)
+      await state.transport.saveParameters(SAVE_GROUP.LAYOUT);
+    const advancedRemovalKeys = [...state.dirty.advancedRemovals]
+      .map((id) => keys[Number(id)])
+      .filter(Boolean);
+    if (advancedRemovalKeys.length) {
+      const tuningSnapshots = new Map();
+      for (let index = 0; index < advancedRemovalKeys.length; index += 1) {
+        const key = advancedRemovalKeys[index];
+        document.querySelector("#progressDetail").textContent =
+          `Removing advanced assignment ${index + 1} of ${advancedRemovalKeys.length}: ${key.n}`;
+        tuningSnapshots.set(
+          key.id,
+          await state.transport.getPerformance(position(key)),
+        );
+        await state.transport.clearAdvancedKey(position(key));
+        const verified = await state.transport.getAdvancedKey(position(key));
+        if (Number(verified.mode) !== ADVANCED_MODE.NONE)
+          throw new Error(`Advanced removal verification failed for ${key.n}.`);
+        state.hardware.advancedByKey.delete(key.id);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.ADVANCED);
+      for (const key of advancedRemovalKeys) {
+        const expected = tuningSnapshots.get(key.id),
+          current = await state.transport.getPerformance(position(key)),
+          desired = {
+            ...current,
+            ...expected,
+            axis: current.axis,
+            calibrate: current.calibrate,
+          };
+        await state.transport.setPerformance(position(key), desired);
+        const restored = await state.transport.getPerformance(position(key)),
+          comparison = performanceReadbackComparison(desired, restored, true);
+        if (!comparison.valid)
+          throw new Error(
+            `Advanced assignment was removed but ${key.n} tuning could not be restored: ${comparison.hard.join(", ")}.`,
+          );
+        if (comparison.normalized.length) {
+          const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+          performanceNormalizations.push(warning);
+          log("Firmware normalized advanced-removal Hall read-back", warning);
+        }
+        state.profile.performance[key.id] = restored;
+        state.hardware.performance.set(key.id, restored);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+      const selectedAdvancedKey = keys.find((key) => {
+        const address = position(key);
+        return (
+          Number(address.row) === Number(state.hardware.advanced?.row) &&
+          Number(address.col) === Number(state.hardware.advanced?.col)
+        );
+      });
+      if (selectedAdvancedKey && state.dirty.advancedRemovals.has(selectedAdvancedKey.id))
+        state.hardware.advanced = null;
+    }
+    if (state.dirty.advanced) {
+      const draft = state.advancedDraft;
+      if (draft.feature === "MPT") await applyMultipointDraft(draft, performanceNormalizations);
+      else if (draft.feature === "DKS") await applyDynamicKeystrokeDraft(draft, performanceNormalizations);
+      else if (["MT", "TGL", "END"].includes(draft.feature)) await applySimpleAdvancedDraft(draft, performanceNormalizations);
+      else {
+        const keyA = keys[draft.keyAId],
+        keyB = keys[draft.keyBId],
+        feature = draft.feature === "RS" ? "RS" : "SOCD",
+        advancedMode = feature === "RS" ? ADVANCED_MODE.RS : ADVANCED_MODE.SOCD;
+      if (!keyA || !keyB || keyA.id === keyB.id)
+        throw new Error(`${feature} requires two different physical keys.`);
+      document.querySelector("#progressDetail").textContent =
+        `${feature}: checking ${keyA.n} and ${keyB.n}`;
+      const firstPosition = position(keyA),
+        secondPosition = position(keyB),
+        [currentA, currentB, tuningA, tuningB] = await Promise.all([
+          state.transport.getAdvancedKey(firstPosition),
+          state.transport.getAdvancedKey(secondPosition),
+          state.transport.getPerformance(firstPosition),
+          state.transport.getPerformance(secondPosition),
+        ]),
+        pairedWith = (record, target) =>
+          Number(record.pairedRow) === Number(target.row) &&
+          Number(record.pairedCol) === Number(target.col),
+        compatible = (record, target) =>
+          Number(record.mode) === ADVANCED_MODE.NONE ||
+          (Number(record.mode) === advancedMode && pairedWith(record, target));
+      if (!compatible(currentA, secondPosition))
+        throw new Error(`${keyA.n} already has another advanced assignment. Clear it before creating this ${feature} pair.`);
+      if (!compatible(currentB, firstPosition))
+        throw new Error(`${keyB.n} already has another advanced assignment. Clear it before creating this ${feature} pair.`);
+      const keycodes = Array.isArray(draft.keycodes)
+          ? draft.keycodes
+          : [displayedKeycode(keyA, 0), displayedKeycode(keyB, 0)],
+        socdMode = Number(draft.socdMode),
+        delay = Math.round(clamp(draft.delay, 0, 50));
+      if (feature === "RS")
+        await state.transport.setRappySnappyPair({ first: firstPosition, second: secondPosition, keycodes, delay });
+      else
+        await state.transport.setSocdPair({ first: firstPosition, second: secondPosition, keycodes, delay, mode: socdMode });
+      await state.transport.saveParameters(SAVE_GROUP.ADVANCED);
+      const [verifiedA, verifiedB] = await Promise.all([
+          state.transport.getAdvancedKey(firstPosition),
+          state.transport.getAdvancedKey(secondPosition),
+        ]),
+        pairModes = SOCD_PAIR_MODES[socdMode],
+        verified =
+          verifiedA.mode === advancedMode &&
+          verifiedB.mode === advancedMode &&
+          pairedWith(verifiedA, secondPosition) &&
+          pairedWith(verifiedB, firstPosition) &&
+          (feature === "RS" || (verifiedA.socdMode === pairModes[0] && verifiedB.socdMode === pairModes[1])) &&
+          verifiedA.delay === delay &&
+          verifiedB.delay === delay &&
+          verifiedA.keycodes[0] === keycodes[0] &&
+          verifiedA.keycodes[1] === keycodes[1] &&
+          verifiedB.keycodes[0] === keycodes[1] &&
+          verifiedB.keycodes[1] === keycodes[0];
+      if (!verified) throw new Error(`${feature} read-back verification failed.`);
+      state.hardware.advanced = verifiedA;
+      state.hardware.advancedByKey.set(keyA.id, verifiedA);
+      state.hardware.advancedByKey.set(keyB.id, verifiedB);
+      state.advancedDraft = { ...draft, feature, delay, socdMode, keycodes: [...keycodes] };
+      document.querySelector("#progressDetail").textContent =
+        `${feature}: restoring Hall tuning for ${keyA.n} and ${keyB.n}`;
+      for (const key of [keyA, keyB]) {
+        const expected = key.id === keyA.id ? tuningA : tuningB,
+          current = await state.transport.getPerformance(position(key)),
+          desired = {
+            ...current,
+            ...expected,
+            axis: current.axis,
+            calibrate: current.calibrate,
+          };
+        await state.transport.setPerformance(position(key), desired);
+        const restored = await state.transport.getPerformance(position(key)),
+          comparison = performanceReadbackComparison(desired, restored, true);
+        if (!comparison.valid)
+          throw new Error(
+            `${feature} preserved the pair but could not restore ${key.n} tuning: ${comparison.hard.join(", ")}.`,
+          );
+        if (comparison.normalized.length) {
+          const warning = `${key.n}: ${comparison.normalized.join(", ")}`;
+          performanceNormalizations.push(warning);
+          log(`Firmware normalized ${feature} Hall read-back`, warning);
+        }
+        state.profile.performance[key.id] = restored;
+        state.hardware.performance.set(key.id, restored);
+      }
+      await state.transport.saveParameters(SAVE_GROUP.PERFORMANCE);
+      }
+    }
+    if (transfer) await assertProfileTransferTarget(transport, profileIndex);
+    if (state.dirty.lightingBase || state.dirty.lightingPalette) {
+      if (state.dirty.lightingBase) {
+        await state.transport.setLightingBase(state.profile.lighting.base, 0);
+        const verified = await state.transport.getLightingBase(0);
+        if (!verifyLightingBase(state.profile.lighting.base, verified)) {
+          const expectedMode = Number(state.profile.lighting.base.mode),
+            reported = lightingModeCount(0, AE64_MAIN_MODE_COUNT);
+          if (
+            expectedMode >= reported &&
+            Number(verified.mode) !== expectedMode
+          )
+            throw new Error(
+              `Firmware rejected experimental L${expectedMode + 1}; it read back L${Number(verified.mode) + 1}.`,
+            );
+          throw new Error("Main lighting read-back verification failed.");
+        }
+        state.profile.lighting.base = {
+          ...state.profile.lighting.base,
+          ...verified,
+        };
+      }
+      if (state.dirty.lightingPalette)
+        await state.transport.setLightingPalette(
+          state.profile.lighting.palette.map(hexToRgb),
+          0,
+        );
+      await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
+      await rememberAppliedPalette(transport, 0, state.profile.lighting, state.original.lighting, state.dirty.lightingPalette);
+    }
+    if (state.dirty.customLighting.size || transfer?.mainRgb || transfer?.sharedMain) {
+      const profile = Number(state.profile.profileIndex),
+        client = expectsProfileMainRgb() ? requireProfileMainRgb() : null,
+        scoped = client ? await client.read(profile, 0) : null,
+        restored = transfer?.mainRgb || transfer?.sharedMain,
+        matrix = restored?.slice() || scoped?.matrix || (state.hardware.customMatrix || await readMainRgbMatrix(transport)).slice();
+      const cells = new Set(restored ? restored.map((_, index) => index) : []);
+      for (const id of state.dirty.customLighting) {
+        const key = keys[id],
+          matrixIndexes = lightingMatrixIndexes(key),
+          color = hexToRgb(state.profile.lighting.perKey[id]);
+        if (!matrixIndexes.length)
+          throw new Error(`Custom lighting matrix position is unavailable for ${key.n}.`);
+        if (scoped && matrixIndexes.some((index) => index % MATRIX_COLS >= scoped.cols))
+          throw new Error(`This firmware has no Main RGB cell for ${key.n}.`);
+        color.custom = Boolean(state.profile.lighting.customEnabled[id]);
+        matrixIndexes.forEach((matrixIndex) => {
+          cells.add(matrixIndex);
+          matrix[matrixIndex] = { ...color };
+        });
+      }
+      if (scoped) {
+        const result = await client.write(profile, 0, { matrix, enabled: true, revision: scoped.revision });
+        state.hardware.customMatrix = result.matrix;
+      } else {
+        await transport.writeCustomLighting(matrix, MATRIX_ROWS, MATRIX_COLS, 0);
+        await transport.saveParameters(SAVE_GROUP.LIGHTING);
+        await verifyLightingOverrides(transport, 0, cells, matrix);
+        state.hardware.customMatrix = matrix;
+      }
+      rememberAppliedColors([...cells].filter((cell) => matrix[cell].custom).map((cell) => rgbToHex(matrix[cell])));
+    }
+    if (transfer) await assertProfileTransferTarget(transport, profileIndex);
+    if (state.dirty.decorativeBase || state.dirty.decorativePalette) {
+      const decorative = state.profile.lighting.decorative;
+      if (state.dirty.decorativeBase) {
+        await state.transport.setLightingBase(decorative.base, 1);
+        const verified = await state.transport.getLightingBase(1);
+        if (!verifyLightingBase(decorative.base, verified))
+          throw new Error("Decorative1 base read-back verification failed.");
+        decorative.base = { ...decorative.base, ...verified };
+      }
+      if (state.dirty.decorativePalette)
+        await state.transport.setLightingPalette(
+          decorative.palette.map(hexToRgb),
+          1,
+        );
+      await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
+      await rememberAppliedPalette(transport, 1, decorative, state.original.lighting.decorative, state.dirty.decorativePalette);
+    }
+    if (state.dirty.decorativeLighting.size) {
+      const decorative = state.profile.lighting.decorative;
+      if (!state.hardware.decorativeMatrix)
+        state.hardware.decorativeMatrix =
+          await state.transport.readCustomLighting(
+            DECORATIVE_ROWS,
+            DECORATIVE_COLS,
+            1,
+          );
+      const matrix = state.hardware.decorativeMatrix.slice();
+      for (const index of state.dirty.decorativeLighting) {
+        const color = hexToRgb(decorative.perLed[index]);
+        color.custom = Boolean(decorative.customEnabled[index]);
+        matrix[index] = color;
+      }
+      await state.transport.writeCustomLighting(
+        matrix,
+        DECORATIVE_ROWS,
+        DECORATIVE_COLS,
+        1,
+      );
+      await state.transport.saveParameters(SAVE_GROUP.LIGHTING);
+      await verifyLightingOverrides(transport, 1, state.dirty.decorativeLighting, matrix);
+      state.hardware.decorativeMatrix = matrix;
+      rememberAppliedColors([...state.dirty.decorativeLighting].filter((index) => matrix[index].custom).map((index) => rgbToHex(matrix[index])));
+    }
+    const settingsToWrite = [...state.dirty.settings],
+      pollingRateChanged = settingsToWrite.includes("reportRate"),
+      previousRate = state.original?.settings.reportRate,
+      requestedRate = Number(state.profile.settings.reportRate);
+    for (const field of settingsToWrite.filter((field) => field !== "reportRate")) {
+      const commands = {
+        systemMode: ["setSystemMode", "getSystemMode", Number],
+        sleepTime: ["setLightingSleepTime", "getLightingSleepTime", Number],
+        shake: ["setShakeOptimization", "getShakeOptimization", Boolean],
+      }[field];
+      if (!commands) continue;
+      const [write, read, normalize] = commands, value = normalize(state.profile.settings[field]);
+      await transport[write](value);
+      if (normalize(await transport[read]()) !== value)
+        throw new Error(`${field} did not match the keyboard's read-back.`);
+    }
+    // The controller restarts its HID interface immediately after this write.
+    // Keep it last, then close our old session instead of issuing any stale
+    // commands while the keyboard re-enumerates.
+    let restartIdentity;
+    if (pollingRateChanged) {
+      restartIdentity = window.AE64Firmware.decodeInfo(await transport.raw([1, 2]));
+      window.AE64Firmware.checkIdentity(restartIdentity, 0);
+    }
+    state.original = clone(state.profile);
+    if (pollingRateChanged) state.original.settings.reportRate = previousRate;
+    clearDirty();
+    if (pollingRateChanged) state.dirty.settings.add("reportRate");
+    driverStorage.setItem(STORAGE_KEY, JSON.stringify(state.profile));
+    const pendingLayers = typeof pendingFnLighting === "function" ? pendingFnLighting() : [];
+    if (pendingLayers.length) await applyFnLighting(transport, profileIndex, pendingLayers);
+    if (typeof pendingGamepad !== "undefined" && pendingGamepad && (!automatic || pendingGamepad.auto))
+      await applyGamepadChange(transport, profileIndex);
+    if (transfer) {
+      await assertProfileTransferTarget(transport, profileIndex);
+      if (transfer.name) {
+        await transport.setConfigName(profileIndex, transfer.name);
+        const verified = await transport.getConfigName(profileIndex);
+        if (verified !== transfer.name) throw new Error("The imported profile name could not be verified.");
+        state.hardware.configNames[profileIndex] = verified;
+      }
+      state.profileTransfer = null;
+    }
+    if (pollingRateChanged) {
+      await transport.setReportRate(requestedRate);
+      state.dirty.settings.delete("reportRate");
+      if (state.transport === transport) state.transport = null;
+      await transport.close().catch((error) =>
+        log("Polling-rate session close failed", error.message),
+      );
+      log("Polling rate changed; reconnect required");
+      const reconnected = await reconnectAfterPollingRateChange(restartIdentity, transport.device, requestedRate);
+      if (!reconnected) throw new Error("The requested polling rate could not be verified after reconnecting.");
+      return true;
+    }
+    log("Staged changes applied and verified");
+    const normalizationNote = performanceNormalizations.length
+      ? ` Firmware normalized ${performanceNormalizations.length} key${performanceNormalizations.length === 1 ? "" : "s"}: ${performanceNormalizations.slice(0, 2).join("; ")}${performanceNormalizations.length > 2 ? `; +${performanceNormalizations.length - 2} more` : ""}.`
+      : "";
+    showToast(
+      `${automatic ? "Auto apply wrote and verified the completed edit." : "Changes written, committed, and verified on the AE64 Pro."}${normalizationNote}`,
+    );
+    return true;
+  } catch (error) {
+    log("Apply failed", error.message);
+    if (automatic) {
+      state.autoApply = false;
+      driverStorage.setItem(AUTO_APPLY_KEY, "false");
+    }
+    showToast(
+      `${automatic ? "Auto apply was disabled" : "Apply stopped"}: ${error.message}`,
+      true,
+    );
+    return false;
+  } finally {
+    state.writeInFlight = false;
+    hideProgress();
+    if (connected()) startProfilePolling();
+    render();
+  }
+}
+
+function revertChanges() {
+  if (toolOperationBusy()) return;
+  clearTimeout(state.timers.autoApply);
+  state.timers.autoApply = null;
+  state.profileTransfer = null;
+  state.profile = clone(state.original);
+  state.advancedDraft = defaultSocdDraft();
+  state.macroDraft = null;
+  if (Number(state.hardware.advanced?.mode) === ADVANCED_MODE.MPT) {
+    const record = state.hardware.advanced,
+      host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
+    if (host) state.advancedDraft = multipointDraftFromRecord(host, record);
+  } else if ([ADVANCED_MODE.MT, ADVANCED_MODE.TGL, ADVANCED_MODE.END].includes(Number(state.hardware.advanced?.mode))) {
+    const record = state.hardware.advanced,
+      host = keys.find((key) => { const address = position(key); return address.row === record.row && address.col === record.col; });
+    if (host) state.advancedDraft = simpleAdvancedDraftFromRecord(host, record);
+  } else if ([ADVANCED_MODE.SOCD, ADVANCED_MODE.RS].includes(Number(state.hardware.advanced?.mode))) {
+    const record = state.hardware.advanced,
+      first = keys.find((key) => {
+        const address = position(key);
+        return address.row === record.row && address.col === record.col;
+      }),
+      second = keys.find((key) => {
+        const address = position(key);
+        return address.row === record.pairedRow && address.col === record.pairedCol;
+      });
+    if (first && second)
+      state.advancedDraft = {
+        feature: record.mode === ADVANCED_MODE.RS ? "RS" : "SOCD",
+        keyAId: first.id,
+        keyBId: second.id,
+        delay: record.delay,
+        socdMode: record.mode === ADVANCED_MODE.SOCD ? record.socdMode : SOCD_MODE.LAST_OVERRIDE,
+        keycodes: [...record.keycodes],
+      };
+  }
+  clearDirty();
+  const refreshFn = typeof revertFnLighting === "function" && revertFnLighting();
+  if (typeof revertGamepadChange === "function") revertGamepadChange();
+  render();
+  if (refreshFn && connected()) readLightingProfiles({ force: true });
+  showToast("Staged changes reverted.");
+}
+async function reloadProfileFromDevice(index) {
+  const transport = state.transport;
+  state.profileNeedsReload = true;
+  state.profile.profileIndex = index;
+  state.hardware.advanced = null;
+  state.hardware.advancedByKey.clear();
+  state.advancedDraft = defaultSocdDraft();
+  state.hardware.macros?.clear();
+  state.hardware.macroSpace = null;
+  state.macroDraft = null;
+  state.hardware.keycodes.clear();
+  state.hardware.performance.clear();
+  state.switchAssignmentsStatus = "idle";
+  state.switchAssignmentsError = "";
+  keys.forEach((key) => { state.profile.lighting.customEnabled[key.id] = false; });
+  state.profile.lighting.decorative.customEnabled.fill(false);
+  Object.assign(state.hardware, {
+    customMatrix: null, decorativeMatrix: null, liveMatrix: null, liveStrip: null,
+  });
+  if (await readKeymapLayer(state.profile.layer) !== keys.length)
+    throw new Error("The full keymap could not be read. Retrying the onboard profile.");
+  await optional("Fn layer target", readFnLayerTarget);
+  await readSelectedKey();
+  await optional(
+    "calibration status",
+    () => readAllPerformanceRecords({ renderDuringLoad: false }),
+    0,
+  );
+  await optional(
+    "advanced key assignments",
+    () => readAllAdvancedRecords({ renderDuringLoad: false }),
+    0,
+  );
+  if (typeof readLightingProfiles === "function") await readLightingProfiles({ force: true, renderAfter: false });
+  if (transport !== state.transport || await transport.getCurrentConfig() !== index || transport !== state.transport)
+    throw new Error("The onboard profile changed while it was being read.");
+  state.original = clone(state.profile);
+  state.profileNeedsReload = false;
+  clearDirty();
+  maybeShowCalibrationRecommendation();
+}
+async function switchProfile(index) {
+  if (toolOperationBusy()) return;
+  if (state.calibrationActive || state.calibrationBusy) await stopCalibration(true);
+  if (pendingChangeCount()) {
+    showToast("Apply or revert changes before switching profiles.", true);
+    renderToolbar();
+    return;
+  }
+  if (connected()) {
+    if (toolOperationBusy()) return;
+    state.profileSyncInFlight = true;
+    stopPolling();
+    stopProfilePolling();
+    renderStatus();
+    showProgress("Switching profile", `Loading profile ${index + 1}.`);
+    try {
+      const transport = state.transport;
+      await transport.switchConfig(index);
+      const activeIndex = await transport.getCurrentConfig();
+      if (transport !== state.transport) throw new Error("The keyboard disconnected while switching profiles.");
+      if (!state.hardware.configIndexes.includes(activeIndex)) throw new Error("The keyboard reported an invalid profile.");
+      if (activeIndex !== Number(state.profile.profileIndex) || state.profileNeedsReload) await reloadProfileFromDevice(activeIndex);
+      if (activeIndex !== index) throw new Error(`The keyboard stayed on profile ${activeIndex + 1}.`);
+      log("Profile switched", index);
+      showToast(
+        `Profile ${index + 1} loaded. Live RGB readback has restarted.`,
+      );
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      state.profileSyncInFlight = false;
+      hideProgress();
+      render();
+      startProfilePolling();
+    }
+  } else {
+    state.profile.profileIndex = index;
+    state.original = clone(state.profile);
+    render();
+  }
+}
+async function renameProfile(name) {
+  name = String(name || "").trim();
+  if (!name) {
+    showToast("Profile name cannot be empty.", true);
+    return false;
+  }
+  if (!connected()) {
+    showToast("Connect to rename an onboard profile.", true);
+    return false;
+  }
+  try {
+    await state.transport.setConfigName(state.profile.profileIndex, name);
+    const verified = await state.transport.getConfigName(
+      state.profile.profileIndex,
+    );
+    state.hardware.configNames[state.profile.profileIndex] = verified;
+    render();
+    showToast(`Profile renamed to ${verified}.`);
+    return true;
+  } catch (error) {
+    showToast(error.message, true);
+    return false;
+  }
+}
+async function saveProfileName() {
+  return renameProfile(document.querySelector("#profileName").value);
+}
+function openProfileRename() {
+  if (!connected())
+    return showToast("Connect to rename an onboard profile.", true);
+  const input = document.querySelector("#quickProfileName");
+  input.value =
+    state.hardware.configNames[state.profile.profileIndex] ||
+    `Profile ${state.profile.profileIndex + 1}`;
+  openDialog(document.querySelector("#profileRenameDialog"));
+  input.focus();
+}
+
+function downloadJson(filename, value) {
+  const url = URL.createObjectURL(
+      new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }),
+    ),
+    link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+function exportProfile() {
+  if (connected() && typeof exportOnboardProfile === "function") return exportOnboardProfile();
+  downloadJson("ae64-pro-profile.json", {
+    format: "ae64-control-profile",
+    version: 1,
+    device: { vendorId: "1CA6", productId: "300A" },
+    exportedAt: new Date().toISOString(),
+    profile: state.profile,
+  });
+  showToast("Profile exported.");
+}
+function exportLog() {
+  downloadJson("ae64-pro-session-log.json", {
+    device: state.hardware.info,
+    logs: state.hardware.logs,
+  });
+  showToast("Session log exported.");
+}
+async function importProfile(file) {
+  if (toolOperationBusy()) return;
+  const transport = state.transport, profile = state.profile.profileIndex;
+  try {
+    const data = typeof readProfileFile === "function" ? await readProfileFile(file) : JSON.parse(await file.text());
+    if (toolOperationBusy() || transport !== state.transport || profile !== state.profile.profileIndex) return;
+    if (data?.format === "ae64-fn-rgb") {
+      stageFnLightingBackup(data, data.layer);
+      showToast(`Fn ${data.layer} colors staged for the active profile.`);
+      return;
+    }
+    if (data?.schema === "ae64-gamepad") {
+      await importGamepadBackup(data);
+      return;
+    }
+    if (data?.format === "ae64-control-profile" && data.version !== 1) {
+      if (typeof importProfileBundle !== "function") throw new Error("This profile version needs the newer driver.");
+      await importProfileBundle(data);
+      return;
+    }
+    if (pendingChangeCount()) throw new Error("Apply or revert changes before importing another profile.");
+    const imported = data.profile || data;
+    if (!imported.performance || !imported.keycodes || !imported.lighting)
+      throw new Error("Not an AE64 Control profile.");
+    const base = defaultProfile();
+    state.profile = {
+      ...base,
+      ...imported,
+      profileIndex: profile,
+      schema: base.schema,
+      settings: state.profile.settings,
+      performance: { ...base.performance, ...imported.performance },
+      keycodes: Object.fromEntries(
+        Array.from({ length: 4 }, (_, i) => [
+          i,
+          { ...base.keycodes[i], ...imported.keycodes?.[i] },
+        ]),
+      ),
+      combinationBases: {
+        ...base.combinationBases,
+        ...imported.combinationBases,
+      },
+      lighting: {
+        ...base.lighting,
+        ...imported.lighting,
+        base: { ...base.lighting.base, ...imported.lighting.base },
+        perKey: { ...base.lighting.perKey, ...imported.lighting.perKey },
+        customEnabled: {
+          ...base.lighting.customEnabled,
+          ...imported.lighting.customEnabled,
+        },
+        decorative: mergeDecorative(
+          base.lighting.decorative,
+          imported.lighting.decorative,
+        ),
+      },
+    };
+    keys.forEach((key) => {
+      state.dirty.performance.add(key.id);
+      state.dirty.customLighting.add(key.id);
+      for (let layer = 0; layer < 4; layer += 1)
+        state.dirty.mapping.add(`${layer}:${key.id}`);
+    });
+    stageFnReleaseMappings();
+    for (let index = 0; index < DECORATIVE_COLS; index += 1)
+      state.dirty.decorativeLighting.add(index);
+    state.dirty.lightingBase = true;
+    state.dirty.lightingPalette = true;
+    state.dirty.decorativeBase = true;
+    state.dirty.decorativePalette = true;
+    render();
+    showToast(
+      state.autoApply
+        ? "Profile imported. Auto apply will save it when the keyboard is ready."
+        : "Profile imported and staged. Review before applying.",
+    );
+  } catch (error) {
+    showToast(`Import failed: ${error.message}`, true);
+  }
+}

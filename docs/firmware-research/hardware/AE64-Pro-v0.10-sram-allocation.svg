@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1048" height="493" viewBox="0 0 1048 493" role="img" aria-labelledby="title description">
+  <title id="title">AE64 Pro v0.10 SRAM allocation</title>
+  <desc id="description">The HPM5300 family has 128 KiB each of instruction and data memory and 32 KiB of AHB SRAM. The former 16 KiB native heap now contains a 12,284-byte heap and a 4,096-byte custom allocation with a 4-byte boundary gap. The custom allocation has 32 bytes of leading alignment, 2,304 bytes of board state, 468 bytes of Fn protocol, 1,144 bytes of Fn color cache, 4 bytes of flags and padding, and a 144-byte contiguous tail.</desc>
+  <defs>
+    <pattern id="unknown" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#25354b"/>
+      <path d="M0 0v8" stroke="#4b5f77" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <style>
+    text { font-family: "Segoe UI", sans-serif; fill: #eef4fc; }
+    .heading { font-size: 29px; font-weight: 700; }
+    .section { font-size: 19px; font-weight: 650; }
+    .note { font-size: 16px; fill: #bed0e2; }
+    .label, .dark { font-size: 15px; font-weight: 650; }
+    .dark { fill: #102136; }
+  </style>
+  <rect width="1048" height="493" rx="16" fill="#111f31"/>
+  <text class="heading" x="44" y="49">AE64 Pro v0.10 SRAM allocation</text>
+  <text class="section" x="44" y="93">MCU SRAM banks · 288 KiB for the HPM5300 family</text>
+  <g transform="translate(44 107)">
+    <rect x="0" width="426.6667" height="34" fill="#8ebaff"/>
+    <text class="dark" x="213.3333" y="22" text-anchor="middle">Instruction local memory · 128 KiB</text>
+    <rect x="426.6667" width="426.6667" height="34" fill="#c6b4f8"/>
+    <text class="dark" x="640" y="22" text-anchor="middle">Data local memory · 128 KiB</text>
+    <rect x="853.3333" width="106.6667" height="34" fill="#ffcb85"/>
+    <text class="dark" x="906.6667" y="22" text-anchor="middle">32 KiB</text>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="169">The 32 KiB bank is AHB SRAM. Actual whole-chip use and the exact board SKU are unverified.</text>
+  <text class="section" x="44" y="218">Former native heap allocation · 16,384 B</text>
+  <g transform="translate(44 232)">
+    <rect x="0" width="719.7656" height="34" fill="#8ebaff"/>
+    <text class="dark" x="359.8828" y="22" text-anchor="middle">Remaining native heap capacity · 12,284 B</text>
+    <rect x="719.7656" width="240" height="34" fill="#6dd9c5"/>
+    <text class="dark" x="839.7656" y="22" text-anchor="middle">Custom reserve · 4,096 B</text>
+    <rect x="959.7656" width="0.2344" height="34" fill="#ffcb85"/>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="294">Includes a 4 B gap at the upper boundary. Live heap usage and stack peaks are unmeasured.</text>
+  <text class="section" x="44" y="343">Custom SRAM reserve · 4,096 B</text>
+  <g transform="translate(44 357)">
+    <rect x="0" width="7.5" height="34" fill="#25354b"/>
+    <rect x="7.5" width="540" height="34" fill="#8ebaff"/>
+    <text class="dark" x="277.5" y="22" text-anchor="middle">Board state · 2,304 B</text>
+    <rect x="547.5" width="109.6875" height="34" fill="#ffcb85"/>
+    <text class="dark" x="602.3438" y="22" text-anchor="middle">468 B</text>
+    <rect x="657.1875" width="268.125" height="34" fill="#c6b4f8"/>
+    <text class="dark" x="791.25" y="22" text-anchor="middle">Fn color cache · 1,144 B</text>
+    <rect x="925.3125" width="0.9375" height="34" fill="#25354b"/>
+    <rect x="926.25" width="33.75" height="34" fill="#305472"/>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="419">Board state includes gamepad, USB, and keyboard tracking. Amber marks Fn protocol state.</text>
+  <text class="note" x="44" y="450">Leading alignment · 32 B    |    Flags and padding · 4 B</text>
+  <text class="label" x="1004" y="450" text-anchor="end">Contiguous space after static state · 144 B</text>
+</svg>

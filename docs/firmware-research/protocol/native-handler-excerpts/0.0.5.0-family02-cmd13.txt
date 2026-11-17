@@ -1,0 +1,26 @@
+payload+0x00b778 container+0x00c778 VMA0x8002c778 13870151 addi       a4, gp, 0x510
+payload+0x00b77c container+0x00c77c VMA0x8002c77c 03462700 lbu        a2, 2(a4)
+payload+0x00b780 container+0x00c780 VMA0x8002c780 8546     c.li       a3, 1
+payload+0x00b782 container+0x00c782 VMA0x8002c782 9387014d addi       a5, gp, 0x4d0
+payload+0x00b786 container+0x00c786 VMA0x8002c786 63f6c600 bgeu       a3, a2, 0xc
+payload+0x00b78a container+0x00c78a VMA0x8002c78a 7d57     c.li       a4, -1
+payload+0x00b78c container+0x00c78c VMA0x8002c78c 2381e700 sb         a4, 2(a5)
+payload+0x00b790 container+0x00c790 VMA0x8002c790 8280     c.jr       ra
+payload+0x00b792 container+0x00c792 VMA0x8002c792 b7360800 lui        a3, 0x83
+payload+0x00b796 container+0x00c796 VMA0x8002c796 2381c700 sb         a2, 2(a5)
+payload+0x00b79a container+0x00c79a VMA0x8002c79a 9386c6a5 addi       a3, a3, -0x5a4
+payload+0x00b79e container+0x00c79e VMA0x8002c79e 0de2     c.bnez     a2, 0x22
+payload+0x00b7a0 container+0x00c7a0 VMA0x8002c7a0 03463700 lbu        a2, 3(a4)
+payload+0x00b7a4 container+0x00c7a4 VMA0x8002c7a4 03474700 lbu        a4, 4(a4)
+payload+0x00b7a8 container+0x00c7a8 VMA0x8002c7a8 2207     c.slli     a4, 8
+payload+0x00b7aa container+0x00c7aa VMA0x8002c7aa 518f     c.or       a4, a2
+payload+0x00b7ac container+0x00c7ac VMA0x8002c7ac 37d60800 lui        a2, 0x8d
+payload+0x00b7b0 container+0x00c7b0 VMA0x8002c7b0 2395e600 sh         a4, 0xa(a3)
+payload+0x00b7b4 container+0x00c7b4 VMA0x8002c7b4 03278637 lw         a4, 0x378(a2)
+payload+0x00b7b8 container+0x00c7b8 VMA0x8002c7b8 13678700 ori        a4, a4, 8
+payload+0x00b7bc container+0x00c7bc VMA0x8002c7bc 232ce636 sw         a4, 0x378(a2)
+payload+0x00b7c0 container+0x00c7c0 VMA0x8002c7c0 03d7a600 lhu        a4, 0xa(a3)
+payload+0x00b7c4 container+0x00c7c4 VMA0x8002c7c4 a381e700 sb         a4, 3(a5)
+payload+0x00b7c8 container+0x00c7c8 VMA0x8002c7c8 2183     c.srli     a4, 8
+payload+0x00b7ca container+0x00c7ca VMA0x8002c7ca 2382e700 sb         a4, 4(a5)
+payload+0x00b7ce container+0x00c7ce VMA0x8002c7ce 8280     c.jr       ra

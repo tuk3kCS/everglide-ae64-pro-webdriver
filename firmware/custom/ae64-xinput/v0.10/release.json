@@ -1,0 +1,34 @@
+{
+  "version": "0.10",
+  "base_custom_version": "0.9",
+  "factory_app_version": "0.1.0.0",
+  "image": "AE64-Pro-XInput-FnRGB-EXPERIMENTAL-v0.10.bin",
+  "image_bytes": 145440,
+  "image_sha256": "ec90108b7f9eb6c6933c185d08083c2b54eebacd901d3e8df8ece139252444da",
+  "offline_verified": true,
+  "flashed": false,
+  "hardware_verified": false,
+  "persistent_state_bytes": 3920,
+  "reserved_state_bytes": 4096,
+  "identity_marker": {
+    "command": "01 02",
+    "offset": 48,
+    "bytes_hex": "4145363401000a0000",
+    "display": "v0.10.0.0 custom based on v0.1.0.0"
+  },
+  "gamepad": {
+    "profile_slots": 4,
+    "analog_assignments": 10,
+    "points_per_assignment": 4,
+    "wire_signature": "AGC2",
+    "wire_bytes": 208,
+    "trailer_signature": "GPR2",
+    "trailer_offset": "0x1C00",
+    "trailer_bytes": 240,
+    "migration": "Legacy onboard gamepad mappings start empty. Import a previous JSON export to restore assignments."
+  },
+  "verification": {
+    "firmware_packets": 2598,
+    "gamepad_browser_firmware": "PASS: 62 codec/identity/atomic-transfer checks against compiled C staging engine."
+  }
+}

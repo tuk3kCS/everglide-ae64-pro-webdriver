@@ -1,0 +1,1 @@
+uM=new class{getAppToBoot(){return N([o2,KR])}getBootToApp(){return N([o2,NR])}getValiDatePack(){return N([o2,qR])}getFlash(e){const t=(r=>{const{address:n,data:i}=r,a=Mr(n),o=W(i.length);return[o2,HR,...a,...o,...i]})(e);return N(t)}},

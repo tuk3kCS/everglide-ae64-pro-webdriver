@@ -1,0 +1,51 @@
+payload+0x00dd08 container+0x00ed08 VMA0x8002ed08 ef527ff0 jal        t0, -0xa0fa
+payload+0x00dd0c container+0x00ed0c VMA0x8002ed0c 4111     c.addi     sp, -0x10
+payload+0x00dd0e container+0x00ed0e VMA0x8002ed0e 2a84     c.mv       s0, a0
+payload+0x00dd10 container+0x00ed10 VMA0x8002ed10 02c6     c.swsp     zero, 0xc(sp)
+payload+0x00dd12 container+0x00ed12 VMA0x8002ed12 a144     c.li       s1, 8
+payload+0x00dd14 container+0x00ed14 VMA0x8002ed14 f3b70430 csrrc      a5, mstatus, s1
+payload+0x00dd18 container+0x00ed18 VMA0x8002ed18 3ec6     c.swsp     a5, 0xc(sp)
+payload+0x00dd1a container+0x00ed1a VMA0x8002ed1a b247     c.lwsp     a5, 0xc(sp)
+payload+0x00dd1c container+0x00ed1c VMA0x8002ed1c ef401073 jal        0x4f30
+payload+0x00dd20 container+0x00ed20 VMA0x8002ed20 ef40f074 jal        0x4f4e
+payload+0x00dd24 container+0x00ed24 VMA0x8002ed24 ef403076 jal        0x4f62
+payload+0x00dd28 container+0x00ed28 VMA0x8002ed28 1315c400 slli       a0, s0, 0xc
+payload+0x00dd2c container+0x00ed2c VMA0x8002ed2c 8565     c.lui      a1, 1
+payload+0x00dd2e container+0x00ed2e VMA0x8002ed2e 3181     c.srli     a0, 0xc
+payload+0x00dd30 container+0x00ed30 VMA0x8002ed30 9720fd7f auipc      ra, 0x7ffd2
+payload+0x00dd34 container+0x00ed34 VMA0x8002ed34 e780202b jalr       ra, ra, 0x2b2
+payload+0x00dd38 container+0x00ed38 VMA0x8002ed38 ef40d06f jal        0x4efc
+payload+0x00dd3c container+0x00ed3c VMA0x8002ed3c ef401072 jal        0x4f20
+payload+0x00dd40 container+0x00ed40 VMA0x8002ed40 73a00430 csrs       mstatus, s1
+payload+0x00dd44 container+0x00ed44 VMA0x8002ed44 4101     c.addi     sp, 0x10
+payload+0x00dd46 container+0x00ed46 VMA0x8002ed46 6f50dfee j          -0xa114
+payload+0x00dd4a container+0x00ed4a VMA0x8002ed4a ae87     c.mv       a5, a1
+payload+0x00dd4c container+0x00ed4c VMA0x8002ed4c 9315c500 slli       a1, a0, 0xc
+payload+0x00dd50 container+0x00ed50 VMA0x8002ed50 b181     c.srli     a1, 0xc
+payload+0x00dd52 container+0x00ed52 VMA0x8002ed52 3e85     c.mv       a0, a5
+payload+0x00dd54 container+0x00ed54 VMA0x8002ed54 1723fd7f auipc      t1, 0x7ffd2
+payload+0x00dd58 container+0x00ed58 VMA0x8002ed58 67008321 jalr       zero, t1, 0x218
+payload+0x00dd5c container+0x00ed5c VMA0x8002ed5c ef523feb jal        t0, -0xa14e
+payload+0x00dd60 container+0x00ed60 VMA0x8002ed60 0111     c.addi     sp, -0x20
+payload+0x00dd62 container+0x00ed62 VMA0x8002ed62 2a84     c.mv       s0, a0
+payload+0x00dd64 container+0x00ed64 VMA0x8002ed64 2ec6     c.swsp     a1, 0xc(sp)
+payload+0x00dd66 container+0x00ed66 VMA0x8002ed66 b284     c.mv       s1, a2
+payload+0x00dd68 container+0x00ed68 VMA0x8002ed68 02ce     c.swsp     zero, 0x1c(sp)
+payload+0x00dd6a container+0x00ed6a VMA0x8002ed6a 2149     c.li       s2, 8
+payload+0x00dd6c container+0x00ed6c VMA0x8002ed6c f3370930 csrrc      a5, mstatus, s2
+payload+0x00dd70 container+0x00ed70 VMA0x8002ed70 3ece     c.swsp     a5, 0x1c(sp)
+payload+0x00dd72 container+0x00ed72 VMA0x8002ed72 f247     c.lwsp     a5, 0x1c(sp)
+payload+0x00dd74 container+0x00ed74 VMA0x8002ed74 3204     c.slli     s0, 0xc
+payload+0x00dd76 container+0x00ed76 VMA0x8002ed76 ef40706d jal        0x4ed6
+payload+0x00dd7a container+0x00ed7a VMA0x8002ed7a ef40506f jal        0x4ef4
+payload+0x00dd7e container+0x00ed7e VMA0x8002ed7e ef409070 jal        0x4f08
+payload+0x00dd82 container+0x00ed82 VMA0x8002ed82 3245     c.lwsp     a0, 0xc(sp)
+payload+0x00dd84 container+0x00ed84 VMA0x8002ed84 13962400 slli       a2, s1, 2
+payload+0x00dd88 container+0x00ed88 VMA0x8002ed88 9355c400 srli       a1, s0, 0xc
+payload+0x00dd8c container+0x00ed8c VMA0x8002ed8c 9720fd7f auipc      ra, 0x7ffd2
+payload+0x00dd90 container+0x00ed90 VMA0x8002ed90 e780c020 jalr       ra, ra, 0x20c
+payload+0x00dd94 container+0x00ed94 VMA0x8002ed94 ef40106a jal        0x4ea0
+payload+0x00dd98 container+0x00ed98 VMA0x8002ed98 ef40506c jal        0x4ec4
+payload+0x00dd9c container+0x00ed9c VMA0x8002ed9c 73200930 csrs       mstatus, s2
+payload+0x00dda0 container+0x00eda0 VMA0x8002eda0 0561     c.addi16sp sp, 0x20
+payload+0x00dda2 container+0x00eda2 VMA0x8002eda2 6f501fe9 j          -0xa170

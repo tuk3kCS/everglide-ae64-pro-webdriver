@@ -1,0 +1,6 @@
+payload+0x00b8cc container+0x00c8cc VMA0x8002c8cc 9387015d addi       a5, gp, 0x5d0
+payload+0x00b8d0 container+0x00c8d0 VMA0x8002c8d0 13071020 addi       a4, zero, 0x201
+payload+0x00b8d4 container+0x00c8d4 VMA0x8002c8d4 2391e700 sh         a4, 2(a5)
+payload+0x00b8d8 container+0x00c8d8 VMA0x8002c8d8 0547     c.li       a4, 1
+payload+0x00b8da container+0x00c8da VMA0x8002c8da 2392e700 sh         a4, 4(a5)
+payload+0x00b8de container+0x00c8de VMA0x8002c8de 8280     c.jr       ra

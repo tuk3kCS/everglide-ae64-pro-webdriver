@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tuk3kcs.github.io/everglide-ae64-pro-webdriver/sitemap.xml

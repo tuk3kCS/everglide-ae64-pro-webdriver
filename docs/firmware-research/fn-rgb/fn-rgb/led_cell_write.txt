@@ -1,0 +1,11 @@
+00a3b8 83470500 lbu        a5, 0(a0)
+00a3bc 63fdf500 bgeu       a1, a5, 0x1a
+00a3c0 03471500 lbu        a4, 1(a0)
+00a3c4 6379e600 bgeu       a2, a4, 0x12
+00a3c8 b387c702 mul        a5, a5, a2
+00a3cc 5841     c.lw       a4, 4(a0)
+00a3ce ae97     c.add      a5, a1
+00a3d0 8a07     c.slli     a5, 2
+00a3d2 ba97     c.add      a5, a4
+00a3d4 94c3     c.sw       a3, 0(a5)
+00a3d6 8280     c.jr       ra

@@ -1,0 +1,289 @@
+{
+  "scope": "Portable component tests and RV32 static library, not a linked/flashable application",
+  "compiler": "Zig 0.17.0",
+  "runs": [
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\tests\\test_gamepad_review.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\core.exe"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\core.exe"
+      ],
+      "stdout": "Independent gamepad review: 120591 checks passed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_physical.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\tests\\test_gamepad_physical.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\physical.exe"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\physical.exe"
+      ],
+      "stdout": "Physical adapter: 140737 checks passed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_xusb.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\tests\\test_xusb.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\xusb.exe"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\xusb.exe"
+      ],
+      "stdout": "XUSB offline backend: descriptors, control bounds, input packet, transfer lifetime and OUT parsing passed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_physical.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_protocol.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\tests\\test_gamepad_protocol_review.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\protocol-review.exe"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\protocol-review.exe"
+      ],
+      "stdout": "AGP1 independent review: 236254 checks passed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_physical.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_protocol.c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\tests\\protocol_harness.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\protocol-harness.exe"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "C:\\GitHub\\everglide-ae64-pro-webdriver\\gamepad\\tests.cjs"
+      ],
+      "stdout": "PASS: 8036 model and UI checks; exact 64-key layout, physical ranges, curves, controller states, safe capability gate.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "C:\\GitHub\\everglide-ae64-pro-webdriver\\gamepad\\protocol-tests.cjs",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\protocol-harness.exe"
+      ],
+      "stdout": "PASS: 37 codec/identity/atomic-transfer checks against compiled C staging engine.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-target",
+        "riscv32-freestanding-none",
+        "-mcpu=generic_rv32+m+a+c",
+        "-mabi=ilp32",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-Os",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "-c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad.rv32.o"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-target",
+        "riscv32-freestanding-none",
+        "-mcpu=generic_rv32+m+a+c",
+        "-mabi=ilp32",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-Os",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "-c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_physical.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad_physical.rv32.o"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-target",
+        "riscv32-freestanding-none",
+        "-mcpu=generic_rv32+m+a+c",
+        "-mabi=ilp32",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-Os",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "-c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_gamepad_protocol.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad_protocol.rv32.o"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "cc",
+        "-target",
+        "riscv32-freestanding-none",
+        "-mcpu=generic_rv32+m+a+c",
+        "-mabi=ilp32",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-Os",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\include",
+        "-c",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-Pro-research\\gamepad\\src\\ae64_xusb.c",
+        "-o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_xusb.rv32.o"
+      ],
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+        "ar",
+        "rcs",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\libae64_gamepad.rv32.a",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad.rv32.o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad_physical.rv32.o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_gamepad_protocol.rv32.o",
+        "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\gamepad-build\\ae64_xusb.rv32.o"
+      ],
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "ae64_gamepad.rv32.o",
+      "bytes": 6404,
+      "sha256": "00962c4dfd272a96e28c1c80629a6bdead5630e267cd36ba8b9b2e972d38ea1c"
+    },
+    {
+      "file": "ae64_gamepad_physical.rv32.o",
+      "bytes": 5412,
+      "sha256": "5edfd24e8c910e04f9f8492bfbbc5121a730b188edb8685e7dd7d9f7ddfc3152"
+    },
+    {
+      "file": "ae64_gamepad_protocol.rv32.o",
+      "bytes": 4316,
+      "sha256": "00fc03766d089ea02d391247a10e79b48913fd037c59971b6ad34ec8fc82c5fa"
+    },
+    {
+      "file": "ae64_xusb.rv32.o",
+      "bytes": 4120,
+      "sha256": "74d9249836a1257db1fe75818a14282b94aca3789716e78324906f1ae3c9271e"
+    },
+    {
+      "file": "libae64_gamepad.rv32.a",
+      "bytes": 21572,
+      "sha256": "372ed64cd00057bdbe6a22da23c75bfc7ff7919a31e2d356d8cc3adac94f32dc"
+    }
+  ]
+}

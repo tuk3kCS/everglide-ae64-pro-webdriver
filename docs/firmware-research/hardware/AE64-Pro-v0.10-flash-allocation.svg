@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1048" height="648" viewBox="0 0 1048 648" role="img" aria-labelledby="title description">
+  <title id="title">AE64 Pro v0.10 flash allocation</title>
+  <desc id="description">The inferred 1 MiB flash map has 128 KiB of unclassified low flash, a 256 KiB active application bank, a 256 KiB updater backup, 16 KiB of common settings, an unclassified 48 KiB gap, 64 KiB for four profiles, and 256 KiB of unclassified upper flash. The active bank contains a 145,440-byte image and has 116,704 bytes beyond it. Each 16 KiB profile includes settings, macros, and an 8 KiB keymap block with custom records and 360 bytes of contiguous tail.</desc>
+  <defs>
+    <pattern id="unknown" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#25354b"/>
+      <path d="M0 0v8" stroke="#4b5f77" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <style>
+    text { font-family: "Segoe UI", sans-serif; fill: #eef4fc; }
+    .heading { font-size: 29px; font-weight: 700; }
+    .section { font-size: 19px; font-weight: 650; }
+    .note { font-size: 16px; fill: #bed0e2; }
+    .label, .dark { font-size: 15px; font-weight: 650; }
+    .dark { fill: #102136; }
+  </style>
+  <rect width="1048" height="648" rx="16" fill="#111f31"/>
+  <text class="heading" x="44" y="49">AE64 Pro v0.10 flash allocation</text>
+  <text class="section" x="44" y="93">Chip address map · 1 MiB inferred from the HPM5300 family</text>
+  <g transform="translate(44 107)">
+    <rect x="0" width="120" height="34" fill="url(#unknown)"/>
+    <text class="label" x="60" y="22" text-anchor="middle">Low flash</text>
+    <rect x="120" width="240" height="34" fill="#8ebaff"/>
+    <text class="dark" x="240" y="22" text-anchor="middle">Active app · 256 KiB</text>
+    <rect x="360" width="240" height="34" fill="#c6b4f8"/>
+    <text class="dark" x="480" y="22" text-anchor="middle">Updater backup · 256 KiB</text>
+    <rect x="600" width="15" height="34" fill="#ffcb85"/>
+    <rect x="615" width="45" height="34" fill="url(#unknown)"/>
+    <rect x="660" width="60" height="34" fill="#6dd9c5"/>
+    <text class="dark" x="690" y="22" text-anchor="middle">Slots</text>
+    <rect x="720" width="240" height="34" fill="url(#unknown)"/>
+    <text class="label" x="840" y="22" text-anchor="middle">Upper flash · 256 KiB</text>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="169">Hatched areas are unclassified. Amber marks 16 KiB of common data pages.</text>
+  <text class="note" x="44" y="194">Four onboard profile slots use 64 KiB combined at 0x800B0000–0x800BFFFF.</text>
+  <text class="section" x="44" y="241">Active application bank · 256 KiB</text>
+  <g transform="translate(44 255)">
+    <rect x="0" width="15" height="34" fill="#ffcb85"/>
+    <rect x="15" width="419.9707" height="34" fill="#8ebaff"/>
+    <text class="dark" x="224.9854" y="22" text-anchor="middle">Factory-derived payload · 114,680 B</text>
+    <rect x="434.9707" width="95.3979" height="34" fill="#6dd9c5"/>
+    <text class="dark" x="482.6697" y="22" text-anchor="middle">Code</text>
+    <rect x="530.3687" width="2.2119" height="34" fill="#c6b4f8"/>
+    <rect x="532.5806" width="0.0366" height="34" fill="#25354b"/>
+    <rect x="532.6172" width="427.3828" height="34" fill="#305472"/>
+    <text class="label" x="746.3086" y="22" text-anchor="middle">Headroom · 116,704 B</text>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="317">Header · 4,096 B    |    Custom code · 26,050 B    |    Constants · 604 B    |    Alignment · 10 B</text>
+  <text class="note" x="44" y="342">Image · 145,440 B (55.5%)    |    Headroom · 114.0 KiB within the inferred bank</text>
+  <text class="section" x="44" y="389">One onboard profile slot · 16 KiB</text>
+  <g transform="translate(44 403)">
+    <rect x="0" width="240" height="34" fill="#8ebaff"/>
+    <text class="dark" x="120" y="22" text-anchor="middle">Settings · 4 KiB</text>
+    <rect x="240" width="240" height="34" fill="#c6b4f8"/>
+    <text class="dark" x="360" y="22" text-anchor="middle">Macros · 4 KiB</text>
+    <rect x="480" width="480" height="34" fill="#6dd9c5"/>
+    <text class="dark" x="720" y="22" text-anchor="middle">Keymap block · 8 KiB</text>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="section" x="44" y="484">Inside the keymap block · 8,192 B</text>
+  <g transform="translate(44 498)">
+    <rect x="0" width="680.1563" height="34" fill="#8ebaff"/>
+    <text class="dark" x="340.0781" y="22" text-anchor="middle">Factory keymaps and actions · 5,804 B</text>
+    <rect x="680.1563" width="9.8438" height="34" fill="#25354b"/>
+    <rect x="690" width="135" height="34" fill="#c6b4f8"/>
+    <text class="dark" x="757.5" y="22" text-anchor="middle">Fn RGB</text>
+    <rect x="825" width="15" height="34" fill="#25354b"/>
+    <rect x="840" width="28.125" height="34" fill="#6dd9c5"/>
+    <rect x="868.125" width="1.875" height="34" fill="#25354b"/>
+    <rect x="870" width="1.875" height="34" fill="#ffcb85"/>
+    <rect x="871.875" width="1.875" height="34" fill="#25354b"/>
+    <rect x="873.75" width="44.0625" height="34" fill="#c6b4f8"/>
+    <rect x="917.8125" width="42.1875" height="34" fill="#305472"/>
+    <rect width="960" height="34" fill="none" stroke="#849ab4"/>
+  </g>
+  <text class="note" x="44" y="560">Fn RGB · 1,152 B    |    Gamepad · 240 B    |    USB preference · 16 B    |    Main RGB · 376 B</text>
+  <text class="note" x="44" y="585">Unallocated within this block · 244 B in gaps and 360 B in the contiguous tail.</text>
+  <text class="label" x="44" y="615">Bootloader limits and unclassified flash contents need direct hardware verification.</text>
+</svg>

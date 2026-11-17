@@ -1,0 +1,496 @@
+"use strict";
+
+// Combination mappings are a HID modifier bitmask in the high byte plus one
+// standard keyboard trigger usage in the low byte, as used by the original
+// driver's Associated Key / Trigger Key editor. The lower four modifier bits
+// are exposed by the original AE64 UI; the upper four are the standard HID
+// right-side modifiers and match the independently verified HE30 mapping form.
+const COMBINATION_MODIFIERS = Object.freeze([
+  { label: "Left Ctrl", short: "L Ctrl", value: 0x01, captured: true },
+  { label: "Left Shift", short: "L Shift", value: 0x02, captured: true },
+  { label: "Left Alt", short: "L Alt", value: 0x04, captured: true },
+  { label: "Left GUI", short: "L GUI", value: 0x08, captured: true },
+  { label: "Right Ctrl", short: "R Ctrl", value: 0x10, captured: false },
+  { label: "Right Shift", short: "R Shift", value: 0x20, captured: false },
+  { label: "Right Alt", short: "R Alt", value: 0x40, captured: false },
+  { label: "Right GUI", short: "R GUI", value: 0x80, captured: false },
+]);
+const COMBINATION_TRIGGER_KEYS = Object.freeze(
+  KEYCODE_GROUPS.keyboard.filter(({ code }) => code >= 4 && code < 224),
+);
+// These are the groups with verified write behavior on the AE64 Pro. Other
+// catalog entries remain available for decoding assignments read from hardware.
+const KEYMAP_SELECTABLE_GROUPS = Object.freeze([
+  "keyboard",
+  "media",
+  "mouse",
+  "firmware",
+  "lighting",
+]);
+const COMBINATION_LAYER_NAMES = Object.freeze(["Main", "Fn1", "Fn2", "Fn3"]);
+state.mappingCombination = { modifiers: new Set([0x01]), trigger: 4 };
+state.combinationDraft = {
+  hostId: Number(state.profile.selected),
+  layer: Number(state.profile.layer),
+  modifiers: [0x01],
+  trigger: 4,
+};
+state.selectedKeys = new Set([Number(state.profile.selected)]);
+state.keySelectionDrag = null;
+state.mappingPickerGroup = "keyboard";
+state.mappingKeyboardGroup = "basic";
+const selectedKeyIds = () => {
+  const ids = [...state.selectedKeys].filter((id) => keys[id]);
+  return ids.sort((a, b) => a - b);
+};
+
+// The keyboard catalog is intentionally split into useful hardware-facing
+// groups in the picker. This keeps the full keymap available without making
+// the user scroll through one long list.
+const KEYBOARD_MAPPING_GROUPS = Object.freeze([
+  { id: "basic", label: "Basic keys", test: (code) => (code >= 4 && code <= 57) || code === 0 || code === 1 },
+  { id: "function", label: "F1–F24", test: (code) => (code >= 58 && code <= 69) || (code >= 104 && code <= 115) },
+  { id: "navigation", label: "Navigation", test: (code) => code >= 70 && code <= 82 },
+  { id: "numpad", label: "Numpad", test: (code) => code >= 83 && code <= 103 },
+  { id: "modifiers", label: "Modifiers", test: (code) => code >= 224 && code <= 231 },
+]);
+
+function mappingPickerEntries(group = state.mappingPickerGroup, search = state.mappingSearch) {
+  const query = search.trim().toLowerCase();
+  if (query) {
+    return KEYMAP_SELECTABLE_GROUPS.flatMap((category) =>
+      KEYCODE_GROUPS[category]
+        .filter((entry) => entry.label.toLowerCase().includes(query))
+        .map((entry) => ({ ...entry, category })),
+    );
+  }
+  const source = KEYCODE_GROUPS[group] || KEYCODE_GROUPS.keyboard;
+  const keyboardGroup = KEYBOARD_MAPPING_GROUPS.find((item) => item.id === state.mappingKeyboardGroup) || KEYBOARD_MAPPING_GROUPS[0];
+  return group === "keyboard" ? source.filter((entry) => keyboardGroup.test(Number(entry.code))) : source;
+}
+
+function mappingKeyboardGroupForCode(code) {
+  return KEYBOARD_MAPPING_GROUPS.find((group) => group.test(Number(code)))?.id || "basic";
+}
+
+function renderMappingPicker() {
+  const body = document.querySelector("#mappingPickerBody"), title = document.querySelector("#mappingPickerTitle");
+  if (!body) return;
+  const group = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingPickerGroup) ? state.mappingPickerGroup : "keyboard";
+  const active = displayedKeycode(selectedKey());
+  const searching = Boolean(state.mappingSearch.trim());
+  const entries = mappingPickerEntries(group);
+  const groupLabel = group === "keyboard" ? (KEYBOARD_MAPPING_GROUPS.find((item) => item.id === state.mappingKeyboardGroup)?.label || "Keyboard") : group[0].toUpperCase() + group.slice(1);
+  if (title) title.textContent = `Map ${selectedKey().n}`;
+  body.innerHTML = `
+    <div class="mapping-picker-shell">
+      <aside class="mapping-picker-sidebar">
+        <div class="mapping-picker-summary">
+          <span>PHYSICAL KEY</span><strong>${esc(selectedKey().n)}</strong>
+          <small>${esc(["Main", "Fn1", "Fn2", "Fn3"][Number(state.profile.layer)])} · currently ${esc(keycodeLabel(active))}</small>
+        </div>
+        <div class="mapping-picker-groups" role="tablist" aria-label="Keymap groups">
+          ${KEYMAP_SELECTABLE_GROUPS.map((item) => {
+            const selected = !searching && item === group;
+            return `<button type="button" role="tab" data-mapping-picker-group="${item}" class="${selected ? "active" : ""}" aria-selected="${selected}"><span>${item[0].toUpperCase() + item.slice(1)}</span><i aria-hidden="true">›</i></button>`;
+          }).join("")}
+        </div>
+      </aside>
+      <section class="mapping-picker-catalog">
+        <div class="mapping-picker-catalog-head">
+          <div><span>KEYMAP CATALOG</span><strong>${searching ? "All categories" : esc(groupLabel)}</strong></div>
+          <b>${entries.length} ${searching ? "MATCHES" : "VALUES"}</b>
+        </div>
+        ${group === "keyboard" ? `<div class="mapping-keyboard-groups" role="tablist" aria-label="Keyboard key groups">
+          ${KEYBOARD_MAPPING_GROUPS.map((item) => {
+            const selected = !searching && item.id === state.mappingKeyboardGroup;
+            return `<button type="button" role="tab" data-mapping-keyboard-group="${item.id}" class="${selected ? "active" : ""}" aria-selected="${selected}">${esc(item.label)}</button>`;
+          }).join("")}
+        </div>` : ""}
+        <label class="mapping-picker-search">
+          <span>Search all categories</span>
+          <input class="search-input" id="mappingPickerSearch" type="search" placeholder="Search keybinds…" autocomplete="off" value="${esc(state.mappingSearch)}">
+        </label>
+        <div class="mapping-picker-list${searching ? " search-results" : ""}">
+          ${entries.length ? entries.map((entry) => {
+            const current = Number(entry.code) === Number(active);
+            const category = entry.category?.toUpperCase();
+            const badge = current ? category ? `CURRENT · ${category}` : "CURRENT" : category || "KEY VALUE";
+            return `<button type="button" data-mapping-picker-keycode="${entry.code}" class="${current ? "active" : ""}"><span>${badge}</span><b>${esc(entry.label)}</b><small>0x${Number(entry.code).toString(16).padStart(4, "0").toUpperCase()}</small></button>`;
+          }).join("") : '<p class="mapping-picker-empty">No matching keybinds.</p>'}
+        </div>
+      </section>
+    </div>`;
+  bindMappingPicker();
+}
+
+function openMappingPicker() {
+  state.mappingPickerGroup = KEYMAP_SELECTABLE_GROUPS.includes(state.mappingGroup) ? state.mappingGroup : "keyboard";
+  if (state.mappingPickerGroup === "keyboard") state.mappingKeyboardGroup = mappingKeyboardGroupForCode(displayedKeycode(selectedKey()));
+  renderMappingPicker();
+  const dialog = document.querySelector("#mappingPickerDialog");
+  if (!dialog?.open) openDialog(dialog);
+  queueMicrotask(() => document.querySelector("#mappingPickerSearch")?.focus());
+}
+
+function applyMappingPickerKeycode(code) {
+  selectedKeyIds().forEach((id) => {
+    state.profile.keycodes[state.profile.layer][id] = Number(code);
+    state.dirty.mapping.add(`${state.profile.layer}:${id}`);
+  });
+  const guarded = stageFnReleaseMappings();
+  state.mappingGroup = state.mappingPickerGroup;
+  closeDialog(document.querySelector("#mappingPickerDialog"));
+  render();
+  if (guarded) showToast("Fn trigger staged. Its higher layers use Transparent so releasing it returns to the previous layer.");
+}
+
+// The native action processor resolves a release through the active layer's
+// mapping again. Match the vendor driver: a layer trigger must inherit through
+// higher layers rather than turning into an ordinary key after its own press.
+// Only staged mappings participate; unrelated onboard keys are never rewritten.
+function stageFnReleaseMappings(tokens = state.dirty.mapping) {
+  let changed = 0;
+  const entries = [...tokens].map((token) => String(token).split(":").map(Number))
+    .filter(([layer, id]) => Number.isInteger(layer) && layer >= 0 && layer < 4 && keys[id])
+    .sort(([layerA, idA], [layerB, idB]) => layerA - layerB || idA - idB);
+  for (const [layer, id] of entries) {
+    const code = Number(state.profile.keycodes[layer]?.[id]);
+    if (!Number.isInteger(code) || code < 0xf100 || code > 0xf103) continue;
+    for (let higher = layer + 1; higher < 4; higher++) {
+      if (Number(state.profile.keycodes[higher]?.[id]) === 1) continue;
+      state.profile.keycodes[higher] ||= {};
+      state.profile.keycodes[higher][id] = 1;
+      state.dirty.mapping.add(`${higher}:${id}`);
+      const token = combinationBaseToken(higher, id);
+      delete state.profile.combinationBases?.[token];
+      delete state.profile.macroBases?.[token];
+      changed++;
+    }
+  }
+  return changed;
+}
+
+function bindMappingPicker() {
+  document.querySelectorAll("[data-mapping-picker-group]").forEach((button) => button.addEventListener("click", () => {
+    state.mappingPickerGroup = button.dataset.mappingPickerGroup;
+    state.mappingSearch = "";
+    renderMappingPicker();
+  }));
+  document.querySelectorAll("[data-mapping-keyboard-group]").forEach((button) => button.addEventListener("click", () => {
+    state.mappingKeyboardGroup = button.dataset.mappingKeyboardGroup;
+    state.mappingSearch = "";
+    renderMappingPicker();
+  }));
+  document.querySelector("#mappingPickerSearch")?.addEventListener("input", (event) => {
+    if (event.isComposing) return;
+    const { value, selectionStart, selectionEnd } = event.target;
+    state.mappingSearch = value;
+    renderMappingPicker();
+    const search = document.querySelector("#mappingPickerSearch");
+    search?.focus();
+    search?.setSelectionRange(selectionStart, selectionEnd);
+  });
+  document.querySelectorAll("[data-mapping-picker-keycode]").forEach((button) => button.addEventListener("click", () => applyMappingPickerKeycode(button.dataset.mappingPickerKeycode)));
+}
+function decodeCombinationKeycode(keycode, allowExtended = false) {
+  const value = Number(keycode), modifiers = (value >>> 8) & 0xff, trigger = value & 0xff;
+  if (!Number.isInteger(value) || value <= 0xff || !modifiers || (!allowExtended && modifiers & ~0x0f) || !COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === trigger)) return null;
+  return { modifiers: COMBINATION_MODIFIERS.filter(({ value: mask }) => modifiers & mask), trigger };
+}
+function combinationKeycode(modifiers, trigger) {
+  const mask = [...modifiers].reduce((total, value) => total | (Number(value) & 0xff), 0);
+  if (!mask) throw new Error("Select at least one modifier key.");
+  if (!COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === Number(trigger))) throw new Error("Select a standard keyboard trigger key.");
+  return (mask << 8) | Number(trigger);
+}
+function keycodeLabel(keycode) {
+  const combination = decodeCombinationKeycode(keycode);
+  if (combination) return `${combination.modifiers.map(({ label }) => label).join(" + ")} + ${KEYCODE_LABELS.get(combination.trigger)}`;
+  return KEYCODE_LABELS.get(Number(keycode)) || `Keycode 0x${Number(keycode).toString(16).padStart(4, "0")}`;
+}
+const VIRTUAL_KEYCODE_LABELS = new Map([
+  [30, "1/!"], [31, "2/@"], [32, "3/#"], [33, "4/$"], [34, "5/%"], [35, "6/^"], [36, "7/&"], [37, "8/*"], [38, "9/("], [39, "0/)"],
+  [41, "Esc"], [42, "Bksp"], [45, "-/_"], [46, "=/+"], [47, "[/{"], [48, "]/}"], [49, "\\/|"], [50, "#/~"], [51, ";/:"], [52, "'/\""], [53, "`/~"], [54, ",/<"], [55, "./>"], [56, "//?"], [57, "Caps"],
+  [70, "PrtSc"], [71, "ScrLk"], [75, "PgUp"], [78, "PgDn"], [79, "→"], [80, "←"], [81, "↓"], [82, "↑"], [83, "NumLk"],
+  [224, "LCtrl"], [225, "LShift"], [226, "LAlt"], [227, "LWin"], [228, "RCtrl"], [229, "RShift"], [230, "RAlt"], [231, "RWin"],
+  [0x1152, "Ctrl Ctr"], [0x1329, "Task Mgr"], [0x1807, "Desktop"], [0x1808, "Explorer"], [0x1815, "Run"],
+  [0x206f, "Bright +"], [0x2070, "Bright -"], [0x20b5, "Next"], [0x20b6, "Prev"], [0x20b7, "Stop"],
+  [0x20cd, "Play/Ps"], [0x20e2, "Mute"], [0x20e9, "Vol +"], [0x20ea, "Vol -"],
+  [0x2183, "Music"], [0x218a, "Mail"], [0x2192, "Calc"], [0x2194, "PC"], [0x2223, "Browser"],
+  [0x4000, "M Rel"], [0x4100, "M Left"], [0x4200, "M Right"], [0x4300, "M Mid"], [0x4400, "M Fwd"], [0x4500, "M Back"],
+  [0x4600, "M ←"], [0x4700, "M →"], [0x4800, "M ↑"], [0x4900, "M ↓"], [0x4a01, "Whl +"], [0x4b01, "Whl -"],
+  [0, "Empty"], [1, "Trans"], [0xf100, "Main"], [0xf101, "Fn1"], [0xf102, "Fn2"], [0xf103, "Fn3"],
+  [0xf200, "Reset"], [0xf201, "Win Mode"], [0xf202, "Mac Mode"], [0xf203, "Calibrate"], [0xf205, "P1"], [0xf206, "P2"], [0xf207, "P3"], [0xf208, "P4"], [0xf209, "Win Lock"],
+  [0xf300, "RGB Mode"], [0xf301, "RGB Color"], [0xf302, "RGB Br +"], [0xf303, "RGB Br -"], [0xf304, "RGB Spd +"], [0xf305, "RGB Spd -"], [0xf306, "RGB Prev"], [0xf307, "RGB On/Off"], [0xf308, "RGB Dir"],
+  ...Array.from({ length: 3 }, (_, index) => {
+    const area = index + 1, base = 0xf300 + area * 0x10;
+    return [
+      [base, `D${area} Mode`], [base + 1, `D${area} Color`], [base + 2, `D${area} Br +`],
+      [base + 3, `D${area} Br -`], [base + 4, `D${area} Spd +`], [base + 5, `D${area} Spd -`],
+      [base + 6, `D${area} Prev`], [base + 7, `D${area} On/Off`], [base + 8, `D${area} Dir`],
+    ];
+  }).flat(),
+  [0xf401, "USB"], [0xf402, "2.4G"], [0xf403, "BT1"], [0xf404, "BT2"], [0xf405, "BT3"], [0xf406, "Clear Pair"], [0xf407, "Battery"],
+  [0x5201, "D-pad ↑"], [0x5202, "D-pad ↓"], [0x5204, "D-pad ←"], [0x5208, "D-pad →"],
+  [0x5301, "LB"], [0x5302, "RB"], [0x5400, "LT"], [0x5500, "RT"],
+  [0x5240, "LS Press"], [0x5280, "RS Press"],
+  [0x5601, "LS →"], [0x5602, "LS ←"], [0x5801, "LS ↑"], [0x5802, "LS ↓"],
+  [0x5a01, "RS →"], [0x5a02, "RS ←"], [0x5c01, "RS ↑"], [0x5c02, "RS ↓"],
+]);
+function virtualKeycodeLabel(keycode, allowExtendedCombination = false) {
+  const value = Number(keycode), exact = VIRTUAL_KEYCODE_LABELS.get(value);
+  if (exact) return exact;
+  const combination = decodeCombinationKeycode(value, allowExtendedCombination);
+  if (combination) return combinationLabel(combination.modifiers.map(({ value: mask }) => mask), combination.trigger).replaceAll(" ", "");
+  const compact = keycodeLabel(value)
+    .replace(/^Switch to (?:configuration|profile) ([1-4])$/i, "P$1")
+    .replace(/^Numpad /, "Num")
+    .replace(/^Gamepad /, "GP ")
+    .replace(/^Decorative lighting (\d+) /, "D$1 ")
+    .replace(/^Decorative lighting /, "D ")
+    .replace(/^Lighting /, "RGB ")
+    .replace(/brightness/gi, "Bright")
+    .replace(/Previous/gi, "Prev")
+    .replace(/Forward/gi, "Fwd")
+    .replace(/Windows/gi, "Win")
+    .replace(/macOS/gi, "Mac")
+    .replace(/Control/gi, "Ctrl")
+    .replace(/Arrow/gi, "")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ")
+    .trim();
+  return compact.length <= 11 ? compact : compact.split(" ").map((word) => word.length > 5 ? word.slice(0, 4) : word).join(" ").slice(0, 11);
+}
+function syncCombinationEditor(keycode = displayedKeycode(selectedKey())) {
+  const combination = decodeCombinationKeycode(keycode), basicTrigger = COMBINATION_TRIGGER_KEYS.some((entry) => entry.code === Number(keycode)) ? Number(keycode) : 4;
+  state.mappingCombination.modifiers = new Set(combination?.modifiers.map(({ value }) => value) || [0x01]);
+  state.mappingCombination.trigger = combination?.trigger || basicTrigger;
+}
+
+function combinationLabel(modifiers, trigger) {
+  const labels = COMBINATION_MODIFIERS
+    .filter(({ value }) => modifiers.includes(value))
+    .map(({ short }) => short);
+  labels.push(KEYCODE_LABELS.get(Number(trigger)) || `HID ${Number(trigger)}`);
+  return labels.join(" + ");
+}
+
+function combinationTokenKnown(token) {
+  return Object.prototype.hasOwnProperty.call(
+    state.profile.combinationBases || {},
+    token,
+  );
+}
+function combinationBaseToken(layer, id, profileIndex = state.profile.profileIndex) {
+  return `${Number(profileIndex)}:${Number(layer)}:${Number(id)}`;
+}
+
+function combinationMappingLabel(key, layer) {
+  const token = combinationBaseToken(layer, key.id),
+    keycode = displayedKeycode(key, layer),
+    decoded = decodeCombinationKeycode(keycode, combinationTokenKnown(token));
+  return decoded
+    ? combinationLabel(decoded.modifiers.map(({ value }) => value), decoded.trigger)
+    : keycodeLabel(keycode);
+}
+
+function syncCombinationDraft(hostId, layer) {
+  const host = keys[Number(hostId)] || selectedKey(),
+    resolvedLayer = clamp(layer, 0, 3),
+    token = combinationBaseToken(resolvedLayer, host.id),
+    keycode = displayedKeycode(host, resolvedLayer),
+    decoded = decodeCombinationKeycode(keycode, combinationTokenKnown(token)),
+    basicTrigger = COMBINATION_TRIGGER_KEYS.some(({ code }) => code === Number(keycode))
+      ? Number(keycode)
+      : 4;
+  state.combinationDraft = {
+    hostId: host.id,
+    layer: resolvedLayer,
+    modifiers: decoded?.modifiers.map(({ value }) => value) || [0x01],
+    trigger: decoded?.trigger || basicTrigger,
+  };
+}
+
+function combinationHostKeyboardHtml() {
+  const draft = state.combinationDraft;
+  return `<div class="combination-host-board"><div class="keyboard combination-host-keyboard" aria-label="Choose the physical key that activates this combination">${layout.map((row, uiRow) => `<div class="keyboard-row">${row.map((_, col) => {
+    const key = keys.find((candidate) => candidate.uiRow === uiRow && candidate.col === col),
+      selected = Number(draft.hostId) === key.id;
+    return `<button class="key combination-host-key ${selected ? "selected" : ""}" style="--u:${key.u}" type="button" data-combination-host="${key.id}" aria-pressed="${selected}" title="Use physical ${esc(key.n)} as the combination host"><span class="mapped">${esc(key.n)}</span><b>${esc(combinationMappingLabel(key, draft.layer))}</b></button>`;
+  }).join("")}</div>`).join("")}</div></div>`;
+}
+
+function combinationTriggerGroups() {
+  return KEYBOARD_MAPPING_GROUPS
+    .filter((group) => group.id !== "modifiers")
+    .map((group) => ({
+      id: group.id,
+      label: group.label,
+      entries: COMBINATION_TRIGGER_KEYS.filter((entry) => group.test(entry.code)),
+    }))
+    .filter((group) => group.entries.length);
+}
+
+function openCombinationTriggerPicker() {
+  openAdvancedKeyPicker({
+    title: "Choose combination trigger",
+    eyebrow: "KEY COMBINATION TRIGGER",
+    context: `${COMBINATION_LAYER_NAMES[state.combinationDraft.layer]} · ${keys[state.combinationDraft.hostId]?.n || "Host key"}`,
+    description: "Choose the one normal HID key sent together with the modifier mask.",
+    groups: combinationTriggerGroups(),
+    current: Number(state.combinationDraft.trigger),
+    accent: "#58d1d6",
+    exclusion: "Modifier usages are selected separately. Media, mouse, firmware, lighting, macro and gamepad values are not valid combination triggers.",
+    onSelect: (code) => {
+      state.combinationDraft.trigger = code;
+      renderCombinationConfiguration();
+    },
+  });
+}
+
+function combinationEditor() {
+  const draft = state.combinationDraft,
+    host = keys[Number(draft.hostId)] || keys[0],
+    modifiers = draft.modifiers.map(Number),
+    summary = combinationLabel(modifiers, draft.trigger),
+    hasExperimental = modifiers.some((value) => value > 0x08);
+  return `<div class="combination-editor"><div class="panel-head"><div><span class="eyebrow">INLINE LAYER MAPPING</span><h2>Key combination</h2><p>Choose the layer and physical host key, then combine up to eight HID modifiers with one normal trigger key.</p></div><span class="badge ${hasExperimental ? "experimental" : "ready"}">${modifiers.length} MODIFIER${modifiers.length === 1 ? "" : "S"}</span></div><div class="combination-layer-tabs" role="tablist" aria-label="Combination layer">${COMBINATION_LAYER_NAMES.map((name, layer) => `<button type="button" role="tab" data-combination-layer="${layer}" class="${layer === Number(draft.layer) ? "active" : ""}" aria-selected="${layer === Number(draft.layer)}"><span>0${layer + 1}</span>${name}</button>`).join("")}</div><div class="combination-host-heading"><div><h3>Activation key</h3><p>Pressing this physical key emits the complete combination.</p></div><strong>${esc(host.n)} · ${esc(COMBINATION_LAYER_NAMES[draft.layer])}</strong></div>${combinationHostKeyboardHtml()}<div class="combination-builder"><section><div class="combination-section-heading"><div><h3>Modifier mask</h3><p>All selected modifier bits are sent together. Their click order here does not change firmware timing.</p></div><span>${modifiers.length}/8</span></div><div class="combination-modifier-grid">${COMBINATION_MODIFIERS.map((modifier) => {
+    const selected = modifiers.includes(modifier.value);
+    return `<button type="button" data-combination-modifier="${modifier.value}" class="${selected ? "selected" : ""} ${modifier.captured ? "captured" : "experimental"}" aria-pressed="${selected}"><i>${selected ? "✓" : "+"}</i><span><b>${esc(modifier.label)}</b><small>${modifier.captured ? "Original AE64 range" : "Extended HID bit"}</small></span></button>`;
+  }).join("")}</div></section><section class="combination-trigger-panel"><div class="field"><span>Trigger key</span><button type="button" class="advanced-key-value assigned" id="openCombinationTriggerPicker"><small>NORMAL HID USAGE</small><b>${esc(keycodeLabel(draft.trigger))}</b><i aria-hidden="true">›</i></button><small>One standard keyboard usage can accompany the modifier byte.</small></div><div class="combination-output"><span>ONBOARD OUTPUT</span><strong>${esc(summary)}</strong><small>Modifier mask 0x${modifiers.reduce((mask, value) => mask | value, 0).toString(16).padStart(2, "0").toUpperCase()} · Trigger 0x${Number(draft.trigger).toString(16).padStart(2, "0").toUpperCase()}</small></div><div class="combination-timing-note"><b>Simultaneous, not sequenced</b><p>The keyboard holds this report while ${esc(host.n)} is held, then releases it when ${esc(host.n)} is released. Use a macro when events need delays.</p></div></section></div><div class="combination-footer"><p>${hasExperimental ? "Right-side modifier bits are standards-based and HE30-verified, but were hidden by the captured AE64 interface. Test the result before relying on it in games." : "The four left-side modifiers match the range exposed by the captured AE64 interface."}</p><button class="button primary" id="stageCombination" type="button" ${modifiers.length ? "" : "disabled"}>Stage combination</button></div></div>`;
+}
+
+function renderCombinationConfiguration() {
+  const body = document.querySelector("#combinationConfigBody");
+  if (!body) return;
+  body.innerHTML = combinationEditor();
+  bindCombinationConfiguration();
+}
+
+function openCombinationConfiguration() {
+  syncCombinationDraft(selectedKey().id, state.profile.layer);
+  renderCombinationConfiguration();
+  openDialog(document.querySelector("#combinationConfigDialog"));
+}
+
+function selectCombinationHost(id) {
+  syncCombinationDraft(Number(id), state.combinationDraft.layer);
+  renderCombinationConfiguration();
+}
+
+function stageCombination() {
+  const draft = state.combinationDraft,
+    host = keys[Number(draft.hostId)],
+    layer = clamp(draft.layer, 0, 3);
+  if (!host) return showToast("Choose a valid physical host key.", true);
+  let keycode;
+  try {
+    keycode = combinationKeycode(draft.modifiers, draft.trigger);
+  } catch (error) {
+    return showToast(error.message, true);
+  }
+  const token = `${layer}:${host.id}`,
+    baseToken = combinationBaseToken(layer, host.id),
+    previous = displayedKeycode(host, layer);
+  if (!decodeCombinationKeycode(previous, combinationTokenKnown(baseToken)))
+    state.profile.combinationBases[baseToken] = previous;
+  state.profile.keycodes[layer][host.id] = keycode;
+  state.dirty.mapping.add(token);
+  state.profile.layer = layer;
+  state.profile.selected = host.id;
+  state.selectedKeys = new Set([host.id]);
+  closeDialog(document.querySelector("#combinationConfigDialog"));
+  render();
+  showToast(`${combinationLabel(draft.modifiers, draft.trigger)} staged on ${COMBINATION_LAYER_NAMES[layer]} ${host.n}.`);
+}
+
+function removeCombinationAssignment(value) {
+  const [layerValue, idValue] = String(value).split(":"),
+    layer = clamp(layerValue, 0, 3),
+    host = keys[Number(idValue)];
+  const token = `${layer}:${host?.id}`,
+    baseToken = combinationBaseToken(layer, host?.id);
+  if (!host || !decodeCombinationKeycode(displayedKeycode(host, layer), combinationTokenKnown(baseToken))) return;
+  if (state.dirty.mapping.has(token)) {
+    const original = Number(state.original?.keycodes?.[layer]?.[host.id]),
+      originalBase = state.original?.combinationBases?.[baseToken];
+    state.profile.keycodes[layer][host.id] = Number.isInteger(original)
+      ? original
+      : defaultKeycode(host);
+    if (originalBase === undefined) delete state.profile.combinationBases[baseToken];
+    else state.profile.combinationBases[baseToken] = originalBase;
+    state.dirty.mapping.delete(token);
+    render();
+    showToast(`Staged combination discarded for ${COMBINATION_LAYER_NAMES[layer]} ${host.n}.`);
+    return;
+  }
+  const fallback = Number(state.profile.combinationBases[baseToken]);
+  state.profile.keycodes[layer][host.id] = Number.isInteger(fallback)
+    ? fallback
+    : defaultKeycode(host);
+  delete state.profile.combinationBases[baseToken];
+  state.dirty.mapping.add(token);
+  state.profile.layer = layer;
+  state.profile.selected = host.id;
+  state.selectedKeys = new Set([host.id]);
+  render();
+  showToast(`Combination removal staged for ${COMBINATION_LAYER_NAMES[layer]} ${host.n}.`);
+}
+
+function bindCombinationConfiguration() {
+  document.querySelectorAll("[data-combination-layer]").forEach((button) =>
+    button.addEventListener("click", () => {
+      syncCombinationDraft(state.combinationDraft.hostId, Number(button.dataset.combinationLayer));
+      renderCombinationConfiguration();
+    }),
+  );
+  document.querySelectorAll("[data-combination-host]").forEach((button) =>
+    button.addEventListener("click", () => selectCombinationHost(button.dataset.combinationHost)),
+  );
+  document.querySelectorAll("[data-combination-modifier]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const value = Number(button.dataset.combinationModifier),
+        selected = new Set(state.combinationDraft.modifiers.map(Number));
+      if (selected.has(value)) selected.delete(value); else selected.add(value);
+      state.combinationDraft.modifiers = COMBINATION_MODIFIERS
+        .map((modifier) => modifier.value)
+        .filter((modifier) => selected.has(modifier));
+      renderCombinationConfiguration();
+    }),
+  );
+  document.querySelector("#openCombinationTriggerPicker")?.addEventListener("click", openCombinationTriggerPicker);
+  document.querySelector("#stageCombination")?.addEventListener("click", stageCombination);
+}
+
+function combinationAssignmentEntries() {
+  const feature = ADVANCED_FEATURES.find((item) => item.code === "COMBO"),
+    entries = [];
+  for (let layer = 0; layer < 4; layer += 1) {
+    keys.forEach((key) => {
+      const token = `${layer}:${key.id}`,
+        baseToken = combinationBaseToken(layer, key.id),
+        keycode = displayedKeycode(key, layer),
+        combination = decodeCombinationKeycode(keycode, combinationTokenKnown(baseToken));
+      if (!combination) return;
+      entries.push({
+        feature,
+        ids: [key.id],
+        keys: [key],
+        layer,
+        details: `${COMBINATION_LAYER_NAMES[layer]} · ${combinationLabel(combination.modifiers.map(({ value }) => value), combination.trigger)}`,
+        staged: state.dirty.mapping.has(token),
+        removing: false,
+        combination: true,
+      });
+    });
+  }
+  return entries;
+}
+
+function combinationFeatureInfo() {
+  return {
+    title: "Key Combination",
+    body: `<div class="feature-info-lead"><p>A key combination replaces one host key on one layer with a standard HID keyboard report: one eight-bit modifier mask plus one normal trigger usage. It consumes a layer-mapping entry, not an AE64 higher-key or macro slot.</p><ul><li>Choose the layer and physical host key.</li><li>Select one to eight left/right modifiers.</li><li>Choose one normal trigger key, then stage and apply.</li></ul></div><div class="combination-tutorial"><section><span>01</span><div><b>Pick the host</b><p>The host is the physical key you press. A combination can be different on Main, Fn1, Fn2, and Fn3.</p></div></section><section><span>02</span><div><b>Build the report</b><p>Ctrl, Shift, Alt, and GUI each have left and right bits. The original AE64 UI exposed the first four; right-side bits are an experimental extension supported by the same byte layout.</p></div></section><section><span>03</span><div><b>Understand timing</b><p>The modifier byte and trigger usage appear in the same report. There is no modifier order and no programmable delay. The report stays active for as long as the host key is held.</p></div></section><section><span>04</span><div><b>Test safely</b><p>Apply, then verify in a keyboard tester. Operating systems and games can intercept reserved shortcuts or treat left/right modifier variants identically.</p></div></section></div><div class="combination-report-diagram" aria-label="Combination report timing"><span>Host down</span><i></i><strong>Modifiers + trigger held together</strong><i></i><span>Host up</span></div>`,
+  };
+}

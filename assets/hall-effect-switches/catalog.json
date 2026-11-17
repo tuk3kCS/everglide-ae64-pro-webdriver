@@ -1,0 +1,1419 @@
+{
+  "schema": 1,
+  "device": {
+    "boardId": "0030000a",
+    "vendorId": "1ca6",
+    "productId": "300a"
+  },
+  "switches": [
+    {
+      "axisV2Id": 4112,
+      "axisRangeMax": 3430,
+      "axisCoefficient": 22800,
+      "vendor": {
+        "id": 257,
+        "name": "磁玉轴",
+        "brand": "GATERON",
+        "magneticFlux": 451,
+        "color": "#dbfdcd"
+      },
+      "display": {
+        "name": "Magnetic Jade"
+      },
+      "image": "assets/images/he_switch_images/4112.webp"
+    },
+    {
+      "axisV2Id": 4128,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 20000,
+      "vendor": {
+        "id": 258,
+        "name": "磁玉Pro",
+        "brand": "GATERON",
+        "magneticFlux": 458,
+        "color": "#adfb8c"
+      },
+      "display": {
+        "name": "Magnetic Jade Pro"
+      },
+      "image": "assets/images/he_switch_images/4128.webp"
+    },
+    {
+      "axisV2Id": 4144,
+      "axisRangeMax": 3400,
+      "axisCoefficient": 19000,
+      "vendor": {
+        "id": 259,
+        "name": "磁玉Gaming",
+        "brand": "GATERON",
+        "magneticFlux": 470,
+        "color": "#69ff51"
+      },
+      "display": {
+        "name": "Magnetic Jade Gaming"
+      },
+      "image": "assets/images/he_switch_images/4144.webp"
+    },
+    {
+      "axisV2Id": 4160,
+      "axisRangeMax": 3430,
+      "axisCoefficient": 19600,
+      "vendor": {
+        "id": 260,
+        "name": "磁玉Air",
+        "brand": "GATERON",
+        "magneticFlux": 477,
+        "color": "#f0f6bb"
+      },
+      "display": {
+        "name": "Magnetic Jade Air"
+      },
+      "image": "assets/images/he_switch_images/4160.webp"
+    },
+    {
+      "axisV2Id": 4176,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 20350,
+      "vendor": {
+        "id": 261,
+        "name": "玉京子轴",
+        "brand": "GATERON",
+        "magneticFlux": 461,
+        "color": "#ff3f3f"
+      },
+      "display": {
+        "name": "Yujingzi"
+      },
+      "image": "assets/images/he_switch_images/4176.webp"
+    },
+    {
+      "axisV2Id": 4192,
+      "axisRangeMax": 3350,
+      "axisCoefficient": 21300,
+      "vendor": {
+        "id": 262,
+        "name": "绿龙轴",
+        "brand": "GATERON",
+        "magneticFlux": 467,
+        "color": "#a8ff47"
+      },
+      "display": {
+        "name": "Magnetic Green Dragon"
+      },
+      "image": "assets/images/he_switch_images/4192.webp"
+    },
+    {
+      "axisV2Id": 4208,
+      "axisRangeMax": 3130,
+      "axisCoefficient": 24500,
+      "vendor": {
+        "id": 263,
+        "name": "阿波罗轴",
+        "brand": "GATERON",
+        "magneticFlux": 403,
+        "color": "#ffe919"
+      },
+      "display": {
+        "name": "Apollo"
+      },
+      "image": "assets/images/he_switch_images/4208.webp"
+    },
+    {
+      "axisV2Id": 4224,
+      "axisRangeMax": 3410,
+      "axisCoefficient": 19500,
+      "vendor": {
+        "id": 264,
+        "name": "磁玉Max",
+        "brand": "GATERON",
+        "magneticFlux": 471,
+        "color": "#f9e892"
+      },
+      "display": {
+        "name": "Magnetic Jade Max"
+      },
+      "image": "assets/images/he_switch_images/4224.webp"
+    },
+    {
+      "axisV2Id": 4240,
+      "axisRangeMax": 3300,
+      "axisCoefficient": 20480,
+      "vendor": {
+        "id": 265,
+        "name": "磁玉Pom",
+        "brand": "GATERON",
+        "magneticFlux": 480,
+        "color": "#defccb"
+      },
+      "display": {
+        "name": "Magnetic Jade POM"
+      }
+    },
+    {
+      "axisV2Id": 4256,
+      "axisRangeMax": 3150,
+      "axisCoefficient": 26800,
+      "vendor": {
+        "id": 266,
+        "name": "花火轴",
+        "brand": "GATERON",
+        "magneticFlux": 378,
+        "color": "#ffa70e"
+      },
+      "display": {
+        "name": "Magnetic Spark"
+      },
+      "image": "assets/images/he_switch_images/4256.webp"
+    },
+    {
+      "axisV2Id": 4272,
+      "axisRangeMax": 3335,
+      "axisCoefficient": 20300,
+      "vendor": {
+        "id": 267,
+        "name": "紫龙轴",
+        "brand": "GATERON",
+        "magneticFlux": 450,
+        "color": "#8174f8"
+      },
+      "display": {
+        "name": "Magnetic Purple Dragon"
+      },
+      "image": "assets/images/he_switch_images/4272.webp"
+    },
+    {
+      "axisV2Id": 4288,
+      "axisRangeMax": 3380,
+      "axisCoefficient": 20044,
+      "vendor": {
+        "id": 268,
+        "name": "赤龙轴(自润)",
+        "brand": "GATERON",
+        "magneticFlux": 442,
+        "color": "#ff4141"
+      },
+      "display": {
+        "name": "Magnetic Red Dragon (Lubed)"
+      },
+      "image": "assets/images/he_switch_images/4288.webp"
+    },
+    {
+      "axisV2Id": 4304,
+      "axisRangeMax": 3945,
+      "axisCoefficient": 15000,
+      "vendor": {
+        "id": 269,
+        "name": "星轨磁轴",
+        "brand": "GATERON",
+        "magneticFlux": 395,
+        "color": "#0099ff"
+      },
+      "display": {
+        "name": "Star Trail"
+      },
+      "image": "assets/images/he_switch_images/4304.webp"
+    },
+    {
+      "axisV2Id": 4320,
+      "axisRangeMax": 3340,
+      "axisCoefficient": 21600,
+      "vendor": {
+        "id": 270,
+        "name": "金龙轴",
+        "brand": "GATERON",
+        "magneticFlux": 445,
+        "color": "#fcca74"
+      },
+      "display": {
+        "name": "Magnetic Gold Dragon"
+      },
+      "image": "assets/images/he_switch_images/4320.webp"
+    },
+    {
+      "axisV2Id": 4336,
+      "axisRangeMax": 3430,
+      "axisCoefficient": 22250,
+      "vendor": {
+        "id": 271,
+        "name": "封底雪刀轴",
+        "brand": "GATERON",
+        "magneticFlux": 458,
+        "color": "#d9d9d9"
+      },
+      "display": {
+        "name": "Snow Blade (Closed Bottom)"
+      }
+    },
+    {
+      "axisV2Id": 4352,
+      "axisRangeMax": 3440,
+      "axisCoefficient": 19100,
+      "vendor": {
+        "id": 272,
+        "name": "麒麟轴",
+        "brand": "GATERON",
+        "magneticFlux": 410
+      },
+      "display": {
+        "name": "Qilin"
+      },
+      "image": "assets/images/he_switch_images/4352.webp"
+    },
+    {
+      "axisV2Id": 4368,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 22000,
+      "vendor": {
+        "id": 273,
+        "name": "樱花轴",
+        "brand": "GATERON",
+        "magneticFlux": 458,
+        "color": "#f4abff"
+      },
+      "display": {
+        "name": "Magnetic Jade Sakura"
+      },
+      "image": "assets/images/he_switch_images/4368.webp"
+    },
+    {
+      "axisV2Id": 4384,
+      "axisRangeMax": 3385,
+      "axisCoefficient": 23300,
+      "vendor": {
+        "id": 274,
+        "name": "灰玉轴Pro",
+        "brand": "GATERON",
+        "magneticFlux": 435,
+        "color": "#e9fcc9"
+      },
+      "display": {
+        "name": "Grey Jade Pro"
+      },
+      "image": "assets/images/he_switch_images/4384.webp"
+    },
+    {
+      "axisV2Id": 4400,
+      "axisRangeMax": 3365,
+      "axisCoefficient": 20800,
+      "vendor": {
+        "id": 275,
+        "name": "玄武轴(全润)",
+        "brand": "GATERON",
+        "magneticFlux": 455,
+        "color": "#4dfb32"
+      },
+      "display": {
+        "name": "Xuanwu (Fully Lubed)"
+      },
+      "image": "assets/images/he_switch_images/4400.webp"
+    },
+    {
+      "axisV2Id": 4416,
+      "axisRangeMax": 4015,
+      "axisCoefficient": 13300,
+      "vendor": {
+        "id": 276,
+        "name": "双轨磁白轴",
+        "brand": "GATERON",
+        "magneticFlux": 495,
+        "color": "#fff3f3"
+      },
+      "display": {
+        "name": "KS-37B Dual-Rail Magnetic White"
+      },
+      "image": "assets/images/he_switch_images/4416.webp"
+    },
+    {
+      "axisV2Id": 4432,
+      "axisRangeMax": 4005,
+      "axisCoefficient": 15200,
+      "vendor": {
+        "id": 277,
+        "name": "双轨磁橙轴",
+        "brand": "GATERON",
+        "magneticFlux": 412,
+        "color": "#fccb68"
+      },
+      "display": {
+        "name": "KS-20 Dual-Rail Magnetic Orange"
+      },
+      "image": "assets/images/he_switch_images/4432.webp"
+    },
+    {
+      "axisV2Id": 4464,
+      "axisRangeMax": 3970,
+      "axisCoefficient": 15300,
+      "vendor": {
+        "id": 279,
+        "name": "磁黄轴",
+        "brand": "GATERON",
+        "magneticFlux": 535,
+        "color": "#fff06f"
+      },
+      "display": {
+        "name": "Magnetic Yellow"
+      },
+      "image": "assets/images/he_switch_images/4464.webp"
+    },
+    {
+      "axisV2Id": 4480,
+      "axisRangeMax": 3400,
+      "axisCoefficient": 17600,
+      "vendor": {
+        "id": 280,
+        "name": "磁黑轴",
+        "brand": "GATERON",
+        "magneticFlux": 440,
+        "color": "#c1bfbf"
+      },
+      "display": {
+        "name": "Magnetic Black"
+      }
+    },
+    {
+      "axisV2Id": 4496,
+      "axisRangeMax": 3935,
+      "axisCoefficient": 19700,
+      "vendor": {
+        "id": 281,
+        "name": "磁橙轴",
+        "brand": "GATERON",
+        "magneticFlux": 510,
+        "color": "#ffc527"
+      },
+      "display": {
+        "name": "KS-20 Magnetic Orange"
+      },
+      "image": "assets/images/he_switch_images/4496.webp"
+    },
+    {
+      "axisV2Id": 4512,
+      "axisRangeMax": 3895,
+      "axisCoefficient": 17200,
+      "vendor": {
+        "id": 282,
+        "name": "磁绿轴",
+        "brand": "GATERON",
+        "magneticFlux": 505,
+        "color": "#75ff30"
+      },
+      "display": {
+        "name": "Magnetic Green"
+      },
+      "image": "assets/images/he_switch_images/4512.webp"
+    },
+    {
+      "axisV2Id": 4528,
+      "axisRangeMax": 3615,
+      "axisCoefficient": 16800,
+      "vendor": {
+        "id": 283,
+        "name": "悟静轴",
+        "brand": "GATERON",
+        "magneticFlux": 475,
+        "color": "#f1f888"
+      },
+      "display": {
+        "name": "Magnetic Genty Silent"
+      },
+      "image": "assets/images/he_switch_images/4528.webp"
+    },
+    {
+      "axisV2Id": 4544,
+      "axisRangeMax": 3415,
+      "axisCoefficient": 23000,
+      "vendor": {
+        "id": 284,
+        "name": "粉磁玉轴Pro",
+        "brand": "GATERON",
+        "magneticFlux": 430,
+        "color": "#f4bdff"
+      },
+      "display": {
+        "name": "Pink Jade Pro"
+      },
+      "image": "assets/images/he_switch_images/4544.webp"
+    },
+    {
+      "axisV2Id": 4560,
+      "axisRangeMax": 3355,
+      "axisCoefficient": 21300,
+      "vendor": {
+        "id": 285,
+        "name": "粉玉轴",
+        "brand": "GATERON",
+        "magneticFlux": 415,
+        "color": "#f85ed9"
+      },
+      "display": {
+        "name": "Pink Jade"
+      },
+      "image": "assets/images/he_switch_images/4560.webp"
+    },
+    {
+      "axisV2Id": 4592,
+      "axisRangeMax": 3355,
+      "axisCoefficient": 22200,
+      "vendor": {
+        "id": 287,
+        "name": "翠玉轴",
+        "brand": "GATERON",
+        "magneticFlux": 418,
+        "color": "#4bff09"
+      },
+      "display": {
+        "name": "Magnetic Jade Emerald"
+      },
+      "image": "assets/images/he_switch_images/4592.webp"
+    },
+    {
+      "axisV2Id": 4608,
+      "axisRangeMax": 3475,
+      "axisCoefficient": 22200,
+      "vendor": {
+        "id": 288,
+        "name": "玉刃轴",
+        "brand": "GATERON",
+        "magneticFlux": 450
+      },
+      "display": {
+        "name": "Jade Blade"
+      },
+      "image": "assets/images/he_switch_images/4608.webp"
+    },
+    {
+      "axisV2Id": 8208,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 20500,
+      "vendor": {
+        "id": 513,
+        "name": "万磁王",
+        "brand": "TTC",
+        "magneticFlux": 474,
+        "color": "#fb4848"
+      },
+      "display": {
+        "name": "King (KOM)",
+        "aliases": [
+          "King/KOM"
+        ],
+        "image": "assets/images/he_switch_images/8208.webp"
+      },
+      "image": "assets/images/he_switch_images/8208.png"
+    },
+    {
+      "axisV2Id": 8224,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 20100,
+      "vendor": {
+        "id": 514,
+        "name": "万磁王RGB",
+        "brand": "TTC",
+        "magneticFlux": 473,
+        "color": "#ff2121"
+      },
+      "display": {
+        "name": "RGB King",
+        "aliases": [
+          "King/KOM RGB"
+        ],
+        "image": "assets/images/he_switch_images/8224.webp"
+      },
+      "image": "assets/images/he_switch_images/8224.png"
+    },
+    {
+      "axisV2Id": 8240,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 21400,
+      "vendor": {
+        "id": 515,
+        "name": "Pom万磁王",
+        "brand": "TTC",
+        "magneticFlux": 476,
+        "color": "#e3dcff"
+      },
+      "display": {
+        "name": "POM King",
+        "aliases": [
+          "King/KOM POM"
+        ],
+        "image": "assets/images/he_switch_images/8240.webp"
+      },
+      "image": "assets/images/he_switch_images/8240.png"
+    },
+    {
+      "axisV2Id": 8256,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 20600,
+      "vendor": {
+        "id": 516,
+        "name": "青蛇轴",
+        "brand": "TTC",
+        "magneticFlux": 471,
+        "color": "#69ff1f"
+      },
+      "display": {
+        "name": "Zodiac Snake Green",
+        "image": "assets/images/he_switch_images/8256.webp"
+      },
+      "image": "assets/images/he_switch_images/8256.png"
+    },
+    {
+      "axisV2Id": 8272,
+      "axisRangeMax": 3410,
+      "axisCoefficient": 20800,
+      "vendor": {
+        "id": 517,
+        "name": "白蛇轴",
+        "brand": "TTC",
+        "magneticFlux": 457,
+        "color": "#e8e8e8"
+      },
+      "display": {
+        "name": "Zodiac Snake White",
+        "image": "assets/images/he_switch_images/8272.webp"
+      },
+      "image": "assets/images/he_switch_images/8272.png"
+    },
+    {
+      "axisV2Id": 8288,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 20500,
+      "vendor": {
+        "id": 518,
+        "name": "爱心万磁王",
+        "brand": "TTC",
+        "magneticFlux": 461,
+        "color": "#f8d4e0"
+      },
+      "display": {
+        "name": "Honey King",
+        "image": "assets/images/he_switch_images/8288.webp"
+      },
+      "image": "assets/images/he_switch_images/8288.png"
+    },
+    {
+      "axisV2Id": 8304,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 21000,
+      "vendor": {
+        "id": 519,
+        "name": "紫心万磁王",
+        "brand": "TTC",
+        "magneticFlux": 462,
+        "color": "#6f43fd"
+      },
+      "display": {
+        "name": "RGB Purple Heart",
+        "image": "assets/images/he_switch_images/8304.webp"
+      },
+      "image": "assets/images/he_switch_images/8304.png"
+    },
+    {
+      "axisV2Id": 8320,
+      "axisRangeMax": 3450,
+      "axisCoefficient": 19800,
+      "vendor": {
+        "id": 520,
+        "name": "圣心万磁王",
+        "brand": "TTC",
+        "magneticFlux": 470,
+        "color": "#fffafa"
+      },
+      "display": {
+        "name": "RGB Sacred Heart",
+        "image": "assets/images/he_switch_images/8320.webp"
+      },
+      "image": "assets/images/he_switch_images/8320.png"
+    },
+    {
+      "axisV2Id": 8336,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 21000,
+      "vendor": {
+        "id": 521,
+        "name": "太阳神轴",
+        "brand": "TTC",
+        "magneticFlux": 471,
+        "color": "#ff8000"
+      },
+      "display": {
+        "name": "Helios",
+        "image": "assets/images/he_switch_images/8336.webp"
+      },
+      "image": "assets/images/he_switch_images/8336.png"
+    },
+    {
+      "axisV2Id": 8352,
+      "axisRangeMax": 3460,
+      "axisCoefficient": 20900,
+      "vendor": {
+        "id": 522,
+        "name": "天王轴",
+        "brand": "TTC",
+        "magneticFlux": 482,
+        "color": "#60daff"
+      },
+      "display": {
+        "name": "Uranus",
+        "aliases": [
+          "Uranus Standard"
+        ],
+        "image": "assets/images/he_switch_images/8352.webp"
+      },
+      "image": "assets/images/he_switch_images/8352.png"
+    },
+    {
+      "axisV2Id": 8368,
+      "axisRangeMax": 3450,
+      "axisCoefficient": 20100,
+      "vendor": {
+        "id": 523,
+        "name": "天王轴电竞",
+        "brand": "TTC",
+        "magneticFlux": 483,
+        "color": "#f9a748"
+      },
+      "display": {
+        "name": "Uranus Esports",
+        "image": "assets/images/he_switch_images/8368.webp"
+      },
+      "image": "assets/images/he_switch_images/8368.png"
+    },
+    {
+      "axisV2Id": 8384,
+      "axisRangeMax": 3440,
+      "axisCoefficient": 18352,
+      "vendor": {
+        "id": 524,
+        "name": "天王SE",
+        "brand": "TTC",
+        "magneticFlux": 465,
+        "color": "#e8fff4"
+      },
+      "display": {
+        "name": "Uranus SE",
+        "image": "assets/images/he_switch_images/8384.webp"
+      },
+      "image": "assets/images/he_switch_images/8384.png"
+    },
+    {
+      "axisV2Id": 8400,
+      "axisRangeMax": 3480,
+      "axisCoefficient": 20500,
+      "vendor": {
+        "id": 525,
+        "name": "兵王轴",
+        "brand": "TTC",
+        "magneticFlux": 484,
+        "color": "#af7c05"
+      },
+      "display": {
+        "name": "Commander King",
+        "image": "assets/images/he_switch_images/8400.webp"
+      },
+      "image": "assets/images/he_switch_images/8400.png"
+    },
+    {
+      "axisV2Id": 8416,
+      "axisRangeMax": 3440,
+      "axisCoefficient": 21000,
+      "vendor": {
+        "id": 526,
+        "name": "兵王轴Pro",
+        "brand": "TTC",
+        "magneticFlux": 453,
+        "color": "#ffdf5d"
+      },
+      "display": {
+        "name": "Commander King Pro",
+        "image": "assets/images/he_switch_images/8416.webp"
+      },
+      "image": "assets/images/he_switch_images/8416.jpg"
+    },
+    {
+      "axisV2Id": 8432,
+      "axisRangeMax": 3510,
+      "axisCoefficient": 20000,
+      "vendor": {
+        "id": 527,
+        "name": "凌雪轴",
+        "brand": "TTC",
+        "magneticFlux": 471,
+        "color": "#28f0ff"
+      },
+      "display": {
+        "name": "HiFi Snow",
+        "aliases": [
+          "HiFi Snow Magneto"
+        ],
+        "image": "assets/images/he_switch_images/8432.webp"
+      },
+      "image": "assets/images/he_switch_images/8432.png"
+    },
+    {
+      "axisV2Id": 8448,
+      "axisRangeMax": 3470,
+      "axisCoefficient": 19100,
+      "vendor": {
+        "id": 528,
+        "name": "龙神轴",
+        "brand": "TTC",
+        "magneticFlux": 466,
+        "color": "#9131fd"
+      },
+      "display": {
+        "name": "Dragon Lord",
+        "image": "assets/images/he_switch_images/8448.webp"
+      },
+      "image": "assets/images/he_switch_images/8448.png"
+    },
+    {
+      "axisV2Id": 8464,
+      "axisRangeMax": 3470,
+      "axisCoefficient": 19500,
+      "vendor": {
+        "id": 529,
+        "name": "精灵王轴",
+        "brand": "TTC",
+        "magneticFlux": 501,
+        "color": "#6cfff6"
+      },
+      "display": {
+        "name": "Elf King",
+        "image": "assets/images/he_switch_images/8464.webp"
+      },
+      "image": "assets/images/he_switch_images/8464.png"
+    },
+    {
+      "axisV2Id": 8480,
+      "axisRangeMax": 3470,
+      "axisCoefficient": 19700,
+      "vendor": {
+        "id": 530,
+        "name": "太阿磁轴",
+        "brand": "TTC",
+        "magneticFlux": 456,
+        "color": "#ffb93f"
+      },
+      "display": {
+        "name": "Tai'e Sword",
+        "image": "assets/images/he_switch_images/8480.webp"
+      },
+      "image": "assets/images/he_switch_images/8480.png"
+    },
+    {
+      "axisV2Id": 8496,
+      "axisRangeMax": 3420,
+      "axisCoefficient": 16672,
+      "vendor": {
+        "id": 531,
+        "name": "科泰轴",
+        "brand": "TTC",
+        "magneticFlux": 455,
+        "color": "#f2bc05"
+      },
+      "display": {
+        "name": "KTEK Magnetic",
+        "aliases": [
+          "KTEK"
+        ],
+        "image": "assets/images/he_switch_images/8496.webp"
+      },
+      "image": "assets/images/he_switch_images/8496.png"
+    },
+    {
+      "axisV2Id": 12336,
+      "axisRangeMax": 3500,
+      "axisCoefficient": 22000,
+      "vendor": {
+        "id": 771,
+        "name": "八宝轴α",
+        "brand": "WuqueStudio",
+        "group": "WuqueStudio",
+        "magneticFlux": 646,
+        "color": "#f2f2f2"
+      },
+      "display": {
+        "name": "WS Babao Alpha",
+        "aliases": [
+          "Babao","Alpha"
+        ]
+      }
+    },
+    {
+      "axisV2Id": 12352,
+      "axisRangeMax": 3500,
+      "axisCoefficient": 20200,
+      "vendor": {
+        "id": 772,
+        "name": "八宝轴L",
+        "brand": "WuqueStudio",
+        "group": "WuqueStudio",
+        "magneticFlux": 498,
+        "color": "#ece8e8"
+      },
+      "display": {
+        "name": "WS Babao Pink Lotus",
+        "aliases": [
+          "Babao","Lotus"
+        ]
+      }
+    },
+    {
+      "axisV2Id": 12368,
+      "axisRangeMax": 3360,
+      "axisCoefficient": 20500,
+      "vendor": {
+        "id": 773,
+        "name": "冰皇轴",
+        "brand": "other",
+        "magneticFlux": 543,
+        "color": "#eeeeee"
+      },
+      "display": {
+        "name": "AULA Ice Emperor"
+      },
+      "image": "assets/images/he_switch_images/12368.webp"
+    },
+    {
+      "axisV2Id": 12400,
+      "axisRangeMax": 3340,
+      "axisCoefficient": 20200,
+      "vendor": {
+        "id": 775,
+        "name": "ti轴",
+        "brand": "other",
+        "magneticFlux": 518,
+        "color": "#d9c5b3"
+      },
+      "display": {
+        "name": "Owlab Ti HE",
+        "aliases": [
+          "Owlab Ti"
+        ],
+        "image": "assets/images/he_switch_images/12400.webp"
+      },
+      "image": "assets/images/he_switch_images/12400.png"
+    },
+    {
+      "axisV2Id": 12416,
+      "axisRangeMax": 3360,
+      "axisCoefficient": 21300,
+      "vendor": {
+        "id": 776,
+        "name": "登神Pro",
+        "brand": "other",
+        "magneticFlux": 510,
+        "color": "#caa1ff"
+      },
+      "display": {
+        "name": "Latenpow Dengshen Pro",
+        "aliases": [
+          "Latenpow Deng God Pro"
+        ],
+        "image": "assets/images/he_switch_images/12416.webp"
+      },
+      "image": "assets/images/he_switch_images/12416.jpg"
+    },
+    {
+      "axisV2Id": 12432,
+      "axisRangeMax": 3310,
+      "axisCoefficient": 20500,
+      "vendor": {
+        "id": 777,
+        "name": "UR冰磁轴",
+        "brand": "other",
+        "magneticFlux": 486,
+        "color": "#ffd9d9"
+      },
+      "display": {
+        "name": "UR Ice Extreme",
+        "aliases": [
+          "UR Ice Magnetic"
+        ],
+        "image": "assets/images/he_switch_images/12432.webp"
+      },
+      "image": "assets/images/he_switch_images/12432.jpg"
+    },
+    {
+      "axisV2Id": 12448,
+      "axisRangeMax": 3340,
+      "axisCoefficient": 21500,
+      "vendor": {
+        "id": 778,
+        "name": "锦鲤轴",
+        "brand": "other",
+        "magneticFlux": 515,
+        "color": "#fcadad"
+      },
+      "display": {
+        "name": "Koi"
+      },
+      "image": "assets/images/he_switch_images/12448.webp"
+    },
+    {
+      "axisV2Id": 12464,
+      "axisRangeMax": 3390,
+      "axisCoefficient": 20100,
+      "vendor": {
+        "id": 779,
+        "name": "悟空轴",
+        "brand": "Everglide",
+        "magneticFlux": 491,
+        "color": "#ebebeb"
+      },
+      "display": {
+        "name": "Wukong 21mm spring?"
+      },
+      "image": "assets/images/he_switch_images/12464.webp"
+    },
+    {
+      "axisV2Id": 12512,
+      "axisRangeMax": 3450,
+      "axisCoefficient": 21600,
+      "vendor": {
+        "id": 782,
+        "name": "粉皇轴",
+        "brand": "other",
+        "magneticFlux": 484,
+        "color": "#ffe043"
+      },
+      "display": {
+        "name": "LEOBOG Pink Emperor"
+      },
+      "image": "assets/images/he_switch_images/12512.webp"
+    },
+    {
+      "axisV2Id": 12560,
+      "axisRangeMax": 3380,
+      "axisCoefficient": 20000,
+      "vendor": {
+        "id": 785,
+        "name": "形意轴",
+        "brand": "other",
+        "magneticFlux": 488,
+        "color": "#dddddd"
+      },
+      "display": {
+        "name": "LEOBOG/AULA Xingyi"
+      },
+      "image": "assets/images/he_switch_images/12560.webp"
+    },
+    {
+      "axisV2Id": 12608,
+      "axisRangeMax": 3550,
+      "axisCoefficient": 18600,
+      "vendor": {
+        "id": 788,
+        "name": "天际线轴",
+        "brand": "Everglide",
+        "magneticFlux": 502,
+        "color": "#d3e4ff"
+      },
+      "display": {
+        "name": "Skyline"
+      },
+      "image": "assets/images/he_switch_images/12608.webp"
+    },
+    {
+      "axisV2Id": 12656,
+      "axisRangeMax": 3470,
+      "axisCoefficient": 21000,
+      "vendor": {
+        "id": 791,
+        "name": "磁神轴",
+        "brand": "other",
+        "magneticFlux": 476,
+        "color": "#049217"
+      },
+      "display": {
+        "name": "Kailh Magnetic God",
+        "aliases": [
+          "Kailh Magnetic God"
+        ],
+        "image": "assets/images/he_switch_images/12656.webp"
+      },
+      "image": "assets/images/he_switch_images/12656.png"
+    },
+    {
+      "axisV2Id": 12704,
+      "axisRangeMax": 3610,
+      "axisCoefficient": 18100,
+      "vendor": {
+        "id": 794,
+        "name": "天青轴Pro",
+        "brand": "other",
+        "magneticFlux": 500,
+        "color": "#74e1fd"
+      },
+      "display": {
+        "name": "OKT Azure Pro"
+      },
+      "image": "assets/images/he_switch_images/12704.webp"
+    },
+    {
+      "axisV2Id": 12720,
+      "axisRangeMax": 3550,
+      "axisCoefficient": 18600,
+      "vendor": {
+        "id": 795,
+        "name": "紫星轴",
+        "brand": "other",
+        "magneticFlux": 447,
+        "color": "#cbadff"
+      },
+      "display": {
+        "name": "OKT Purple Star"
+      },
+      "image": "assets/images/he_switch_images/12720.webp"
+    },
+    {
+      "axisV2Id": 12736,
+      "axisRangeMax": 3540,
+      "axisCoefficient": 19900,
+      "vendor": {
+        "id": 796,
+        "name": "赤霄轴",
+        "brand": "other",
+        "magneticFlux": 530,
+        "color": "#fff897"
+      },
+      "display": {
+        "name": "Outemu Chixiao"
+      },
+      "image": "assets/images/he_switch_images/12736.webp"
+    },
+    {
+      "axisV2Id": 13088,
+      "axisRangeMax": 3650,
+      "axisCoefficient": 17300,
+      "vendor": {
+        "id": 818,
+        "name": "极磁轴Pro+",
+        "brand": "other",
+        "magneticFlux": 510,
+        "color": "#fcc4b5"
+      },
+      "display": {
+        "name": "Polar Pro+",
+        "brand": "Unionwell / Greetech",
+        "image": "assets/images/he_switch_images/13088-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13088.webp"
+    },
+    {
+      "axisV2Id": 13104,
+      "axisRangeMax": 3585,
+      "axisCoefficient": 18500,
+      "vendor": {
+        "id": 819,
+        "name": "极磁轴Pro",
+        "brand": "other",
+        "magneticFlux": 505,
+        "color": "#fedada"
+      },
+      "display": {
+        "name": "Polar Pro",
+        "brand": "Unionwell / Greetech",
+        "image": "assets/images/he_switch_images/13104-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13104.webp"
+    },
+    {
+      "axisV2Id": 13120,
+      "axisRangeMax": 3580,
+      "axisCoefficient": 19000,
+      "vendor": {
+        "id": 820,
+        "name": "极磁轴RGB",
+        "brand": "other",
+        "magneticFlux": 510,
+        "color": "#fff6f6"
+      },
+      "display": {
+        "name": "Polar RGB",
+        "brand": "Unionwell / Greetech",
+        "image": "assets/images/he_switch_images/13120-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13120.webp"
+    },
+    {
+      "axisV2Id": 13136,
+      "axisRangeMax": 3645,
+      "axisCoefficient": 16950,
+      "vendor": {
+        "id": 821,
+        "name": "极磁-灼华轴",
+        "brand": "other",
+        "magneticFlux": 490,
+        "color": "#f7d8fe"
+      },
+      "display": {
+        "name": "Polar Blazing Bloom",
+        "brand": "Unionwell / Greetech",
+        "image": "assets/images/he_switch_images/13136-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13136.webp"
+    },
+    {
+      "axisV2Id": 13152,
+      "axisRangeMax": 3655,
+      "axisCoefficient": 19200,
+      "vendor": {
+        "id": 822,
+        "name": "极磁-混元轴",
+        "brand": "other",
+        "magneticFlux": 500,
+        "color": "#e4e4e4"
+      },
+      "display": {
+        "name": "Polar Primordial Unity",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Primordial Unity"
+        ],
+        "image": "assets/images/he_switch_images/13152-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13152.webp"
+    },
+    {
+      "axisV2Id": 13168,
+      "axisRangeMax": 3605,
+      "axisCoefficient": 18900,
+      "vendor": {
+        "id": 823,
+        "name": "极磁-墨玉轴",
+        "brand": "other",
+        "magneticFlux": 503,
+        "color": "#d3f89c"
+      },
+      "display": {
+        "name": "Polar Ink Jade",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Ink Jade"
+        ],
+        "image": "assets/images/he_switch_images/13168-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13168.webp"
+    },
+    {
+      "axisV2Id": 13184,
+      "axisRangeMax": 3625,
+      "axisCoefficient": 22200,
+      "vendor": {
+        "id": 824,
+        "name": "极磁-樱澈轴",
+        "brand": "other",
+        "magneticFlux": 495,
+        "color": "#f2b9f8"
+      },
+      "display": {
+        "name": "Polar Sakura Clear",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Sakura Clarity"
+        ]
+      },
+      "image": "assets/images/he_switch_images/13184.webp"
+    },
+    {
+      "axisV2Id": 13264,
+      "axisRangeMax": 3793,
+      "axisCoefficient": 17536,
+      "vendor": {
+        "id": 829,
+        "name": "海妖轴",
+        "brand": "Everglide",
+        "magneticFlux": 400,
+        "color": "#e89ab1"
+      },
+      "display": {
+        "name": "Siren",
+        "aliases": [
+          "Everglide Siren"
+        ],
+        "image": "assets/images/he_switch_images/13264.webp"
+      },
+      "image": "assets/images/he_switch_images/13264.jpg"
+    },
+    {
+      "axisV2Id": 13472,
+      "axisRangeMax": 3500,
+      "axisCoefficient": 17536,
+      "vendor": {
+        "id": 842,
+        "name": "天际线轴",
+        "brand": "Everglide",
+        "magneticFlux": 480,
+        "color": "#4dd1f9"
+      },
+      "display": {
+        "name": "Skyline V3"
+      },
+      "image": "assets/images/he_switch_images/13472.webp"
+    },
+    {
+      "axisV2Id": 13665,
+      "axisRangeMax": 3200,
+      "axisCoefficient": 25728,
+      "vendor": {
+        "id": 854,
+        "name": "冰曜轴",
+        "brand": "other",
+        "magneticFlux": 360,
+        "color": "#54a9e1"
+      },
+      "display": {
+        "name": "Ice Shine",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Polar Ice Shine"
+        ],
+        "image": "assets/images/he_switch_images/13665-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13665.webp"
+    },
+    {
+      "axisV2Id": 13681,
+      "axisRangeMax": 3200,
+      "axisCoefficient": 25728,
+      "vendor": {
+        "id": 855,
+        "name": "雪曜轴",
+        "brand": "other",
+        "magneticFlux": 360,
+        "color": "#ffffff"
+      },
+      "display": {
+        "name": "Snow Shine",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Polar Snow Shine"
+        ],
+        "image": "assets/images/he_switch_images/13681-extracted.webp"
+      },
+      "image": "assets/images/he_switch_images/13681.webp"
+    },
+    {
+      "axisV2Id": 14240,
+      "axisRangeMax": 3443,
+      "axisCoefficient": 21888,
+      "vendor": {
+        "id": 890,
+        "name": "粉藕轴",
+        "brand": "WuqueStudio",
+        "magneticFlux": 610,
+        "color": "#f4c9cc"
+      },
+      "display": {
+        "name": "Pink Lotus"
+      },
+      "image": "assets/images/he_switch_images/14240.png"
+    },
+    {
+      "axisV2Id": 14256,
+      "axisRangeMax": 3450,
+      "axisCoefficient": 21888,
+      "vendor": {
+        "id": 891,
+        "name": "深海低语者",
+        "brand": "WuqueStudio",
+        "magneticFlux": 610,
+        "color": "#d9e2f4"
+      },
+      "display": {
+        "name": "Ocean Whisperer"
+      },
+      "image": "assets/images/he_switch_images/14256.png"
+    },
+    {
+      "axisV2Id": 14544,
+      "axisRangeMax": 3400,
+      "axisCoefficient": 17664,
+      "vendor": {
+        "id": 909,
+        "name": "白色悟空轴",
+        "brand": "Everglide",
+        "magneticFlux": 460,
+        "color": "#ffffff"
+      },
+      "display": {
+        "name": "Wukong 16mm spring?"
+      },
+      "image": "assets/images/he_switch_images/14544.webp"
+    },
+    {
+      "axisV2Id": 14608,
+      "axisRangeMax": 3200,
+      "axisCoefficient": 18432,
+      "vendor": {
+        "id": 913,
+        "name": "瑶光轴",
+        "brand": "other",
+        "magneticFlux": 460,
+        "color": "#ede8cb"
+      },
+      "display": {
+        "name": "Yaoguang HE",
+        "brand": "Unionwell / Greetech",
+        "aliases": [
+          "Alioth",
+          "Yaoguang",
+          "Alioth/ Yaoguang"
+        ],
+        "image": "assets/images/he_switch_images/14608.webp"
+      },
+      "image": "assets/images/he_switch_images/14608.jpg"
+    },
+    {
+      "axisV2Id": 14656,
+      "axisRangeMax": 3555,
+      "axisCoefficient": 24576,
+      "vendor": {
+        "id": 916,
+        "name": "海洋之心",
+        "brand": "WuqueStudio",
+        "magneticFlux": 585,
+        "color": "#eaf0f7"
+      },
+      "display": {
+        "name": "Heart of the Ocean"
+      },
+      "image": "assets/images/he_switch_images/14656.png"
+    },
+    {
+      "axisV2Id": 14672,
+      "axisRangeMax": 3534,
+      "axisCoefficient": 24576,
+      "vendor": {
+        "id": 917,
+        "name": "库里南",
+        "brand": "WuqueStudio",
+        "magneticFlux": 580,
+        "color": "#f8f5f5"
+      },
+      "display": {
+        "name": "Cullinan"
+      },
+      "image": "assets/images/he_switch_images/14672.png"
+    },
+    {
+      "axisV2Id": 19504,
+      "axisRangeMax": 3600,
+      "axisCoefficient": 19456,
+      "vendor": {
+        "id": 1219,
+        "name": "库里南轴",
+        "brand": "Everglide",
+        "magneticFlux": 550,
+        "color": "#eaeaea"
+      },
+      "display": {
+        "name": "Everglide Cullinan"
+      },
+      "image": "assets/images/he_switch_images/19504.webp"
+    }
+  ]
+}

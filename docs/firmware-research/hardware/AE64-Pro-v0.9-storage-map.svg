@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1212" viewBox="0 0 1200 1212" role="img" aria-labelledby="title desc">
+  <title id="title">AE64 Pro v0.9 storage allocation</title>
+  <desc id="desc">Flash overview on an inferred 1 MiB HPM5300-class device, with detailed views of the application bank, four onboard profile slots, and the custom runtime SRAM reservation. The firmware references profiles through address 0x800BFFFF. Physical chip capacity and unclassified flash regions have not been read on hardware.</desc>
+  <defs>
+    <pattern id="unknown" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="9" height="9" fill="#243248"/>
+      <path d="M0 0V9" stroke="#53627a" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', sans-serif; fill: #edf3fc; }
+    .title { font-size: 39px; font-weight: 700; }
+    .eyebrow { font-size: 15px; font-weight: 700; letter-spacing: 2px; fill: #80ddcc; }
+    .section { font-size: 24px; font-weight: 650; }
+    .heading { font-size: 17px; font-weight: 650; }
+    .body { font-size: 17px; }
+    .muted { font-size: 16px; fill: #aebdd3; }
+    .mono { font: 15px Consolas, monospace; }
+    .dark { fill: #101d2e; font-size: 16px; font-weight: 700; }
+    .panel { fill: #162237; stroke: #30405a; }
+    .rule { stroke: #334661; }
+  </style>
+  <rect width="1200" height="1212" fill="#0e1828"/>
+  <text class="eyebrow" x="44" y="46">AE64 PRO / FIRMWARE ENGINEERING</text>
+  <text class="title" x="44" y="94">v0.9 storage allocation</text>
+  <text class="body" x="44" y="128">Likely hardware · 1 MiB flash and 288 KiB SRAM on an HPM5300-class part</text>
+  <text class="muted" x="44" y="155">Exact chip and capacity unconfirmed. Map reconstructed from factory v0.1.0.0 and the linked v0.9 image.</text>
+
+  <rect class="panel" x="44" y="183" width="1112" height="294" rx="14"/>
+  <text class="section" x="66" y="221">01  Flash address map</text>
+  <text class="muted" x="66" y="250">Scale in KiB from 0x80000000. Hatched regions have unknown ownership.</text>
+  <g transform="translate(88 281)">
+    <rect width="128" height="40" fill="url(#unknown)"/>
+    <rect x="128" width="256" height="40" fill="#7caeff"/>
+    <rect x="384" width="256" height="40" fill="#c1a9ff"/>
+    <rect x="640" width="16" height="40" fill="#ffd58d"/>
+    <rect x="656" width="48" height="40" fill="url(#unknown)"/>
+    <rect x="704" width="64" height="40" fill="#80ddcc"/>
+    <rect x="768" width="256" height="40" fill="url(#unknown)"/>
+    <rect width="1024" height="40" fill="none" stroke="#788ba9"/>
+    <text class="body" x="64" y="26" text-anchor="middle">Low flash</text>
+    <text class="dark" x="256" y="26" text-anchor="middle">Active application</text>
+    <text class="dark" x="512" y="26" text-anchor="middle">Updater backup</text>
+    <text class="dark" x="736" y="26" text-anchor="middle">4 slots</text>
+    <text class="body" x="896" y="26" text-anchor="middle">Upper range unclassified</text>
+    <g class="mono" text-anchor="middle">
+      <text x="0" y="-7">0</text><text x="128" y="-7">128</text><text x="384" y="-7">384</text>
+      <text x="640" y="-7">640</text><text x="704" y="-7">704</text><text x="768" y="-7">768</text><text x="1024" y="-7">1024</text>
+    </g>
+    <path d="M648 41v10h-28v19h18" stroke="#ffd58d" fill="none"/>
+  </g>
+  <g class="mono">
+    <text x="88" y="355">0x80020000–0x8005FFFF</text><text x="88" y="390">0x80060000–0x8009FFFF</text>
+    <text x="88" y="425">0x800B0000–0x800BFFFF</text>
+    <text x="736" y="355">0x800A0000–0x800A3FFF</text>
+  </g>
+  <g class="muted">
+    <text x="302" y="355">256 KiB active bank</text><text x="302" y="390">256 KiB native backup bank</text>
+    <text x="302" y="425">64 KiB for four profiles</text>
+    <text x="736" y="381">16 KiB of identified common data pages</text>
+    <text x="736" y="405">Includes calibration and shared RGB</text>
+    <text x="736" y="429">Legacy Main 0x800A2200 · strip 0x800A2400</text>
+  </g>
+
+  <rect class="panel" x="44" y="495" width="1112" height="166" rx="14"/>
+  <text class="section" x="66" y="533">02  Active bank usage</text>
+  <g transform="translate(88 552)">
+    <rect width="16" height="34" fill="#ffd58d"/>
+    <rect x="16" width="448" height="34" fill="#7caeff"/>
+    <rect x="464" width="104.06" height="34" fill="#80ddcc"/>
+    <rect x="568.06" width="455.94" height="34" fill="#273955"/>
+    <rect width="1024" height="34" fill="none" stroke="#788ba9"/>
+    <text class="dark" x="235" y="23" text-anchor="middle">Factory-derived payload region</text>
+    <text class="dark" x="516" y="23" text-anchor="middle">Custom</text>
+    <text class="body" x="796" y="23" text-anchor="middle">113.98 KiB beyond the current image</text>
+  </g>
+  <text class="body" x="88" y="616">145,424 B image · 55.47% of bank · 4 KiB header included · 1,656 B larger than v0.8.1.1</text>
+  <text class="muted" x="88" y="642">Image ends at 0x80043810 (exclusive). Nominal bank headroom is subject to physical bootloader acceptance.</text>
+
+  <rect class="panel" x="44" y="679" width="1112" height="347" rx="14"/>
+  <text class="section" x="66" y="717">03  Persistent storage in each onboard profile</text>
+  <text class="body" x="66" y="746">16 KiB per slot · 4 KiB settings + 4 KiB macros + 8 KiB keymaps, actions and custom records</text>
+  <path class="rule" d="M66 787H1134M66 818H1134M66 849H1134M66 880H1134M66 911H1134M66 942H1134"/>
+  <g class="heading"><text x="66" y="777">Keymap block offset</text><text x="265" y="777">Record</text><text x="559" y="777">Bytes / slot</text>
+    <text x="708" y="777">Slot</text><text x="781" y="777">Keymap base</text><text x="968" y="777">Main RGB address</text></g>
+  <g class="mono">
+    <text x="66" y="809">+0000–+16AB</text><text x="559" y="809">5,804</text><text x="708" y="809">1</text><text x="781" y="809">0x800B2000</text><text x="968" y="809">0x800B3D20</text>
+    <text x="66" y="840">+1700–+1B7F</text><text x="559" y="840">1,152</text><text x="708" y="840">2</text><text x="781" y="840">0x800B6000</text><text x="968" y="840">0x800B7D20</text>
+    <text x="66" y="871">+1C00–+1CEF</text><text x="559" y="871">240</text><text x="708" y="871">3</text><text x="781" y="871">0x800BA000</text><text x="968" y="871">0x800BBD20</text>
+    <text x="66" y="902">+1D00–+1D0F</text><text x="559" y="902">16</text><text x="708" y="902">4</text><text x="781" y="902">0x800BE000</text><text x="968" y="902">0x800BFD20</text>
+    <text x="66" y="933" fill="#80ddcc">+1D20–+1E97</text><text x="559" y="933">376</text>
+    <text x="66" y="964">+1E98–+1FFF</text><text x="559" y="964">360</text>
+  </g>
+  <g class="body">
+    <text x="265" y="809">Factory keymaps and actions</text>
+    <text x="265" y="840">Fn1–Fn3 RGB · FNR1</text>
+    <text x="265" y="871">Gamepad mappings · GPR1</text>
+    <text x="265" y="902">Xbox USB visibility record</text>
+    <text x="265" y="933" fill="#80ddcc">Main per-key RGB · MRG1</text>
+    <text x="265" y="964">Unallocated contiguous tail</text>
+    <text x="708" y="933">v0.9 adds 1,504 B across all four slots.</text>
+    <text x="708" y="964">604 B per slot outside records, including gaps.</text>
+  </g>
+  <text class="muted" x="66" y="1001">The native keymap save erases the entire 8 KiB block. Custom firmware restores the records after each save.</text>
+
+  <rect class="panel" x="44" y="1044" width="1112" height="143" rx="14"/>
+  <text class="section" x="66" y="1081">04  Volatile SRAM reserved for custom firmware</text>
+  <text class="mono" x="66" y="1110">0x0008A960–0x0008B95F</text>
+  <text class="body" x="299" y="1110">3,920 B static state out of 4,096 B reserved · 95.70%</text>
+  <text class="muted" x="66" y="1137">176 B outside static state includes 32 B of leading alignment and 144 B after .bss.</text>
+  <text class="muted" x="66" y="1163">Native heap retains 12,284 B. Live heap use, stack peaks and whole-chip SRAM occupancy are unmeasured.</text>
+</svg>

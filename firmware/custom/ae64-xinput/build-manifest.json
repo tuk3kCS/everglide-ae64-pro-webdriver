@@ -1,0 +1,852 @@
+{
+  "status": "EXPERIMENTAL_UNTESTED_ON_HARDWARE",
+  "stock_sha256": "3f99093d07426db7c0a4329f3b171eafe2544c92cf5d1e1c99faa358e5b61a1d",
+  "image": "AE64-Pro-XInput-EXPERIMENTAL-v0.1.bin",
+  "image_bytes": 131464,
+  "image_sha256": "fa97bcfef4cffe1fb8f2309ba537d2491dbc0fe7162eaec1db2c3d1ea220d69a",
+  "payload_bytes": 127368,
+  "payload_crc32": "51591266",
+  "original_payload_bytes": 114680,
+  "append_vma": "0x8003d000",
+  "reserved_ram": [
+    "0x8a960",
+    "0x8b960"
+  ],
+  "sections": [
+    {
+      "name": "",
+      "type": 0,
+      "flags": 0,
+      "address": 0,
+      "offset": 0,
+      "bytes": 0
+    },
+    {
+      "name": ".text",
+      "type": 1,
+      "flags": 6,
+      "address": 2147733504,
+      "offset": 4096,
+      "bytes": 12240
+    },
+    {
+      "name": ".rodata",
+      "type": 1,
+      "flags": 50,
+      "address": 2147745744,
+      "offset": 16336,
+      "bytes": 439
+    },
+    {
+      "name": ".bss",
+      "type": 8,
+      "flags": 3,
+      "address": 567680,
+      "offset": 18816,
+      "bytes": 2176
+    },
+    {
+      "name": ".symtab",
+      "type": 2,
+      "flags": 0,
+      "address": 0,
+      "offset": 18816,
+      "bytes": 2944
+    },
+    {
+      "name": ".shstrtab",
+      "type": 3,
+      "flags": 0,
+      "address": 0,
+      "offset": 21760,
+      "bytes": 46
+    },
+    {
+      "name": ".strtab",
+      "type": 3,
+      "flags": 0,
+      "address": 0,
+      "offset": 21806,
+      "bytes": 1971
+    }
+  ],
+  "symbols": {
+    "ae64_gamepad.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    ".L0 ": {
+      "address": 2147745664,
+      "bytes": 0,
+      "section": 1
+    },
+    "$x": {
+      "address": 2147745728,
+      "bytes": 0,
+      "section": 1
+    },
+    "analog_valid": {
+      "address": 2147734162,
+      "bytes": 144,
+      "section": 1
+    },
+    "stick": {
+      "address": 2147735634,
+      "bytes": 300,
+      "section": 1
+    },
+    "analog": {
+      "address": 2147735934,
+      "bytes": 134,
+      "section": 1
+    },
+    "axis_value": {
+      "address": 2147736686,
+      "bytes": 100,
+      "section": 1
+    },
+    ".L__const.gp_encode_xinput_state.masks": {
+      "address": 2147745752,
+      "bytes": 20,
+      "section": 2
+    },
+    "$d": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "ae64_gamepad_physical.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "make_core": {
+      "address": 2147737108,
+      "bytes": 564,
+      "section": 1
+    },
+    "copy_analog": {
+      "address": 2147739278,
+      "bytes": 256,
+      "section": 1
+    },
+    "released": {
+      "address": 2147738748,
+      "bytes": 182,
+      "section": 1
+    },
+    "digital_report": {
+      "address": 2147738930,
+      "bytes": 232,
+      "section": 1
+    },
+    "ae64_gamepad_protocol.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "ae64_xusb.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    ".L__const.ae64_xusb_device_descriptor.bytes": {
+      "address": 2147745872,
+      "bytes": 18,
+      "section": 2
+    },
+    "board_port.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "state": {
+      "address": 567680,
+      "bytes": 2176,
+      "section": 3
+    },
+    "usb_config": {
+      "address": 2147746172,
+      "bytes": 6,
+      "section": 2
+    },
+    "default_profile": {
+      "address": 2147745948,
+      "bytes": 208,
+      "section": 2
+    },
+    "install": {
+      "address": 2147744154,
+      "bytes": 98,
+      "section": 1
+    },
+    ".L__const.board_usb_initialize.io": {
+      "address": 2147746156,
+      "bytes": 16,
+      "section": 2
+    },
+    "in_complete": {
+      "address": 2147744276,
+      "bytes": 16,
+      "section": 1
+    },
+    "out_complete": {
+      "address": 2147744292,
+      "bytes": 56,
+      "section": 1
+    },
+    "event": {
+      "address": 2147744348,
+      "bytes": 226,
+      "section": 1
+    },
+    "usb_start": {
+      "address": 2147744252,
+      "bytes": 24,
+      "section": 1
+    },
+    "arm_out": {
+      "address": 2147745534,
+      "bytes": 80,
+      "section": 1
+    },
+    ".LJTI7_0": {
+      "address": 2147745900,
+      "bytes": 0,
+      "section": 2
+    },
+    "refresh_maxima": {
+      "address": 2147745164,
+      "bytes": 106,
+      "section": 1
+    },
+    "row_lengths": {
+      "address": 2147746178,
+      "bytes": 5,
+      "section": 2
+    },
+    "runtime.c": {
+      "address": 0,
+      "bytes": 0,
+      "section": 65521
+    },
+    "gp_linear_curve": {
+      "address": 2147733504,
+      "bytes": 38,
+      "section": 1
+    },
+    "gp_config_empty": {
+      "address": 2147733542,
+      "bytes": 316,
+      "section": 1
+    },
+    "memset": {
+      "address": 2147745642,
+      "bytes": 22,
+      "section": 1
+    },
+    "gp_config_valid": {
+      "address": 2147733858,
+      "bytes": 304,
+      "section": 1
+    },
+    "gp_reset": {
+      "address": 2147734306,
+      "bytes": 38,
+      "section": 1
+    },
+    "gp_bound_keys": {
+      "address": 2147734344,
+      "bytes": 334,
+      "section": 1
+    },
+    "gp_keyboard_suppression": {
+      "address": 2147734678,
+      "bytes": 24,
+      "section": 1
+    },
+    "gp_update": {
+      "address": 2147734702,
+      "bytes": 932,
+      "section": 1
+    },
+    "memcpy": {
+      "address": 2147745614,
+      "bytes": 28,
+      "section": 1
+    },
+    "gp_watchdog": {
+      "address": 2147736068,
+      "bytes": 102,
+      "section": 1
+    },
+    "gp_report_equal": {
+      "address": 2147736170,
+      "bytes": 112,
+      "section": 1
+    },
+    "gp_encode_hid": {
+      "address": 2147736282,
+      "bytes": 228,
+      "section": 1
+    },
+    "gp_encode_xinput_state": {
+      "address": 2147736510,
+      "bytes": 176,
+      "section": 1
+    },
+    "gp_hid_report_descriptor": {
+      "address": 2147745772,
+      "bytes": 93,
+      "section": 2
+    },
+    "gp_hid_report_descriptor_size": {
+      "address": 2147745868,
+      "bytes": 4,
+      "section": 2
+    },
+    "gp_physical_config_empty": {
+      "address": 2147736786,
+      "bytes": 294,
+      "section": 1
+    },
+    "gp_physical_config_valid": {
+      "address": 2147737080,
+      "bytes": 28,
+      "section": 1
+    },
+    "gp_physical_bound_keys": {
+      "address": 2147737672,
+      "bytes": 44,
+      "section": 1
+    },
+    "gp_physical_keyboard_suppression": {
+      "address": 2147737716,
+      "bytes": 56,
+      "section": 1
+    },
+    "gp_physical_reset": {
+      "address": 2147737772,
+      "bytes": 48,
+      "section": 1
+    },
+    "gp_physical_update": {
+      "address": 2147737820,
+      "bytes": 928,
+      "section": 1
+    },
+    "gp_physical_watchdog": {
+      "address": 2147739162,
+      "bytes": 116,
+      "section": 1
+    },
+    "gp_crc32": {
+      "address": 2147739534,
+      "bytes": 58,
+      "section": 1
+    },
+    "gp_wire_decode": {
+      "address": 2147739592,
+      "bytes": 736,
+      "section": 1
+    },
+    "gp_vendor_init": {
+      "address": 2147740328,
+      "bytes": 282,
+      "section": 1
+    },
+    "gp_vendor_handle": {
+      "address": 2147740610,
+      "bytes": 1576,
+      "section": 1
+    },
+    "ae64_xusb_config_valid": {
+      "address": 2147742186,
+      "bytes": 88,
+      "section": 1
+    },
+    "ae64_xusb_init": {
+      "address": 2147742274,
+      "bytes": 100,
+      "section": 1
+    },
+    "ae64_xusb_interface_descriptor": {
+      "address": 2147742374,
+      "bytes": 308,
+      "section": 1
+    },
+    "ae64_xusb_device_descriptor": {
+      "address": 2147742682,
+      "bytes": 32,
+      "section": 1
+    },
+    "ae64_xusb_ms_string": {
+      "address": 2147742714,
+      "bytes": 168,
+      "section": 1
+    },
+    "ae64_xusb_ms_compatible_id": {
+      "address": 2147742882,
+      "bytes": 122,
+      "section": 1
+    },
+    "ae64_xusb_control": {
+      "address": 2147743004,
+      "bytes": 240,
+      "section": 1
+    },
+    "ae64_xusb_encode_input": {
+      "address": 2147743244,
+      "bytes": 38,
+      "section": 1
+    },
+    "ae64_xusb_configured": {
+      "address": 2147743282,
+      "bytes": 36,
+      "section": 1
+    },
+    "ae64_xusb_submit": {
+      "address": 2147743318,
+      "bytes": 122,
+      "section": 1
+    },
+    "ae64_xusb_in_complete": {
+      "address": 2147743440,
+      "bytes": 16,
+      "section": 1
+    },
+    "ae64_xusb_out": {
+      "address": 2147743456,
+      "bytes": 130,
+      "section": 1
+    },
+    "board_configuration": {
+      "address": 2147743586,
+      "bytes": 98,
+      "section": 1
+    },
+    "board_other_speed": {
+      "address": 2147743684,
+      "bytes": 90,
+      "section": 1
+    },
+    "board_usb_initialize": {
+      "address": 2147743774,
+      "bytes": 380,
+      "section": 1
+    },
+    "stock_add_interface": {
+      "address": 2147685524,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_add_endpoint": {
+      "address": 2147685578,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_usb_initialize": {
+      "address": 2147685854,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_write": {
+      "address": 2147680996,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_ep0_hook": {
+      "address": 2147744574,
+      "bytes": 182,
+      "section": 1
+    },
+    "stock_ep0_original": {
+      "address": 2147745736,
+      "bytes": 8,
+      "section": 1
+    },
+    "board_scan_hook": {
+      "address": 2147744756,
+      "bytes": 408,
+      "section": 1
+    },
+    "stock_scan": {
+      "address": 2147643086,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_tick": {
+      "address": 2147686150,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_schedule_hook": {
+      "address": 2147745270,
+      "bytes": 138,
+      "section": 1
+    },
+    "stock_schedule": {
+      "address": 2147640308,
+      "bytes": 0,
+      "section": 65521
+    },
+    "board_dispatch_hook": {
+      "address": 2147745408,
+      "bytes": 126,
+      "section": 1
+    },
+    "stock_vendor_reply": {
+      "address": 2147673304,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_dispatch_original": {
+      "address": 2147745728,
+      "bytes": 8,
+      "section": 1
+    },
+    "stock_read": {
+      "address": 2147681086,
+      "bytes": 0,
+      "section": 65521
+    },
+    "memmove": {
+      "address": 2147745664,
+      "bytes": 64,
+      "section": 1
+    },
+    "stock_save3": {
+      "address": 2147634190,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_dispatch_continue": {
+      "address": 2147673978,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_save12": {
+      "address": 2147634142,
+      "bytes": 0,
+      "section": 65521
+    },
+    "stock_ep0_continue": {
+      "address": 2147682134,
+      "bytes": 0,
+      "section": 65521
+    },
+    "__state_end": {
+      "address": 569856,
+      "bytes": 0,
+      "section": 3
+    },
+    "__state_start": {
+      "address": 567680,
+      "bytes": 0,
+      "section": 3
+    },
+    "stock_usb_event": {
+      "address": 2147678344,
+      "bytes": 0,
+      "section": 65521
+    }
+  },
+  "patches": [
+    {
+      "payload_offset": "0x6e08",
+      "container_offset": "0x7e08",
+      "before": "eff06f8c",
+      "after": "ef70d15e",
+      "reason": "board_scan_hook"
+    },
+    {
+      "payload_offset": "0x6e60",
+      "container_offset": "0x7e60",
+      "before": "efe04fd9",
+      "after": "ef707179",
+      "reason": "board_schedule_hook"
+    },
+    {
+      "payload_offset": "0xea70",
+      "container_offset": "0xfa70",
+      "before": "ef10f036",
+      "after": "eff0f05a",
+      "reason": "board_usb_initialize"
+    },
+    {
+      "payload_offset": "0xd776",
+      "container_offset": "0xe776",
+      "before": "ef628fc9",
+      "after": "6f10a170",
+      "reason": "board_dispatch_hook"
+    },
+    {
+      "payload_offset": "0xf752",
+      "container_offset": "0x10752",
+      "before": "ef42cfc8",
+      "after": "6ff0c03e",
+      "reason": "board_ep0_hook"
+    },
+    {
+      "payload_offset": "0x19f88",
+      "container_offset": "0x1af88",
+      "before": "98fb0280",
+      "after": "62f70380",
+      "reason": "board_configuration"
+    },
+    {
+      "payload_offset": "0x19f90",
+      "container_offset": "0x1af90",
+      "before": "acfb0280",
+      "after": "c4f70380",
+      "reason": "board_other_speed"
+    },
+    {
+      "payload_offset": "0x1066c",
+      "container_offset": "0x1166c",
+      "before": "b7c50800",
+      "after": "b7b50800",
+      "reason": "reserve patch state: heap end upper immediate"
+    },
+    {
+      "payload_offset": "0x10674",
+      "container_offset": "0x11674",
+      "before": "93854596",
+      "after": "93850596",
+      "reason": "reserve patch state: heap end lower immediate"
+    },
+    {
+      "payload_offset": "0x1bc80",
+      "container_offset": "0x1cc80",
+      "before": "0200",
+      "after": "0101",
+      "reason": "custom bcdDevice 0x0101; preserve VID/PID"
+    }
+  ],
+  "build_command": [
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+    "build-exe",
+    "-target",
+    "riscv32-freestanding-none",
+    "-mcpu",
+    "generic_rv32+m+a+c",
+    "-O",
+    "ReleaseSmall",
+    "-fno-strip",
+    "-fentry=board_usb_initialize",
+    "--no-gc-sections",
+    "-T",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\memory.ld",
+    "-femit-bin=C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64-xinput-experimental.elf",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_physical.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_protocol.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_xusb.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\board_port.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\runtime.o",
+    "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\trampolines.o"
+  ],
+  "compiler_version": "0.17.0",
+  "verified": {
+    "host_tests": true,
+    "hardware_boot": false,
+    "windows_xinput": false,
+    "bootloader_acceptance": false,
+    "flashed": false,
+    "static_image_audit": true
+  },
+  "build_commands": [
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad_physical.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_physical.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_gamepad_protocol.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_protocol.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\src\\ae64_xusb.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_xusb.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\board_port.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\board_port.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\runtime.c",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\runtime.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "cc",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu=generic_rv32+m+a+c",
+      "-mabi=ilp32",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-stack-protector",
+      "-msmall-data-limit=0",
+      "-mno-relax",
+      "-Os",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\include",
+      "-c",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\trampolines.S",
+      "-o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\trampolines.o"
+    ],
+    [
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\work\\toolchains\\zig-x86_64-windows-0.17.0\\zig.exe",
+      "build-exe",
+      "-target",
+      "riscv32-freestanding-none",
+      "-mcpu",
+      "generic_rv32+m+a+c",
+      "-O",
+      "ReleaseSmall",
+      "-fno-strip",
+      "-fentry=board_usb_initialize",
+      "--no-gc-sections",
+      "-T",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\source\\board\\memory.ld",
+      "-femit-bin=C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64-xinput-experimental.elf",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_physical.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_gamepad_protocol.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\ae64_xusb.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\board_port.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\runtime.o",
+      "C:\\Users\\Fat Dogggo\\Documents\\Codex\\2026-10-28\\https-www-xsyd-top-v2-app\\outputs\\AE64-XInput-experimental\\trampolines.o"
+    ]
+  ],
+  "heap": {
+    "original_begin": "0x87964",
+    "original_end": "0x8b964",
+    "new_end": "0x8a960",
+    "remaining_bytes": 12284,
+    "reserved_bytes": 4100
+  }
+}
