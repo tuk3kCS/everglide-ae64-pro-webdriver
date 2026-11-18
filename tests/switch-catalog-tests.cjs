@@ -19,11 +19,11 @@ for (const entry of historical) {
   assert.equal(current.axisRangeMax, entry.axisRangeMax);
   assert.equal(current.axisCoefficient, entry.axisCoefficient);
 }
-assert.equal(byId.get(12432).display.name, "UR Ice HE-Ex");
+assert.equal(byId.get(12432).display.name, "UR Ice Extreme");
 assert.ok(byId.get(12432).display.aliases.includes("UR Ice Magnetic"));
 assert.equal(byId.get(8208).display.image, "assets/images/he_switch_images/8208.webp");
 assert.equal(byId.get(8208).image, "assets/images/he_switch_images/8208.png");
-assert.equal(byId.get(13088).display.image, "assets/images/he_switch_images/13088-extracted.webp");
+assert.equal(byId.get(13088).display.image, "assets/images/he_switch_images/13088.webp");
 assert.equal(byId.get(13088).image, "assets/images/he_switch_images/13088.webp");
 assert.throws(() => validateSwitchCatalog({ ...catalog, switches: [...catalog.switches, catalog.switches[0]] }), /duplicate/);
 
